@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Permission and license requests
+    url: https://wdmin.com/
+    about: Request personal permission to use Feuer-Einsatzberichte.
+  - name: Security reports
+    url: https://wdmin.com/
+    about: Report vulnerabilities privately. Do not publish security issues here.

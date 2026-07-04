@@ -1,0 +1,385 @@
+{
+  "releases": [
+    {
+      "version": "3.2.27",
+      "date": "2026-07-03",
+      "title": "Installierte Version korrekt angezeigt",
+      "summary": "Synchronisiert die interne Plugin-Version mit dem WordPress-Plugin-Header, damit Einstellungen und Update-Pruefung dieselbe Version anzeigen.",
+      "changes": [
+        "Behoben: In den Plugin-Einstellungen wurde weiterhin 3.2.23 angezeigt, obwohl der Plugin-Header bereits neuer war.",
+        "Behoben: Die interne FEU_EINSATZ_VERSION-Konstante ist wieder mit der ausgelieferten Release-Version synchron.",
+        "Stabilitaet: Versionanzeige, Asset-Versionierung und Update-Vergleich nutzen wieder denselben Versionswert."
+      ]
+    },
+    {
+      "version": "3.2.26",
+      "date": "2026-07-03",
+      "title": "Update-Pruefung robuster gemacht",
+      "summary": "Verhindert falsche Manifest-Mismatch-Fehler, wenn WordPress noch ein aelteres Update-Paket im Cache haelt.",
+      "changes": [
+        "Behoben: Die Paketpruefung liest das freigegebene Manifest jetzt aus der Release-Mappe des tatsaechlich heruntergeladenen ZIP-Pakets.",
+        "Stabilitaet: Die SHA-256-Pruefung bleibt verpflichtend, aber ein veralteter WordPress-Update-Cache verursacht keinen vorschnellen Manifest-Mismatch mehr.",
+        "Performance: Der Manifest-Changelog bleibt kompakt, damit Update-Pruefungen keine unnoetig grossen JSON-Dateien laden."
+      ]
+    },
+    {
+      "version": "3.2.25",
+      "date": "2026-07-03",
+      "title": "Praesentationssteuerung und Kartenmarker korrigiert",
+      "summary": "Korrigiert die Kategorie-Farben, macht die Logo-Groesse auf der Willkommensseite wirksam und erweitert die Praesentation um Seitenreihenfolge und Feuerwehrhaus-Marker.",
+      "changes": [
+        "Behoben: Der Kategorie-Donut 'Verteilung' nutzt wieder die hinterlegten Kategorie-Farben.",
+        "Verbessert: Die Logo-Groesse der Willkommensseite wird relativ zur rechten Seitenhaelfte skaliert und kann von klein bis ueber die volle Spaltenbreite eingestellt werden.",
+        "Geaendert: Der Teilnehmer-Slide zeigt die Gesamtzahl direkt im Titel und entfernt die doppelte Teilnehmer-Karte.",
+        "Neu: Eigene Praesentationsseiten koennen in den Einstellungen per Hoch-/Runter-Schaltflaeche sortiert werden.",
+        "Neu: Die Aktivitaetskarte der Praesentation zeigt zusaetzlich das Feuerwehrhaus mit dem konfigurierten Logo-Marker."
+      ]
+    },
+    {
+      "version": "3.2.24",
+      "date": "2026-07-03",
+      "title": "Dashboard-Grafiken im Statistikbereich",
+      "summary": "Ergaenzt die Statistikseite um AdminDEK-artige Dashboard-Grafiken und entfernt die ueberfluessige Gesamtteilnahmen-Karte aus der Praesentation.",
+      "changes": [
+        "Neu: Die Statistikseite zeigt oberhalb der Registerkarten ein Dashboard mit Monatsverlauf, Kategorie-Donut, haeufigsten Wochentagen und Spitzen-Tagen.",
+        "Neu: Die neuen Dashboard-Grafiken besitzen Hover-Daten, Icons, Fortschrittsbalken und responsive Karten.",
+        "Behoben: Die Kategorie-Grafik nutzt wieder die hinterlegten Farben der Kategorien.",
+        "Geaendert: Der Teilnehmer-Slide zeigt keine separate Karte 'Teilnahmen gesamt' mehr.",
+        "Verbessert: Die Top-3 Teilnehmer werden als Siegerpodium mit Pokal-Icons dargestellt; die weiteren Teilnehmer erscheinen kompakt in drei Spalten mit voller Namensanzeige links und Einsatzanzahl rechts."
+      ]
+    },
+    {
+      "version": "3.2.23",
+      "date": "2026-07-03",
+      "title": "Präsentationsdesign und Teilnehmerdaten korrigiert",
+      "summary": "Erweitert die Präsentationsseiten um Untertitel, Hintergrundsteuerung, Logo-Größe und vollständige Teilnehmerdaten.",
+      "changes": [
+        "Neu: Eigene Präsentationsseiten besitzen jetzt zusätzlich einen Untertitel.",
+        "Neu: Logo-Größe, Hintergrundbild, Transparenz, Abdunklung und Hintergrund pro Präsentationsseite sind direkt in der Statistik einstellbar.",
+        "Verbessert: Die Willkommensseite zeigt nur noch das Logo ohne dekorativen Logo-Hintergrund.",
+        "Verbessert: Der Kalender zeigt März korrekt mit Umlaut und in der Monatsgrafik die Einsatzanzahl direkt über jedem Monat.",
+        "Verbessert: Der Teilnehmer-Slide nutzt eine eigene aktuelle Teilnehmerstatistik und zeigt Anzahl der Teilnehmer, Gesamtteilnahmen, Top-3-Plätze und Teilnehmerliste mit Teilnahmen."
+      ]
+    },
+    {
+      "version": "3.2.22",
+      "date": "2026-07-03",
+      "title": "Präsentationsseiten, Logo und Statistik-Hover",
+      "summary": "Erweitert die Präsentation um Seitensteuerung, eigene Editor-Seiten, ein großes Logo auf der Startseite und bessere Hover-Daten in Statistikgrafiken.",
+      "changes": [
+        "Neu: Präsentation einstellen liegt jetzt als eigene Statistik-Registerkarte mit Seitennummern und Ein-/Aus-Schaltern je Präsentationsseite vor.",
+        "Neu: Eigene Präsentationsseiten können direkt in der Statistik über einen WordPress-ähnlichen Editor angelegt, bearbeitet und aktiviert werden.",
+        "Neu: Die erste Präsentationsseite zeigt den Text links und das konfigurierte Logo groß auf der rechten Seitenhälfte.",
+        "Verbessert: Statistikdiagramme zeigen beim Hover konkrete Werte, zum Beispiel Einsätze pro Monat, Kategorie oder Teilnehmer.",
+        "Verbessert: Teilnehmer in der Präsentation werden als Top-3-Podium im Stil des Teilnehmer-Rankings dargestellt.",
+        "Behoben: Die Leaflet-/OpenStreetMap-Attribution behält ihren Text, aber eingebettete Logos/Bilder werden deutlich kleiner dargestellt."
+      ]
+    },
+    {
+      "version": "3.2.21",
+      "date": "2026-07-03",
+      "title": "Live-Präsentation und Statistik-Steuerung",
+      "summary": "Erweitert die Statistik-Präsentation um Live-Daten, eine echte Aktivitätskarte und direkt steuerbare Präsentationsinhalte auf der Statistikseite.",
+      "changes": [
+        "Neu: Präsentations-Einstellungen stehen direkt auf der Statistikseite bereit und speichern, welche Slides und Blöcke gezeigt werden.",
+        "Neu: Die Präsentation zeigt einen Live-Daten-Hinweis mit Jahr und Aktualisierungszeit der aktuellen Statistikansicht.",
+        "Neu: Die Aktivitätskarte in der Präsentation nutzt eine eigene Leaflet-Karte mit aktuellen Punkten, Markern, Tooltips und Popups statt eines statischen Bildes.",
+        "Verbessert: Statistik- und Präsentationsflächen erhalten zusätzliche Icons, Animationen und visuelle Zustände.",
+        "Behoben: Sichtbare Statistiktexte verwenden wieder korrekte deutsche Zeichen wie Ä, Ö, Ü und ß."
+      ]
+    },
+    {
+      "version": "3.2.20",
+      "date": "2026-07-03",
+      "title": "Statistik-Kategorien und Praesentation erweitert",
+      "summary": "Ueberarbeitet die Statistikansicht mit Kategorie-Balken, Prozentliste und einer eigenen sechsseitigen Praesentation.",
+      "changes": [
+        "Entfernt: Die Kennzahl 'Einsaetze je aktivem Tag' wird im Statistik-Ueberblick nicht mehr angezeigt.",
+        "Neu: Kategorien werden als einzelne horizontale Balken mit Anzahl dargestellt.",
+        "Neu: Der Kreisgraph zeigt die Kategorieverteilung mit darunterliegender Prozent- und Mengenliste.",
+        "Neu: Der Praesentationsmodus wird ueber eine eigene Renderer-Funktion erzeugt und besitzt sechs Blaetter mit Navigation fuer Willkommen, Uebersicht, Kategorien, Kalender, Aktivitaetskarte und Teilnehmer.",
+        "Verbessert: Die Praesentation kann per Weiter/Zurueck, Pfeiltasten, PageUp/PageDown und Escape bedient werden."
+      ]
+    },
+    {
+      "version": "3.2.19",
+      "date": "2026-07-03",
+      "title": "Live-Vorschau Kartenbild zeigt Strasse wieder",
+      "summary": "Stellt die Strassenmarkierung und das Strassen-Label in der Live-Vorschau der Karteneinstellungen wieder her, ohne die 504-Last durch automatische Remote-Geometrieabfragen zurueckzubringen.",
+      "changes": [
+        "Behoben: Live-Vorschau Kartenbild zeigt wieder eine sichtbare Strassenlinie und das konfigurierte Strassen-Label, auch wenn fuer die Feuerwehrhaus-Adresse noch keine OSM-Geometrie im lokalen Cache liegt.",
+        "Stabilitaet: Die Einstellungsseite bleibt bei der Karten-Vorschau weiterhin ohne automatische Remote-Geometrieabfrage und vermeidet dadurch die zuvor beobachteten 504-Lastspitzen.",
+        "Verbessert: Beim Bearbeiten der Feuerwehrhaus-Adresse in den Karteneinstellungen bleibt die Live-Vorschau sofort nutzbar und faellt auf eine lokale Beispiel-Geometrie um, bis echte Geometriedaten gespeichert oder gecacht sind."
+      ]
+    },
+    {
+      "version": "3.2.18",
+      "date": "2026-07-03",
+      "title": "Strassenregister-Liste per AJAX wiederhergestellt",
+      "summary": "Behebt die Ursache, warum vorhandene Strassen in den Einstellungen nicht sichtbar waren, obwohl die Vorschlaege im Einsatzbericht-Editor funktionierten.",
+      "changes": [
+        "Behoben: Das Strassenregister-Partial nutzt jetzt den explizit uebergebenen Datenbank-Controller statt eines nicht verfuegbaren Template-Kontexts.",
+        "Neu: Die Strassenregister-Liste wird beim Oeffnen der Einstellungs-Tabs per AJAX nachgeladen, ohne die Einstellungsseite neu zu laden.",
+        "Neu: Die AJAX-Antwort liefert manuell gepflegte Register-Eintraege und alle bekannten Strassen aus dem Autocomplete-Datenbestand.",
+        "Verbessert: Zaehler, Live-Suche, Bearbeiten, Entfernen und Einsatz-Links werden nach dem Nachladen synchron aktualisiert."
+      ]
+    },
+    {
+      "version": "3.2.17",
+      "date": "2026-07-03",
+      "title": "Isolierte Einstellungs-Tabs",
+      "summary": "Fuehrt einen geschuetzten Template-Loader fuer Einstellungsbereiche ein, damit Fehler in einem Bereich nicht die komplette Einstellungsseite abschalten.",
+      "changes": [
+        "Neu: Einstellungs-Partial-Dateien werden ueber einen guarded renderer geladen.",
+        "Stabilitaet: Fehler in einem Einstellungsbereich werden als lokale Fehlermeldung in diesem Bereich angezeigt und im Plugin-Log protokolliert.",
+        "Wartbarkeit: Die bestehende Tab-Struktur ist vorbereitet, damit einzelne Bereiche schrittweise weiter entkoppelt werden koennen.",
+        "Analyse: Die Statistikseite bleibt als naechster groesserer Refactor-Kandidat markiert, weil dort Datenabfragen, Rendering und Praesentations-JavaScript noch in einem grossen Template liegen."
+      ]
+    },
+    {
+      "version": "3.2.16",
+      "date": "2026-07-03",
+      "title": "Hotfix fuer Einstellungen und 504-Last",
+      "summary": "Reduziert die Last beim Oeffnen der Plugin-Einstellungen und stellt das Umschalten der Einstellungs-Tabs wieder her.",
+      "changes": [
+        "Behoben: Einstellungs-Tabs entfernen beim Umschalten jetzt auch die interne Hidden-Klasse; die Bereiche werden wieder sichtbar ohne Seitenreload.",
+        "Performance: Karten-Vorschau, Strassenregister, Manifest-Pruefung und Kartenbild-Rebuild-Zaehler werden nur noch fuer die jeweils aktive Einstellungsseite vorbereitet.",
+        "Behoben: Die Einstellungsseite startet keine automatische Strassenregister-Bootstrap-Operation mehr beim normalen Seitenaufruf.",
+        "Stabilitaet: Die Karten-Vorschau loest beim Oeffnen der Einstellungen keine Remote-Geometrie-Aktualisierung mehr aus."
+      ]
+    },
+    {
+      "version": "3.2.15",
+      "date": "2026-07-03",
+      "title": "Hotfix fuer Strassenregister-Ladeproblem",
+      "summary": "Behebt eine runtime-seitige Endloslast beim Laden der Strassenlisten und stellt die Tabellenmigration fuer aktualisierte Installationen sauber ueber die Plugin-Schema-Version sicher.",
+      "changes": [
+        "Behoben: Strassen-Vorschlaege erzeugen keinen zweiten Datenbank-Controller mehr und starten dadurch keine wiederholten Schema-Pruefungen waehrend der Seitenladung.",
+        "Behoben: Die Strassenregister-Tabelle wird jetzt ueber eine neue Schema-Version beim Plugin-Update erstellt, statt aus dem normalen Datenbank-Konstruktor heraus.",
+        "Stabilitaet: Alle Strassenregister-Operationen pruefen die Tabelle vor Zugriffen und brechen sauber ab, falls eine Installation noch nicht migriert ist.",
+        "Performance: Die Admin-Seite und AJAX-Vorschlaege vermeiden unnoetige Datenbankinitialisierungen und laden wieder ohne blockierende Schleifen."
+      ]
+    },
+    {
+      "version": "3.2.14",
+      "date": "2026-07-03",
+      "title": "Strassenregister mit Live-Suche und Modal-Bearbeitung",
+      "summary": "Stellt die sichtbare Strassenliste wieder her und erweitert das Strassenregister um direkte Pflege, Live-Suche und Einsatz-Links ohne Seitenreload.",
+      "changes": [
+        "Behoben: Das Strassenregister legt die benoetigte Datenbanktabelle jetzt auch bei aktualisierten Installationen automatisch an und importiert vorhandene Einsatzstrassen wieder aus bestehenden Einsatzberichten.",
+        "Neu: Strassen werden im Register kompakt als Strasse / PLZ / Ort angezeigt, inklusive realem Einsatzzaehler und direktem Link zur gefilterten Einsatzliste.",
+        "Neu: Suche im Strassenregister filtert Strasse, PLZ und Ort live im Browser ohne Neuladen der Einstellungsseite.",
+        "Neu: Strassen-Eintraege werden in einem Modal bearbeitet und per AJAX gespeichert; Hinzufuegen, Bearbeiten und Entfernen aktualisieren die Tabelle direkt ohne Seitenreload.",
+        "Verbessert: Manuell gepflegte Register-Eintraege verwenden echte Einsatzzaehler statt interner Sortierwerte und bleiben dadurch nachvollziehbar."
+      ]
+    },
+    {
+      "version": "3.2.13",
+      "date": "2026-07-02",
+      "title": "Beschreibungsseite ohne direkte Plugin-Downloads",
+      "summary": "Schärft die öffentliche Pluginbeschreibung und entfernt sichtbare Direktlinks zu Plugin-Paketen aus Beschreibungs- und Admin-Oberflächen.",
+      "changes": [
+        "Neu: Die öffentliche index-Seite beschreibt Funktionen ausführlicher, inklusive animierter Statistik, Archiv, Protokollen und Update-Verhalten.",
+        "Geaendert: Die index-Seite verweist nur noch auf Pluginbeschreibung und Autorenseite und bietet keine direkte Download-Schaltflaeche fuer Plugin-Pakete.",
+        "Geaendert: Die Admin-Manifestansicht blendet direkte Paket-Download-Felder aus und zeigt nur noch Pluginbeschreibung, Autorenseite und lokale Wartungsdateien.",
+        "Geaendert: Die WordPress-Plugininformation verlinkt den Autor auf die Autorenseite und gibt keinen separaten Download-Link mehr aus."
+      ]
+    },
+    {
+      "version": "3.2.12",
+      "date": "2026-07-02",
+      "title": "Animierte Statistik-Visualisierung",
+      "summary": "Erweitert die Statistik-Adminseite um eine moderne visuelle Lageuebersicht, animierte Kennzahlen und lebendigere Aktivitaetskarten.",
+      "changes": [
+        "Neu: Die Statistikseite zeigt oben animierte Kennzahlen mit Icons, Fortschrittsbalken und Count-up-Effekt.",
+        "Neu: Eine operative Lageuebersicht visualisiert staerksten Monat, Top-Kategorie, durchschnittliche Einsaetze je aktivem Tag und Monatsverteilung.",
+        "Verbessert: Aktivitaetskarte und Kartenmarker erhalten dezente Animationen, bleiben aber fuer Nutzer mit reduzierter Bewegung barrierearm."
+      ]
+    },
+    {
+      "version": "3.2.11",
+      "date": "2026-06-28",
+      "title": "Teilnehmerfoto-Loeschung und Karten-Quickaction im Dashboard",
+      "summary": "Erweitert die Teilnehmerbearbeitung um ein direktes Entfernen von Fotos und bringt die manuelle Kartenbild-Generierung in die Liste der letzten Einsatzberichte.",
+      "changes": [
+        "Neu: In Teilnehmer bearbeiten kann das hinterlegte Foto jetzt direkt entfernt werden, ohne Workaround ueber Medien oder neue Uploads.",
+        "Neu: Im Dashboard-Bereich 'Letzte Einsatzberichte' steht jetzt pro Eintrag eine direkte Schaltflaeche zur manuellen Kartenbild-Generierung bereit.",
+        "Behoben: Beim Entfernen eines Teilnehmerfotos werden die bestehenden Galerie-Referenzen vor dem Speichern sauber geleert."
+      ]
+    },
+    {
+      "version": "3.2.10",
+      "date": "2026-06-28",
+      "title": "Autocomplete, Teilnehmer-Workflow und Statistik-Praesentation",
+      "summary": "Schliesst die offene Strassen-Automation im Editor ab, verbessert die Teilnehmer-Auswahl und fuegt der Statistik einen echten Praesentationsmodus hinzu.",
+      "changes": [
+        "Neu: Strassen-Autocomplete arbeitet jetzt mit Eintraegen aus dem lokalen Strassenregister und bestehenden Einsatzberichten als kombinierter Memory-Layer.",
+        "Behoben: Wird eine Strasse aus den Vorschlaegen ausgewaehlt, werden genau die zugehoerige PLZ und der zugehoerige Ort uebernommen, auch wenn dieselbe Strasse mehrfach mit unterschiedlichen PLZ existiert.",
+        "Verbessert: Doppelte Strassenvorschlaege werden in der Browser-Memory vermieden und AJAX-Nachladungen erweitern den lokalen Vorschlagspool direkt.",
+        "Behoben: Archivierte Teilnehmer erscheinen nicht mehr in der Auswahl fuer neue Einsatzberichte.",
+        "Verbessert: Ein erneuter Klick auf einen bereits ausgewaehlten Teilnehmer entfernt ihn sofort wieder aus der Auswahl.",
+        "Sicherheit: Die Street-Search-AJAX-Schnittstelle prueft jetzt zusaetzlich den Zugriff auf den Plugin-Bereich Berichte.",
+        "Neu: Die Statistik-Seite besitzt jetzt einen Praesentationsmodus im Vollbild fuer Jahresauswertungen und Vorfuehrungen."
+      ]
+    },
+    {
+      "version": "3.2.9",
+      "date": "2026-06-24",
+      "title": "Sicherheitsupdate, Strassenregister und Release-Haertung",
+      "summary": "Haertet Freigabe- und Importpfade, erweitert das Strassenregister fuer PLZ/Stadt-Varianten und verbessert die Pflege sowie Freigabe von Release-Paketen.",
+      "changes": [
+        "Sicherheit: Oeffentliche Share-Bild-URLs nutzen jetzt eine zeitlich begrenzte Signatur statt dauerhaft gueltiger Links.",
+        "Sicherheit: Backup-Archive werden beim Import nicht mehr nur nach Dateiendung, sondern auch nach Dateityp und ZIP-Signatur geprueft.",
+        "Neu: Strassenregister unterstuetzt Suche, Bearbeitung und getrennte Eintraege fuer dieselbe Strasse mit unterschiedlicher PLZ oder Stadt.",
+        "Verbessert: Autocomplete im Einsatzort-Feld zeigt Strasse, PLZ und Stadt differenziert an und uebernimmt PLZ nur noch eindeutig.",
+        "Behoben: Strassenregister verhindert jetzt das Loeschen von Eintraegen, die bereits in Einsatzberichten verwendet werden."
+      ]
+    },
+    {
+      "version": "3.2.8",
+      "date": "2026-06-21",
+      "title": "Ersteinrichtung und Plugin-Status",
+      "summary": "Fuegt eine zentrale Ersteinrichtungspruefung und eine permanente Status-Info fuer alle Plugin-Adminseiten hinzu.",
+      "changes": [
+        "Neu: Pflichtdaten wie Feuerwehrhaus-Adresse, Kategorien, Funktionen, Teilnehmer und Karten-Copyright werden zentral geprueft.",
+        "Neu: Bei fehlenden Pflichtdaten zeigt die Plugin-Adminoberflaeche einen Ersteinrichtungs-Hinweis mit direkten Links zu den passenden Einstellungen.",
+        "Neu: Unten rechts erscheint auf Plugin-Seiten eine Info-Schaltflaeche mit gruenem Status bei vollstaendigen Pflichtdaten oder rotem Status bei fehlenden Pflichtdaten.",
+        "Neu: Die Status-Detailansicht zeigt Empfehlungen, wo Logo, Share-Karte, Wasserzeichen, Organisationen und Shortcodes gepflegt werden sollten.",
+        "Verbessert: Die Statusanzeige bleibt lokal im Plugin und erzeugt keine externen Anfragen."
+      ]
+    },
+    {
+      "version": "3.2.7",
+      "date": "2026-06-21",
+      "title": "Kartenbild-Layout und Strassen-PLZ-Memory",
+      "summary": "Erweitert generierte Kartenbilder um frei platzierbare Textelemente und verbessert die Strassen-Schnelleingabe mit automatischer PLZ-Uebernahme.",
+      "changes": [
+        "Neu: Kartenbild-Infofeld, Strassen-Label und Karten-Copyright koennen im generierten Kartenbild an unterschiedliche Positionen gesetzt werden.",
+        "Neu: Infofeld-Ueberschrift, Infofeld-Adresse, Strassen-Label und Karten-Copyright lassen sich getrennt ein- oder ausblenden.",
+        "Neu: Der Karten-Copyright-Text ist editierbar, bleibt aber standardmaessig sichtbar fuer die OpenStreetMap-Attribution.",
+        "Verbessert: Die Live-Vorschau der Karteneinstellungen zeigt die neuen Positionen und Sichtbarkeiten sofort an.",
+        "Neu: Die Strassen-Memory speichert PLZ und Stadt aus bestehenden Einsatzberichten und setzt die PLZ automatisch beim Auswaehlen einer bekannten Strasse."
+      ]
+    },
+    {
+      "version": "3.2.6",
+      "date": "2026-06-21",
+      "title": "Street-Memory, Aktivitaetskarte und Share-Karte",
+      "summary": "Erweitert Einsatzbericht-Bearbeitung, Statistik-Popups, Karten-Live-Vorschau und Share-Karten-Gestaltung.",
+      "changes": [
+        "Neu: Strassenfeld merkt sich bereits verwendete Einsatzstrassen und bietet sie beim Tippen als Vorschlaege an.",
+        "Behoben: Teilnehmer-Dialog nutzt robuste CSS-Icons fuer Plus und Schliessen statt fehleranfaelliger Zeichensatz-Symbole.",
+        "Verbessert: Aktivitaetskarte verlinkt Einsatzberichte im Popup und zeigt Datumsangaben im Format TT.MM.JJJJ.",
+        "Verbessert: Live-Vorschau Kartenbild zeigt das Feuerwehrhaus mit Logo und Wasserzeichen-Text statt als Punkt.",
+        "Neu: Share-Karte bietet Steuerung fuer Overlays, Rundungen, Bild-Weichzeichnung, Textausrichtung und Logo-Position."
+      ]
+    },
+    {
+      "version": "3.2.5",
+      "date": "2026-06-13",
+      "title": "Sicherheits-, Stabilitaets- und Performance-Haertung",
+      "summary": "Behebt kritische Probleme bei Ausgabe, Restore, Medienloeschung, Update-Pruefung und Hintergrundverarbeitung.",
+      "changes": [
+        "Behoben: UTF-8-BOM erzeugte unerwartete Ausgabe und konnte Header, AJAX und Weiterleitungen stoeren.",
+        "Behoben: PHP-8.0-Kompatibilitaet, sichere Medienloeschung und transaktionsgestuetzte Restore-Sicherung.",
+        "Sicherheit: Backup-Import, Paket-Hash-Pruefung, Rollenrechte, PIN-Speicherung und Protokollierung gehaertet.",
+        "Performance: Share-Bild-Cache, Hintergrund-Watermarks und gecachter Uebersichtsindex.",
+        "Stabilitaet: Atomare Kartenbild-Sperre mit garantierter Freigabe und Fehlerstatus."
+      ]
+    },
+    {
+      "version": "3.2.4",
+      "date": "2026-05-26",
+      "title": "Bugfix Race Condition beim Erstellen neuer Einsatzberichte",
+      "summary": "Behebt eine Race Condition, durch die neue Einsatzberichte im Modus '48 Stunden' sofort veroeffentlicht wurden statt als geplanter Beitrag eingestellt zu werden.",
+      "changes": [
+        "Behoben: Neuer Einsatzbericht mit Modus '48 Stunden' wurde trotzdem sofort veroeffentlicht. Ursache war eine Race Condition im WordPress-save_post-Hook: Beim Anlegen neuer Beitraege feuerte der Hook vor dem Speichern der Veroeffentlichungs-Sperre, sodass der Hintergrund-Cron die Sperre nicht fand und den Beitrag nicht korrekt einplante.",
+        "Behoben: Weiterleitungs-URL nach dem Erstellen eines Einsatzberichts zeigte falsch 'Entwurf gespeichert', auch wenn der Bericht tatsaechlich als geplanter Beitrag eingestellt wurde."
+      ]
+    },
+    {
+      "version": "3.2.3",
+      "date": "2026-05-25",
+      "title": "Bugfixes Veroeffentlichung, Shortcode-Referenz in Einstellungen",
+      "summary": "Behebt drei Fehler (48-Stunden-Veroeffentlichung, Schnelleingabe-Datum, Umlaut-Kodierung) und fuegt in den Plugin-Einstellungen einen neuen Reiter Shortcodes mit Referenz aller verfuegbaren Shortcodes hinzu.",
+      "changes": [
+        "Behoben: Modus '48 Stunden' veroeffentlicht jetzt immer als geplanter Beitrag. Lag der Einsatz laenger als 48 Stunden zurueck, wurde der Bericht bisher sofort veroeffentlicht; er wird jetzt 48 Stunden ab dem aktuellen Speicherzeitpunkt eingeplant.",
+        "Behoben: Schnelleingabe-Formular uebernahm das Einsatzdatum nicht als WordPress-Beitragsdatum. Beitraege erschienen mit der Erstellungszeit statt der tatsaechlichen Einsatzzeit.",
+        "Behoben: Kodierungsfehler bei deutschen Umlauten im Dashboard-Widget und anderen Admin-Texten (z.B. \"EinsГ¤tze gesamt\" erschien statt \"Einsaetze gesamt\").",
+        "Neu: Einstellungen enthalten jetzt den Reiter Shortcodes mit einer vollstaendigen Uebersicht aller verfuegbaren Shortcodes inklusive Attributen, Standardwerten und kopierbaren Beispielen."
+      ]
+    },
+    {
+      "version": "3.2.2",
+      "date": "2026-05-23",
+      "title": "Live-Vorschau Kartenbild mit echter Feuerwehrhaus-Strasse",
+      "summary": "Erweitert die Live-Vorschau der Karteneinstellungen um echte OSM-Strassengeometrie fuer das Feuerwehrhaus und aktiviert die interaktive Kartenbedienung.",
+      "changes": [
+        "Behoben: Die Strassenmarkierung in der Live-Vorschau wird nicht mehr als kuenstliche Linie erzeugt, sondern aus der gespeicherten OSM-Geometrie der Feuerwehrhaus-Strasse geladen.",
+        "Verbessert: Die Live-Karte kann in den Einstellungen per Plus/Minus, Dragging, Mausrad und Tastatur gezoomt und bewegt werden.",
+        "Verbessert: Wenn keine echte Strassengeometrie verfuegbar ist, zeigt die Vorschau keine falsche Beispiel-Strasse mehr an."
+      ]
+    },
+    {
+      "version": "3.2.1",
+      "date": "2026-05-23",
+      "title": "Live-Vorschau Kartenbild mit echter Leaflet-Karte",
+      "summary": "Stellt die Live-Vorschau der Karteneinstellungen wieder auf eine echte Leaflet-/OpenStreetMap-Karte um und behaelt den lokalen SVG-Fallback nur fuer den Fall, dass Kartenkacheln nicht geladen werden.",
+      "changes": [
+        "Behoben: Live-Vorschau Kartenbild in den Karteneinstellungen initialisiert wieder eine echte Leaflet-Karte.",
+        "Verbessert: Strassenmarkierung, Marker, Strassen-Label, Info-Panel und Attribution werden live auf der Karte aktualisiert.",
+        "Verbessert: Lokaler SVG-Fallback bleibt sichtbar, bis OpenStreetMap-Kacheln erfolgreich geladen wurden."
+      ]
+    },
+    {
+      "version": "3.2.0",
+      "date": "2026-05-17",
+      "title": "3.1.6 Release",
+      "summary": "Finale stabile Freigabe des aktuellen Plugin-Stands. Technisch wird die Version als 3.2.0 ausgeliefert, damit WordPress sie korrekt als neuer als 3.1.49 bis 3.1.512 erkennt.",
+      "changes": [
+        "Stabil: Finale Release-Freigabe fuer den aktuellen Admin-, Statistik-, Karten- und Share-Stand.",
+        "Behoben: Hintergrund-Queue fuer Kartenbilder, Cron-Bootstrap, manuelle Dashboard-Generierung und Freigabe-Logik fuer neue Einsatzberichte.",
+        "Verbessert: Teilnehmer-Auswahl, Formular-Layouts, Dashboard-Kartenstatus und kompaktere Bearbeitungsoberflaechen.",
+        "Behoben: Mehrere Frontend- und Template-Probleme inklusive Einzelbeitrags-Rendering, Kommentar-Sichtbarkeit und Karten-/Share-Fallbacks."
+      ]
+    },
+    {
+      "version": "3.1.51",
+      "date": "2026-05-17",
+      "title": "Stabiler Admin-Release fuer Einsatzberichte",
+      "summary": "Fuehrt den zuletzt erweiterten Admin-Layer als stabile Version zusammen und schliesst die offenen Hotfixes fuer Teilnehmerauswahl, Share-Bilder, Aktivierung, Statistik-Layouts und Formularseiten ab.",
+      "changes": [
+        "Stabil: Kompakter und mobilfreundlicher Admin-Layer fuer Erstellung, Bearbeitung, Schnelleingabe und Einstellungen.",
+        "Verbessert: Teilnehmerauswahl dichter aufgebaut, Funktionswahl direkter eingebunden und mobile Darstellung reduziert.",
+        "Behoben: Share-Bild-Kette mit Vorhandenem Beitragsbild, Kommentare-Sichtbarkeit, Kalender-Popover und mehrere Statistik-Layouts.",
+        "Behoben: Aktivierungsproblem durch unerwartete Ausgabe sowie zusaetzlicher Leerraum ueber dem Site-Header.",
+        "Verbessert: Karten-, Share- und Formularvorschauen sowie diverse Abstaende und Container in der Admin-Oberflaeche."
+      ]
+    },
+    {
+      "version": "3.1.50",
+      "date": "2026-05-14",
+      "title": "Zugriffsrechte, permanente Strassen-Labels und Zoom-Verhalten",
+      "summary": "Fuehrt eine vollstaendig konfigurierbare Rollen-Zugriffsverwaltung ein, behebt dauerhaft sichtbare Strassen-Labels auf der Live-Karte und verbessert das Zoom-Verhalten des Feuerwehrhaus-Markers.",
+      "changes": [
+        "Neu: Zugriffsrechte vollstaendig konfigurierbar; nur Administrator hat fixen Vollzugriff.",
+        "Behoben: Strassen-Label auf der Live-Karte ist jetzt dauerhaft sichtbar statt nur beim Hover.",
+        "Behoben: Feuerwehrhaus-Label wird bei niedrigem Zoom ausgeblendet, wenn der Marker auf Mindestgroesse verkleinert ist.",
+        "Verbessert: Kartenbild- und Fotos-Bereich in der Bearbeitungsansicht sind getrennte Karten."
+      ]
+    },
+    {
+      "version": "3.1.49",
+      "date": "2026-05-14",
+      "title": "Feuerwehrhaus auf Karten, Kartenlinien-Bugfixes und aufgeraeumte Einstellungen",
+      "summary": "Erweitert Kartenbilder und Live-Karten um einen optionalen Feuerwehrhaus-Marker, behebt Pixelartefakte und ungleichmaessige Linien in generierten PNG-Kartenbildern und uebertraegt die konfigurierte Linienbreite korrekt auf die Live-Karte.",
+      "changes": [
+        "Neu: Einsatz-Kartenbilder und Live-Karten koennen das Feuerwehrhaus jetzt als zusaetzlichen Marker mit Label anzeigen.",
+        "Neu: Die Live-Vorschau im Bereich Karteneinstellungen reagiert direkt auf Zoom, Kartenhoehe, Linienbreite, Farbe und Schrift.",
+        "Behoben: Die eingestellte Linienbreite wird jetzt korrekt auf die Live-Karte im Beitrag uebertragen.",
+        "Behoben: Kartenlinien in generierten PNG-Bildern sind jetzt glatt und gleichmaessig.",
+        "Verbessert: Karteneinstellungen sind jetzt in die Bereiche Grundkarte, Kartenbild, Feuerwehrhaus und Wartung gegliedert."
+      ]
+    }
+  ]
+}
