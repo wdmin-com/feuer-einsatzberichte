@@ -123,7 +123,7 @@ if ('publish' === $current_post_status) {
         <?php if ($comments_feature_enabled) : ?>
             <a class="feu-einsatz-report-section-link" href="#feu-einsatz-report-box-comments"><?php esc_html_e('Kommentare', 'feuer-einsatzberichte'); ?></a>
         <?php endif; ?>
-        <a class="feu-einsatz-report-section-link" href="#feu-einsatz-report-box-categories"><?php esc_html_e('Kategorien', 'feuer-einsatzberichte'); ?></a>
+        <a class="feu-einsatz-report-section-link" href="#feu-einsatz-report-box-categories"><?php esc_html_e('Einsatzstichworte', 'feuer-einsatzberichte'); ?></a>
         <a class="feu-einsatz-report-section-link" href="#feu-einsatz-report-box-publish"><?php esc_html_e('Veroeffentlichung', 'feuer-einsatzberichte'); ?></a>
     </nav>
 
@@ -181,7 +181,7 @@ if ('publish' === $current_post_status) {
                                        value="<?php echo esc_attr($post_title_value); ?>"
                                        placeholder="<?php esc_attr_e('z.B. ALARM - Ueckerstrasse', 'feuer-einsatzberichte'); ?>" />
                                 <p class="description feu-einsatz-field-hint">
-                                    <?php _e('Wenn leer, erzeugt das Plugin beim Speichern automatisch einen Titel aus der ersten gewaehlten Kategorie und der Strasse, z.B. ALARM - Ueckerstrasse.', 'feuer-einsatzberichte'); ?>
+                                    <?php _e('Wenn leer, erzeugt das Plugin beim Speichern automatisch einen Titel aus dem ersten gewaehlten Einsatzstichwort und der Strasse, z.B. ALARM - Ueckerstrasse.', 'feuer-einsatzberichte'); ?>
                                 </p>
                             </div>
 
@@ -337,13 +337,13 @@ if ('publish' === $current_post_status) {
             <aside class="feu-einsatz-report-create-side">
                 <div class="postbox feu-einsatz-form-section feu-einsatz-form-section--side" id="feu-einsatz-report-box-categories">
                     <div class="postbox-header">
-                        <h2 class="hndle"><?php _e('Kategorien', 'feuer-einsatzberichte'); ?></h2>
+                        <h2 class="hndle"><?php _e('Einsatzstichworte', 'feuer-einsatzberichte'); ?></h2>
                     </div>
                     <div class="inside">
                         <?php if (empty($report_categories)) : ?>
-                            <p class="description"><?php _e('Keine Kategorien verfuegbar. Lege zuerst Kategorien in WordPress an oder waehle sie in den Plugin-Einstellungen aus.', 'feuer-einsatzberichte'); ?></p>
+                            <p class="description"><?php _e('Keine Einsatzstichworte verfuegbar. Lege zuerst passende Kategorien in WordPress an oder waehle sie in den Plugin-Einstellungen aus.', 'feuer-einsatzberichte'); ?></p>
                         <?php else : ?>
-                            <div class="feu-einsatz-report-category-groups" data-feu-category-list>
+                            <div class="feu-einsatz-report-category-groups" data-feu-category-list role="group" aria-label="<?php esc_attr_e('Einsatzstichworte', 'feuer-einsatzberichte'); ?>" aria-describedby="feu-einsatz-category-validation-status">
                                 <div class="feu-einsatz-report-category-block">
                                     <h3><?php esc_html_e('Hauefig genutzt', 'feuer-einsatzberichte'); ?></h3>
                                     <div class="feu-einsatz-report-category-list feu-einsatz-report-category-list--popular">
@@ -362,7 +362,7 @@ if ('publish' === $current_post_status) {
 
                                 <?php if (!empty($other_report_categories)) : ?>
                                     <div class="feu-einsatz-report-category-block">
-                                        <h3><?php esc_html_e('Weitere Kategorien', 'feuer-einsatzberichte'); ?></h3>
+                                        <h3><?php esc_html_e('Weitere Einsatzstichworte', 'feuer-einsatzberichte'); ?></h3>
                                         <div class="feu-einsatz-report-category-list feu-einsatz-report-category-list--scroll">
                                             <?php foreach ($other_report_categories as $category) : ?>
                                                 <?php $depth = count(get_ancestors($category->term_id, 'category')); ?>
@@ -378,8 +378,8 @@ if ('publish' === $current_post_status) {
                                     </div>
                                 <?php endif; ?>
                             </div>
-                            <p class="feu-einsatz-field-error feu-einsatz-category-error" data-feu-category-error hidden>
-                                <?php _e('Bitte waehle mindestens eine Kategorie aus.', 'feuer-einsatzberichte'); ?>
+                            <p id="feu-einsatz-category-validation-status" class="feu-einsatz-field-error feu-einsatz-category-error" data-feu-category-error aria-live="polite" hidden>
+                                <?php _e('Bitte waehle mindestens ein Einsatzstichwort aus.', 'feuer-einsatzberichte'); ?>
                             </p>
                         <?php endif; ?>
                     </div>
@@ -429,242 +429,3 @@ if ('publish' === $current_post_status) {
         </div>
     </form>
 </div>
-
-<script>
-(function() {
-    var form = document.querySelector('.feu-einsatz-report-create-form');
-
-    if (!form) {
-        return;
-    }
-
-    var notice = document.getElementById('feu-einsatz-report-validation-notice');
-    var noticeList = notice ? notice.querySelector('.feu-einsatz-report-validation-list') : null;
-    var detailsBox = document.getElementById('feu-einsatz-report-box-details');
-    var categoriesBox = document.getElementById('feu-einsatz-report-box-categories');
-    var categoryList = document.querySelector('[data-feu-category-list]');
-    var categoryError = document.querySelector('[data-feu-category-error]');
-    var fields = [
-        {
-            id: 'feu_einsatz_strasse',
-            label: '<?php echo esc_js(__('Strasse', 'feuer-einsatzberichte')); ?>',
-            validate: function(value) {
-                return value.trim() !== ''
-                    ? ''
-                    : '<?php echo esc_js(__('Bitte gib eine Strasse an.', 'feuer-einsatzberichte')); ?>';
-            }
-        },
-        {
-            id: 'feu_einsatz_plz',
-            label: '<?php echo esc_js(__('PLZ', 'feuer-einsatzberichte')); ?>',
-            validate: function(value) {
-                return /^\d{5}$/.test(value.trim())
-                    ? ''
-                    : '<?php echo esc_js(__('Bitte gib eine fuenfstellige PLZ an.', 'feuer-einsatzberichte')); ?>';
-            }
-        },
-        {
-            id: 'feu_einsatz_stadt',
-            label: '<?php echo esc_js(__('Stadt', 'feuer-einsatzberichte')); ?>',
-            validate: function(value) {
-                return value.trim() !== ''
-                    ? ''
-                    : '<?php echo esc_js(__('Bitte gib eine Stadt an.', 'feuer-einsatzberichte')); ?>';
-            }
-        },
-        {
-            id: 'feu_einsatz_datum',
-            label: '<?php echo esc_js(__('Datum', 'feuer-einsatzberichte')); ?>',
-            validate: function(value) {
-                var trimmed = value.trim();
-                return /^(\d{2}\.\d{2}\.\d{4}|\d{4}-\d{2}-\d{2})$/.test(trimmed)
-                    ? ''
-                    : '<?php echo esc_js(__('Bitte gib ein Datum im Format TT.MM.JJJJ an.', 'feuer-einsatzberichte')); ?>';
-            }
-        },
-        {
-            id: 'feu_einsatz_uhrzeit',
-            label: '<?php echo esc_js(__('Uhrzeit', 'feuer-einsatzberichte')); ?>',
-            validate: function(value) {
-                return /^([01]\d|2[0-3]):[0-5]\d$/.test(value.trim())
-                    ? ''
-                    : '<?php echo esc_js(__('Bitte gib eine Uhrzeit im Format HH:MM an.', 'feuer-einsatzberichte')); ?>';
-            }
-        }
-    ];
-
-    function getField(id) {
-        return document.getElementById(id);
-    }
-
-    function ensureFieldErrorNode(field) {
-        var existing = form.querySelector('[data-feu-field-error-for="' + field.id + '"]');
-
-        if (existing) {
-            return existing;
-        }
-
-        var node = document.createElement('p');
-        node.className = 'feu-einsatz-field-error';
-        node.setAttribute('data-feu-field-error-for', field.id);
-        node.hidden = true;
-        (field.closest('.feu-einsatz-form-row') || field.parentNode).appendChild(node);
-
-        return node;
-    }
-
-    function setFieldError(field, message) {
-        var errorNode = ensureFieldErrorNode(field);
-        field.classList.add('feu-einsatz-field-invalid');
-        field.setAttribute('aria-invalid', 'true');
-        errorNode.textContent = message;
-        errorNode.hidden = false;
-    }
-
-    function clearFieldError(field) {
-        var errorNode = form.querySelector('[data-feu-field-error-for="' + field.id + '"]');
-        field.classList.remove('feu-einsatz-field-invalid');
-        field.removeAttribute('aria-invalid');
-
-        if (errorNode) {
-            errorNode.hidden = true;
-            errorNode.textContent = '';
-        }
-    }
-
-    function validateCategorySelection() {
-        var checkboxes = form.querySelectorAll('input[name="post_category[]"]');
-        var hasSelection = Array.prototype.some.call(checkboxes, function(checkbox) {
-            return checkbox.checked;
-        });
-
-        if (categoryList) {
-            categoryList.classList.toggle('feu-einsatz-field-invalid', !hasSelection);
-        }
-
-        if (categoriesBox) {
-            categoriesBox.classList.toggle('feu-einsatz-section-invalid', !hasSelection);
-        }
-
-        if (categoryError) {
-            categoryError.hidden = hasSelection;
-        }
-
-        return hasSelection
-            ? ''
-            : '<?php echo esc_js(__('Bitte waehle mindestens eine Kategorie aus.', 'feuer-einsatzberichte')); ?>';
-    }
-
-    function validateField(config) {
-        var field = getField(config.id);
-
-        if (!field) {
-            return '';
-        }
-
-        var message = config.validate(field.value);
-
-        if (message) {
-            setFieldError(field, message);
-        } else {
-            clearFieldError(field);
-        }
-
-        return message;
-    }
-
-    function updateNotice(messages) {
-        if (!notice || !noticeList) {
-            return;
-        }
-
-        if (!messages.length) {
-            notice.hidden = true;
-            noticeList.innerHTML = '';
-            return;
-        }
-
-        noticeList.innerHTML = messages.map(function(message) {
-            return '<li>' + message + '</li>';
-        }).join('');
-        notice.hidden = false;
-    }
-
-    function validateForm() {
-        var messages = [];
-        var hasDetailErrors = false;
-
-        fields.forEach(function(config) {
-            var message = validateField(config);
-
-            if (message) {
-                hasDetailErrors = true;
-                messages.push('<strong>' + config.label + ':</strong> ' + message);
-            }
-        });
-
-        var categoryMessage = validateCategorySelection();
-        if (categoryMessage) {
-            messages.push('<strong><?php echo esc_js(__('Kategorien', 'feuer-einsatzberichte')); ?>:</strong> ' + categoryMessage);
-        }
-
-        if (detailsBox) {
-            detailsBox.classList.toggle('feu-einsatz-section-invalid', hasDetailErrors);
-        }
-
-        updateNotice(messages);
-
-        return messages.length === 0;
-    }
-
-    fields.forEach(function(config) {
-        var field = getField(config.id);
-
-        if (!field) {
-            return;
-        }
-
-        ['input', 'change', 'blur'].forEach(function(eventName) {
-            field.addEventListener(eventName, function() {
-                if (notice && !notice.hidden) {
-                    validateForm();
-                    return;
-                }
-
-                validateField(config);
-
-                if (detailsBox) {
-                    var remainingInvalidFields = detailsBox.querySelectorAll('.feu-einsatz-field-invalid').length;
-                    detailsBox.classList.toggle('feu-einsatz-section-invalid', remainingInvalidFields > 0);
-                }
-            });
-        });
-    });
-
-    Array.prototype.forEach.call(form.querySelectorAll('input[name="post_category[]"]'), function(checkbox) {
-        checkbox.addEventListener('change', function() {
-            if (notice && !notice.hidden) {
-                validateForm();
-                return;
-            }
-
-            validateCategorySelection();
-        });
-    });
-
-    form.addEventListener('submit', function(event) {
-        if (validateForm()) {
-            return;
-        }
-
-        event.preventDefault();
-
-        if (notice) {
-            notice.scrollIntoView({
-                behavior: 'smooth',
-                block: 'start'
-            });
-        }
-    });
-})();
-</script>

@@ -126,7 +126,8 @@ class FEU_Einsatz_Installer {
     
     private static function check_requirements() {
         global $wp_version;
-        $required_php_version = defined('FEU_EINSATZ_MIN_PHP_VERSION') ? FEU_EINSATZ_MIN_PHP_VERSION : '8.0';
+        $required_php_version = defined('FEU_EINSATZ_MIN_PHP_VERSION') ? FEU_EINSATZ_MIN_PHP_VERSION : '8.1';
+        $required_wp_version = defined('FEU_EINSATZ_MIN_WP_VERSION') ? FEU_EINSATZ_MIN_WP_VERSION : '7.1';
         $plugin_basename = defined('FEU_EINSATZ_PLUGIN_FILE')
             ? plugin_basename(FEU_EINSATZ_PLUGIN_FILE)
             : plugin_basename(dirname(__DIR__) . '/feuer-einsatzberichte.php');
@@ -136,9 +137,9 @@ class FEU_Einsatz_Installer {
             wp_die(sprintf('Einsatzberichte benötigt PHP %s oder höher.', $required_php_version));
         }
         
-        if (version_compare($wp_version, '5.0', '<')) {
+        if (version_compare($wp_version, $required_wp_version, '<')) {
             deactivate_plugins($plugin_basename);
-            wp_die('Einsatzberichte benötigt WordPress 5.0 oder höher.');
+            wp_die(sprintf('Einsatzberichte benötigt WordPress %s oder höher.', $required_wp_version));
         }
     }
     

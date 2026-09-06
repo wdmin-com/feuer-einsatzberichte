@@ -123,7 +123,7 @@ class FEU_Einsatz_Report_Logger {
             'date'             => __('Datum',        'feuer-einsatzberichte'),
             'time'             => __('Uhrzeit',      'feuer-einsatzberichte'),
             'comments_enabled' => __('Kommentare',  'feuer-einsatzberichte'),
-            'category_labels'  => __('Kategorien',  'feuer-einsatzberichte'),
+            'category_labels'  => __('Einsatzstichworte',  'feuer-einsatzberichte'),
         ];
 
         $changes = [];

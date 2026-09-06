@@ -11,12 +11,12 @@ if (!isset($active_tab) || 'kategorien' !== (string) $active_tab) {
 ?>
 
 <div id="tab-kategorien" class="<?php echo esc_attr($tab_kategorien_classes); ?>">
-    <h2><?php _e('Kategorien', 'feuer-einsatzberichte'); ?></h2>
-    <p><?php _e('Wählen Sie die Kategorien aus, die für Einsatzberichte verwendet werden sollen:', 'feuer-einsatzberichte'); ?></p>
+    <h2><?php _e('Einsatzstichworte', 'feuer-einsatzberichte'); ?></h2>
+    <p><?php _e('Wählen Sie die Einsatzstichworte aus, die für Einsatzberichte verwendet werden sollen:', 'feuer-einsatzberichte'); ?></p>
 
     <div class="feu-einsatz-categories-list">
         <?php if (empty($all_categories)): ?>
-            <p><?php _e('Keine Kategorien vorhanden. Erstellen Sie zuerst Kategorien in WordPress.', 'feuer-einsatzberichte'); ?></p>
+            <p><?php _e('Keine Einsatzstichworte vorhanden. Erstellen Sie zuerst passende Kategorien in WordPress.', 'feuer-einsatzberichte'); ?></p>
         <?php else: ?>
             <?php foreach ($all_categories as $category): ?>
                 <label>

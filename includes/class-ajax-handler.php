@@ -420,11 +420,12 @@ class FEU_Einsatz_Ajax_Handler {
 
         $jahr = isset($_POST['jahr']) ? absint(wp_unslash($_POST['jahr'])) : (int) date('Y');
 
+        $statistics_dashboard_data = $this->db->get_statistics_dashboard_data($jahr);
         $data = [
-            'total' => $this->db->get_total_statistics($jahr),
-            'categories' => $this->db->get_category_statistics($jahr),
+            'total' => $statistics_dashboard_data['total'],
+            'categories' => $statistics_dashboard_data['categories'],
             'participants' => FEU_Einsatz_Admin::is_participant_ranking_unlocked_for_current_user()
-                ? $this->db->get_participant_statistics($jahr)
+                ? $statistics_dashboard_data['participants']
                 : [],
         ];
 

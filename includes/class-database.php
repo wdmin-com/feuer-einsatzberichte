@@ -4,6 +4,10 @@ if (!defined('ABSPATH')) {
 }
 
 class FEU_Einsatz_Database {
+
+    private const STATISTICS_DASHBOARD_CACHE_PREFIX = 'feu_einsatz_statistics_dashboard_';
+    private const STATISTICS_DASHBOARD_CACHE_INDEX_OPTION = 'feu_einsatz_statistics_dashboard_cache_keys';
+    private const STATISTICS_DASHBOARD_CACHE_TTL = 3600;
     
     private static $active_instance = null;
     private $wpdb;
@@ -1044,6 +1048,49 @@ class FEU_Einsatz_Database {
         dbDelta($sql3b);
         dbDelta($sql4);
         dbDelta($sql5);
+    }
+
+    /**
+     * Returns the expensive data required by the statistics dashboard in one
+     * annual cache entry. Report changes explicitly invalidate this cache.
+     */
+    public function get_statistics_dashboard_data($jahr = null) {
+        $jahr = absint($jahr ?: date('Y'));
+        $cache_key = self::STATISTICS_DASHBOARD_CACHE_PREFIX . $jahr;
+        $cached = get_transient($cache_key);
+
+        if (is_array($cached)) {
+            return $cached;
+        }
+
+        $data = [
+            'total' => $this->get_total_statistics($jahr),
+            'categories' => $this->get_category_statistics($jahr),
+            'participants' => $this->get_participant_statistics($jahr),
+            'daily_stats' => $this->get_daily_statistics($jahr),
+            'daily_report_entries' => $this->get_daily_report_entries($jahr),
+            'activity_map_points' => $this->get_activity_map_points($jahr),
+        ];
+
+        set_transient($cache_key, $data, self::STATISTICS_DASHBOARD_CACHE_TTL);
+        $keys = get_option(self::STATISTICS_DASHBOARD_CACHE_INDEX_OPTION, []);
+        $keys = is_array($keys) ? array_values(array_unique(array_map('sanitize_key', $keys))) : [];
+        $keys[] = $cache_key;
+        update_option(self::STATISTICS_DASHBOARD_CACHE_INDEX_OPTION, array_values(array_unique($keys)), false);
+
+        return $data;
+    }
+
+    public function invalidate_statistics_dashboard_cache(): void {
+        $keys = get_option(self::STATISTICS_DASHBOARD_CACHE_INDEX_OPTION, []);
+
+        foreach (is_array($keys) ? $keys : [] as $cache_key) {
+            if (0 === strpos((string) $cache_key, self::STATISTICS_DASHBOARD_CACHE_PREFIX)) {
+                delete_transient($cache_key);
+            }
+        }
+
+        delete_option(self::STATISTICS_DASHBOARD_CACHE_INDEX_OPTION);
     }
 
     private function get_street_registry_schema_sql($charset_collate) {

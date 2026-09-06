@@ -8,7 +8,7 @@ $tab_groups = [
         'title' => __('Allgemein & Struktur', 'feuer-einsatzberichte'),
         'items' => [
             'allgemein' => ['label' => __('Allgemein', 'feuer-einsatzberichte'), 'icon' => 'ti ti-adjustments-horizontal'],
-            'kategorien' => ['label' => __('Kategorien', 'feuer-einsatzberichte'), 'icon' => 'ti ti-tags'],
+            'kategorien' => ['label' => __('Einsatzstichworte', 'feuer-einsatzberichte'), 'icon' => 'ti ti-tags'],
             'organisationen' => ['label' => __('Kraefte vor Ort', 'feuer-einsatzberichte'), 'icon' => 'ti ti-building'],
             'funktionen' => ['label' => __('Funktionen', 'feuer-einsatzberichte'), 'icon' => 'ti ti-badge'],
         ],

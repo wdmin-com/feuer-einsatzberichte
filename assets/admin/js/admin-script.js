@@ -1131,7 +1131,59 @@
             });
         }
 
+        function updateShareSettingsStatus(message) {
+            var $status = $('[data-feu-share-settings-status]');
+
+            if (!$status.length) {
+                return;
+            }
+
+            $status.text(message || 'Vorschau ist aktuell. Aenderungen bitte unten speichern.');
+        }
+
+        $(document).on('click', '[data-feu-share-preset]', function () {
+            var preset = String($(this).data('feuSharePreset') || 'operational');
+            var presets = {
+                operational: {
+                    mode: 'generated', layout: 'wide', overlay: true, blur: 2,
+                    panel: '#0f2f5f', accent: '#ef233c', title: '#ffffff', text: '#dbeafe', align: 'left'
+                },
+                photo: {
+                    mode: 'post_image', layout: 'wide', overlay: true, blur: 0,
+                    panel: '#0f2f5f', accent: '#ef233c', title: '#ffffff', text: '#dbeafe', align: 'left'
+                },
+                story: {
+                    mode: 'generated', layout: 'story', overlay: true, blur: 4,
+                    panel: '#0f2f5f', accent: '#ef233c', title: '#ffffff', text: '#dbeafe', align: 'center'
+                }
+            };
+            var selected = presets[preset];
+
+            if (!selected) {
+                return;
+            }
+
+            $('input[name="feu_einsatz_social_share_image_mode"][value="' + selected.mode + '"]').prop('checked', true);
+            $('#feu_einsatz_social_share_layout').val(selected.layout);
+            $('#feu_einsatz_social_share_overlay_enabled').prop('checked', selected.overlay);
+            $('#feu_einsatz_social_share_image_blur').val(selected.blur);
+            $('#feu_einsatz_social_share_panel_color').val(selected.panel);
+            $('#feu_einsatz_social_share_accent_color').val(selected.accent);
+            $('#feu_einsatz_social_share_title_color').val(selected.title);
+            $('#feu_einsatz_social_share_description_color').val(selected.text);
+            $('#feu_einsatz_social_share_text_align').val(selected.align);
+            $('[data-feu-share-preset]').removeClass('is-active');
+            $(this).addClass('is-active');
+            updateSocialShareLivePreview();
+            updateShareSettingsStatus('Preset angewendet. Bitte Einstellungen speichern.');
+        });
+
+        $(document).on('input change', '#tab-sozial input, #tab-sozial select', function () {
+            updateShareSettingsStatus('Ungespeicherte Aenderungen – Vorschau wurde aktualisiert.');
+        });
+
         updateSocialShareLivePreview();
+        updateShareSettingsStatus();
 
         $(document).on(
             'input change',

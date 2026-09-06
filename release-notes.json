@@ -1,6 +1,64 @@
 {
   "releases": [
     {
+      "version": "3.2.32",
+      "date": "2026-09-06",
+      "title": "Kartenlinie im Einsatzbericht wiederhergestellt",
+      "summary": "Stellt die Markierung der Einsatzstrasse auf der Live-Karte auch fuer bereits gespeicherte Geometrie- und Cache-Formate zuverlaessig dar.",
+      "changes": [
+        "Behoben: Die oeffentliche Karte verarbeitet wieder vorhandene Linien-Geometrien aus aelteren Cache-Eintraegen.",
+        "Robustheit: Neben dem bisherigen Segmentformat werden GeoJSON-Linien, GeoJSON-Features und kompakte Koordinatenlinien sicher normalisiert.",
+        "Kompatibilitaet: GeoJSON-Koordinaten werden korrekt von Laenge/Breite fuer Leaflet umgewandelt."
+      ]
+    },
+    {
+      "version": "3.2.31",
+      "date": "2026-09-04",
+      "title": "Share-Karten-Einstellungen vereinfacht",
+      "summary": "Macht die Konfiguration von Share-Karten mit Presets, eindeutigem Speicherstatus und einem direkten Weg zur Live-Vorschau schneller und sicherer.",
+      "changes": [
+        "Bedienung: Die neuen Presets Einsatz kompakt, Foto im Fokus und Story mobil setzen passende Werte fuer Format, Bildmodus, Overlay und Typografie.",
+        "Transparenz: Der Bereich zeigt nach jeder Anpassung sichtbar an, dass die Vorschau aktuell ist und die Einstellung noch gespeichert werden muss.",
+        "Design: Der Arbeitsbereich wurde als kompakte, responsive Schnellsteuerung oberhalb der Detailfelder gestaltet."
+      ]
+    },
+    {
+      "version": "3.2.30",
+      "date": "2026-09-04",
+      "title": "Share-Karten im Hintergrund erzeugen",
+      "summary": "Erzeugt generierte Share-Karten nach der Veroeffentlichung im Hintergrund, bereinigt alte Bildrevisionen und erweitert den Integrationscheck um die Warteschlange.",
+      "changes": [
+        "Performance: Generierte Open-Graph-Karten werden nach Veroeffentlichung per WordPress-Cron erstellt, damit Social-Crawler keinen GD-Render ausloesen.",
+        "Speicher: Pro Einsatzbericht bleiben nur die aktuelle und die neuesten zwischengespeicherten Kartenrevisionen erhalten.",
+        "Robustheit: Ein direkter Aufruf des Bildes nutzt denselben Cache-Generator als Rueckfall, falls die Hintergrundaufgabe noch nicht gelaufen ist.",
+        "Qualitaet: Der WordPress-Integrationstest prueft die Share-Karten-Warteschlange in einer frischen Installation."
+      ]
+    },
+    {
+      "version": "3.2.29",
+      "date": "2026-09-04",
+      "title": "Automatisierte Qualitätsprüfung und Statistik-Cache",
+      "summary": "Ergaenzt CI-Checks, einen WordPress-Aktivierungstest, ein separates Validierungsmodul fuer den Berichtseditor und einen invalidierbaren Jahres-Cache fuer die Statistik.",
+      "changes": [
+        "Qualitaet: GitHub Actions prueft PHP 8.1 und 8.4 per Lint, JavaScript-Syntax und die Aktivierung in einer frischen WordPress-Installation mit MySQL.",
+        "Architektur: Die Formularvalidierung liegt jetzt in einer eigenen, nur auf dem Berichtseditor geladenen JavaScript-Datei.",
+        "Performance: Die Statistikseite und die Statistik-AJAX-Antwort nutzen einen gemeinsamen Jahres-Cache fuer die aufwaendigen Abfragen.",
+        "Konsistenz: Der Statistik-Cache wird bei Speichern, Papierkorb, Loeschen und manuellem Rebuild eines Einsatzberichts geleert."
+      ]
+    },
+    {
+      "version": "3.2.28",
+      "date": "2026-09-04",
+      "title": "WordPress 7.1 und Einsatzstichworte",
+      "summary": "Aktualisiert die Kompatibilitaetspruefung auf WordPress 7.1 und PHP 8.1, vereinheitlicht die sichtbare Bezeichnung Einsatzstichworte und verbessert die Validierung beim Erstellen von Einsatzberichten.",
+      "changes": [
+        "Kompatibilitaet: Plugin-Header und Installationspruefung verwenden jetzt WordPress 7.1 sowie PHP 8.1 als Mindestversion.",
+        "Bezeichnung: Kategorien heissen im Backend, in Statistik, Praesentation und PDF-Export jetzt Einsatzstichworte. Bestehende technische Kategorie-Daten bleiben unveraendert kompatibel.",
+        "Bedienung: Pflichtfeldpruefung erkennt auch ungueltige Kalenderdaten, markiert fehlerhafte Felder sichtbar und meldet Fehler fuer Screenreader.",
+        "Design: Fehlerzustaende besitzen einen klaren Tastaturfokus und springen beim Navigieren nicht unter die Admin-Leiste."
+      ]
+    },
+    {
       "version": "3.2.27",
       "date": "2026-07-03",
       "title": "Installierte Version korrekt angezeigt",

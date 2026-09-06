@@ -58,32 +58,127 @@
         ].indexOf(String(highway || '').toLowerCase()) !== -1;
     }
 
+    function isCoordinatePair(value) {
+        return Array.isArray(value)
+            && value.length >= 2
+            && normalizeNumber(value[0]) !== null
+            && normalizeNumber(value[1]) !== null;
+    }
+
+    function normalizeGeoJsonPoints(coordinates) {
+        return (Array.isArray(coordinates) ? coordinates : []).map(function (coordinate) {
+            if (!isCoordinatePair(coordinate)) {
+                return null;
+            }
+
+            // GeoJSON uses longitude, latitude while Leaflet expects latitude, longitude.
+            return normalizePoint([coordinate[1], coordinate[0]]);
+        }).filter(Boolean);
+    }
+
+    function getSegmentKind(segment, fallbackKind) {
+        var kind = fallbackKind || 'road';
+
+        if (segment && typeof segment === 'object'
+            && (String(segment.kind || '').toLowerCase() === 'pedestrian' || isPedestrianHighway(segment.highway))) {
+            kind = 'pedestrian';
+        }
+
+        return kind;
+    }
+
+    function normalizeGeoJsonGeometry(geometry, fallbackKind) {
+        if (!geometry || typeof geometry !== 'object') {
+            return [];
+        }
+
+        if (geometry.type === 'Feature') {
+            return normalizeGeoJsonGeometry(geometry.geometry, getSegmentKind(geometry.properties, fallbackKind));
+        }
+
+        if (geometry.type === 'FeatureCollection') {
+            return (Array.isArray(geometry.features) ? geometry.features : []).reduce(function (segments, feature) {
+                return segments.concat(normalizeGeoJsonGeometry(feature, fallbackKind));
+            }, []);
+        }
+
+        if (geometry.type === 'GeometryCollection') {
+            return (Array.isArray(geometry.geometries) ? geometry.geometries : []).reduce(function (segments, item) {
+                return segments.concat(normalizeGeoJsonGeometry(item, fallbackKind));
+            }, []);
+        }
+
+        var kind = getSegmentKind(geometry, fallbackKind);
+        var coordinates = geometry.coordinates;
+        var lines = [];
+
+        if (geometry.type === 'LineString') {
+            lines = [coordinates];
+        } else if (geometry.type === 'MultiLineString') {
+            lines = coordinates;
+        } else if (geometry.type === 'Polygon') {
+            // This keeps route data visible if an older cache contains an outer polygon ring.
+            lines = Array.isArray(coordinates) && coordinates.length ? [coordinates[0]] : [];
+        } else if (geometry.type === 'MultiPolygon') {
+            lines = (Array.isArray(coordinates) ? coordinates : []).map(function (polygon) {
+                return Array.isArray(polygon) && polygon.length ? polygon[0] : [];
+            });
+        } else {
+            return [];
+        }
+
+        return (Array.isArray(lines) ? lines : []).map(function (line) {
+            var points = normalizeGeoJsonPoints(line);
+
+            return points.length >= 2 ? { points: points, kind: kind } : null;
+        }).filter(Boolean);
+    }
+
     function normalizeGeometry(geometry) {
-        return (Array.isArray(geometry) ? geometry : []).map(function (segment) {
+        // Saved reports can contain legacy segment arrays or cached GeoJSON payloads.
+        if (geometry && typeof geometry === 'object' && !Array.isArray(geometry)) {
+            if (geometry.type) {
+                return normalizeGeoJsonGeometry(geometry);
+            }
+
+            if (geometry.geometry) {
+                return normalizeGeometry(geometry.geometry);
+            }
+        }
+
+        var source = Array.isArray(geometry) ? geometry : [];
+
+        // A raw coordinate line is a compact representation of a single route segment.
+        if (source.length && isCoordinatePair(source[0])) {
+            source = [source];
+        }
+
+        return source.reduce(function (segments, segment) {
             var pointsSource = segment;
             var kind = 'road';
 
             if (segment && typeof segment === 'object' && !Array.isArray(segment)) {
-                pointsSource = Array.isArray(segment.points) ? segment.points : [];
-
-                if (String(segment.kind || '').toLowerCase() === 'pedestrian' || isPedestrianHighway(segment.highway)) {
-                    kind = 'pedestrian';
+                if (segment.type) {
+                    return segments.concat(normalizeGeoJsonGeometry(segment));
                 }
+
+                pointsSource = Array.isArray(segment.points) ? segment.points : [];
+                kind = getSegmentKind(segment, kind);
             }
 
             var points = (Array.isArray(pointsSource) ? pointsSource : []).map(normalizePoint).filter(Boolean);
 
             if (points.length < 2) {
-                return null;
+                return segments;
             }
 
-            return {
+            segments.push({
                 points: points,
                 kind: kind
-            };
-        }).filter(function (segment) {
-            return !!segment;
-        });
+            });
+
+            return segments;
+        }, []);
     }
 
     function normalizeCenter(center) {
@@ -881,4 +976,3 @@
         init();
     }
 })();
-

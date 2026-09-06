@@ -696,7 +696,7 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
         $current_participant_ranking_pin = FEU_Einsatz_Admin::get_participant_ranking_pin();
         $setting_labels = [
             'feu_einsatz_functions' => __('Funktionen', 'feuer-einsatzberichte'),
-            'feu_einsatz_categories' => __('Kategorien', 'feuer-einsatzberichte'),
+            'feu_einsatz_categories' => __('Einsatzstichworte', 'feuer-einsatzberichte'),
             'feu_einsatz_map_zoom' => __('Karten-Zoom', 'feuer-einsatzberichte'),
             'feu_einsatz_map_height' => __('Kartenhöhe', 'feuer-einsatzberichte'),
             'feu_einsatz_auto_map_image' => __('Automatische Kartenbilder', 'feuer-einsatzberichte'),
@@ -1150,7 +1150,7 @@ $settings_summary_cards = [
         'icon' => 'ti ti-badge',
     ],
     [
-        'label' => __('Kategorien', 'feuer-einsatzberichte'),
+        'label' => __('Einsatzstichworte', 'feuer-einsatzberichte'),
         'value' => count((array) $selected_categories),
         'icon' => 'ti ti-tags',
     ],
@@ -1306,7 +1306,7 @@ $settings_summary_cards = [
             'active_tab' => $active_tab,
             'all_categories' => $all_categories,
             'selected_categories' => $selected_categories,
-        ], 'Einstellungen: Kategorien');
+        ], 'Einstellungen: Einsatzstichworte');
 
         echo FEU_Einsatz_Template_Helpers::render_guarded('templates/admin/settings/partials/tab-karten.php', [
             'active_tab' => $active_tab,

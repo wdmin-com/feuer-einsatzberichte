@@ -1,0 +1,70 @@
+name: Plugin quality checks
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  php-lint:
+    name: PHP ${{ matrix.php }} lint
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.1', '8.4']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mysqli, gd
+          coverage: none
+      - name: Lint all PHP files
+        run: find . -path './release' -prune -o -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: Check JavaScript syntax
+        run: |
+          find assets -name '*.js' -print0 | xargs -0 -n1 node --check
+
+  wordpress-integration:
+    name: WordPress activation smoke test
+    runs-on: ubuntu-latest
+    needs: php-lint
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: wordpress_test
+          MYSQL_USER: wordpress
+          MYSQL_PASSWORD: wordpress
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          extensions: mysqli, gd
+          coverage: none
+      - name: Download WP-CLI and WordPress
+        run: |
+          curl -fsSL -o /usr/local/bin/wp https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+          chmod +x /usr/local/bin/wp
+          wp core download --path="$RUNNER_TEMP/wordpress" --version=latest --force
+      - name: Install isolated WordPress
+        run: |
+          wp config create --path="$RUNNER_TEMP/wordpress" --dbname=wordpress_test --dbuser=wordpress --dbpass=wordpress --dbhost=127.0.0.1 --skip-check --force
+          wp core install --path="$RUNNER_TEMP/wordpress" --url=http://localhost --title='Plugin CI' --admin_user=admin --admin_password=password --admin_email=ci@example.test --skip-email
+          ln -s "$GITHUB_WORKSPACE" "$RUNNER_TEMP/wordpress/wp-content/plugins/feuer-einsatzberichte"
+      - name: Activate plugin and verify core services
+        run: |
+          wp plugin activate feuer-einsatzberichte --path="$RUNNER_TEMP/wordpress"
+          wp eval-file "$GITHUB_WORKSPACE/tests/integration/plugin-load.php" --path="$RUNNER_TEMP/wordpress"

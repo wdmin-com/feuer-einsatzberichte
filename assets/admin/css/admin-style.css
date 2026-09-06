@@ -1408,6 +1408,11 @@
     box-shadow: 0 0 0 1px rgba(214, 54, 56, 0.18) !important;
 }
 
+.feu-einsatz-field-invalid:focus {
+    outline: 2px solid #d63638;
+    outline-offset: 2px;
+}
+
 .feu-einsatz-field-error {
     flex-basis: 100%;
     margin: 4px 0 0;
@@ -1473,6 +1478,15 @@
 .feu-einsatz-section-invalid {
     border-color: #d63638;
     box-shadow: 0 0 0 1px rgba(214, 54, 56, 0.18);
+}
+
+.feu-einsatz-form-section,
+.feu-einsatz-report-validation-notice {
+    scroll-margin-top: 44px;
+}
+
+.feu-einsatz-form-has-validation-errors .feu-einsatz-report-status-actions .button-primary {
+    box-shadow: 0 0 0 2px rgba(214, 54, 56, 0.16);
 }
 
 .feu-einsatz-report-category-list.feu-einsatz-field-invalid {
@@ -9181,6 +9195,61 @@ body.feu-admin-ui--modern-shell .feu-admin-settings-main .feu-einsatz-tab-conten
 
 .feu-einsatz-social-share-live-preview-logo img {
     display: block;
+}
+
+.feu-share-settings-workbench {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin: 2px 0 18px;
+    padding: 14px 16px;
+    border: 1px solid #cfe0f6;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #f7fbff 0%, #edf5ff 100%);
+}
+
+.feu-share-settings-workbench-copy {
+    display: grid;
+    gap: 3px;
+    color: #0f2f5f;
+}
+
+.feu-share-settings-workbench-copy strong {
+    font-size: 14px;
+}
+
+.feu-share-settings-workbench-copy span {
+    color: #52667f;
+    font-size: 12px;
+}
+
+.feu-share-settings-workbench-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.feu-share-settings-workbench-actions .button.is-active {
+    border-color: #1558a5;
+    background: #206bc4;
+    color: #fff;
+}
+
+#feu-einsatz-social-share-preview {
+    scroll-margin-top: 46px;
+}
+
+@media (max-width: 782px) {
+    .feu-share-settings-workbench {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .feu-share-settings-workbench-actions {
+        justify-content: flex-start;
+    }
 }
 
 @media (max-width: 1080px) {

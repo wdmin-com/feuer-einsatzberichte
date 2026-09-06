@@ -85,7 +85,7 @@ $quick_links = [
         <article class="feu-admin-stat-card">
             <div class="feu-admin-stat-icon"><span class="ti ti-tags"></span></div>
             <div class="feu-admin-stat-content">
-                <span class="feu-admin-stat-label"><?php esc_html_e('Aktive Kategorien', 'feuer-einsatzberichte'); ?></span>
+                <span class="feu-admin-stat-label"><?php esc_html_e('Aktive Einsatzstichworte', 'feuer-einsatzberichte'); ?></span>
                 <strong class="feu-admin-stat-value"><?php echo esc_html($kategorien_count); ?></strong>
             </div>
         </article>

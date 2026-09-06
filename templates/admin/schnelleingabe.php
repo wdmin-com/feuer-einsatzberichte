@@ -138,7 +138,7 @@ $street_suggestions = FEU_Einsatz_Template_Helpers::get_street_suggestions();
                 <span class="feu-se-required">*</span>
             </h2>
             <?php if (empty($categories)) : ?>
-                <p class="feu-se-hint"><?php esc_html_e('Es sind noch keine Einsatzkategorien konfiguriert.', 'feuer-einsatzberichte'); ?></p>
+                <p class="feu-se-hint"><?php esc_html_e('Es sind noch keine Einsatzstichworte konfiguriert.', 'feuer-einsatzberichte'); ?></p>
             <?php else : ?>
                 <div class="feu-se-chip-group" role="group" aria-label="<?php esc_attr_e('Einsatzarten auswaehlen', 'feuer-einsatzberichte'); ?>">
                     <?php foreach ($categories as $category) : ?>

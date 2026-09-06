@@ -38,6 +38,8 @@ if (!defined('ABSPATH')) {
 
 class FEU_Einsatz_Report_Share {
     private const PUBLIC_SHARE_TTL = DAY_IN_SECONDS;
+    private const BACKGROUND_GENERATION_HOOK = 'feu_einsatz_generate_share_card_background';
+    private const CACHE_REVISIONS_TO_KEEP = 2;
 
     /** @var callable */
     private $fn_draw_text;
@@ -85,6 +87,7 @@ class FEU_Einsatz_Report_Share {
         $this->fn_fit_text            = $fn_fit_text;
         $this->fn_is_einsatzbericht   = $fn_is_einsatzbericht;
         $this->fn_get_editable_report = $fn_get_editable_report;
+        add_action(self::BACKGROUND_GENERATION_HOOK, [$this, 'handle_background_share_card_generation']);
     }
 
     private function get_share_capability(): string {
@@ -147,6 +150,103 @@ class FEU_Einsatz_Report_Share {
             if (is_file($file)) {
                 wp_delete_file($file);
             }
+        }
+    }
+
+    /** Queue a generated Open Graph card so social crawlers never trigger GD work. */
+    public function queue_share_card_generation(int $post_id): void {
+        $post_id = absint($post_id);
+        $post = $post_id ? get_post($post_id) : null;
+        $settings = $this->get_social_share_settings();
+
+        if (
+            !$post instanceof WP_Post
+            || 'publish' !== $post->post_status
+            || !($this->fn_is_einsatzbericht)($post)
+            || 'generated' !== $settings['image_mode']
+            || wp_next_scheduled(self::BACKGROUND_GENERATION_HOOK, [$post_id])
+        ) {
+            return;
+        }
+
+        wp_schedule_single_event(time() + 15, self::BACKGROUND_GENERATION_HOOK, [$post_id]);
+    }
+
+    public function handle_background_share_card_generation($post_id): void {
+        $post_id = absint($post_id);
+        $post = $post_id ? get_post($post_id) : null;
+
+        if (!$post instanceof WP_Post || 'publish' !== $post->post_status || !($this->fn_is_einsatzbericht)($post)) {
+            return;
+        }
+
+        $this->generate_share_card_cache($post);
+    }
+
+    private function generate_share_card_cache(WP_Post $post): string {
+        $share_data = $this->build_public_share_card_data($post);
+
+        if (empty($share_data)) {
+            return '';
+        }
+
+        $cache_revision = $this->build_share_card_cache_revision($post, $share_data);
+        $cached = $this->get_share_card_cache_path((int) $post->ID, $cache_revision);
+
+        if ('' === $cached) {
+            return '';
+        }
+
+        if (file_exists($cached) && is_readable($cached)) {
+            return $cached;
+        }
+
+        $canvas = $this->build_generated_share_card_canvas($share_data);
+
+        if (!$canvas) {
+            return '';
+        }
+
+        $directory = dirname($cached);
+        if (!is_dir($directory) && !wp_mkdir_p($directory)) {
+            imagedestroy($canvas);
+            return '';
+        }
+
+        $written = imagepng($canvas, $cached, 8);
+        imagedestroy($canvas);
+
+        if (!$written) {
+            return '';
+        }
+
+        $this->prune_share_card_cache((int) $post->ID, $cached);
+
+        return $cached;
+    }
+
+    private function prune_share_card_cache(int $post_id, string $current_path): void {
+        $upload_dir = wp_upload_dir();
+
+        if ($post_id < 1 || !empty($upload_dir['error'])) {
+            return;
+        }
+
+        $pattern = trailingslashit($upload_dir['basedir']) . 'feuer-einsatzberichte/share-cards/' . $post_id . '-*.png';
+        $files = array_values(array_filter((array) glob($pattern), 'is_file'));
+
+        usort($files, static function ($left, $right): int {
+            return (int) @filemtime($right) <=> (int) @filemtime($left);
+        });
+
+        $kept = 0;
+        foreach ($files as $file) {
+            if ($file === $current_path || $kept < self::CACHE_REVISIONS_TO_KEEP) {
+                $kept++;
+                continue;
+            }
+
+            wp_delete_file($file);
         }
     }
 
@@ -270,31 +370,17 @@ class FEU_Einsatz_Report_Share {
             exit;
         }
 
-        $canvas     = $this->build_generated_share_card_canvas($share_data);
+        $cached = $this->generate_share_card_cache($post);
 
-        if (!$canvas) {
+        if ('' === $cached || !is_readable($cached)) {
             wp_die(esc_html__('Share-Karte konnte nicht erzeugt werden.', 'feuer-einsatzberichte'), '', ['response' => 500]);
         }
-
-        if ('' !== $cached) {
-            $dir = dirname($cached);
-
-            if (!is_dir($dir)) {
-                wp_mkdir_p($dir);
-            }
-
-            imagepng($canvas, $cached, 9);
-        }
-
-        $filename = $this->build_share_filename($post_id);
 
         header('Content-Type: image/png');
         header('Cache-Control: public, max-age=900');
         header('X-Robots-Tag: noindex');
-        header('Content-Disposition: ' . ($download ? 'attachment' : 'inline') . '; filename="' . $filename . '"');
-
-        imagepng($canvas, null, 9);
-        imagedestroy($canvas);
+        header('Content-Disposition: ' . ($download ? 'attachment' : 'inline') . '; filename="' . $this->build_share_filename($post_id) . '"');
+        readfile($cached);
         exit;
     }
 

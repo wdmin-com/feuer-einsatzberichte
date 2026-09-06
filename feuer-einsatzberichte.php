@@ -3,10 +3,10 @@
  * Plugin Name: Feuer-Einsatzberichte
  * Plugin URI: https://wdmin.com/plugins/feuer-einsatzberichte/
  * Description: Feuer-Einsatzberichte mit Einsatzverwaltung, Karten, Statistik und Archivierung
- * Version: 3.2.27
+ * Version: 3.2.32
  * Update URI: https://wdmin.com/plugins/feuer-einsatzberichte/
- * Requires at least: 6.9
- * Requires PHP: 8.0
+ * Requires at least: 7.1
+ * Requires PHP: 8.1
  * Author URI: https://wdmin.com/
  * Author: Walter Faerber
  * License: Proprietary - personal permission required
@@ -23,11 +23,12 @@ if (!defined('ABSPATH')) {
 // FEU_Einsatz_* remains available as a legacy alias layer.
 // -------------------------------------------------------------------------
 
-define('FEU_EINSATZ_VERSION', '3.2.27');
+define('FEU_EINSATZ_VERSION', '3.2.32');
 define('FEU_EINSATZ_PLUGIN_FILE', __FILE__);
 define('FEU_EINSATZ_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('FEU_EINSATZ_PLUGIN_URL', plugin_dir_url(__FILE__));
-define('FEU_EINSATZ_MIN_PHP_VERSION', '8.0');
+define('FEU_EINSATZ_MIN_PHP_VERSION', '8.1');
+define('FEU_EINSATZ_MIN_WP_VERSION', '7.1');
 
 // Legacy aliases for older templates and update artifacts.
 if (!defined('FEU_Einsatz_VERSION')) {
@@ -199,8 +200,10 @@ final class Feuer_Einsatzberichte_Core {
             ? wp_doing_cron()
             : (defined('DOING_CRON') && DOING_CRON);
 
+        $is_cli_context = defined('WP_CLI') && WP_CLI;
         $load_admin_context = is_admin()
             || $is_cron_context
+            || $is_cli_context
             || (isset($GLOBALS['pagenow']) && 'admin-post.php' === (string) $GLOBALS['pagenow']);
 
         if ($load_admin_context) {

@@ -34,8 +34,8 @@ $participant_ranking_notice = null;
 $presentation_settings_notice = null;
 $presentation_setting_options = [
     'welcome' => ['page' => 1, 'title' => __('Willkommen', 'feuer-einsatzberichte'), 'blocks' => [__('Logo aus Einstellungen', 'feuer-einsatzberichte')]],
-    'overview' => ['page' => 2, 'title' => __('Übersicht', 'feuer-einsatzberichte'), 'blocks' => [__('Einsätze', 'feuer-einsatzberichte'), __('Stärkster Monat', 'feuer-einsatzberichte'), __('Top-Kategorie', 'feuer-einsatzberichte')]],
-    'categories' => ['page' => 3, 'title' => __('Kategorien', 'feuer-einsatzberichte'), 'blocks' => [__('Kategorie-Balken', 'feuer-einsatzberichte'), __('Kategorie-Anteile', 'feuer-einsatzberichte')]],
+    'overview' => ['page' => 2, 'title' => __('Übersicht', 'feuer-einsatzberichte'), 'blocks' => [__('Einsätze', 'feuer-einsatzberichte'), __('Stärkster Monat', 'feuer-einsatzberichte'), __('Top-Einsatzstichwort', 'feuer-einsatzberichte')]],
+    'categories' => ['page' => 3, 'title' => __('Einsatzstichworte', 'feuer-einsatzberichte'), 'blocks' => [__('Einsatzstichwort-Balken', 'feuer-einsatzberichte'), __('Einsatzstichwort-Anteile', 'feuer-einsatzberichte')]],
     'calendar' => ['page' => 4, 'title' => __('Kalender', 'feuer-einsatzberichte'), 'blocks' => [__('Beliebte Wochentage', 'feuer-einsatzberichte'), __('Stärkste Tage', 'feuer-einsatzberichte'), __('Monatsverteilung', 'feuer-einsatzberichte')]],
     'activity_map' => ['page' => 5, 'title' => __('Aktivitätskarte', 'feuer-einsatzberichte'), 'blocks' => [__('Live-Karte', 'feuer-einsatzberichte')]],
     'participants' => ['page' => 6, 'title' => __('Teilnehmer', 'feuer-einsatzberichte'), 'blocks' => [__('Top 3 Teilnehmer', 'feuer-einsatzberichte'), __('Teilnehmerliste', 'feuer-einsatzberichte')]],
@@ -216,13 +216,14 @@ if ($selected_participant_id > 0) {
     $active_tab = 'participants';
 }
 
-$total = $this->db->get_total_statistics($jahr);
-$categories = $this->db->get_category_statistics($jahr);
-$participants = $participant_ranking_unlocked ? $this->db->get_participant_statistics($jahr) : [];
-$presentation_participants = $this->db->get_participant_statistics($jahr);
-$daily_stats = $this->db->get_daily_statistics($jahr);
-$daily_report_entries = $this->db->get_daily_report_entries($jahr);
-$activity_map_points = $this->db->get_activity_map_points($jahr);
+$statistics_dashboard_data = $this->db->get_statistics_dashboard_data($jahr);
+$total = $statistics_dashboard_data['total'];
+$categories = $statistics_dashboard_data['categories'];
+$participants = $participant_ranking_unlocked ? $statistics_dashboard_data['participants'] : [];
+$presentation_participants = $statistics_dashboard_data['participants'];
+$daily_stats = $statistics_dashboard_data['daily_stats'];
+$daily_report_entries = $statistics_dashboard_data['daily_report_entries'];
+$activity_map_points = $statistics_dashboard_data['activity_map_points'];
 $participant_distribution_chart_data = [];
 
 usort($participants, static function($a, $b) {
@@ -406,7 +407,7 @@ foreach ((array) $categories as $category_entry) {
     $category_count = isset($category_entry->anzahl) ? (int) $category_entry->anzahl : 0;
     $category_percent = $category_total_count > 0 ? round(($category_count / $category_total_count) * 100, 1) : 0;
     $category_visual_rows[] = [
-        'name' => isset($category_entry->kategorie_name) ? (string) $category_entry->kategorie_name : __('Ohne Kategorie', 'feuer-einsatzberichte'),
+        'name' => isset($category_entry->kategorie_name) ? (string) $category_entry->kategorie_name : __('Ohne Einsatzstichwort', 'feuer-einsatzberichte'),
         'count' => $category_count,
         'percent' => $category_percent,
         'color' => sanitize_hex_color((string) ($category_entry->farbe ?? '')) ?: '#0a4b78',
@@ -682,7 +683,7 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
                                 <p><strong><?php echo esc_html($top_month['label'] ?: '-'); ?></strong><em><?php echo esc_html(sprintf(__('mit %d Einsätze', 'feuer-einsatzberichte'), (int) $top_month['count'])); ?></em></p>
                             <?php endforeach; ?>
                         </div>
-                        <div><span><?php esc_html_e('Top-Kategorie', 'feuer-einsatzberichte'); ?></span><strong><?php echo esc_html($top_category_label); ?></strong></div>
+                        <div><span><?php esc_html_e('Top-Einsatzstichwort', 'feuer-einsatzberichte'); ?></span><strong><?php echo esc_html($top_category_label); ?></strong></div>
                     </div>
                     <div class="feu-einsatz-presentation-overview-lists">
                         <div>
@@ -705,7 +706,7 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
                 <?php $slide_number++; ?>
                 <section class="feu-einsatz-presentation-slide<?php echo 1 === $slide_number ? ' is-active' : ''; ?>" data-feu-presentation-slide="<?php echo esc_attr((string) $slide_number); ?>">
                     <?php $render_slide_background('categories'); ?>
-                    <h2><span class="ti ti-category" aria-hidden="true"></span><?php esc_html_e('Kategorien', 'feuer-einsatzberichte'); ?></h2>
+                    <h2><span class="ti ti-category" aria-hidden="true"></span><?php esc_html_e('Einsatzstichworte', 'feuer-einsatzberichte'); ?></h2>
                     <div class="feu-einsatz-presentation-category-grid">
                         <?php foreach ($category_rows as $category_row): ?>
                             <div class="feu-einsatz-presentation-category-row" title="<?php echo esc_attr(sprintf('%s: %d Einsätze (%s%%)', $category_row['name'], (int) $category_row['count'], number_format_i18n((float) $category_row['percent'], 1))); ?>" style="--feu-category-color: <?php echo esc_attr($category_row['color']); ?>; --feu-category-percent: <?php echo esc_attr(number_format((float) $category_row['percent'], 2, '.', '')); ?>%;">
@@ -920,7 +921,7 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
             <h2><?php esc_html_e('Statistiklage im Admin-Dashboard', 'feuer-einsatzberichte'); ?></h2>
             <div class="feu-einsatz-command-metrics">
                 <span><strong><?php echo esc_html($busiest_month_label ?: '-'); ?></strong><?php esc_html_e('stärkster Monat', 'feuer-einsatzberichte'); ?></span>
-                <span><strong><?php echo esc_html($top_category_label); ?></strong><?php esc_html_e('Top-Kategorie', 'feuer-einsatzberichte'); ?></span>
+                <span><strong><?php echo esc_html($top_category_label); ?></strong><?php esc_html_e('Top-Einsatzstichwort', 'feuer-einsatzberichte'); ?></span>
             </div>
         </div>
         <div class="feu-einsatz-command-months" aria-label="<?php esc_attr_e('Monatsverteilung', 'feuer-einsatzberichte'); ?>">
@@ -951,7 +952,7 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
         <div class="feu-einsatz-admindek-card">
             <div class="feu-einsatz-admindek-card-head">
                 <div>
-                    <span><i class="ti ti-chart-donut"></i><?php esc_html_e('Kategorien', 'feuer-einsatzberichte'); ?></span>
+                    <span><i class="ti ti-chart-donut"></i><?php esc_html_e('Einsatzstichworte', 'feuer-einsatzberichte'); ?></span>
                     <h2><?php esc_html_e('Verteilung', 'feuer-einsatzberichte'); ?></h2>
                 </div>
             </div>
@@ -1000,7 +1001,7 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
     </section>
 
     <div class="feu-einsatz-stats-tabs" role="tablist" aria-label="<?php esc_attr_e('Statistikbereiche', 'feuer-einsatzberichte'); ?>">
-        <button type="button" class="button feu-einsatz-stats-tab <?php echo 'categories' === $active_tab ? 'is-active' : ''; ?>" data-target="categories"><?php esc_html_e('Einsätze nach Kategorie', 'feuer-einsatzberichte'); ?></button>
+        <button type="button" class="button feu-einsatz-stats-tab <?php echo 'categories' === $active_tab ? 'is-active' : ''; ?>" data-target="categories"><?php esc_html_e('Einsätze nach Einsatzstichwort', 'feuer-einsatzberichte'); ?></button>
         <button type="button" class="button feu-einsatz-stats-tab <?php echo 'calendar' === $active_tab ? 'is-active' : ''; ?>" data-target="calendar"><?php esc_html_e('Kalender', 'feuer-einsatzberichte'); ?></button>
         <button type="button" class="button feu-einsatz-stats-tab <?php echo 'activity-map' === $active_tab ? 'is-active' : ''; ?>" data-target="activity-map"><?php esc_html_e('Aktivitätskarte', 'feuer-einsatzberichte'); ?></button>
         <button type="button" class="button feu-einsatz-stats-tab <?php echo 'participants' === $active_tab ? 'is-active' : ''; ?>" data-target="participants">
@@ -1159,13 +1160,13 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
 
     <section class="feu-einsatz-stats-panel <?php echo 'categories' === $active_tab ? 'is-active' : ''; ?>" data-panel="categories">
         <div class="feu-einsatz-panel-card">
-            <h2><?php esc_html_e('Einsätze nach Kategorie', 'feuer-einsatzberichte'); ?></h2>
+            <h2><?php esc_html_e('Einsätze nach Einsatzstichwort', 'feuer-einsatzberichte'); ?></h2>
             <div class="feu-einsatz-category-summary-head">
-                <p class="description"><?php esc_html_e('Jede Kategorie wird als eigene Linie mit Anzahl und Prozentanteil gezeigt.', 'feuer-einsatzberichte'); ?></p>
+                <p class="description"><?php esc_html_e('Jedes Einsatzstichwort wird als eigene Linie mit Anzahl und Prozentanteil gezeigt.', 'feuer-einsatzberichte'); ?></p>
                 <strong class="feu-einsatz-category-total"><?php echo esc_html((string) $category_total_count); ?> <?php esc_html_e('Einsätze', 'feuer-einsatzberichte'); ?></strong>
             </div>
             <?php if (!empty($category_visual_rows)): ?>
-                <div class="feu-einsatz-category-bars" aria-label="<?php esc_attr_e('Kategorie-Balken', 'feuer-einsatzberichte'); ?>">
+                <div class="feu-einsatz-category-bars" aria-label="<?php esc_attr_e('Einsatzstichwort-Balken', 'feuer-einsatzberichte'); ?>">
                     <?php foreach ($category_visual_rows as $category_row): ?>
                         <div class="feu-einsatz-category-bar-row" style="--feu-category-color: <?php echo esc_attr($category_row['color']); ?>; --feu-category-percent: <?php echo esc_attr(number_format((float) $category_row['percent'], 2, '.', '')); ?>%;">
                             <div class="feu-einsatz-category-bar-top">
@@ -1182,7 +1183,7 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
                 <div class="category-list">
                     <?php $total_categories = 0; foreach ($categories as $cat) { $total_categories += (int) $cat->anzahl; } ?>
                     <?php if (empty($categories)): ?>
-                        <p><?php esc_html_e('Keine Kategoriedaten für dieses Jahr vorhanden.', 'feuer-einsatzberichte'); ?></p>
+                        <p><?php esc_html_e('Keine Einsatzstichwort-Daten für dieses Jahr vorhanden.', 'feuer-einsatzberichte'); ?></p>
                     <?php else: ?>
                         <?php foreach ($categories as $cat): ?>
                             <?php $percent = $total_categories > 0 ? round(((int) $cat->anzahl / $total_categories) * 100, 1) : 0; ?>
@@ -1199,7 +1200,7 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
             </div>
 
             <div class="feu-einsatz-category-history">
-                <h3><?php esc_html_e('Kategorien nach Jahren', 'feuer-einsatzberichte'); ?></h3>
+                <h3><?php esc_html_e('Einsatzstichworte nach Jahren', 'feuer-einsatzberichte'); ?></h3>
                 <div class="feu-einsatz-category-history-grid">
                     <?php foreach ($category_history as $history_year => $history_categories): ?>
                         <div class="feu-einsatz-year-card">
@@ -3798,7 +3799,7 @@ document.addEventListener('DOMContentLoaded', function() {
             drawPdfStatCard(pdf, 14, 34, 88, 26, 'Einsätze', String(totalStats.total_einsaetze || 0), [10, 75, 120]);
             drawPdfStatCard(pdf, 14, 66, 88, 26, 'Teilnehmer gesamt', String(totalStats.total_teilnehmer_alle || 0), [214, 158, 46]);
             drawPdfStatCard(pdf, 108, 66, 88, 26, 'Durchschnittliche Teilnehmer pro Einsatz', String(totalStats.avg_teilnehmer || 0), [197, 48, 48]);
-            drawPdfHorizontalBarChart(pdf, 14, 102, 122, 92, 'Kategorien', 'Verteilung der Einsatzarten', categoryItems, [10, 75, 120]);
+            drawPdfHorizontalBarChart(pdf, 14, 102, 122, 92, 'Einsatzstichworte', 'Verteilung der Einsatzstichworte', categoryItems, [10, 75, 120]);
             drawPdfListCard(pdf, 142, 102, 54, 92, 'Highlights', categoryItems.map(function(item) { return item.label + ' - ' + item.value; }));
 
             pdf.addPage();
@@ -3876,13 +3877,13 @@ document.addEventListener('DOMContentLoaded', function() {
         line('Durchschnitt Teilnehmer pro Einsatz: ' + (totalStats.avg_teilnehmer || 0));
         y += 4;
 
-        line('Kategorien', 14, 'bold');
+        line('Einsatzstichworte', 14, 'bold');
         if (categories.length) {
             categories.forEach(function(category) {
                 line('- ' + category.kategorie_name + ': ' + category.anzahl, 18);
             });
         } else {
-            line('- Keine Kategoriedaten vorhanden.', 18);
+            line('- Keine Einsatzstichwort-Daten vorhanden.', 18);
         }
         y += 4;
 

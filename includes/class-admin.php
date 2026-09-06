@@ -44,6 +44,10 @@ class FEU_Einsatz_Admin {
     /** @var FEU_Einsatz_Schnelleingabe */
     private $schnelleingabe;
 
+    public function get_report_share(): FEU_Einsatz_Report_Share {
+        return $this->report_share;
+    }
+
     public function __construct($database) {
         $this->db           = $database;
         $this->ranking      = new FEU_Einsatz_Participant_Ranking();
@@ -325,6 +329,8 @@ class FEU_Einsatz_Admin {
         add_action('save_post', [$this, 'save_post_data'], 10, 3);
         add_action('post_updated', [$this, 'on_einsatz_updated'], 10, 1);
         add_action('save_post', [$this, 'on_einsatz_updated'], 20, 1);
+        add_action('trashed_post', [$this, 'invalidate_statistics_cache_for_post']);
+        add_action('before_delete_post', [$this, 'invalidate_statistics_cache_for_post']);
         add_action('trashed_post',      [$this->report_logger, 'log_trashed_report']);
         add_action('before_delete_post', [$this->report_logger, 'log_deleted_report']);
         add_filter('manage_post_posts_columns', [$this, 'add_custom_columns']);
@@ -479,17 +485,17 @@ class FEU_Einsatz_Admin {
         $add_item(
             $items,
             'categories',
-            __('Einsatz-Kategorien', 'feuer-einsatzberichte'),
+            __('Einsatzstichworte', 'feuer-einsatzberichte'),
             $categories_ok
                 ? sprintf(
                     /* translators: %d: category count */
-                    _n('%d Kategorie ist aktiv.', '%d Kategorien sind aktiv.', count($selected_categories), 'feuer-einsatzberichte'),
+                    _n('%d Einsatzstichwort ist aktiv.', '%d Einsatzstichworte sind aktiv.', count($selected_categories), 'feuer-einsatzberichte'),
                     count($selected_categories)
                 )
-                : __('Pflicht: mindestens eine Kategorie fuer Einsatzberichte aktivieren.', 'feuer-einsatzberichte'),
+                : __('Pflicht: mindestens ein Einsatzstichwort fuer Einsatzberichte aktivieren.', 'feuer-einsatzberichte'),
             $categories_ok ? 'ok' : 'missing',
             true,
-            __('Kategorien auswaehlen', 'feuer-einsatzberichte'),
+            __('Einsatzstichworte auswaehlen', 'feuer-einsatzberichte'),
             add_query_arg('tab', 'kategorien', $settings_url)
         );
 
@@ -793,7 +799,7 @@ class FEU_Einsatz_Admin {
                     <strong><?php esc_html_e('Empfohlene Reihenfolge', 'feuer-einsatzberichte'); ?></strong>
                     <ol>
                         <li><?php esc_html_e('Feuerwehrhaus-Adresse und Logo unter Einstellungen > Karten pflegen.', 'feuer-einsatzberichte'); ?></li>
-                        <li><?php esc_html_e('Kategorien und Funktionen festlegen.', 'feuer-einsatzberichte'); ?></li>
+                        <li><?php esc_html_e('Einsatzstichworte und Funktionen festlegen.', 'feuer-einsatzberichte'); ?></li>
                         <li><?php esc_html_e('Teilnehmer und Kraefte vor Ort anlegen.', 'feuer-einsatzberichte'); ?></li>
                         <li><?php esc_html_e('Share-Karte, Wasserzeichen und Shortcode-Seiten pruefen.', 'feuer-einsatzberichte'); ?></li>
                     </ol>
@@ -995,6 +1001,16 @@ class FEU_Einsatz_Admin {
         }
 
         $this->report_share->invalidate_share_card_cache($post_id);
+        $this->report_share->queue_share_card_generation($post_id);
+        $this->db->invalidate_statistics_dashboard_cache();
+    }
+
+    public function invalidate_statistics_cache_for_post($post_id): void {
+        $post_id = absint($post_id);
+
+        if ($post_id && '1' === get_post_meta($post_id, '_feu_einsatz_einsatzbericht', true)) {
+            $this->db->invalidate_statistics_dashboard_cache();
+        }
     }
 
     private function build_admin_share_box_data($post) {
@@ -1524,6 +1540,7 @@ class FEU_Einsatz_Admin {
         $admin_style_path = FEU_EINSATZ_PLUGIN_DIR . 'assets/admin/css/admin-style.css';
         $admin_modern_style_path = FEU_EINSATZ_PLUGIN_DIR . 'assets/admin/css/admin-modern.css';
         $admin_script_path = FEU_EINSATZ_PLUGIN_DIR . 'assets/admin/js/admin-script.js';
+        $report_validation_script_path = FEU_EINSATZ_PLUGIN_DIR . 'assets/admin/js/report-create-validation.js';
         $chart_script_path = FEU_EINSATZ_PLUGIN_DIR . 'assets/vendor/chartjs/chart.min.js';
         $tabler_style_path = FEU_EINSATZ_PLUGIN_DIR . 'assets/vendor/tabler/css/tabler.min.css';
         $tabler_icons_path = FEU_EINSATZ_PLUGIN_DIR . 'assets/vendor/tabler-icons/tabler-icons.min.css';
@@ -1531,6 +1548,7 @@ class FEU_Einsatz_Admin {
         $admin_style_version = file_exists($admin_style_path) ? (string) filemtime($admin_style_path) : FEU_EINSATZ_VERSION;
         $admin_modern_style_version = file_exists($admin_modern_style_path) ? (string) filemtime($admin_modern_style_path) : FEU_EINSATZ_VERSION;
         $admin_script_version = file_exists($admin_script_path) ? (string) filemtime($admin_script_path) : FEU_EINSATZ_VERSION;
+        $report_validation_script_version = file_exists($report_validation_script_path) ? (string) filemtime($report_validation_script_path) : FEU_EINSATZ_VERSION;
         $chart_script_version = file_exists($chart_script_path) ? (string) filemtime($chart_script_path) : FEU_EINSATZ_VERSION;
         $tabler_style_version = file_exists($tabler_style_path) ? (string) filemtime($tabler_style_path) : FEU_EINSATZ_VERSION;
         $tabler_icons_version = file_exists($tabler_icons_path) ? (string) filemtime($tabler_icons_path) : FEU_EINSATZ_VERSION;
@@ -1589,6 +1607,36 @@ class FEU_Einsatz_Admin {
             $chart_script_version,
             true
         );
+
+        if (false !== strpos((string) $hook, 'feu-einsatz-neuer-bericht') || false !== strpos((string) $hook, 'feu-einsatz-bericht-bearbeiten')) {
+            wp_enqueue_script(
+                'feu-einsatz-report-create-validation',
+                FEU_EINSATZ_PLUGIN_URL . 'assets/admin/js/report-create-validation.js',
+                [],
+                $report_validation_script_version,
+                true
+            );
+            wp_add_inline_script(
+                'feu-einsatz-report-create-validation',
+                'window.feuEinsatzReportValidation = ' . wp_json_encode([
+                    'strings' => [
+                        'street' => __('Strasse', 'feuer-einsatzberichte'),
+                        'streetRequired' => __('Bitte gib eine Strasse an.', 'feuer-einsatzberichte'),
+                        'postcode' => __('PLZ', 'feuer-einsatzberichte'),
+                        'postcodeInvalid' => __('Bitte gib eine fuenfstellige PLZ an.', 'feuer-einsatzberichte'),
+                        'city' => __('Stadt', 'feuer-einsatzberichte'),
+                        'cityRequired' => __('Bitte gib eine Stadt an.', 'feuer-einsatzberichte'),
+                        'date' => __('Datum', 'feuer-einsatzberichte'),
+                        'dateInvalid' => __('Bitte gib ein gueltiges Datum im Format TT.MM.JJJJ an.', 'feuer-einsatzberichte'),
+                        'time' => __('Uhrzeit', 'feuer-einsatzberichte'),
+                        'timeInvalid' => __('Bitte gib eine Uhrzeit im Format HH:MM an.', 'feuer-einsatzberichte'),
+                        'categoriesLabel' => __('Einsatzstichworte', 'feuer-einsatzberichte'),
+                        'categoryRequired' => __('Bitte waehle mindestens ein Einsatzstichwort aus.', 'feuer-einsatzberichte'),
+                    ],
+                ]) . ';',
+                'before'
+            );
+        }
 
         if ($is_statistics_screen || $is_settings_screen) {
             $leaflet_style_path = FEU_EINSATZ_PLUGIN_DIR . 'assets/vendor/leaflet/leaflet.css';
@@ -2960,7 +3008,7 @@ class FEU_Einsatz_Admin {
         }
 
         if (empty($selected_categories)) {
-            $errors[] = __('Mindestens eine Kategorie ist ein Pflichtfeld.', 'feuer-einsatzberichte');
+            $errors[] = __('Mindestens ein Einsatzstichwort ist ein Pflichtfeld.', 'feuer-einsatzberichte');
         }
 
         $geocoded_data = false;
@@ -3278,6 +3326,7 @@ class FEU_Einsatz_Admin {
         }
 
         $this->db->rebuild_all_statistics();
+        $this->db->invalidate_statistics_dashboard_cache();
 
         wp_redirect(admin_url('admin.php?page=feu-einsatz-statistiken&cache_rebuilt=1'));
         exit;
@@ -7146,7 +7195,7 @@ class FEU_Einsatz_Admin {
         echo '<div class="feu-einsatz-dashboard-stat"><strong>' . esc_html($total_reports) . '</strong><span>' . esc_html__('Einsätze gesamt', 'feuer-einsatzberichte') . '</span></div>';
         echo '<div class="feu-einsatz-dashboard-stat"><strong>' . esc_html($reports_this_year) . '</strong><span>' . esc_html(sprintf(__('Einsätze %d', 'feuer-einsatzberichte'), $current_year)) . '</span></div>';
         echo '<div class="feu-einsatz-dashboard-stat"><strong>' . esc_html($participants_total) . '</strong><span>' . esc_html__('Aktive Teilnehmer', 'feuer-einsatzberichte') . '</span></div>';
-        echo '<div class="feu-einsatz-dashboard-stat"><strong>' . esc_html($categories_total) . '</strong><span>' . esc_html__('Konfigurierte Kategorien', 'feuer-einsatzberichte') . '</span></div>';
+        echo '<div class="feu-einsatz-dashboard-stat"><strong>' . esc_html($categories_total) . '</strong><span>' . esc_html__('Konfigurierte Einsatzstichworte', 'feuer-einsatzberichte') . '</span></div>';
         echo '</div>';
 
         if (self::current_user_can_access_plugin_section('statistics')) {
@@ -7610,6 +7659,8 @@ class FEU_Einsatz_Admin {
         $this->save_teilnehmer($post_id);
         $this->save_organisationen($post_id);
         $this->save_gallery($post_id);
+        $this->db->invalidate_statistics_dashboard_cache();
+        $this->report_share->queue_share_card_generation($post_id);
         $this->store_report_availability_meta($post_id, $availability_request, $availability_datetime);
         if ($defer_publication_until_map) {
             $this->store_generated_map_publish_hold($post_id, $deferred_target_status, $deferred_target_postarr);
@@ -7793,6 +7844,8 @@ class FEU_Einsatz_Admin {
         $this->save_teilnehmer($post_id);
         $this->save_organisationen($post_id);
         $this->save_gallery($post_id);
+        $this->db->invalidate_statistics_dashboard_cache();
+        $this->report_share->queue_share_card_generation($post_id);
         $this->store_report_availability_meta($post_id, $availability_request, $availability_datetime);
         if ($defer_publication_until_map) {
             $this->store_generated_map_publish_hold($post_id, $deferred_target_status, $deferred_target_postarr);

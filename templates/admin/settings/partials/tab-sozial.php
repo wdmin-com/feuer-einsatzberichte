@@ -70,6 +70,19 @@ if ($social_share_background_url) {
                 </div>
             </div>
 
+            <div class="feu-share-settings-workbench" data-feu-share-settings-workbench>
+                <div class="feu-share-settings-workbench-copy">
+                    <strong><?php esc_html_e('In drei Schritten zur fertigen Share-Karte', 'feuer-einsatzberichte'); ?></strong>
+                    <span data-feu-share-settings-status aria-live="polite"></span>
+                </div>
+                <div class="feu-share-settings-workbench-actions" aria-label="<?php esc_attr_e('Schnellaktionen fuer die Share-Karte', 'feuer-einsatzberichte'); ?>">
+                    <button type="button" class="button" data-feu-share-preset="operational"><?php esc_html_e('Einsatz kompakt', 'feuer-einsatzberichte'); ?></button>
+                    <button type="button" class="button" data-feu-share-preset="photo"><?php esc_html_e('Foto im Fokus', 'feuer-einsatzberichte'); ?></button>
+                    <button type="button" class="button" data-feu-share-preset="story"><?php esc_html_e('Story mobil', 'feuer-einsatzberichte'); ?></button>
+                    <a class="button button-secondary" href="#feu-einsatz-social-share-preview"><?php esc_html_e('Vorschau ansehen', 'feuer-einsatzberichte'); ?></a>
+                </div>
+            </div>
+
             <div class="feu-admin-settings-form-grid feu-admin-settings-form-grid--2">
                 <div class="feu-admin-settings-fieldset">
                     <div class="feu-admin-settings-fieldset-head">
@@ -401,7 +414,7 @@ if ($social_share_background_url) {
             </div>
         </section>
 
-        <section class="feu-admin-settings-surface">
+        <section class="feu-admin-settings-surface" id="feu-einsatz-social-share-preview">
             <div class="feu-admin-settings-surface-head">
                 <div>
                     <h3><?php esc_html_e('Live-Vorschau', 'feuer-einsatzberichte'); ?></h3>
@@ -463,4 +476,3 @@ if ($social_share_background_url) {
         </section>
     </div>
 </div>
-
