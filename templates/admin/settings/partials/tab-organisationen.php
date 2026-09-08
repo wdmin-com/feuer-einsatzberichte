@@ -11,13 +11,18 @@ if (!isset($active_tab) || 'organisationen' !== (string) $active_tab) {
 ?>
 
 <div id="tab-organisationen" class="<?php echo esc_attr($tab_organisationen_classes); ?>">
-    <h2><?php _e('KrГ¤fte vor Ort', 'feuer-einsatzberichte'); ?></h2>
-    <p><?php _e('Verwalten Sie die Organisationen, die an EinsГ¤tzen teilnehmen kГ¶nnen:', 'feuer-einsatzberichte'); ?></p>
+    <h2><?php _e('Kräfte vor Ort', 'feuer-einsatzberichte'); ?></h2>
+    <p><?php _e('Verwalten Sie die Organisationen, die an Einsätzen teilnehmen können:', 'feuer-einsatzberichte'); ?></p>
+
+    <label class="feu-admin-settings-toggle">
+        <input type="checkbox" name="feu_einsatz_feature_organizations_enabled" value="1" <?php checked(!empty($organizations_enabled)); ?> />
+        <span><?php esc_html_e('Kräfte vor Ort im Plugin aktivieren', 'feuer-einsatzberichte'); ?></span>
+    </label>
 
     <div class="feu-einsatz-organizations-section">
-        <p class="description"><?php _e('Archivierte Organisationen bleiben in bestehenden Einsatzberichten erhalten, kГ¶nnen aber nicht mehr neu ausgewГ¤hlt werden.', 'feuer-einsatzberichte'); ?></p>
+        <p class="description"><?php _e('Archivierte Organisationen bleiben in bestehenden Einsatzberichten erhalten, können aber nicht mehr neu ausgewählt werden.', 'feuer-einsatzberichte'); ?></p>
         <div class="feu-einsatz-add-organization">
-            <h3><?php _e('Neue Organisation hinzufГјgen', 'feuer-einsatzberichte'); ?></h3>
+            <h3><?php _e('Neue Organisation hinzufügen', 'feuer-einsatzberichte'); ?></h3>
             <div class="feu-einsatz-organization-form">
                 <input type="text"
                        id="feu-einsatz-new-organization"
@@ -34,7 +39,7 @@ if (!isset($active_tab) || 'organisationen' !== (string) $active_tab) {
                        value="#0a4b78" />
                 <button type="button" id="feu-einsatz-add-organization" class="button button-primary">
                     <span class="feu-einsatz-button-icon" aria-hidden="true">+</span>
-                    <?php _e('HinzufГјgen', 'feuer-einsatzberichte'); ?>
+                    <?php _e('Hinzufügen', 'feuer-einsatzberichte'); ?>
                 </button>
             </div>
         </div>
@@ -73,7 +78,7 @@ if (!isset($active_tab) || 'organisationen' !== (string) $active_tab) {
                                     <?php $org_post_link = !empty($org->post_link) ? esc_url($org->post_link) : ''; ?>
                                     <?php if ('' !== $org_post_link) : ?>
                                         <a href="<?php echo esc_url($org_post_link); ?>" target="_blank" rel="noopener">
-                                            <?php _e('Beitrag Г¶ffnen', 'feuer-einsatzberichte'); ?>
+                                            <?php _e('Beitrag öffnen', 'feuer-einsatzberichte'); ?>
                                         </a>
                                     <?php else : ?>
                                         &ndash;
@@ -107,7 +112,7 @@ if (!isset($active_tab) || 'organisationen' !== (string) $active_tab) {
                                             data-id="<?php echo esc_attr((int) $org->id); ?>"
                                             data-archived="<?php echo esc_attr((int) !empty($org->is_archived)); ?>">
                                         <span class="feu-einsatz-button-icon" aria-hidden="true">×</span>
-                                        <?php _e('LГ¶schen', 'feuer-einsatzberichte'); ?>
+                                        <?php _e('Löschen', 'feuer-einsatzberichte'); ?>
                                     </button>
                                 </td>
                             </tr>

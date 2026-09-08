@@ -45,9 +45,9 @@ if (!empty($display['single_desaturate_organizations'])) {
             <?php endif; ?>
         </div>
 
-        <?php if (in_array('organizations', $info_fields, true) && !empty($report['organizations'])) : ?>
+        <?php if (1 === (int) get_option('feu_einsatz_feature_organizations_enabled', 1) && in_array('organizations', $info_fields, true) && !empty($report['organizations'])) : ?>
             <div class="<?php echo esc_attr($organization_section_classes); ?>">
-                <b><?php echo esc_html__('Kraefte vor Ort:', 'feuer-einsatzberichte'); ?></b><br>
+                <b><?php echo esc_html__('Kräfte vor Ort:', 'feuer-einsatzberichte'); ?></b><br>
                 <?php foreach ($report['organizations'] as $organization) : ?>
                     <?php $organization_link = !empty($organization['post_link']) ? esc_url($organization['post_link']) : ''; ?>
                     <?php if ('' !== $organization_link) : ?>

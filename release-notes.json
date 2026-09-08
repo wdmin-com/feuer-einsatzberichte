@@ -1,6 +1,19 @@
 {
   "releases": [
     {
+      "version": "3.2.34",
+      "date": "2026-09-08",
+      "title": "Ersteinrichtung und Admin-Texte korrigiert",
+      "summary": "Behebt die deutsche Zeichencodierung und fuehrt einen klaren Ersteinrichtungsdialog mit Pflichtdaten ein.",
+      "changes": [
+        "Behoben: Umlaute in der Organisationen-Einstellung werden korrekt als Kraefte, Einsaetze, hinzufuegen, oeffnen und Loeschen angezeigt.",
+        "Neu: Bei der ersten Aktivierung oeffnet sich ein Pflichtdialog fuer Feuerwehrhaus-Adresse und Einsatzstichworte.",
+        "Neu: Die Standard-Kategoriegruppe Einsaetze mit Beschreibungen wird bei der Erstaktivierung angelegt und aktiviert.",
+        "Bedienung: Kraefte vor Ort koennen als eigene Funktion in den Einstellungen ein- und ausgeschaltet werden.",
+        "Behoben: Das verschachtelte Strassenregister-Formular blockiert die Hauptaktion der Einstellungen nicht mehr."
+      ]
+    },
+    {
       "version": "3.2.33",
       "date": "2026-09-08",
       "title": "Einstellungen und Einsatzstichworte korrigiert",
@@ -375,7 +388,7 @@
       "changes": [
         "Behoben: Modus '48 Stunden' veroeffentlicht jetzt immer als geplanter Beitrag. Lag der Einsatz laenger als 48 Stunden zurueck, wurde der Bericht bisher sofort veroeffentlicht; er wird jetzt 48 Stunden ab dem aktuellen Speicherzeitpunkt eingeplant.",
         "Behoben: Schnelleingabe-Formular uebernahm das Einsatzdatum nicht als WordPress-Beitragsdatum. Beitraege erschienen mit der Erstellungszeit statt der tatsaechlichen Einsatzzeit.",
-        "Behoben: Kodierungsfehler bei deutschen Umlauten im Dashboard-Widget und anderen Admin-Texten (z.B. \"EinsГ¤tze gesamt\" erschien statt \"Einsaetze gesamt\").",
+        "Behoben: Kodierungsfehler bei deutschen Umlauten im Dashboard-Widget und anderen Admin-Texten (z.B. \"Einsaetze gesamt\" erschien statt einer korrekt kodierten Anzeige).",
         "Neu: Einstellungen enthalten jetzt den Reiter Shortcodes mit einer vollstaendigen Uebersicht aller verfuegbaren Shortcodes inklusive Attributen, Standardwerten und kopierbaren Beispielen."
       ]
     },

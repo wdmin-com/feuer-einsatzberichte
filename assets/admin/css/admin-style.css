@@ -9667,3 +9667,57 @@ body.feu-admin-ui--modern-shell .feu-admin-settings-main .feu-einsatz-tab-conten
         max-height: calc(100vh - 96px);
     }
 }
+.feu-einsatz-setup-wizard {
+    position: fixed;
+    inset: 0;
+    z-index: 100000;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: rgba(15, 23, 42, 0.62);
+}
+
+.feu-einsatz-setup-wizard-card {
+    width: min(680px, 100%);
+    max-height: calc(100vh - 48px);
+    overflow: auto;
+    padding: 28px;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 24px 70px rgba(15, 23, 42, 0.28);
+}
+
+.feu-einsatz-setup-wizard-card > form > label,
+.feu-einsatz-setup-wizard-card fieldset {
+    display: grid;
+    gap: 6px;
+    margin: 0 0 14px;
+}
+
+.feu-einsatz-setup-wizard-card label span,
+.feu-einsatz-setup-wizard-card legend {
+    font-weight: 700;
+}
+
+.feu-einsatz-setup-wizard-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+.feu-einsatz-setup-wizard-grid label {
+    display: grid;
+    gap: 6px;
+}
+
+.feu-einsatz-setup-wizard-check {
+    display: inline-flex;
+    gap: 7px;
+    margin: 4px 14px 4px 0;
+}
+
+@media (max-width: 600px) {
+    .feu-einsatz-setup-wizard { padding: 12px; }
+    .feu-einsatz-setup-wizard-card { padding: 20px; }
+    .feu-einsatz-setup-wizard-grid { grid-template-columns: 1fr; }
+}

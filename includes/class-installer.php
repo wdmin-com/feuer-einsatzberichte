@@ -195,6 +195,21 @@ class FEU_Einsatz_Installer {
         self::create_tables();
         self::set_default_options();
         self::maybe_prepare_default_categories_prompt();
+        if (null === get_option('feu_einsatz_setup_wizard_pending', null)) {
+            update_option('feu_einsatz_setup_wizard_pending', 1, false);
+        }
+        $default_categories = self::install_default_categories();
+        if (is_array($default_categories) && !empty($default_categories['root_id'])) {
+            $default_category_ids = get_terms([
+                'taxonomy' => 'category',
+                'hide_empty' => false,
+                'parent' => (int) $default_categories['root_id'],
+                'fields' => 'ids',
+            ]);
+            if (!is_wp_error($default_category_ids) && !empty($default_category_ids)) {
+                update_option('feu_einsatz_categories', array_map('absint', $default_category_ids), false);
+            }
+        }
         self::maybe_upgrade_default_functions_option();
         self::ensure_default_participant_function_option();
         self::migrate_legacy_participant_ranking_pin();
@@ -380,6 +395,7 @@ class FEU_Einsatz_Installer {
             'feu_einsatz_default_participant_function' => self::get_builtin_default_participant_function(),
             'feu_einsatz_categories' => [],
             'feu_einsatz_default_categories_prompt' => 1,
+            'feu_einsatz_setup_wizard_pending' => 1,
             'feu_einsatz_map_zoom' => 16,
             'feu_einsatz_map_height' => 400,
             'feu_einsatz_auto_map_image' => 1,
@@ -443,6 +459,7 @@ class FEU_Einsatz_Installer {
             'feu_einsatz_social_meta_schema_enabled' => 1,
             'feu_einsatz_social_meta_twitter_site' => '',
             'feu_einsatz_role_access' => [],
+            'feu_einsatz_feature_organizations_enabled' => 1,
             'feu_einsatz_photo_watermark_enabled' => 1,
             'feu_einsatz_photo_watermark_text' => get_bloginfo('name'),
             'feu_einsatz_photo_watermark_image_id' => 0,

@@ -215,6 +215,7 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
                 get_option('feu_einsatz_social_meta_twitter_site', '')
             ),
             'feu_einsatz_role_access' => FEU_Einsatz_Admin::get_plugin_role_access_settings(),
+            'feu_einsatz_feature_organizations_enabled' => (int) get_option('feu_einsatz_feature_organizations_enabled', 1),
             'feu_einsatz_default_participant_function' => FEU_Einsatz_Installer::get_default_participant_function(),
             'feu_einsatz_backup_retention_limit' => max(1, absint(get_option('feu_einsatz_backup_retention_limit', 5))),
             'feu_einsatz_photo_watermark_enabled' => (int) get_option('feu_einsatz_photo_watermark_enabled', 1),
@@ -383,6 +384,7 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
             isset($_POST['feu_einsatz_related_reports_count']) ? max(1, min(12, absint(wp_unslash($_POST['feu_einsatz_related_reports_count'])))) : 6
         );
         update_option('feu_einsatz_single_desaturate_organizations', isset($_POST['feu_einsatz_single_desaturate_organizations']) ? 1 : 0);
+        update_option('feu_einsatz_feature_organizations_enabled', isset($_POST['feu_einsatz_feature_organizations_enabled']) ? 1 : 0);
         update_option(
             'feu_einsatz_single_info_fields',
             FEU_Einsatz_Template_Helpers::normalize_single_info_fields(
@@ -710,6 +712,7 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
                 get_option('feu_einsatz_social_meta_twitter_site', '')
             ),
             'feu_einsatz_role_access' => FEU_Einsatz_Admin::get_plugin_role_access_settings(),
+            'feu_einsatz_feature_organizations_enabled' => (int) get_option('feu_einsatz_feature_organizations_enabled', 1),
             'feu_einsatz_default_participant_function' => FEU_Einsatz_Installer::get_default_participant_function(),
             'feu_einsatz_backup_retention_limit' => max(1, absint(get_option('feu_einsatz_backup_retention_limit', 5))),
             'feu_einsatz_photo_watermark_enabled' => (int) get_option('feu_einsatz_photo_watermark_enabled', 1),
@@ -791,6 +794,7 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
             'feu_einsatz_social_meta_schema_enabled' => __('Schema.org für Suchmaschinen', 'feuer-einsatzberichte'),
             'feu_einsatz_social_meta_twitter_site' => __('X/Twitter @Handle', 'feuer-einsatzberichte'),
             'feu_einsatz_role_access' => __('Zugriffsrechte', 'feuer-einsatzberichte'),
+            'feu_einsatz_feature_organizations_enabled' => __('Funktion: Kräfte vor Ort', 'feuer-einsatzberichte'),
             'feu_einsatz_default_participant_function' => __('Standardfunktion', 'feuer-einsatzberichte'),
             'feu_einsatz_backup_retention_limit' => __('Archiv-Limit', 'feuer-einsatzberichte'),
             'feu_einsatz_photo_watermark_enabled' => __('Foto-Wasserzeichen', 'feuer-einsatzberichte'),
@@ -1335,6 +1339,7 @@ $settings_summary_cards = [
             'selected_categories' => $selected_categories,
             'default_categories_root' => $default_categories_root,
             'default_categories_prompt' => $default_categories_prompt,
+            'organizations_enabled' => (int) get_option('feu_einsatz_feature_organizations_enabled', 1),
         ], 'Einstellungen: Einsatzstichworte');
 
         echo FEU_Einsatz_Template_Helpers::render_guarded('templates/admin/settings/partials/tab-karten.php', [
