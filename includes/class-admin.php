@@ -1591,6 +1591,7 @@ class FEU_Einsatz_Admin {
 
         $admin_style_path = FEU_EINSATZ_PLUGIN_DIR . 'assets/admin/css/admin-style.css';
         $admin_modern_style_path = FEU_EINSATZ_PLUGIN_DIR . 'assets/admin/css/admin-modern.css';
+        $admin_wordpress_style_path = FEU_EINSATZ_PLUGIN_DIR . 'assets/admin/css/admin-wordpress.css';
         $admin_script_path = FEU_EINSATZ_PLUGIN_DIR . 'assets/admin/js/admin-script.js';
         $report_validation_script_path = FEU_EINSATZ_PLUGIN_DIR . 'assets/admin/js/report-create-validation.js';
         $chart_script_path = FEU_EINSATZ_PLUGIN_DIR . 'assets/vendor/chartjs/chart.min.js';
@@ -1599,6 +1600,7 @@ class FEU_Einsatz_Admin {
         $tabler_script_path = FEU_EINSATZ_PLUGIN_DIR . 'assets/vendor/tabler/js/tabler.min.js';
         $admin_style_version = file_exists($admin_style_path) ? (string) filemtime($admin_style_path) : FEU_EINSATZ_VERSION;
         $admin_modern_style_version = file_exists($admin_modern_style_path) ? (string) filemtime($admin_modern_style_path) : FEU_EINSATZ_VERSION;
+        $admin_wordpress_style_version = file_exists($admin_wordpress_style_path) ? (string) filemtime($admin_wordpress_style_path) : FEU_EINSATZ_VERSION;
         $admin_script_version = file_exists($admin_script_path) ? (string) filemtime($admin_script_path) : FEU_EINSATZ_VERSION;
         $report_validation_script_version = file_exists($report_validation_script_path) ? (string) filemtime($report_validation_script_path) : FEU_EINSATZ_VERSION;
         $chart_script_version = file_exists($chart_script_path) ? (string) filemtime($chart_script_path) : FEU_EINSATZ_VERSION;
@@ -1642,6 +1644,13 @@ class FEU_Einsatz_Admin {
             FEU_EINSATZ_PLUGIN_URL . 'assets/admin/css/admin-modern.css',
             ['feu-einsatz-admin-style'],
             $admin_modern_style_version
+        );
+
+        wp_enqueue_style(
+            'feu-einsatz-admin-wordpress-style',
+            FEU_EINSATZ_PLUGIN_URL . 'assets/admin/css/admin-wordpress.css',
+            ['feu-einsatz-admin-modern-style'],
+            $admin_wordpress_style_version
         );
 
         wp_enqueue_script(

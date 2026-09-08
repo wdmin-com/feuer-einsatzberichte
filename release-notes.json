@@ -1,6 +1,17 @@
 {
   "releases": [
     {
+      "version": "3.2.36",
+      "date": "2026-09-08",
+      "title": "Neues WordPress-natives Admin-Design",
+      "summary": "Vereinheitlicht die Plugin-Administration mit dem WordPress-Backend und verbessert Formulare, Tabellen, Karten und responsive Darstellung.",
+      "changes": [
+        "Design: Neuer isolierter Admin-Stil ohne externe Schrift- oder UI-Abhaengigkeiten.",
+        "Bedienung: Einheitliche Navigation, Formfelder, Buttons, Hinweise, Tabellen und Dialoge.",
+        "Responsive: Einstellungen und Statistik passen sich an Tablet- und Mobilansichten an."
+      ]
+    },
+    {
       "version": "3.2.35",
       "date": "2026-09-08",
       "title": "Feuerwehrhaus-Logo und Admin-Feinschliff",

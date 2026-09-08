@@ -1,0 +1,64 @@
+/* Feuer Einsatzberichte – WordPress-native admin skin.
+ * Loaded last so legacy markup remains compatible while visual rules stay scoped
+ * to this plugin only. No external fonts or UI framework are required.
+ */
+body.feu-admin-ui {
+  --feu-bg: #f0f0f1;
+  --feu-surface: #fff;
+  --feu-surface-muted: #f6f7f7;
+  --feu-border: #dcdcde;
+  --feu-text: #1d2327;
+  --feu-muted: #50575e;
+  --feu-blue: #2271b1;
+  --feu-blue-dark: #135e96;
+  --feu-red: #d63638;
+  --feu-radius: 6px;
+  background: var(--feu-bg);
+  color: var(--feu-text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+}
+body.feu-admin-ui #wpcontent { background: var(--feu-bg); }
+body.feu-admin-ui .wrap.feu-admin-page,
+body.feu-admin-ui .feu-admin-page { max-width: 1440px; margin: 24px auto; padding: 0 24px 40px; }
+body.feu-admin-ui .feu-admin-page-header,
+body.feu-admin-ui .feu-einsatz-page-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 0 0 20px; }
+body.feu-admin-ui .feu-admin-page-header h1,
+body.feu-admin-ui .feu-einsatz-page-header h1 { margin: 0; color: var(--feu-text); font-size: 26px; line-height: 1.25; font-weight: 600; }
+body.feu-admin-ui .feu-admin-page-header p { color: var(--feu-muted); margin: 5px 0 0; }
+body.feu-admin-ui .feu-admin-settings-shell { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 24px; align-items: start; }
+body.feu-admin-ui .feu-admin-settings-nav { background: var(--feu-surface); border: 1px solid var(--feu-border); border-radius: var(--feu-radius); padding: 8px; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+body.feu-admin-ui .feu-admin-settings-nav a { display: block; color: var(--feu-text); border-radius: 4px; padding: 9px 11px; text-decoration: none; font-weight: 500; }
+body.feu-admin-ui .feu-admin-settings-nav a:hover { background: #f0f6fc; color: var(--feu-blue-dark); }
+body.feu-admin-ui .feu-admin-settings-nav a.active,
+body.feu-admin-ui .feu-admin-settings-nav a[aria-current="page"] { background: var(--feu-blue); color: #fff; }
+body.feu-admin-ui .feu-einsatz-tab-content,
+body.feu-admin-ui .feu-einsatz-card,
+body.feu-admin-ui .feu-einsatz-chart-card,
+body.feu-admin-ui .feu-einsatz-stat-visual-card,
+body.feu-admin-ui .feu-einsatz-statistics-toolbar,
+body.feu-admin-ui .feu-einsatz-panel { background: var(--feu-surface); border: 1px solid var(--feu-border); border-radius: var(--feu-radius); box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+body.feu-admin-ui .feu-einsatz-tab-content { padding: 22px; }
+body.feu-admin-ui .form-table { margin: 0; border-collapse: collapse; }
+body.feu-admin-ui .form-table th { width: 220px; color: var(--feu-text); font-weight: 600; padding: 16px 20px 16px 0; }
+body.feu-admin-ui .form-table td { padding: 12px 0; }
+body.feu-admin-ui input[type="text"], body.feu-admin-ui input[type="email"], body.feu-admin-ui input[type="number"], body.feu-admin-ui input[type="url"], body.feu-admin-ui input[type="date"], body.feu-admin-ui input[type="time"], body.feu-admin-ui select, body.feu-admin-ui textarea { border: 1px solid #8c8f94; border-radius: 4px; min-height: 36px; box-shadow: 0 1px 1px rgba(0,0,0,.04); color: var(--feu-text); background: #fff; }
+body.feu-admin-ui input:focus, body.feu-admin-ui select:focus, body.feu-admin-ui textarea:focus { border-color: var(--feu-blue); box-shadow: 0 0 0 1px var(--feu-blue); outline: 2px solid transparent; }
+body.feu-admin-ui .button { border-radius: 4px; min-height: 36px; padding: 0 14px; font-weight: 500; }
+body.feu-admin-ui .button-primary { background: var(--feu-blue); border-color: var(--feu-blue); box-shadow: none; text-shadow: none; }
+body.feu-admin-ui .button-primary:hover, body.feu-admin-ui .button-primary:focus { background: var(--feu-blue-dark); border-color: var(--feu-blue-dark); }
+body.feu-admin-ui .notice { border-radius: 4px; margin: 0 0 18px; }
+body.feu-admin-ui table.wp-list-table, body.feu-admin-ui .feu-einsatz-table { border: 1px solid var(--feu-border); border-radius: var(--feu-radius); overflow: hidden; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+body.feu-admin-ui table.wp-list-table thead th, body.feu-admin-ui .feu-einsatz-table thead th { background: var(--feu-surface-muted); color: var(--feu-text); font-weight: 600; }
+body.feu-admin-ui table.wp-list-table td, body.feu-admin-ui table.wp-list-table th, body.feu-admin-ui .feu-einsatz-table td, body.feu-admin-ui .feu-einsatz-table th { border-color: var(--feu-border); padding: 11px 14px; }
+body.feu-admin-ui .feu-einsatz-stats-tabs { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 1px solid var(--feu-border); margin-bottom: 18px; }
+body.feu-admin-ui .feu-einsatz-stats-tabs a { color: var(--feu-muted); padding: 10px 14px; text-decoration: none; border-bottom: 2px solid transparent; }
+body.feu-admin-ui .feu-einsatz-stats-tabs a:hover, body.feu-admin-ui .feu-einsatz-stats-tabs a.active { color: var(--feu-blue-dark); border-bottom-color: var(--feu-blue); }
+body.feu-admin-ui .feu-einsatz-modal { background: rgba(29,35,39,.55); }
+body.feu-admin-ui .feu-einsatz-modal .feu-einsatz-modal-content { background: #fff; border: 1px solid var(--feu-border); border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,.2); }
+body.feu-admin-ui .feu-einsatz-modal-header { border-bottom: 1px solid var(--feu-border); }
+body.feu-admin-ui .feu-einsatz-modal-footer { border-top: 1px solid var(--feu-border); }
+body.feu-admin-ui .feu-einsatz-setup-wizard__dialog { border-radius: 8px; border: 1px solid var(--feu-border); box-shadow: 0 12px 40px rgba(0,0,0,.2); }
+body.feu-admin-ui .feu-einsatz-kpi-grid { gap: 16px; }
+body.feu-admin-ui .feu-einsatz-kpi-card { border: 1px solid var(--feu-border); border-radius: var(--feu-radius); background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+@media (max-width: 960px) { body.feu-admin-ui .feu-admin-settings-shell { grid-template-columns: 1fr; } body.feu-admin-ui .feu-admin-settings-nav { display: flex; overflow-x: auto; gap: 4px; } body.feu-admin-ui .feu-admin-settings-nav a { white-space: nowrap; } }
+@media (max-width: 782px) { body.feu-admin-ui .wrap.feu-admin-page, body.feu-admin-ui .feu-admin-page { margin: 14px auto; padding: 0 12px 28px; } body.feu-admin-ui .feu-admin-page-header, body.feu-admin-ui .feu-einsatz-page-header { align-items: flex-start; flex-direction: column; } body.feu-admin-ui .feu-einsatz-tab-content { padding: 16px; } body.feu-admin-ui .form-table th, body.feu-admin-ui .form-table td { display: block; width: auto; padding: 8px 0; } }
