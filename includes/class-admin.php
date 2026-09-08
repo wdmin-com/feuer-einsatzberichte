@@ -832,6 +832,20 @@ class FEU_Einsatz_Admin {
                         <fieldset><legend><?php esc_html_e('Einsatzstichworte', 'feuer-einsatzberichte'); ?></legend>
                             <?php foreach ((array) $wizard_categories as $category) : ?><label class="feu-einsatz-setup-wizard-check"><input type="checkbox" name="feu_einsatz_categories[]" value="<?php echo esc_attr((int) $category->term_id); ?>" checked /> <?php echo esc_html($category->name); ?></label><?php endforeach; ?>
                         </fieldset>
+                        <fieldset class="feu-einsatz-setup-wizard-examples"><legend><?php esc_html_e('Beispieldaten anlegen', 'feuer-einsatzberichte'); ?></legend>
+                            <p class="description"><?php esc_html_e('Die Beispiele bleiben Entwurf bzw. Testdaten und können später gelöscht oder angepasst werden.', 'feuer-einsatzberichte'); ?></p>
+                            <label class="feu-einsatz-setup-wizard-check"><input type="checkbox" name="feu_einsatz_create_sample_report" value="1" /> <?php esc_html_e('Ersten Einsatzbericht als Beispiel anlegen', 'feuer-einsatzberichte'); ?></label>
+                            <div class="feu-einsatz-setup-wizard-grid">
+                                <label><span><?php esc_html_e('Beispielstraße', 'feuer-einsatzberichte'); ?></span><input type="text" name="feu_einsatz_sample_street" placeholder="Musterstraße 1" /></label>
+                                <label><span><?php esc_html_e('Beispiel-PLZ', 'feuer-einsatzberichte'); ?></span><input type="text" name="feu_einsatz_sample_postcode" pattern="[0-9]{5}" maxlength="5" placeholder="22525" /></label>
+                            </div>
+                            <label><span><?php esc_html_e('Beispielstadt', 'feuer-einsatzberichte'); ?></span><input type="text" name="feu_einsatz_sample_city" placeholder="Hamburg" /></label>
+                            <label class="feu-einsatz-setup-wizard-check"><input type="checkbox" name="feu_einsatz_create_sample_participant" value="1" /> <?php esc_html_e('Ersten Teilnehmer als Beispiel anlegen', 'feuer-einsatzberichte'); ?></label>
+                            <div class="feu-einsatz-setup-wizard-grid">
+                                <label><span><?php esc_html_e('Vorname', 'feuer-einsatzberichte'); ?></span><input type="text" name="feu_einsatz_sample_first_name" placeholder="Max" /></label>
+                                <label><span><?php esc_html_e('Nachname', 'feuer-einsatzberichte'); ?></span><input type="text" name="feu_einsatz_sample_last_name" placeholder="Mustermann" /></label>
+                            </div>
+                        </fieldset>
                         <button type="submit" class="button button-primary"><?php esc_html_e('Einrichtung abschließen', 'feuer-einsatzberichte'); ?></button>
                     </form>
                 </div>
@@ -856,9 +870,61 @@ class FEU_Einsatz_Admin {
         update_option('feu_einsatz_area_station_postcode', $postcode);
         update_option('feu_einsatz_area_station_city', $city);
         update_option('feu_einsatz_categories', $categories);
+        $this->create_setup_examples(
+            '1' === (string) ($_POST['feu_einsatz_create_sample_report'] ?? ''),
+            '1' === (string) ($_POST['feu_einsatz_create_sample_participant'] ?? ''),
+            sanitize_text_field(wp_unslash($_POST['feu_einsatz_sample_street'] ?? 'Musterstraße 1')),
+            preg_replace('/\D+/', '', (string) wp_unslash($_POST['feu_einsatz_sample_postcode'] ?? '22525')),
+            sanitize_text_field(wp_unslash($_POST['feu_einsatz_sample_city'] ?? $city)),
+            sanitize_text_field(wp_unslash($_POST['feu_einsatz_sample_first_name'] ?? 'Max')),
+            sanitize_text_field(wp_unslash($_POST['feu_einsatz_sample_last_name'] ?? 'Mustermann')),
+            $categories
+        );
         update_option('feu_einsatz_setup_wizard_pending', 0, false);
         wp_safe_redirect(admin_url('admin.php?page=feu-einsatz-einstellungen&setup_complete=1'));
         exit;
+    }
+
+    private function create_setup_examples(bool $create_report, bool $create_participant, string $street, string $postcode, string $city, string $first_name, string $last_name, array $categories): void {
+        $street = '' !== trim($street) ? trim($street) : 'Musterstraße 1';
+        $postcode = preg_match('/^\d{5}$/', $postcode) ? $postcode : '22525';
+        $city = '' !== trim($city) ? trim($city) : 'Hamburg';
+        if ($create_participant && method_exists($this->db, 'save_participant') && !get_option('feu_einsatz_setup_sample_participant_id', 0)) {
+            $participant_id = $this->db->save_participant(0, [
+                'vorname' => '' !== $first_name ? $first_name : 'Max',
+                'nachname' => '' !== $last_name ? $last_name : 'Mustermann',
+                'member_function' => 'Beispiel',
+                'description' => 'Beispieldatensatz aus der Ersteinrichtung.',
+            ]);
+            if ($participant_id) {
+                update_option('feu_einsatz_setup_sample_participant_id', (int) $participant_id, false);
+            }
+        }
+        if ($create_report && !get_option('feu_einsatz_setup_sample_report_id', 0)) {
+            $post_id = wp_insert_post([
+                'post_title' => 'Beispiel-Einsatzbericht',
+                'post_content' => 'Dies ist ein Beispieldatensatz aus der Ersteinrichtung und kann angepasst oder gelöscht werden.',
+                'post_status' => 'draft',
+                'post_type' => 'post',
+                'post_author' => get_current_user_id(),
+            ], true);
+            if (!is_wp_error($post_id) && $post_id > 0) {
+                update_post_meta($post_id, '_feu_einsatz_einsatzbericht', '1');
+                update_post_meta($post_id, '_feu_einsatz_setup_sample', '1');
+                update_post_meta($post_id, '_feu_einsatz_strasse', $street);
+                update_post_meta($post_id, '_feu_einsatz_plz', $postcode);
+                update_post_meta($post_id, '_feu_einsatz_stadt', $city);
+                update_post_meta($post_id, '_feu_einsatz_datum', current_time('Y-m-d'));
+                update_post_meta($post_id, '_feu_einsatz_uhrzeit', current_time('H:i'));
+                if (!empty($categories)) {
+                    wp_set_post_categories($post_id, [absint(reset($categories))], false);
+                }
+                if ('' !== $street && method_exists($this, 'schedule_background_geocode')) {
+                    $this->schedule_background_geocode($post_id);
+                }
+                update_option('feu_einsatz_setup_sample_report_id', (int) $post_id, false);
+            }
+        }
     }
 
     private function should_use_modern_shell(string $hook = '', ?WP_Screen $screen = null): bool {

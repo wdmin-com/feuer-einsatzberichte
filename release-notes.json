@@ -1,6 +1,17 @@
 {
   "releases": [
     {
+      "version": "3.2.37",
+      "date": "2026-09-08",
+      "title": "Erweiterter Assistent fuer die Ersteinrichtung",
+      "summary": "Führt nach Kategorien und Feuerwehrhaus-Adresse durch die wichtigsten Startfragen und kann sichere Beispieldaten als Entwurf anlegen.",
+      "changes": [
+        "Neu: Optionaler Beispiel-Einsatzbericht mit frei eingegebener Adresse.",
+        "Neu: Optionaler Beispiel-Teilnehmer mit frei eingegebenem Namen.",
+        "Sicherheit: Beispieldaten werden nur einmal angelegt, als Testdaten markiert und nicht veröffentlicht."
+      ]
+    },
+    {
       "version": "3.2.36",
       "date": "2026-09-08",
       "title": "Neues WordPress-natives Admin-Design",

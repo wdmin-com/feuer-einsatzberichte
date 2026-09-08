@@ -38,6 +38,8 @@ body.feu-admin-ui .feu-einsatz-stat-visual-card,
 body.feu-admin-ui .feu-einsatz-statistics-toolbar,
 body.feu-admin-ui .feu-einsatz-panel { background: var(--feu-surface); border: 1px solid var(--feu-border); border-radius: var(--feu-radius); box-shadow: 0 1px 2px rgba(0,0,0,.04); }
 body.feu-admin-ui .feu-einsatz-tab-content { padding: 22px; }
+body.feu-admin-ui .feu-einsatz-setup-wizard-examples { margin-top: 18px; border-top: 1px solid var(--feu-border); padding-top: 14px; }
+body.feu-admin-ui .feu-einsatz-setup-wizard-examples label { margin-top: 8px; }
 body.feu-admin-ui .form-table { margin: 0; border-collapse: collapse; }
 body.feu-admin-ui .form-table th { width: 220px; color: var(--feu-text); font-weight: 600; padding: 16px 20px 16px 0; }
 body.feu-admin-ui .form-table td { padding: 12px 0; }
