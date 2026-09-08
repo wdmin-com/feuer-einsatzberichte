@@ -1,6 +1,17 @@
 {
   "releases": [
     {
+      "version": "3.2.38",
+      "date": "2026-09-08",
+      "title": "Aufgeraeumte Administration und korrigierte Texte",
+      "summary": "Ordnet technische Einstellungen uebersichtlicher, ergaenzt visuelles Feedback und entfernt beschaedigte Zeichencodierung aus Share-Modul und Release-Manifest.",
+      "changes": [
+        "Bedienung: Erweiterte Einstellungen sind als technischer Bereich gebuendelt.",
+        "Design: Animierte Status-, Tab- und Speicherrueckmeldungen im Admin-Bereich.",
+        "Behoben: Beschaedigte Zeichen in Share-Modul-Kommentaren und Release-Manifest korrigiert."
+      ]
+    },
+    {
       "version": "3.2.37",
       "date": "2026-09-08",
       "title": "Erweiterter Assistent fuer die Ersteinrichtung",
