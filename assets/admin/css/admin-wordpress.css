@@ -79,6 +79,8 @@ body.feu-admin-ui .feu-einsatz-modal-footer { border-top: 1px solid var(--feu-bo
 body.feu-admin-ui .feu-einsatz-setup-wizard__dialog { border-radius: 8px; border: 1px solid var(--feu-border); box-shadow: 0 12px 40px rgba(0,0,0,.2); }
 body.feu-admin-ui .feu-einsatz-kpi-grid { gap: 16px; }
 body.feu-admin-ui .feu-einsatz-kpi-card { border: 1px solid var(--feu-border); border-radius: var(--feu-radius); background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+body.feu-admin-ui .feu-admin-settings-nav-group--advanced { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--feu-border); }
+body.feu-admin-ui .feu-admin-settings-nav-group--advanced .feu-admin-settings-nav-title::after { content: ' · technisch'; color: var(--feu-muted); font-size: 11px; font-weight: 400; }
 @media (max-width: 960px) { body.feu-admin-ui .feu-admin-settings-shell { grid-template-columns: 1fr; } body.feu-admin-ui .feu-admin-settings-nav { display: flex; overflow-x: auto; gap: 4px; } body.feu-admin-ui .feu-admin-settings-nav a { white-space: nowrap; } }
 @media (max-width: 782px) { body.feu-admin-ui .wrap.feu-admin-page, body.feu-admin-ui .feu-admin-page { margin: 14px auto; padding: 0 12px 28px; } body.feu-admin-ui .feu-admin-page-header, body.feu-admin-ui .feu-einsatz-page-header { align-items: flex-start; flex-direction: column; } body.feu-admin-ui .feu-einsatz-tab-content { padding: 16px; } body.feu-admin-ui .form-table th, body.feu-admin-ui .form-table td { display: block; width: auto; padding: 8px 0; } }
 
