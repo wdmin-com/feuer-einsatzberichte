@@ -53,8 +53,25 @@ body.feu-admin-ui table.wp-list-table, body.feu-admin-ui .feu-einsatz-table { bo
 body.feu-admin-ui table.wp-list-table thead th, body.feu-admin-ui .feu-einsatz-table thead th { background: var(--feu-surface-muted); color: var(--feu-text); font-weight: 600; }
 body.feu-admin-ui table.wp-list-table td, body.feu-admin-ui table.wp-list-table th, body.feu-admin-ui .feu-einsatz-table td, body.feu-admin-ui .feu-einsatz-table th { border-color: var(--feu-border); padding: 11px 14px; }
 body.feu-admin-ui .feu-einsatz-stats-tabs { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 1px solid var(--feu-border); margin-bottom: 18px; }
-body.feu-admin-ui .feu-einsatz-stats-tabs a { color: var(--feu-muted); padding: 10px 14px; text-decoration: none; border-bottom: 2px solid transparent; }
-body.feu-admin-ui .feu-einsatz-stats-tabs a:hover, body.feu-admin-ui .feu-einsatz-stats-tabs a.active { color: var(--feu-blue-dark); border-bottom-color: var(--feu-blue); }
+body.feu-admin-ui .feu-einsatz-stats-tabs .feu-einsatz-stats-tab {
+    appearance: none;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    color: var(--feu-muted);
+    cursor: pointer;
+    padding: 10px 14px;
+}
+body.feu-admin-ui .feu-einsatz-stats-tabs .feu-einsatz-stats-tab:hover,
+body.feu-admin-ui .feu-einsatz-stats-tabs .feu-einsatz-stats-tab:focus-visible,
+body.feu-admin-ui .feu-einsatz-stats-tabs .feu-einsatz-stats-tab.is-active {
+    color: var(--feu-blue-dark);
+    border-bottom-color: var(--feu-blue);
+    background: transparent;
+    box-shadow: none;
+}
 body.feu-admin-ui .feu-einsatz-modal { background: rgba(29,35,39,.55); }
 body.feu-admin-ui .feu-einsatz-modal .feu-einsatz-modal-content { background: #fff; border: 1px solid var(--feu-border); border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,.2); }
 body.feu-admin-ui .feu-einsatz-modal-header { border-bottom: 1px solid var(--feu-border); }
