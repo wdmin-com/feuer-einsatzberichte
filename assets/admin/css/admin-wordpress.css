@@ -81,3 +81,61 @@ body.feu-admin-ui .feu-einsatz-kpi-grid { gap: 16px; }
 body.feu-admin-ui .feu-einsatz-kpi-card { border: 1px solid var(--feu-border); border-radius: var(--feu-radius); background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
 @media (max-width: 960px) { body.feu-admin-ui .feu-admin-settings-shell { grid-template-columns: 1fr; } body.feu-admin-ui .feu-admin-settings-nav { display: flex; overflow-x: auto; gap: 4px; } body.feu-admin-ui .feu-admin-settings-nav a { white-space: nowrap; } }
 @media (max-width: 782px) { body.feu-admin-ui .wrap.feu-admin-page, body.feu-admin-ui .feu-admin-page { margin: 14px auto; padding: 0 12px 28px; } body.feu-admin-ui .feu-admin-page-header, body.feu-admin-ui .feu-einsatz-page-header { align-items: flex-start; flex-direction: column; } body.feu-admin-ui .feu-einsatz-tab-content { padding: 16px; } body.feu-admin-ui .form-table th, body.feu-admin-ui .form-table td { display: block; width: auto; padding: 8px 0; } }
+
+/* Motion and state feedback for the WordPress-native admin UI. */
+@keyframes feuAdminRiseIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes feuAdminNoticeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes feuAdminLivePulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(34,113,177,.18); }
+  50% { box-shadow: 0 0 0 6px rgba(34,113,177,0); }
+}
+body.feu-admin-ui .feu-einsatz-tab-content:not(.feu-einsatz-tab-content-hidden) {
+  animation: feuAdminRiseIn 220ms ease both;
+}
+body.feu-admin-ui .feu-admin-notice-enter {
+  animation: feuAdminNoticeIn 220ms ease both;
+}
+body.feu-admin-ui .feu-einsatz-settings-main.is-saving {
+  cursor: progress;
+}
+body.feu-admin-ui .feu-einsatz-settings-main.is-saving .submit .button-primary {
+  position: relative;
+  pointer-events: none;
+}
+body.feu-admin-ui .feu-einsatz-settings-main.is-saving .submit .button-primary::after {
+  content: '';
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-left: 8px;
+  vertical-align: -2px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: feuAdminSpin 650ms linear infinite;
+}
+@keyframes feuAdminSpin { to { transform: rotate(360deg); } }
+body.feu-admin-ui .feu-plugin-status-widget.is-ok .feu-plugin-status-toggle-state {
+  animation: feuAdminLivePulse 2.4s ease-in-out infinite;
+}
+body.feu-admin-ui .feu-plugin-status-panel:not([hidden]) {
+  animation: feuAdminRiseIn 180ms ease both;
+}
+body.feu-admin-ui input[type="checkbox"]:focus-visible,
+body.feu-admin-ui input[type="radio"]:focus-visible {
+  outline: 2px solid var(--feu-blue);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  body.feu-admin-ui .feu-einsatz-tab-content:not(.feu-einsatz-tab-content-hidden),
+  body.feu-admin-ui .feu-admin-notice-enter,
+  body.feu-admin-ui .feu-plugin-status-panel:not([hidden]),
+  body.feu-admin-ui .feu-plugin-status-widget.is-ok .feu-plugin-status-toggle-state { animation: none; }
+  body.feu-admin-ui .feu-einsatz-settings-main.is-saving .submit .button-primary::after { animation-duration: 1ms; }
+}

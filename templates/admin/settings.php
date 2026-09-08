@@ -1597,6 +1597,11 @@ jQuery(document).ready(function($) {
         settingsFormSubmitting = true;
         suppressBeforeUnload = true;
         dirtyFieldKeys = {};
+        $(this).removeClass('is-saved').addClass('is-saving');
+    });
+
+    $('.feu-admin-page .notice').each(function() {
+        $(this).addClass('feu-admin-notice-enter');
     });
 
     $(window).on('beforeunload', function() {
