@@ -465,7 +465,8 @@ class FEU_Einsatz_Admin {
         );
 
         $station_logo_id = absint(get_option('feu_einsatz_area_station_logo_id', 0));
-        $station_logo_ok = $station_logo_id > 0 && (bool) wp_get_attachment_image_url($station_logo_id, 'thumbnail');
+        $station_logo_ok = ($station_logo_id > 0 && (bool) wp_get_attachment_image_url($station_logo_id, 'thumbnail'))
+            || (defined('FEU_EINSATZ_PLUGIN_DIR') && file_exists(FEU_EINSATZ_PLUGIN_DIR . 'assets/images/ff-logo.png'));
 
         $add_item(
             $items,

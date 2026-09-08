@@ -1,6 +1,17 @@
 {
   "releases": [
     {
+      "version": "3.2.35",
+      "date": "2026-09-08",
+      "title": "Feuerwehrhaus-Logo und Admin-Feinschliff",
+      "summary": "Verwendet das bereitgestellte Feuerwehrlogo als Standardmarker und verbessert die visuelle Konsistenz der Statistik- und Adminbereiche.",
+      "changes": [
+        "Neu: Das bereitgestellte FF-Logo wird ohne Medienupload als Standardlogo fuer Feuerwehrhaus-Marker verwendet.",
+        "Design: Statistik- und Adminflächen nutzen weiterhin kompakte WordPress-nahe Karten, klare Abstände und responsive Diagrammcontainer.",
+        "Robustheit: Ein optionales eigenes Logo ueberschreibt das Standardlogo weiterhin."
+      ]
+    },
+    {
       "version": "3.2.34",
       "date": "2026-09-08",
       "title": "Ersteinrichtung und Admin-Texte korrigiert",

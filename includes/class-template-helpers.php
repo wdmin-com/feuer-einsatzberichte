@@ -1720,13 +1720,18 @@ class FEU_Einsatz_Template_Helpers {
             $station_label = __('Feuerwehrhaus', 'feuer-einsatzberichte');
         }
 
+        $logo_url = $logo_id > 0 ? wp_get_attachment_image_url($logo_id, 'medium') : '';
+        if ('' === (string) $logo_url && defined('FEU_EINSATZ_PLUGIN_URL')) {
+            $logo_url = FEU_EINSATZ_PLUGIN_URL . 'assets/images/ff-logo.png';
+        }
+
         return [
             'label' => $station_label,
             'address' => self::build_full_address($street, $plz, $city),
             'latitude' => (float) $cached_coordinates['latitude'],
             'longitude' => (float) $cached_coordinates['longitude'],
             'logo_id' => $logo_id > 0 ? $logo_id : 0,
-            'logo_url' => $logo_id > 0 ? wp_get_attachment_image_url($logo_id, 'medium') : '',
+            'logo_url' => (string) $logo_url,
             'logo_size' => max(20, min(96, absint($logo_size))),
         ];
     }
