@@ -1,17 +1,17 @@
 {
     "name":  "Feuer-Einsatzberichte",
     "slug":  "feuer-einsatzberichte",
-    "version":  "3.2.32",
+    "version":  "3.2.33",
     "homepage":  "https://wdmin.com/plugins/feuer-einsatzberichte/",
-    "download_url":  "https://wdmin.com/plugins/feuer-einsatzberichte/release/3.2.32/feuer-einsatzberichte-3.2.32.zip",
+    "download_url":  "https://wdmin.com/plugins/feuer-einsatzberichte/release/3.2.33/feuer-einsatzberichte-3.2.33.zip",
     "requires":  "7.1",
     "tested":  "7.1",
     "requires_php":  "8.1",
-    "last_updated":  "2026-09-06",
+    "last_updated":  "2026-09-08",
     "sections":  {
                      "description":  "\u003cp\u003eFeuer-Einsatzberichte erweitert WordPress um einsatzorientierte Redaktionsablaeufe fuer Freiwillige Feuerwehren.\u003c/p\u003e",
                      "installation":  "\u003col\u003e\u003cli\u003ePlugin-ZIP herunterladen.\u003c/li\u003e\u003cli\u003eIn WordPress hochladen oder aktualisieren.\u003c/li\u003e\u003cli\u003ePlugin aktivieren.\u003c/li\u003e\u003c/ol\u003e",
-                     "changelog":  "\u003ch4\u003e3.2.32\u003c/h4\u003e\u003cul\u003e\u003cli\u003eBehoben: Die oeffentliche Karte verarbeitet wieder vorhandene Linien-Geometrien aus aelteren Cache-Eintraegen.\u003c/li\u003e\u003cli\u003eRobustheit: Neben dem bisherigen Segmentformat werden GeoJSON-Linien, GeoJSON-Features und kompakte Koordinatenlinien sicher normalisiert.\u003c/li\u003e\u003cli\u003eKompatibilitaet: GeoJSON-Koordinaten werden korrekt von Laenge/Breite fuer Leaflet umgewandelt.\u003c/li\u003e\u003c/ul\u003e"
+                     "changelog":  "\u003ch4\u003e3.2.33\u003c/h4\u003e\u003cul\u003e\u003cli\u003eBehoben: Die Hauptform der Einstellungen wird nicht mehr durch ein verschachteltes Strassenregister-Formular vorzeitig geschlossen.\u003c/li\u003e\u003cli\u003eNeu: Bei einer neuen Installation kann die Kategoriegruppe Einsaetze mit allen Einsatzstichworten und Beschreibungen auf einmal angelegt werden.\u003c/li\u003e\u003cli\u003eKompatibilitaet: Bestehende Kategorien werden erkannt und nicht doppelt angelegt.\u003c/li\u003e\u003cli\u003eBehoben: Die Karten-Geometrie unterscheidet alte Segmentdaten korrekt von kompakten Koordinatenlinien, damit die Strassenlinie sichtbar bleibt.\u003c/li\u003e\u003c/ul\u003e\u003ch4\u003e3.2.32\u003c/h4\u003e\u003cul\u003e\u003cli\u003eBehoben: Die oeffentliche Karte verarbeitet wieder vorhandene Linien-Geometrien aus aelteren Cache-Eintraegen.\u003c/li\u003e\u003cli\u003eRobustheit: Neben dem bisherigen Segmentformat werden GeoJSON-Linien, GeoJSON-Features und kompakte Koordinatenlinien sicher normalisiert.\u003c/li\u003e\u003cli\u003eKompatibilitaet: GeoJSON-Koordinaten werden korrekt von Laenge/Breite fuer Leaflet umgewandelt.\u003c/li\u003e\u003c/ul\u003e"
                  },
     "icons":  {
 
@@ -19,6 +19,6 @@
     "banners":  {
 
                 },
-    "package_hash":  "0f8ec87ecffd029aaedd876a4f361afbe3860b919b1a2133b4913e16445db251",
+    "package_hash":  "29d2694740fe23b434965b13413a6b34c508c32fc3ce5592dcfb2fca5516e714",
     "package_hash_algorithm":  "sha256"
 }

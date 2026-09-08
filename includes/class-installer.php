@@ -105,11 +105,96 @@ class FEU_Einsatz_Installer {
             'THW' => '#d97706',
         ];
     }
+
+    public static function get_default_categories() {
+        return [
+            'ALARM' => 'Alarm Meldung',
+            'DRZF' => 'Droht zu fallen (z.B. Baum)',
+            'FEU' => 'Feuer',
+            'FEU2-5' => 'Alarmstufenerhöhungen FEUER (2-5 HLZ + Sonderkomponenten)',
+            'FEUAUS' => 'Feuer bereits gelöscht / Überprüfung',
+            'FEUBAB' => 'Feuer auf der Autobahn',
+            'FEUBMA' => 'Feuermeldung durch Brandmeldeanlage',
+            'FEUFLUG' => 'Feuer an/im Flugzeug',
+            'FEUK' => 'Kleinalarm (Nur 1 HLF oder 1 FF, z.B. Müllcontainer, Pkw)',
+            'FEUMANV' => 'Feuer mit einem Massenanfall von Verletzten (Großschadenlage) (ab fünf Verletzten)',
+            'FEUTU' => 'Feuer im Tunnel',
+            'FEUWA' => 'Feuer auf dem Wasser',
+            'FEUX' => 'Mit Gefahrstoffen',
+            'FEUY' => 'Menschenleben in Gefahr',
+            'FEUZUG' => 'Feuer am/im Zug',
+            'KMF' => 'Kampfmittelfund',
+            'NIL' => 'Nicht in Liste erfasste Schadenslage',
+            'NOTFAF' => 'Notfall',
+            'PSCHL' => 'Person eingeschlossen (z.B. im Aufzug)',
+            'TH' => 'Hilfeleistungseinsatz',
+            'TH2-5' => 'Alarmstufenerhöhungen HILFE (2-5 HLZ + Sonderkomponenten)',
+            'THBAB' => 'Hilfeleistung auf der Autobahn',
+            'THFLUG' => 'Hilfeleistung an/im Flugzeug (u.a. Notlandung)',
+            'THK' => 'Kleinalarm (z.B. Liegenbleiber, Verkehrshindernisse)',
+            'THMANV' => 'Technische Hilfeleistung mit einem Massenanfall von Verletzten (ab fünf Verletzten)',
+            'THTU' => 'Hilfeleistung im Tunnel',
+            'THV' => 'Technische Hilfeleistung Einsturz / Verschüttung',
+            'THWA' => 'Hilfeleistung auf dem Wasser',
+            'THX' => 'Mit Gefahrstoffen',
+            'THY' => 'Menschenleben in Gefahr (z.B. Verkehrsunfall)',
+            'THYHOE' => 'Technische Hilfeleistung mit Menschenleben in Gefahr in großer Höhe',
+            'THZUG' => 'Hilfeleistung am/im Zug',
+            'TIER' => 'Tier in Notlage',
+            'TV' => 'Tür verschlossen (wenn Notfall vermutet wird: TVNOT)',
+            'WASSER' => 'Wasserschaden',
+        ];
+    }
+
+    public static function install_default_categories() {
+        $root = get_term_by('slug', 'einsatze', 'category');
+        if (!$root) {
+            $root = get_term_by('name', 'Einsätze', 'category');
+        }
+        if (!$root || is_wp_error($root)) {
+            $root_result = wp_insert_term('Einsätze', 'category', [
+                'slug' => 'einsatze',
+                'description' => 'Einsatzstichworte der Feuerwehr',
+            ]);
+            if (is_wp_error($root_result)) {
+                return $root_result;
+            }
+            $root_id = (int) $root_result['term_id'];
+        } else {
+            $root_id = (int) $root->term_id;
+        }
+
+        $created = [];
+        foreach (self::get_default_categories() as $slug => $description) {
+            $term_slug = sanitize_title($slug);
+            $term = get_term_by('slug', $term_slug, 'category');
+            if (!$term) {
+                $result = wp_insert_term($slug, 'category', [
+                    'slug' => $term_slug,
+                    'description' => $description,
+                    'parent' => $root_id,
+                ]);
+                if (is_wp_error($result)) {
+                    continue;
+                }
+                $created[] = (int) $result['term_id'];
+                continue;
+            }
+
+            if ((int) $term->parent !== $root_id) {
+                wp_update_term((int) $term->term_id, 'category', ['parent' => $root_id]);
+            }
+        }
+
+        update_option('feu_einsatz_default_categories_prompt', 0, false);
+        return ['root_id' => $root_id, 'created' => $created];
+    }
     
     public static function activate() {
         self::check_requirements();
         self::create_tables();
         self::set_default_options();
+        self::maybe_prepare_default_categories_prompt();
         self::maybe_upgrade_default_functions_option();
         self::ensure_default_participant_function_option();
         self::migrate_legacy_participant_ranking_pin();
@@ -294,6 +379,7 @@ class FEU_Einsatz_Installer {
             'feu_einsatz_functions' => self::get_default_functions(),
             'feu_einsatz_default_participant_function' => self::get_builtin_default_participant_function(),
             'feu_einsatz_categories' => [],
+            'feu_einsatz_default_categories_prompt' => 1,
             'feu_einsatz_map_zoom' => 16,
             'feu_einsatz_map_height' => 400,
             'feu_einsatz_auto_map_image' => 1,
@@ -368,6 +454,13 @@ class FEU_Einsatz_Installer {
             if (get_option($key) === false) {
                 add_option($key, $value);
             }
+        }
+    }
+
+    private static function maybe_prepare_default_categories_prompt() {
+        $existing = get_term_by('slug', 'einsatze', 'category');
+        if (!$existing) {
+            update_option('feu_einsatz_default_categories_prompt', 1, false);
         }
     }
 

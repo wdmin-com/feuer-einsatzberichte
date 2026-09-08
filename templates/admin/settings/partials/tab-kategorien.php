@@ -14,6 +14,16 @@ if (!isset($active_tab) || 'kategorien' !== (string) $active_tab) {
     <h2><?php _e('Einsatzstichworte', 'feuer-einsatzberichte'); ?></h2>
     <p><?php _e('Wählen Sie die Einsatzstichworte aus, die für Einsatzberichte verwendet werden sollen:', 'feuer-einsatzberichte'); ?></p>
 
+    <?php if (!empty($default_categories_prompt) && empty($default_categories_root)) : ?>
+        <div class="notice notice-info inline feu-einsatz-default-categories-notice">
+            <p><strong><?php esc_html_e('Standard-Einsatzstichworte einrichten?', 'feuer-einsatzberichte'); ?></strong></p>
+            <p><?php esc_html_e('Die Kategoriegruppe „Einsätze“ mit den offiziellen Einsatzstichworten wurde noch nicht gefunden. Sie können sie jetzt als WordPress-Kategorien anlegen und anschließend einzeln auswählen.', 'feuer-einsatzberichte'); ?></p>
+            <button type="submit" class="button button-primary" name="feu_einsatz_install_default_categories" value="1">
+                <?php esc_html_e('Einsatzstichworte installieren', 'feuer-einsatzberichte'); ?>
+            </button>
+        </div>
+    <?php endif; ?>
+
     <div class="feu-einsatz-categories-list">
         <?php if (empty($all_categories)): ?>
             <p><?php _e('Keine Einsatzstichworte vorhanden. Erstellen Sie zuerst passende Kategorien in WordPress.', 'feuer-einsatzberichte'); ?></p>

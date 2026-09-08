@@ -260,7 +260,7 @@ if (!isset($active_tab) || 'strassenregister' !== (string) $active_tab) {
             </button>
         </div>
 
-        <form id="feu-einsatz-edit-street-registry-form" class="feu-einsatz-street-registry-modal-form">
+        <div id="feu-einsatz-edit-street-registry-form" class="feu-einsatz-street-registry-modal-form" role="form">
             <input type="hidden" id="feu-einsatz-edit-street-registry-id" value="0" />
 
             <div class="feu-einsatz-settings-field-grid feu-einsatz-settings-field-grid--street-registry">
@@ -295,13 +295,13 @@ if (!isset($active_tab) || 'strassenregister' !== (string) $active_tab) {
             </div>
 
             <div class="feu-admin-settings-action-stack">
-                <button type="submit" class="button button-primary" id="feu-einsatz-save-street-registry-modal">
+                <button type="button" class="button button-primary" id="feu-einsatz-save-street-registry-modal">
                     <?php esc_html_e('Strasse speichern', 'feuer-einsatzberichte'); ?>
                 </button>
                 <button type="button" class="button feu-einsatz-street-registry-modal-close">
                     <?php esc_html_e('Abbrechen', 'feuer-einsatzberichte'); ?>
                 </button>
             </div>
-        </form>
+        </div>
     </div>
 </div>

@@ -61,6 +61,10 @@
     function isCoordinatePair(value) {
         return Array.isArray(value)
             && value.length >= 2
+            && !Array.isArray(value[0])
+            && !Array.isArray(value[1])
+            && (typeof value[0] !== 'object')
+            && (typeof value[1] !== 'object')
             && normalizeNumber(value[0]) !== null
             && normalizeNumber(value[1]) !== null;
     }

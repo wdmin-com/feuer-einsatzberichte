@@ -99,6 +99,31 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
                  esc_html__('Es wurden keine automatisch erzeugten Kartenbilder gefunden, die neu aufgebaut werden müssen.', 'feuer-einsatzberichte') .
                  '</p></div>';
         }
+    } elseif (isset($_POST['feu_einsatz_install_default_categories'])) {
+        $category_install_result = FEU_Einsatz_Installer::install_default_categories();
+
+        if (is_wp_error($category_install_result)) {
+            echo '<div class="notice notice-error is-dismissible"><p>' .
+                 esc_html($category_install_result->get_error_message()) .
+                 '</p></div>';
+        } else {
+            $installed_category_ids = get_terms([
+                'taxonomy' => 'category',
+                'hide_empty' => false,
+                'parent' => (int) $category_install_result['root_id'],
+                'fields' => 'ids',
+            ]);
+            if (!is_wp_error($installed_category_ids)) {
+                update_option('feu_einsatz_categories', array_map('absint', (array) $installed_category_ids), false);
+            }
+
+            echo '<div class="notice notice-success is-dismissible"><p>' .
+                 esc_html(sprintf(
+                     __('Die Kategoriegruppe Einsätze und %d Einsatzstichworte wurden eingerichtet und aktiviert.', 'feuer-einsatzberichte'),
+                     count((array) $installed_category_ids)
+                 )) .
+                 '</p></div>';
+        }
     } elseif (isset($_POST['submit'])) {
         $previous_settings = [
             'feu_einsatz_functions' => array_values((array) get_option('feu_einsatz_functions', [])),
@@ -1140,6 +1165,8 @@ $update_guide_path = FEU_EINSATZ_PLUGIN_DIR . 'docs/UPDATE_HOSTING_AND_GITHUB.md
 $docs_directory = FEU_EINSATZ_PLUGIN_DIR . 'docs';
 $templates_directory = FEU_EINSATZ_PLUGIN_DIR . 'templates';
 $all_categories = get_categories(['hide_empty' => false]);
+$default_categories_root = get_term_by('slug', 'einsatze', 'category');
+$default_categories_prompt = 1 === (int) get_option('feu_einsatz_default_categories_prompt', 0);
 $organizations = $this->db->get_organizations([
     'include_archived' => true,
 ]);
@@ -1306,6 +1333,8 @@ $settings_summary_cards = [
             'active_tab' => $active_tab,
             'all_categories' => $all_categories,
             'selected_categories' => $selected_categories,
+            'default_categories_root' => $default_categories_root,
+            'default_categories_prompt' => $default_categories_prompt,
         ], 'Einstellungen: Einsatzstichworte');
 
         echo FEU_Einsatz_Template_Helpers::render_guarded('templates/admin/settings/partials/tab-karten.php', [
@@ -1974,9 +2003,7 @@ jQuery(document).ready(function($) {
         });
     });
 
-    $('#feu-einsatz-edit-street-registry-form').on('submit', function(e) {
-        e.preventDefault();
-
+    $('#feu-einsatz-save-street-registry-modal').on('click', function() {
         var id = Number($('#feu-einsatz-edit-street-registry-id').val() || 0);
         var street = $('#feu-einsatz-edit-street-registry-street').val().trim();
         var postcode = $('#feu-einsatz-edit-street-registry-postcode').val().trim();

@@ -1,6 +1,18 @@
 {
   "releases": [
     {
+      "version": "3.2.33",
+      "date": "2026-09-08",
+      "title": "Einstellungen und Einsatzstichworte korrigiert",
+      "summary": "Behebt das blockierte Speichern der Einstellungen und bietet die offizielle Kategoriegruppe als sichere Einrichtungsoption an.",
+      "changes": [
+        "Behoben: Die Hauptform der Einstellungen wird nicht mehr durch ein verschachteltes Strassenregister-Formular vorzeitig geschlossen.",
+        "Neu: Bei einer neuen Installation kann die Kategoriegruppe Einsaetze mit allen Einsatzstichworten und Beschreibungen auf einmal angelegt werden.",
+        "Kompatibilitaet: Bestehende Kategorien werden erkannt und nicht doppelt angelegt.",
+        "Behoben: Die Karten-Geometrie unterscheidet alte Segmentdaten korrekt von kompakten Koordinatenlinien, damit die Strassenlinie sichtbar bleibt."
+      ]
+    },
+    {
       "version": "3.2.32",
       "date": "2026-09-06",
       "title": "Kartenlinie im Einsatzbericht wiederhergestellt",
