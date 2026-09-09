@@ -251,5 +251,86 @@ if (isset($active_tab) && 'allgemein' !== (string) $active_tab) {
                 </label>
             </div>
         </section>
+
+        <?php if (current_user_can('manage_options')) : ?>
+        <section class="feu-admin-settings-surface feu-admin-recovery">
+            <div class="feu-admin-settings-surface-head">
+                <div>
+                    <h2><?php esc_html_e('Sicherung und Wiederherstellung', 'feuer-einsatzberichte'); ?></h2>
+                    <p class="description"><?php esc_html_e('Jede reguläre Speicherung legt automatisch einen Wiederherstellungspunkt an. Bis zu zehn frühere Stände werden sicher aufbewahrt.', 'feuer-einsatzberichte'); ?></p>
+                </div>
+                <span class="feu-admin-recovery-status">
+                    <span class="ti ti-history" aria-hidden="true"></span>
+                    <?php
+                    echo esc_html(sprintf(
+                        /* translators: %d: number of stored settings snapshots */
+                        _n('%d Wiederherstellungspunkt', '%d Wiederherstellungspunkte', count((array) ($settings_history ?? [])), 'feuer-einsatzberichte'),
+                        count((array) ($settings_history ?? []))
+                    ));
+                    ?>
+                </span>
+            </div>
+
+            <div class="feu-admin-recovery-grid">
+                <article class="feu-admin-recovery-card">
+                    <span class="feu-admin-recovery-icon ti ti-restore" aria-hidden="true"></span>
+                    <div>
+                        <h3><?php esc_html_e('Letzte Speicherung wiederherstellen', 'feuer-einsatzberichte'); ?></h3>
+                        <?php if (!empty($settings_history[0]['created_at'])) : ?>
+                            <p><?php echo esc_html(sprintf(__('Verfügbar vom %s. Die aktuelle Konfiguration wird durch diesen Stand ersetzt.', 'feuer-einsatzberichte'), mysql2date(get_option('date_format') . ' ' . get_option('time_format'), (string) $settings_history[0]['created_at']))); ?></p>
+                        <?php else : ?>
+                            <p><?php esc_html_e('Nach der ersten Änderung steht hier automatisch die zuvor gespeicherte Konfiguration bereit.', 'feuer-einsatzberichte'); ?></p>
+                        <?php endif; ?>
+                    </div>
+                    <button type="submit"
+                            name="feu_einsatz_restore_latest_settings"
+                            value="1"
+                            class="button button-secondary"
+                            formnovalidate
+                            <?php disabled(empty($settings_history)); ?>>
+                        <?php esc_html_e('Vorherigen Stand laden', 'feuer-einsatzberichte'); ?>
+                    </button>
+                </article>
+
+                <article class="feu-admin-recovery-card feu-admin-recovery-card--danger">
+                    <span class="feu-admin-recovery-icon ti ti-shield-lock" aria-hidden="true"></span>
+                    <div>
+                        <h3><?php esc_html_e('Werkseinstellungen', 'feuer-einsatzberichte'); ?></h3>
+                        <p><?php esc_html_e('Setzt ausschließlich die Plugin-Einstellungen zurück. Einsatzberichte, Medien, Archive und Teilnehmer werden nicht gelöscht.', 'feuer-einsatzberichte'); ?></p>
+                    </div>
+
+                    <div class="feu-admin-reset-controls">
+                        <button type="submit" name="feu_einsatz_generate_factory_code" value="1" class="button button-secondary" formnovalidate>
+                            <?php esc_html_e('7-stelligen Code erzeugen', 'feuer-einsatzberichte'); ?>
+                        </button>
+
+                        <?php if (!empty($factory_reset_code)) : ?>
+                            <div class="feu-admin-reset-code" role="status" aria-live="polite">
+                                <span><?php esc_html_e('Einmaliger Sicherheitscode', 'feuer-einsatzberichte'); ?></span>
+                                <output><?php echo esc_html($factory_reset_code); ?></output>
+                                <small><?php esc_html_e('Gültig für 10 Minuten.', 'feuer-einsatzberichte'); ?></small>
+                            </div>
+                        <?php endif; ?>
+
+                        <label class="feu-admin-settings-field" for="feu_einsatz_factory_reset_code">
+                            <span><?php esc_html_e('Sicherheitscode bestätigen', 'feuer-einsatzberichte'); ?></span>
+                            <input type="text"
+                                   id="feu_einsatz_factory_reset_code"
+                                   name="feu_einsatz_factory_reset_code"
+                                   class="regular-text"
+                                   value=""
+                                   inputmode="numeric"
+                                   maxlength="7"
+                                   autocomplete="one-time-code"
+                                   placeholder="0000000" />
+                        </label>
+                        <button type="submit" name="feu_einsatz_factory_reset" value="1" class="button feu-admin-danger-button">
+                            <?php esc_html_e('Werkseinstellungen laden', 'feuer-einsatzberichte'); ?>
+                        </button>
+                    </div>
+                </article>
+            </div>
+        </section>
+        <?php endif; ?>
     </div>
 </div>

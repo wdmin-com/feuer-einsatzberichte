@@ -3,9 +3,37 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+$factory_reset_code = '';
+
 if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section('settings') && check_admin_referer('feu_einsatz_save_settings', 'feu_einsatz_settings_nonce')) {
     $rebuild_period_label = '';
-    if (isset($_POST['feu_einsatz_clear_street_cache'])) {
+    if (isset($_POST['feu_einsatz_generate_factory_code'])) {
+        $factory_reset_code = $this->generate_factory_reset_code();
+        echo '<div class="notice notice-warning is-dismissible"><p>'
+            . esc_html__('Der einmalige Sicherheitscode wurde erzeugt. Er ist zehn Minuten gültig und kann nur von Ihrem Benutzerkonto verwendet werden.', 'feuer-einsatzberichte')
+            . '</p></div>';
+    } elseif (isset($_POST['feu_einsatz_restore_latest_settings'])) {
+        if ($this->restore_latest_settings_snapshot()) {
+            echo '<div class="notice notice-success is-dismissible"><p>'
+                . esc_html__('Die vorherige Speicherung wurde wiederhergestellt.', 'feuer-einsatzberichte')
+                . '</p></div>';
+        } else {
+            echo '<div class="notice notice-warning is-dismissible"><p>'
+                . esc_html__('Es ist noch keine frühere Speicherung vorhanden.', 'feuer-einsatzberichte')
+                . '</p></div>';
+        }
+    } elseif (isset($_POST['feu_einsatz_factory_reset'])) {
+        $submitted_reset_code = sanitize_text_field(wp_unslash($_POST['feu_einsatz_factory_reset_code'] ?? ''));
+        if ($this->reset_settings_with_code($submitted_reset_code)) {
+            echo '<div class="notice notice-success is-dismissible"><p>'
+                . esc_html__('Die Plugin-Einstellungen wurden auf Werkseinstellungen zurückgesetzt. Einsatzberichte, Medien und Teilnehmer blieben erhalten.', 'feuer-einsatzberichte')
+                . '</p></div>';
+        } else {
+            echo '<div class="notice notice-error is-dismissible"><p>'
+                . esc_html__('Der Sicherheitscode ist ungültig oder abgelaufen. Bitte erzeugen Sie einen neuen Code.', 'feuer-einsatzberichte')
+                . '</p></div>';
+        }
+    } elseif (isset($_POST['feu_einsatz_clear_street_cache'])) {
         $this->clear_all_street_cache_storage();
         FEU_Einsatz_Logger::log('settings_cache_cleared', 'settings', 0, __('Straßen-Cache geleert', 'feuer-einsatzberichte'));
 
@@ -224,6 +252,7 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
             'feu_einsatz_photo_watermark_opacity' => max(5, min(100, absint(get_option('feu_einsatz_photo_watermark_opacity', 36)))),
             'feu_einsatz_photo_watermark_scale' => max(10, min(90, absint(get_option('feu_einsatz_photo_watermark_scale', 42)))),
         ];
+        $this->save_settings_snapshot($previous_settings);
         $previous_participant_ranking_pin = FEU_Einsatz_Admin::get_participant_ranking_pin();
 
         update_option('feu_einsatz_update_manifest_url', FEU_Einsatz_Updater::get_default_manifest_url());
@@ -1123,6 +1152,7 @@ $map_preview_live_fallback_markup = $is_karten_tab
     ])
     : '';
 $participant_ranking_pin_is_configured = '' !== FEU_Einsatz_Admin::get_participant_ranking_pin();
+$settings_history = $this->get_settings_history();
 $street_cache_entries = $is_karten_tab ? FEU_Einsatz_Street_Cache::get_cache_entry_count() : 0;
 $street_registry_entries = $is_strassenregister_tab ? $this->db->get_street_registry_entries(['limit' => 1000]) : [];
 $street_suggestion_records = $is_strassenregister_tab ? FEU_Einsatz_Template_Helpers::get_street_suggestion_records(1000) : [];
@@ -1260,6 +1290,8 @@ $settings_summary_cards = [
             'single_info_fields' => $single_info_fields,
             'single_map_display_mode' => $single_map_display_mode,
             'single_map_privacy_mode' => $single_map_privacy_mode,
+            'settings_history' => $settings_history,
+            'factory_reset_code' => $factory_reset_code,
         ], 'Einstellungen: Allgemein');
 
         echo FEU_Einsatz_Template_Helpers::render_guarded('templates/admin/settings/partials/tab-zugriff.php', [
@@ -1489,7 +1521,10 @@ jQuery(document).ready(function($) {
         streetSaved: <?php echo wp_json_encode(__('Strassen-Eintrag wurde gespeichert.', 'feuer-einsatzberichte')); ?>,
         streetDeleted: <?php echo wp_json_encode(__('Strassen-Eintrag wurde entfernt.', 'feuer-einsatzberichte')); ?>,
         streetInUse: <?php echo wp_json_encode(__('Diese Strasse wird bereits in Einsatzberichten verwendet und kann nicht geloescht werden.', 'feuer-einsatzberichte')); ?>,
-        organizationOrderSaved: <?php echo wp_json_encode(__('Reihenfolge der Organisationen wurde gespeichert.', 'feuer-einsatzberichte')); ?>
+        organizationOrderSaved: <?php echo wp_json_encode(__('Reihenfolge der Organisationen wurde gespeichert.', 'feuer-einsatzberichte')); ?>,
+        factoryResetCodeRequired: <?php echo wp_json_encode(__('Bitte geben Sie den neu erzeugten 7-stelligen Sicherheitscode ein.', 'feuer-einsatzberichte')); ?>,
+        factoryResetConfirm: <?php echo wp_json_encode(__('Plugin-Einstellungen wirklich auf Werkseinstellungen zurücksetzen? Einsatzberichte, Medien und Teilnehmer bleiben erhalten.', 'feuer-einsatzberichte')); ?>,
+        restoreConfirm: <?php echo wp_json_encode(__('Die aktuelle Konfiguration durch den vorherigen Stand ersetzen?', 'feuer-einsatzberichte')); ?>
     };
 
     $('.feu-einsatz-delete-organization').each(function() {
@@ -1593,7 +1628,31 @@ jQuery(document).ready(function($) {
         markSettingsDirty(getFieldKey($(this)));
     });
 
-    $settingsForm.on('submit', function() {
+    $settingsForm.on('submit', function(event) {
+        var submitter = event.originalEvent && event.originalEvent.submitter
+            ? event.originalEvent.submitter
+            : document.activeElement;
+        var actionName = submitter && submitter.name ? submitter.name : '';
+
+        if (actionName === 'feu_einsatz_factory_reset') {
+            var resetCode = String($('#feu_einsatz_factory_reset_code').val() || '').trim();
+            if (!/^\d{7}$/.test(resetCode)) {
+                event.preventDefault();
+                window.alert(texts.factoryResetCodeRequired);
+                $('#feu_einsatz_factory_reset_code').trigger('focus');
+                return;
+            }
+            if (!window.confirm(texts.factoryResetConfirm)) {
+                event.preventDefault();
+                return;
+            }
+        }
+
+        if (actionName === 'feu_einsatz_restore_latest_settings' && !window.confirm(texts.restoreConfirm)) {
+            event.preventDefault();
+            return;
+        }
+
         settingsFormSubmitting = true;
         suppressBeforeUnload = true;
         dirtyFieldKeys = {};

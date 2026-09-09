@@ -709,6 +709,7 @@ class FEU_Einsatz_Admin {
 
         $setup_complete = isset($_GET['setup_complete']) && '1' === sanitize_text_field(wp_unslash($_GET['setup_complete']));
         $setup_error = isset($_GET['setup_error']) && '1' === sanitize_text_field(wp_unslash($_GET['setup_error']));
+        $setup_postponed = isset($_GET['setup_postponed']) && '1' === sanitize_text_field(wp_unslash($_GET['setup_postponed']));
 
         if ($setup_complete) {
             echo '<div class="notice notice-success is-dismissible"><p>'
@@ -717,6 +718,10 @@ class FEU_Einsatz_Admin {
         } elseif ($setup_error) {
             echo '<div class="notice notice-error"><p>'
                 . esc_html__('Die Ersteinrichtung konnte nicht gespeichert werden. Bitte pruefen Sie Adresse, PLZ, Stadt und Einsatzstichworte.', 'feuer-einsatzberichte')
+                . '</p></div>';
+        } elseif ($setup_postponed) {
+            echo '<div class="notice notice-info is-dismissible"><p>'
+                . esc_html__('Die Ersteinrichtung wurde für 24 Stunden ausgeblendet. Sie können alle Angaben jederzeit unter Einstellungen ergänzen.', 'feuer-einsatzberichte')
                 . '</p></div>';
         }
 
@@ -832,9 +837,11 @@ class FEU_Einsatz_Admin {
             </section>
         </div>
         <?php
+        $setup_wizard_snoozed_until = (int) get_option('feu_einsatz_setup_wizard_snoozed_until', 0);
         $show_setup_wizard = current_user_can('manage_options')
             && 1 === (int) get_option('feu_einsatz_setup_wizard_pending', 0)
             && empty($setup_status['complete'])
+            && ($setup_wizard_snoozed_until <= 0 || time() >= $setup_wizard_snoozed_until)
             && in_array($current_page, ['feuer-einsatzberichte', 'feu-einsatz-einstellungen'], true);
         ?>
         <?php if ($show_setup_wizard) : ?>
@@ -846,36 +853,66 @@ class FEU_Einsatz_Admin {
             ?>
             <div class="feu-einsatz-setup-wizard" role="dialog" aria-modal="true" aria-labelledby="feu-einsatz-setup-wizard-title">
                 <div class="feu-einsatz-setup-wizard-card">
-                    <h2 id="feu-einsatz-setup-wizard-title"><?php esc_html_e('Ersteinrichtung', 'feuer-einsatzberichte'); ?></h2>
-                    <p><?php esc_html_e('Bitte hinterlegen Sie die Pflichtdaten, bevor Sie den ersten Einsatzbericht anlegen.', 'feuer-einsatzberichte'); ?></p>
-                    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                    <form id="feu-einsatz-setup-wizard-form" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
                         <input type="hidden" name="action" value="feu_einsatz_complete_setup" />
                         <?php wp_nonce_field('feu_einsatz_complete_setup', 'feu_einsatz_setup_nonce'); ?>
-                        <label><span><?php esc_html_e('Feuerwehrhaus-Adresse', 'feuer-einsatzberichte'); ?></span>
-                            <input type="text" name="feu_einsatz_area_station_street" required placeholder="<?php esc_attr_e('Strasse', 'feuer-einsatzberichte'); ?>" value="<?php echo esc_attr(get_option('feu_einsatz_area_station_street', '')); ?>" />
-                        </label>
-                        <div class="feu-einsatz-setup-wizard-grid">
-                            <label><span><?php esc_html_e('PLZ', 'feuer-einsatzberichte'); ?></span><input type="text" name="feu_einsatz_area_station_postcode" required pattern="[0-9]{5}" maxlength="5" value="<?php echo esc_attr(get_option('feu_einsatz_area_station_postcode', '')); ?>" /></label>
-                            <label><span><?php esc_html_e('Stadt', 'feuer-einsatzberichte'); ?></span><input type="text" name="feu_einsatz_area_station_city" required value="<?php echo esc_attr(get_option('feu_einsatz_area_station_city', 'Hamburg')); ?>" /></label>
+                        <button type="submit" name="feu_einsatz_setup_intent" value="later" class="feu-einsatz-setup-wizard-close" formnovalidate aria-label="<?php esc_attr_e('Ersteinrichtung schließen und später fortsetzen', 'feuer-einsatzberichte'); ?>">
+                            <span class="ti ti-x" aria-hidden="true"></span>
+                        </button>
+
+                        <header class="feu-einsatz-setup-wizard-head">
+                            <span class="feu-einsatz-setup-wizard-kicker"><?php esc_html_e('Schnellstart', 'feuer-einsatzberichte'); ?></span>
+                            <h2 id="feu-einsatz-setup-wizard-title"><?php esc_html_e('Ersteinrichtung', 'feuer-einsatzberichte'); ?></h2>
+                            <p><?php esc_html_e('In wenigen Schritten ist das Plugin bereit für den ersten Einsatzbericht.', 'feuer-einsatzberichte'); ?></p>
+                        </header>
+
+                        <ol class="feu-einsatz-setup-wizard-progress" aria-label="<?php esc_attr_e('Schritte der Ersteinrichtung', 'feuer-einsatzberichte'); ?>">
+                            <li><span>1</span><?php esc_html_e('Feuerwehrhaus', 'feuer-einsatzberichte'); ?></li>
+                            <li><span>2</span><?php esc_html_e('Einsatzstichworte', 'feuer-einsatzberichte'); ?></li>
+                            <li><span>3</span><?php esc_html_e('Beispieldaten', 'feuer-einsatzberichte'); ?></li>
+                        </ol>
+
+                        <div class="feu-einsatz-setup-wizard-section">
+                            <h3><?php esc_html_e('Feuerwehrhaus-Adresse', 'feuer-einsatzberichte'); ?></h3>
+                            <p class="description"><?php esc_html_e('Diese Angaben werden für Karten, Live-Vorschau und die Feuerwehrhaus-Markierung verwendet.', 'feuer-einsatzberichte'); ?></p>
+                            <label><span><?php esc_html_e('Straße und Hausnummer', 'feuer-einsatzberichte'); ?></span>
+                                <input type="text" name="feu_einsatz_area_station_street" required autocomplete="street-address" placeholder="<?php esc_attr_e('Musterstraße 1', 'feuer-einsatzberichte'); ?>" value="<?php echo esc_attr(get_option('feu_einsatz_area_station_street', '')); ?>" />
+                            </label>
+                            <div class="feu-einsatz-setup-wizard-grid">
+                                <label><span><?php esc_html_e('PLZ', 'feuer-einsatzberichte'); ?></span><input type="text" name="feu_einsatz_area_station_postcode" required pattern="[0-9]{5}" maxlength="5" inputmode="numeric" autocomplete="postal-code" value="<?php echo esc_attr(get_option('feu_einsatz_area_station_postcode', '')); ?>" /></label>
+                                <label><span><?php esc_html_e('Stadt', 'feuer-einsatzberichte'); ?></span><input type="text" name="feu_einsatz_area_station_city" required autocomplete="address-level2" value="<?php echo esc_attr(get_option('feu_einsatz_area_station_city', 'Hamburg')); ?>" /></label>
+                            </div>
                         </div>
-                        <fieldset><legend><?php esc_html_e('Einsatzstichworte', 'feuer-einsatzberichte'); ?></legend>
-                            <?php foreach ((array) $wizard_categories as $category) : ?><label class="feu-einsatz-setup-wizard-check"><input type="checkbox" name="feu_einsatz_categories[]" value="<?php echo esc_attr((int) $category->term_id); ?>" checked /> <?php echo esc_html($category->name); ?></label><?php endforeach; ?>
+
+                        <fieldset class="feu-einsatz-setup-wizard-section"><legend><?php esc_html_e('Einsatzstichworte', 'feuer-einsatzberichte'); ?></legend>
+                            <p class="description"><?php esc_html_e('Die empfohlenen Einsatzstichworte sind bereits ausgewählt und können später angepasst werden.', 'feuer-einsatzberichte'); ?></p>
+                            <div class="feu-einsatz-setup-wizard-categories">
+                                <?php foreach ((array) $wizard_categories as $category) : ?><label class="feu-einsatz-setup-wizard-check"><input type="checkbox" name="feu_einsatz_categories[]" value="<?php echo esc_attr((int) $category->term_id); ?>" checked /> <span><?php echo esc_html($category->name); ?></span></label><?php endforeach; ?>
+                            </div>
                         </fieldset>
-                        <fieldset class="feu-einsatz-setup-wizard-examples"><legend><?php esc_html_e('Beispieldaten anlegen', 'feuer-einsatzberichte'); ?></legend>
-                            <p class="description"><?php esc_html_e('Die Beispiele bleiben Entwurf bzw. Testdaten und können später gelöscht oder angepasst werden.', 'feuer-einsatzberichte'); ?></p>
-                            <label class="feu-einsatz-setup-wizard-check"><input type="checkbox" name="feu_einsatz_create_sample_report" value="1" /> <?php esc_html_e('Ersten Einsatzbericht als Beispiel anlegen', 'feuer-einsatzberichte'); ?></label>
+
+                        <fieldset class="feu-einsatz-setup-wizard-section feu-einsatz-setup-wizard-examples"><legend><?php esc_html_e('Beispieldaten anlegen', 'feuer-einsatzberichte'); ?></legend>
+                            <p class="description"><?php esc_html_e('Optional können Sie sichere Testdaten anlegen. Der Einsatzbericht wird nur als Entwurf gespeichert.', 'feuer-einsatzberichte'); ?></p>
+                            <label class="feu-einsatz-setup-wizard-check"><input type="checkbox" name="feu_einsatz_create_sample_report" value="1" /> <span><?php esc_html_e('Ersten Einsatzbericht als Beispiel anlegen', 'feuer-einsatzberichte'); ?></span></label>
                             <div class="feu-einsatz-setup-wizard-grid">
                                 <label><span><?php esc_html_e('Beispielstraße', 'feuer-einsatzberichte'); ?></span><input type="text" name="feu_einsatz_sample_street" placeholder="Musterstraße 1" /></label>
-                                <label><span><?php esc_html_e('Beispiel-PLZ', 'feuer-einsatzberichte'); ?></span><input type="text" name="feu_einsatz_sample_postcode" pattern="[0-9]{5}" maxlength="5" placeholder="22525" /></label>
+                                <label><span><?php esc_html_e('Beispiel-PLZ', 'feuer-einsatzberichte'); ?></span><input type="text" name="feu_einsatz_sample_postcode" pattern="[0-9]{5}" maxlength="5" inputmode="numeric" placeholder="22525" /></label>
                             </div>
                             <label><span><?php esc_html_e('Beispielstadt', 'feuer-einsatzberichte'); ?></span><input type="text" name="feu_einsatz_sample_city" placeholder="Hamburg" /></label>
-                            <label class="feu-einsatz-setup-wizard-check"><input type="checkbox" name="feu_einsatz_create_sample_participant" value="1" /> <?php esc_html_e('Ersten Teilnehmer als Beispiel anlegen', 'feuer-einsatzberichte'); ?></label>
+                            <label class="feu-einsatz-setup-wizard-check"><input type="checkbox" name="feu_einsatz_create_sample_participant" value="1" /> <span><?php esc_html_e('Ersten Teilnehmer als Beispiel anlegen', 'feuer-einsatzberichte'); ?></span></label>
                             <div class="feu-einsatz-setup-wizard-grid">
                                 <label><span><?php esc_html_e('Vorname', 'feuer-einsatzberichte'); ?></span><input type="text" name="feu_einsatz_sample_first_name" placeholder="Max" /></label>
                                 <label><span><?php esc_html_e('Nachname', 'feuer-einsatzberichte'); ?></span><input type="text" name="feu_einsatz_sample_last_name" placeholder="Mustermann" /></label>
                             </div>
                         </fieldset>
-                        <button type="submit" class="button button-primary"><?php esc_html_e('Einrichtung abschließen', 'feuer-einsatzberichte'); ?></button>
+
+                        <footer class="feu-einsatz-setup-wizard-actions">
+                            <p><?php esc_html_e('„Später“ blendet den Assistenten für 24 Stunden aus. Bereits gespeicherte Plugin-Einstellungen bleiben erhalten.', 'feuer-einsatzberichte'); ?></p>
+                            <div>
+                                <button type="submit" name="feu_einsatz_setup_intent" value="later" class="button button-secondary" formnovalidate><?php esc_html_e('Später einrichten', 'feuer-einsatzberichte'); ?></button>
+                                <button type="submit" name="feu_einsatz_setup_intent" value="complete" class="button button-primary"><?php esc_html_e('Einrichtung abschließen', 'feuer-einsatzberichte'); ?></button>
+                            </div>
+                        </footer>
                     </form>
                 </div>
             </div>
@@ -887,6 +924,14 @@ class FEU_Einsatz_Admin {
         if (!current_user_can('manage_options') || !check_admin_referer('feu_einsatz_complete_setup', 'feu_einsatz_setup_nonce')) {
             wp_die(esc_html__('Sicherheitsprüfung fehlgeschlagen.', 'feuer-einsatzberichte'));
         }
+
+        $setup_intent = sanitize_key(wp_unslash($_POST['feu_einsatz_setup_intent'] ?? 'complete'));
+        if ('later' === $setup_intent) {
+            update_option('feu_einsatz_setup_wizard_snoozed_until', time() + DAY_IN_SECONDS, false);
+            wp_safe_redirect(admin_url('admin.php?page=feuer-einsatzberichte&setup_postponed=1'));
+            exit;
+        }
+
         $street = sanitize_text_field(wp_unslash($_POST['feu_einsatz_area_station_street'] ?? ''));
         $postcode = preg_replace('/\D+/', '', (string) wp_unslash($_POST['feu_einsatz_area_station_postcode'] ?? ''));
         $city = sanitize_text_field(wp_unslash($_POST['feu_einsatz_area_station_city'] ?? ''));
@@ -932,8 +977,120 @@ class FEU_Einsatz_Admin {
             $categories
         );
         update_option('feu_einsatz_setup_wizard_pending', 0, false);
+        delete_option('feu_einsatz_setup_wizard_snoozed_until');
         wp_safe_redirect(admin_url('admin.php?page=feu-einsatz-einstellungen&setup_complete=1'));
         exit;
+    }
+
+    public function save_settings_snapshot(array $settings): void {
+        if (!current_user_can('manage_options') || empty($settings)) {
+            return;
+        }
+
+        $history = get_option('feu_einsatz_settings_history', []);
+        $history = is_array($history) ? $history : [];
+        $latest_settings = is_array($history[0]['settings'] ?? null) ? $history[0]['settings'] : [];
+        if (!empty($latest_settings) && wp_json_encode($latest_settings) === wp_json_encode($settings)) {
+            return;
+        }
+        array_unshift($history, [
+            'id' => wp_generate_uuid4(),
+            'created_at' => current_time('mysql'),
+            'user_id' => get_current_user_id(),
+            'settings' => $settings,
+        ]);
+
+        update_option('feu_einsatz_settings_history', array_slice($history, 0, 10), false);
+    }
+
+    public function get_settings_history(): array {
+        if (!current_user_can('manage_options')) {
+            return [];
+        }
+
+        $history = get_option('feu_einsatz_settings_history', []);
+        return is_array($history) ? array_values($history) : [];
+    }
+
+    public function restore_latest_settings_snapshot(): bool {
+        if (!current_user_can('manage_options')) {
+            return false;
+        }
+
+        $history = $this->get_settings_history();
+        $snapshot = array_shift($history);
+        $settings = is_array($snapshot) && is_array($snapshot['settings'] ?? null) ? $snapshot['settings'] : [];
+
+        if (empty($settings)) {
+            return false;
+        }
+
+        $current_settings = [];
+        foreach ($settings as $key => $value) {
+            $key = sanitize_key((string) $key);
+            if (0 !== strpos($key, 'feu_einsatz_') || in_array($key, ['feu_einsatz_version', 'feu_einsatz_schema_version'], true)) {
+                continue;
+            }
+            $current_settings[$key] = get_option($key);
+            update_option($key, $value, false);
+        }
+
+        if (!empty($current_settings)) {
+            array_unshift($history, [
+                'id' => wp_generate_uuid4(),
+                'created_at' => current_time('mysql'),
+                'user_id' => get_current_user_id(),
+                'settings' => $current_settings,
+            ]);
+        }
+        update_option('feu_einsatz_settings_history', array_slice($history, 0, 10), false);
+        $this->db->invalidate_statistics_dashboard_cache();
+        return true;
+    }
+
+    public function generate_factory_reset_code(): string {
+        if (!current_user_can('manage_options')) {
+            return '';
+        }
+
+        $user_id = get_current_user_id();
+        $last_hash = (string) get_user_meta($user_id, 'feu_einsatz_last_factory_reset_code_hash', true);
+        do {
+            $code = (string) random_int(1000000, 9999999);
+        } while ('' !== $last_hash && wp_check_password($code, $last_hash));
+
+        $code_hash = wp_hash_password($code);
+        update_user_meta($user_id, 'feu_einsatz_last_factory_reset_code_hash', $code_hash);
+        set_transient(
+            'feu_einsatz_factory_reset_' . $user_id,
+            $code_hash,
+            10 * MINUTE_IN_SECONDS
+        );
+        return $code;
+    }
+
+    public function reset_settings_with_code(string $code): bool {
+        if (!current_user_can('manage_options') || !preg_match('/^\d{7}$/', $code)) {
+            return false;
+        }
+
+        $transient_key = 'feu_einsatz_factory_reset_' . get_current_user_id();
+        $stored_hash = (string) get_transient($transient_key);
+        if ('' === $stored_hash || !wp_check_password($code, $stored_hash)) {
+            return false;
+        }
+
+        delete_transient($transient_key);
+        $current_settings = [];
+        foreach (array_keys(FEU_Einsatz_Installer::get_default_options()) as $option_key) {
+            if (!in_array($option_key, ['feu_einsatz_version', 'feu_einsatz_schema_version'], true)) {
+                $current_settings[$option_key] = get_option($option_key);
+            }
+        }
+        $this->save_settings_snapshot($current_settings);
+        FEU_Einsatz_Installer::reset_settings_to_defaults();
+        $this->db->invalidate_statistics_dashboard_cache();
+        return true;
     }
 
     private function create_setup_examples(bool $create_report, bool $create_participant, string $street, string $postcode, string $city, string $first_name, string $last_name, array $categories): void {

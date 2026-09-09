@@ -39,6 +39,27 @@ if (!$admin instanceof FEU_Einsatz_Admin) {
     exit(1);
 }
 
+wp_set_current_user(1);
+update_option('feu_einsatz_map_zoom', 15, false);
+$admin->save_settings_snapshot(['feu_einsatz_map_zoom' => 15]);
+update_option('feu_einsatz_map_zoom', 17, false);
+
+if (!$admin->restore_latest_settings_snapshot() || 15 !== (int) get_option('feu_einsatz_map_zoom')) {
+    fwrite(STDERR, "Settings history could not restore the previous value.\n");
+    exit(1);
+}
+
+$first_reset_code = $admin->generate_factory_reset_code();
+$second_reset_code = $admin->generate_factory_reset_code();
+if (!preg_match('/^\d{7}$/', $first_reset_code) || !preg_match('/^\d{7}$/', $second_reset_code) || $first_reset_code === $second_reset_code) {
+    fwrite(STDERR, "Factory reset codes are invalid or were repeated.\n");
+    exit(1);
+}
+if ($admin->reset_settings_with_code($first_reset_code) || !$admin->reset_settings_with_code($second_reset_code)) {
+    fwrite(STDERR, "Factory reset code expiry or validation failed.\n");
+    exit(1);
+}
+
 $report_id = wp_insert_post([
     'post_title' => 'Share-card CI report',
     'post_status' => 'publish',

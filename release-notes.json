@@ -1,6 +1,19 @@
 {
   "releases": [
     {
+      "version": "3.2.41",
+      "date": "2026-09-09",
+      "title": "Professioneller Schnellstart und sichere Einstellungen",
+      "summary": "Modernisiert die Ersteinrichtung und macht Konfigurationsaenderungen durch automatische Wiederherstellungspunkte und einen geschuetzten Werksreset sicher rueckgaengig.",
+      "changes": [
+        "Neu: Professioneller Schnellstart mit klaren Schritten, responsiver Darstellung, Schliessen-Schaltflaeche und der Option, die Einrichtung fuer 24 Stunden zu verschieben.",
+        "Neu: Bei jeder regulaeren Speicherung wird automatisch ein Wiederherstellungspunkt angelegt; die vorherige Konfiguration kann direkt geladen werden.",
+        "Sicherheit: Werkseinstellungen lassen sich nur mit einem zufaelligen, einmaligen 7-stelligen Code laden, der an den Administrator gebunden und zehn Minuten gueltig ist.",
+        "Datenschutz: Der Werksreset setzt nur Plugin-Einstellungen zurueck und behaelt Einsatzberichte, Medien, Archive und Teilnehmer.",
+        "Bedienung: Schutzcode und Zusatzaktionen koennen die normale Speichern-Schaltflaeche nicht durch versteckte Browser-Validierung blockieren."
+      ]
+    },
+    {
       "version": "3.2.40",
       "date": "2026-09-09",
       "title": "Hotfix fuer das Speichern der Einstellungen",

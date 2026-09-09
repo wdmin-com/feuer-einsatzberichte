@@ -164,3 +164,104 @@ body.feu-admin-ui input[type="radio"]:focus-visible {
   body.feu-admin-ui .feu-plugin-status-widget.is-ok .feu-plugin-status-toggle-state { animation: none; }
   body.feu-admin-ui .feu-einsatz-settings-main.is-saving .submit .button-primary::after { animation-duration: 1ms; }
 }
+
+/* First-run assistant and recoverable settings. */
+body.feu-admin-ui .feu-einsatz-setup-wizard {
+  position: fixed;
+  inset: 0;
+  z-index: 100100;
+  display: flex;
+  overflow-y: auto;
+  padding: 32px 20px;
+  background: rgba(29, 35, 39, .68);
+  backdrop-filter: blur(3px);
+}
+body.feu-admin-ui .feu-einsatz-setup-wizard-card {
+  position: relative;
+  width: min(780px, 100%);
+  max-height: none;
+  margin: auto;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--feu-border);
+  border-radius: 10px;
+  background: var(--feu-surface);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, .32);
+  animation: feuAdminRiseIn 220ms ease both;
+}
+body.feu-admin-ui .feu-einsatz-setup-wizard-card form { margin: 0; }
+body.feu-admin-ui .feu-einsatz-setup-wizard-close {
+  position: absolute;
+  z-index: 2;
+  top: 16px;
+  right: 16px;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: var(--feu-muted);
+  background: transparent;
+  cursor: pointer;
+}
+body.feu-admin-ui .feu-einsatz-setup-wizard-close:hover,
+body.feu-admin-ui .feu-einsatz-setup-wizard-close:focus-visible { color: var(--feu-text); border-color: var(--feu-border); background: var(--feu-surface-muted); }
+body.feu-admin-ui .feu-einsatz-setup-wizard-head { padding: 28px 64px 20px 28px; border-bottom: 1px solid var(--feu-border); }
+body.feu-admin-ui .feu-einsatz-setup-wizard-head h2 { margin: 3px 0 7px; font-size: 24px; }
+body.feu-admin-ui .feu-einsatz-setup-wizard-head p { margin: 0; color: var(--feu-muted); }
+body.feu-admin-ui .feu-einsatz-setup-wizard-kicker { color: var(--feu-blue-dark); font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+body.feu-admin-ui .feu-einsatz-setup-wizard-progress {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  margin: 0;
+  padding: 16px 28px;
+  border-bottom: 1px solid var(--feu-border);
+  background: var(--feu-surface-muted);
+  list-style: none;
+}
+body.feu-admin-ui .feu-einsatz-setup-wizard-progress li { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--feu-muted); font-size: 13px; font-weight: 600; }
+body.feu-admin-ui .feu-einsatz-setup-wizard-progress span { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; color: #fff; background: var(--feu-blue); }
+body.feu-admin-ui .feu-einsatz-setup-wizard-section { margin: 22px 28px 0; padding: 18px; border: 1px solid var(--feu-border); border-radius: 6px; background: #fff; }
+body.feu-admin-ui div.feu-einsatz-setup-wizard-section h3 { margin: 0 0 5px; font-size: 16px; }
+body.feu-admin-ui .feu-einsatz-setup-wizard-section > .description { margin: 0 0 14px; }
+body.feu-admin-ui .feu-einsatz-setup-wizard-section label:not(.feu-einsatz-setup-wizard-check) { display: grid; gap: 6px; margin-top: 12px; font-weight: 600; }
+body.feu-admin-ui .feu-einsatz-setup-wizard-grid { display: grid; grid-template-columns: minmax(140px, .55fr) minmax(220px, 1.45fr); gap: 14px; }
+body.feu-admin-ui .feu-einsatz-setup-wizard-categories { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 16px; max-height: 210px; padding: 4px; overflow-y: auto; }
+body.feu-admin-ui .feu-einsatz-setup-wizard-check { padding: 5px 2px; }
+body.feu-admin-ui .feu-einsatz-setup-wizard-actions { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-top: 24px; padding: 18px 28px; border-top: 1px solid var(--feu-border); background: var(--feu-surface-muted); }
+body.feu-admin-ui .feu-einsatz-setup-wizard-actions p { max-width: 390px; margin: 0; color: var(--feu-muted); font-size: 12px; }
+body.feu-admin-ui .feu-einsatz-setup-wizard-actions > div { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+
+body.feu-admin-ui .feu-admin-recovery-status { display: inline-flex; align-items: center; gap: 6px; padding: 6px 9px; border-radius: 999px; color: var(--feu-blue-dark); background: #f0f6fc; font-size: 12px; font-weight: 600; }
+body.feu-admin-ui .feu-admin-recovery-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+body.feu-admin-ui .feu-admin-recovery-card { display: grid; grid-template-columns: auto minmax(0, 1fr); align-content: start; gap: 12px; padding: 18px; border: 1px solid var(--feu-border); border-radius: 6px; background: var(--feu-surface-muted); }
+body.feu-admin-ui .feu-admin-recovery-card > .button,
+body.feu-admin-ui .feu-admin-recovery-card > .feu-admin-reset-controls { grid-column: 2; justify-self: start; }
+body.feu-admin-ui .feu-admin-recovery-card h3 { margin: 0 0 5px; font-size: 15px; }
+body.feu-admin-ui .feu-admin-recovery-card p { margin: 0; color: var(--feu-muted); }
+body.feu-admin-ui .feu-admin-recovery-icon { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 6px; color: var(--feu-blue-dark); background: #fff; font-size: 20px; }
+body.feu-admin-ui .feu-admin-recovery-card--danger { border-color: #e6b8b8; background: #fcf0f1; }
+body.feu-admin-ui .feu-admin-recovery-card--danger .feu-admin-recovery-icon { color: #b32d2e; }
+body.feu-admin-ui .feu-admin-reset-controls { display: grid; gap: 12px; width: min(100%, 390px); }
+body.feu-admin-ui .feu-admin-reset-code { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; padding: 12px; border-left: 4px solid #dba617; background: #fff; }
+body.feu-admin-ui .feu-admin-reset-code span { color: var(--feu-muted); font-size: 12px; font-weight: 600; }
+body.feu-admin-ui .feu-admin-reset-code output { grid-row: span 2; font: 700 22px/1.2 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: .12em; }
+body.feu-admin-ui .feu-admin-reset-code small { color: var(--feu-muted); }
+body.feu-admin-ui .feu-admin-danger-button { color: #fff; border-color: #b32d2e; background: #b32d2e; }
+body.feu-admin-ui .feu-admin-danger-button:hover,
+body.feu-admin-ui .feu-admin-danger-button:focus { color: #fff; border-color: #8a2424; background: #8a2424; }
+
+@media (max-width: 782px) {
+  body.feu-admin-ui .feu-einsatz-setup-wizard { padding: 12px; }
+  body.feu-admin-ui .feu-einsatz-setup-wizard-progress,
+  body.feu-admin-ui .feu-admin-recovery-grid { grid-template-columns: 1fr; }
+  body.feu-admin-ui .feu-einsatz-setup-wizard-progress { gap: 8px; }
+  body.feu-admin-ui .feu-einsatz-setup-wizard-grid,
+  body.feu-admin-ui .feu-einsatz-setup-wizard-categories { grid-template-columns: 1fr; }
+  body.feu-admin-ui .feu-einsatz-setup-wizard-actions { align-items: stretch; flex-direction: column; }
+  body.feu-admin-ui .feu-einsatz-setup-wizard-actions > div { justify-content: stretch; }
+  body.feu-admin-ui .feu-einsatz-setup-wizard-actions .button { flex: 1 1 auto; }
+}

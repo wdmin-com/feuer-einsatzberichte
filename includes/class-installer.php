@@ -387,8 +387,8 @@ class FEU_Einsatz_Installer {
         
     }
     
-    private static function set_default_options() {
-        $default_options = [
+    public static function get_default_options(): array {
+        return [
             'feu_einsatz_version' => FEU_EINSATZ_VERSION,
             'feu_einsatz_update_manifest_url' => FEU_Einsatz_Updater::get_default_manifest_url(),
             'feu_einsatz_functions' => self::get_default_functions(),
@@ -418,8 +418,15 @@ class FEU_Einsatz_Installer {
             'feu_einsatz_area_page_enabled' => 0,
             'feu_einsatz_area_show_calls' => 1,
             'feu_einsatz_area_postcodes' => [],
+            'feu_einsatz_area_station_street' => '',
+            'feu_einsatz_area_station_postcode' => '',
+            'feu_einsatz_area_station_city' => 'Hamburg',
+            'feu_einsatz_area_station_logo_id' => 0,
+            'feu_einsatz_area_station_logo_size' => 40,
             'feu_einsatz_default_comments_enabled' => 0,
+            'feu_einsatz_default_card_variant' => 'modern',
             'feu_einsatz_backup_retention_limit' => 5,
+            'feu_einsatz_related_reports_display' => 'cards',
             'feu_einsatz_related_reports_count' => 6,
             'feu_einsatz_single_desaturate_organizations' => 0,
             'feu_einsatz_single_info_fields' => ['street', 'location', 'date', 'time', 'category', 'organizations'],
@@ -466,12 +473,43 @@ class FEU_Einsatz_Installer {
             'feu_einsatz_photo_watermark_opacity' => 36,
             'feu_einsatz_photo_watermark_scale' => 42,
         ];
+    }
+
+    private static function set_default_options() {
+        $default_options = self::get_default_options();
         
         foreach ($default_options as $key => $value) {
             if (get_option($key) === false) {
                 add_option($key, $value);
             }
         }
+    }
+
+    public static function reset_settings_to_defaults(): array {
+        $default_options = self::get_default_options();
+
+        foreach ($default_options as $key => $value) {
+            update_option($key, $value, false);
+        }
+
+        $category_result = self::install_default_categories();
+        if (is_array($category_result) && !empty($category_result['root_id'])) {
+            $category_ids = get_terms([
+                'taxonomy' => 'category',
+                'hide_empty' => false,
+                'parent' => (int) $category_result['root_id'],
+                'fields' => 'ids',
+            ]);
+            if (!is_wp_error($category_ids)) {
+                update_option('feu_einsatz_categories', array_values(array_filter(array_map('absint', (array) $category_ids))), false);
+            }
+        }
+
+        update_option('feu_einsatz_setup_wizard_pending', 0, false);
+        update_option('feu_einsatz_version', FEU_EINSATZ_VERSION, false);
+        delete_option('feu_einsatz_setup_wizard_snoozed_until');
+
+        return $default_options;
     }
 
     private static function maybe_prepare_default_categories_prompt() {

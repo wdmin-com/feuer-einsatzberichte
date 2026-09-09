@@ -196,6 +196,7 @@ foreach ($meta_keys as $meta_key) {
 }
 
 delete_metadata('user', 0, '_feu_einsatz_participant_ranking_unlocked_until', '', true);
+delete_metadata('user', 0, 'feu_einsatz_last_factory_reset_code_hash', '', true);
 
 $upload_dir = wp_upload_dir();
 $plugin_directories = [
