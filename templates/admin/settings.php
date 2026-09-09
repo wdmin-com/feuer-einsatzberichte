@@ -1331,6 +1331,7 @@ $settings_summary_cards = [
         echo FEU_Einsatz_Template_Helpers::render_guarded('templates/admin/settings/partials/tab-organisationen.php', [
             'active_tab' => $active_tab,
             'organizations' => $organizations,
+            'organizations_enabled' => (int) get_option('feu_einsatz_feature_organizations_enabled', 1),
         ], 'Einstellungen: Organisationen');
 
         echo FEU_Einsatz_Template_Helpers::render_guarded('templates/admin/settings/partials/tab-kategorien.php', [
@@ -1339,7 +1340,6 @@ $settings_summary_cards = [
             'selected_categories' => $selected_categories,
             'default_categories_root' => $default_categories_root,
             'default_categories_prompt' => $default_categories_prompt,
-            'organizations_enabled' => (int) get_option('feu_einsatz_feature_organizations_enabled', 1),
         ], 'Einstellungen: Einsatzstichworte');
 
         echo FEU_Einsatz_Template_Helpers::render_guarded('templates/admin/settings/partials/tab-karten.php', [

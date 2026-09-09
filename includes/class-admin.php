@@ -702,6 +702,24 @@ class FEU_Einsatz_Admin {
             return;
         }
 
+        $current_page = isset($_GET['page']) ? sanitize_key(wp_unslash($_GET['page'])) : '';
+        if (!in_array($current_page, ['feuer-einsatzberichte', 'feu-einsatz-einstellungen'], true)) {
+            return;
+        }
+
+        $setup_complete = isset($_GET['setup_complete']) && '1' === sanitize_text_field(wp_unslash($_GET['setup_complete']));
+        $setup_error = isset($_GET['setup_error']) && '1' === sanitize_text_field(wp_unslash($_GET['setup_error']));
+
+        if ($setup_complete) {
+            echo '<div class="notice notice-success is-dismissible"><p>'
+                . esc_html__('Die Ersteinrichtung wurde gespeichert.', 'feuer-einsatzberichte')
+                . '</p></div>';
+        } elseif ($setup_error) {
+            echo '<div class="notice notice-error"><p>'
+                . esc_html__('Die Ersteinrichtung konnte nicht gespeichert werden. Bitte pruefen Sie Adresse, PLZ, Stadt und Einsatzstichworte.', 'feuer-einsatzberichte')
+                . '</p></div>';
+        }
+
         $setup_status = $this->get_plugin_setup_status();
 
         if (!empty($setup_status['complete'])) {
@@ -732,6 +750,11 @@ class FEU_Einsatz_Admin {
 
     public function render_plugin_setup_status_panel(): void {
         if (!$this->is_plugin_setup_status_screen()) {
+            return;
+        }
+
+        $current_page = isset($_GET['page']) ? sanitize_key(wp_unslash($_GET['page'])) : '';
+        if (!in_array($current_page, ['feuer-einsatzberichte', 'feu-einsatz-einstellungen'], true)) {
             return;
         }
 
@@ -808,7 +831,13 @@ class FEU_Einsatz_Admin {
                 </div>
             </section>
         </div>
-        <?php if (1 === (int) get_option('feu_einsatz_setup_wizard_pending', 0)) : ?>
+        <?php
+        $show_setup_wizard = current_user_can('manage_options')
+            && 1 === (int) get_option('feu_einsatz_setup_wizard_pending', 0)
+            && empty($setup_status['complete'])
+            && in_array($current_page, ['feuer-einsatzberichte', 'feu-einsatz-einstellungen'], true);
+        ?>
+        <?php if ($show_setup_wizard) : ?>
             <?php
             $wizard_root = get_term_by('slug', 'einsatze', 'category');
             $wizard_categories = $wizard_root && !is_wp_error($wizard_root)
@@ -862,6 +891,28 @@ class FEU_Einsatz_Admin {
         $postcode = preg_replace('/\D+/', '', (string) wp_unslash($_POST['feu_einsatz_area_station_postcode'] ?? ''));
         $city = sanitize_text_field(wp_unslash($_POST['feu_einsatz_area_station_city'] ?? ''));
         $categories = array_values(array_filter(array_map('absint', (array) wp_unslash($_POST['feu_einsatz_categories'] ?? []))));
+        $categories = array_values(array_filter($categories, static function ($term_id) {
+            $term = get_term((int) $term_id, 'category');
+            return $term && !is_wp_error($term);
+        }));
+
+        if (empty($categories) && class_exists('FEU_Einsatz_Installer')) {
+            $installed = FEU_Einsatz_Installer::install_default_categories();
+            $root_id = is_array($installed) ? absint($installed['root_id'] ?? 0) : 0;
+
+            if ($root_id > 0) {
+                $installed_ids = get_terms([
+                    'taxonomy' => 'category',
+                    'hide_empty' => false,
+                    'parent' => $root_id,
+                    'fields' => 'ids',
+                ]);
+                if (!is_wp_error($installed_ids)) {
+                    $categories = array_values(array_filter(array_map('absint', (array) $installed_ids)));
+                }
+            }
+        }
+
         if ('' === $street || !preg_match('/^\d{5}$/', $postcode) || '' === $city || empty($categories)) {
             wp_safe_redirect(add_query_arg(['page' => 'feu-einsatz-einstellungen', 'setup_error' => 1], admin_url('admin.php')));
             exit;
