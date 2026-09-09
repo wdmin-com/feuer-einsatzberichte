@@ -1,6 +1,17 @@
 {
   "releases": [
     {
+      "version": "3.2.40",
+      "date": "2026-09-09",
+      "title": "Hotfix fuer das Speichern der Einstellungen",
+      "summary": "Behebt eine unsichtbare HTML-Validierung, die das Absenden der gesamten Einstellungsform blockiert hat.",
+      "changes": [
+        "Kritisch behoben: Die Schaltflaeche Einstellungen speichern sendet die Hauptform wieder korrekt ab.",
+        "Behoben: Ein verborgenes Pflichtfeld des Strassenregister-Dialogs blockiert keine anderen Einstellungsbereiche mehr.",
+        "Validierung: Der Strassenregister-Dialog prueft den Strassennamen weiterhin vor seinem eigenen AJAX-Speichervorgang."
+      ]
+    },
+    {
       "version": "3.2.39",
       "date": "2026-09-09",
       "title": "Zuverlaessige Ersteinrichtung",

@@ -270,7 +270,7 @@ if (!isset($active_tab) || 'strassenregister' !== (string) $active_tab) {
                         type="text"
                         id="feu-einsatz-edit-street-registry-street"
                         class="regular-text feu-einsatz-street-registry-input"
-                        required
+                        aria-required="true"
                     />
                 </label>
                 <label>
