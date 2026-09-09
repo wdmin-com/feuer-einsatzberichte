@@ -34,7 +34,6 @@ foreach (['total', 'categories', 'participants', 'daily_stats', 'daily_report_en
 
 $database->invalidate_statistics_dashboard_cache();
 
-update_option('feu_einsatz_social_share_image_mode', 'generated');
 $admin = $core->get_admin();
 
 if (!$admin instanceof FEU_Einsatz_Admin) {
@@ -59,6 +58,7 @@ if ($admin->reset_settings_with_code($first_reset_code) || !$admin->reset_settin
     feu_einsatz_ci_fail('Factory reset code expiry or validation failed.');
 }
 
+update_option('feu_einsatz_social_share_image_mode', 'generated');
 $report_id = wp_insert_post([
     'post_title' => 'Share-card CI report',
     'post_status' => 'publish',
