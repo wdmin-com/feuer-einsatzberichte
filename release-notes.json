@@ -1,6 +1,20 @@
 {
   "releases": [
     {
+      "version": "3.2.42",
+      "date": "2026-09-09",
+      "title": "Selektive und auditierte Datenbereinigung",
+      "summary": "Erweitert den geschuetzten Reset zu einer klaren, selektiven Komplettbereinigung fuer Teilnehmer, Einsatzberichte, Statistik, Einstellungen, Protokolle und Archive.",
+      "changes": [
+        "Neu: Administratoren waehlen jeden dauerhaft zu loeschenden Datenbereich einzeln per Checkbox aus.",
+        "Sicherheit: Die Ausfuehrung benoetigt einen benutzergebundenen, einmaligen 7-stelligen Code und eine ausdrueckliche Bestaetigung.",
+        "Audit: Nach jeder Bereinigung bleibt ein neuer Protokolleintrag mit Benutzer, Auswahl und Anzahl der entfernten Datensaetze erhalten, auch wenn alte Protokolle geloescht wurden.",
+        "Bereinigung: Teilnehmerzuordnungen, Statistik-Caches, generierte Kartenbilder, Share-Card-Aufgaben sowie Archivdateien werden konsistent mit entfernt.",
+        "Datenschutz: Normale WordPress-Medien, die nicht vom Plugin erzeugt wurden, bleiben beim Loeschen von Einsatzberichten erhalten.",
+        "Qualitaet: Der Integrationstest prueft Bereinigung, Audit-Protokoll und erneutes Speichern von Daten nach dem Vorgang."
+      ]
+    },
+    {
       "version": "3.2.41",
       "date": "2026-09-09",
       "title": "Professioneller Schnellstart und sichere Einstellungen",

@@ -245,7 +245,17 @@ body.feu-admin-ui .feu-admin-recovery-card p { margin: 0; color: var(--feu-muted
 body.feu-admin-ui .feu-admin-recovery-icon { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 6px; color: var(--feu-blue-dark); background: #fff; font-size: 20px; }
 body.feu-admin-ui .feu-admin-recovery-card--danger { border-color: #e6b8b8; background: #fcf0f1; }
 body.feu-admin-ui .feu-admin-recovery-card--danger .feu-admin-recovery-icon { color: #b32d2e; }
-body.feu-admin-ui .feu-admin-reset-controls { display: grid; gap: 12px; width: min(100%, 390px); }
+body.feu-admin-ui .feu-admin-recovery-card--danger { grid-column: 1 / -1; }
+body.feu-admin-ui .feu-admin-reset-controls { display: grid; gap: 12px; width: min(100%, 860px); }
+body.feu-admin-ui .feu-admin-purge-warning { display: flex; align-items: center; gap: 9px; padding: 11px 13px; border-left: 4px solid #b32d2e; color: #8a2424; background: #fff; }
+body.feu-admin-ui .feu-admin-purge-warning .ti { flex: 0 0 auto; font-size: 19px; }
+body.feu-admin-ui .feu-admin-purge-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+body.feu-admin-ui .feu-admin-purge-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+body.feu-admin-ui .feu-admin-purge-option { display: flex; align-items: flex-start; gap: 10px; min-width: 0; padding: 12px; border: 1px solid #e6b8b8; border-radius: 6px; background: #fff; cursor: pointer; }
+body.feu-admin-ui .feu-admin-purge-option:hover { border-color: #b32d2e; }
+body.feu-admin-ui .feu-admin-purge-option input { flex: 0 0 auto; margin: 2px 0 0; }
+body.feu-admin-ui .feu-admin-purge-option span { display: grid; gap: 3px; min-width: 0; }
+body.feu-admin-ui .feu-admin-purge-option small { color: var(--feu-muted); line-height: 1.4; }
 body.feu-admin-ui .feu-admin-reset-code { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; padding: 12px; border-left: 4px solid #dba617; background: #fff; }
 body.feu-admin-ui .feu-admin-reset-code span { color: var(--feu-muted); font-size: 12px; font-weight: 600; }
 body.feu-admin-ui .feu-admin-reset-code output { grid-row: span 2; font: 700 22px/1.2 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: .12em; }
@@ -260,7 +270,8 @@ body.feu-admin-ui .feu-admin-danger-button:focus { color: #fff; border-color: #8
   body.feu-admin-ui .feu-admin-recovery-grid { grid-template-columns: 1fr; }
   body.feu-admin-ui .feu-einsatz-setup-wizard-progress { gap: 8px; }
   body.feu-admin-ui .feu-einsatz-setup-wizard-grid,
-  body.feu-admin-ui .feu-einsatz-setup-wizard-categories { grid-template-columns: 1fr; }
+  body.feu-admin-ui .feu-einsatz-setup-wizard-categories,
+  body.feu-admin-ui .feu-admin-purge-options { grid-template-columns: 1fr; }
   body.feu-admin-ui .feu-einsatz-setup-wizard-actions { align-items: stretch; flex-direction: column; }
   body.feu-admin-ui .feu-einsatz-setup-wizard-actions > div { justify-content: stretch; }
   body.feu-admin-ui .feu-einsatz-setup-wizard-actions .button { flex: 1 1 auto; }

@@ -454,6 +454,27 @@ class FEU_Einsatz_Backup_Manager {
         @rmdir($path);
     }
 
+    private function count_directory_files($path) {
+        if (is_file($path) || is_link($path)) {
+            return 1;
+        }
+
+        $items = is_dir($path) ? scandir($path) : false;
+        if (!is_array($items)) {
+            return 0;
+        }
+
+        $count = 0;
+        foreach ($items as $item) {
+            if ('.' === $item || '..' === $item) {
+                continue;
+            }
+            $count += $this->count_directory_files(trailingslashit($path) . $item);
+        }
+
+        return $count;
+    }
+
     private function copy_directory_recursive($source, $destination) {
         if (!file_exists($source)) {
             return;
@@ -1224,6 +1245,44 @@ class FEU_Einsatz_Backup_Manager {
 
     public function get_archives() {
         return $this->db->get_archives(200);
+    }
+
+    /**
+     * Permanently removes every managed archive file, including orphaned files.
+     * Database records are removed separately by FEU_Einsatz_Database.
+     */
+    public function purge_all_archive_files(): int {
+        $deleted_files = 0;
+        $directories = [$this->get_archive_storage_dir()];
+        $upload_data = $this->get_upload_data();
+
+        if (empty($upload_data['error']) && !empty($upload_data['basedir'])) {
+            $directories[] = trailingslashit($upload_data['basedir']) . 'feuer-einsatzberichte-archives';
+        }
+
+        foreach (array_unique($directories) as $directory) {
+            if (!is_dir($directory)) {
+                continue;
+            }
+
+            $items = scandir($directory);
+            if (!is_array($items)) {
+                continue;
+            }
+
+            foreach ($items as $item) {
+                if ('.' === $item || '..' === $item) {
+                    continue;
+                }
+
+                $path = trailingslashit($directory) . $item;
+                $deleted_files += $this->count_directory_files($path);
+                $this->delete_directory_recursive($path);
+            }
+        }
+
+        $this->ensure_private_directory($this->get_archive_storage_dir());
+        return $deleted_files;
     }
 
     private function get_archive_path($archive) {

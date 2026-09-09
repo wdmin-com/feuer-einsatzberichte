@@ -2316,6 +2316,57 @@ class FEU_Einsatz_Database {
         );
     }
 
+    /**
+     * Permanently removes selected plugin-owned database records.
+     * Table names are internal constants assembled from the active WordPress prefix.
+     *
+     * @param string[] $sections Allowed values: participants, statistics, logs, archives.
+     * @return array<string,int>
+     */
+    public function purge_data_sections(array $sections): array {
+        $allowed = ['participants', 'statistics', 'logs', 'archives'];
+        $sections = array_values(array_intersect($allowed, array_map('sanitize_key', $sections)));
+        $result = [];
+
+        if (in_array('participants', $sections, true)) {
+            $result['participants'] = (int) $this->wpdb->get_var("SELECT COUNT(*) FROM {$this->table_participants}");
+            // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Internal table name, no user input.
+            $this->wpdb->query("DELETE FROM {$this->table_participants}");
+
+            if (!in_array('statistics', $sections, true)) {
+                $result['statistics'] = (int) $this->wpdb->get_var("SELECT COUNT(*) FROM {$this->table_stats}");
+                // Participant statistics cannot remain valid without participants.
+                // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Internal table name, no user input.
+                $this->wpdb->query("DELETE FROM {$this->table_stats}");
+            }
+        }
+
+        if (in_array('statistics', $sections, true)) {
+            $result['statistics'] = (int) $this->wpdb->get_var("SELECT COUNT(*) FROM {$this->table_stats}");
+            $result['statistics_cache'] = (int) $this->wpdb->get_var("SELECT COUNT(*) FROM {$this->table_statistics_cache}");
+            // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Internal table name, no user input.
+            $this->wpdb->query("DELETE FROM {$this->table_stats}");
+            // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Internal table name, no user input.
+            $this->wpdb->query("DELETE FROM {$this->table_statistics_cache}");
+        }
+
+        if (in_array('archives', $sections, true)) {
+            $result['archives'] = (int) $this->wpdb->get_var("SELECT COUNT(*) FROM {$this->table_archives}");
+            // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Internal table name, no user input.
+            $this->wpdb->query("DELETE FROM {$this->table_archives}");
+        }
+
+        if (in_array('logs', $sections, true)) {
+            $result['logs'] = (int) $this->wpdb->get_var("SELECT COUNT(*) FROM {$this->table_logs}");
+            // The final audit entry is written by the admin service after this deletion.
+            // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Internal table name, no user input.
+            $this->wpdb->query("DELETE FROM {$this->table_logs}");
+        }
+
+        $this->invalidate_statistics_dashboard_cache();
+        return $result;
+    }
+
     public function get_logs($args = []) {
         $args = wp_parse_args($args, [
             'limit' => 100,

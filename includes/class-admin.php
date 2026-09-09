@@ -1070,6 +1070,10 @@ class FEU_Einsatz_Admin {
     }
 
     public function reset_settings_with_code(string $code): bool {
+        return !is_wp_error($this->purge_selected_data_with_code($code, ['settings']));
+    }
+
+    private function consume_factory_reset_code(string $code): bool {
         if (!current_user_can('manage_options') || !preg_match('/^\d{7}$/', $code)) {
             return false;
         }
@@ -1081,16 +1085,125 @@ class FEU_Einsatz_Admin {
         }
 
         delete_transient($transient_key);
-        $current_settings = [];
-        foreach (array_keys(FEU_Einsatz_Installer::get_default_options()) as $option_key) {
-            if (!in_array($option_key, ['feu_einsatz_version', 'feu_einsatz_schema_version'], true)) {
-                $current_settings[$option_key] = get_option($option_key);
-            }
-        }
-        $this->save_settings_snapshot($current_settings);
-        FEU_Einsatz_Installer::reset_settings_to_defaults();
-        $this->db->invalidate_statistics_dashboard_cache();
         return true;
+    }
+
+    /**
+     * Permanently removes only the explicitly selected plugin data sections.
+     *
+     * @param string[] $sections
+     * @return array<string,mixed>|WP_Error
+     */
+    public function purge_selected_data_with_code(string $code, array $sections) {
+        $allowed_sections = ['participants', 'reports', 'statistics', 'settings', 'logs', 'archives'];
+        $sections = array_values(array_unique(array_intersect(
+            $allowed_sections,
+            array_map('sanitize_key', $sections)
+        )));
+
+        if (empty($sections)) {
+            return new WP_Error('no_purge_sections', __('Bitte wählen Sie mindestens einen Datenbereich aus.', 'feuer-einsatzberichte'));
+        }
+
+        if (!$this->consume_factory_reset_code($code)) {
+            return new WP_Error('invalid_purge_code', __('Der Sicherheitscode ist ungültig oder abgelaufen.', 'feuer-einsatzberichte'));
+        }
+
+        global $wpdb;
+        $actor = wp_get_current_user();
+        $result = [
+            'sections' => $sections,
+            'counts' => [],
+        ];
+
+        if (in_array('reports', $sections, true)) {
+            $deleted_reports = 0;
+            do {
+                $report_ids = get_posts([
+                    'post_type' => 'post',
+                    'post_status' => array_keys(get_post_stati()),
+                    'posts_per_page' => 100,
+                    'fields' => 'ids',
+                    'no_found_rows' => true,
+                    'suppress_filters' => true,
+                    'orderby' => 'ID',
+                    'order' => 'ASC',
+                    'meta_query' => [
+                        [
+                            'key' => '_feu_einsatz_einsatzbericht',
+                            'value' => '1',
+                            'compare' => '=',
+                        ],
+                    ],
+                ]);
+
+                $batch_deleted = 0;
+                foreach (array_map('absint', (array) $report_ids) as $report_id) {
+                    $this->db->save_participant_stats($report_id, []);
+                    $this->delete_generated_map_assets($report_id);
+                    if (wp_delete_post($report_id, true)) {
+                        $deleted_reports++;
+                        $batch_deleted++;
+                    }
+                }
+            } while (!empty($report_ids) && $batch_deleted > 0);
+            $result['counts']['reports'] = $deleted_reports;
+        }
+
+        if (in_array('participants', $sections, true)) {
+            delete_post_meta_by_key('_feu_einsatz_teilnehmer');
+        }
+
+        if (in_array('archives', $sections, true)) {
+            $backup_manager = Feuer_Einsatzberichte_Core::get_instance()->get_backup();
+            $result['counts']['archive_files'] = $backup_manager instanceof FEU_Einsatz_Backup_Manager
+                ? $backup_manager->purge_all_archive_files()
+                : 0;
+        }
+
+        $database_sections = array_values(array_intersect($sections, ['participants', 'statistics', 'logs', 'archives']));
+        $result['counts'] = array_merge($result['counts'], $this->db->purge_data_sections($database_sections));
+
+        if (in_array('settings', $sections, true)) {
+            $settings_pattern = $wpdb->esc_like('feu_einsatz_') . '%';
+            $result['counts']['settings'] = (int) $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT COUNT(*) FROM {$wpdb->options} WHERE option_name LIKE %s",
+                    $settings_pattern
+                )
+            );
+            FEU_Einsatz_Installer::purge_settings_for_fresh_start();
+        }
+
+        $this->db->invalidate_statistics_dashboard_cache();
+
+        $section_labels = [
+            'participants' => __('Teilnehmer', 'feuer-einsatzberichte'),
+            'reports' => __('Einsatzberichte', 'feuer-einsatzberichte'),
+            'statistics' => __('Statistik', 'feuer-einsatzberichte'),
+            'settings' => __('Einstellungen', 'feuer-einsatzberichte'),
+            'logs' => __('Protokolle', 'feuer-einsatzberichte'),
+            'archives' => __('Archive', 'feuer-einsatzberichte'),
+        ];
+        $selected_labels = array_map(static function ($section) use ($section_labels) {
+            return $section_labels[$section] ?? $section;
+        }, $sections);
+
+        FEU_Einsatz_Logger::log(
+            'data_purge_completed',
+            'plugin_data',
+            0,
+            sprintf(__('Datenbereiche dauerhaft gelöscht: %s', 'feuer-einsatzberichte'), implode(', ', $selected_labels)),
+            [
+                'sections' => $sections,
+                'counts' => $result['counts'],
+                'performed_by_user_id' => (int) $actor->ID,
+                'performed_by_user_login' => (string) $actor->user_login,
+                'performed_by_display_name' => (string) $actor->display_name,
+            ]
+        );
+
+        return $result;
     }
 
     private function create_setup_examples(bool $create_report, bool $create_participant, string $street, string $postcode, string $city, string $first_name, string $last_name, array $categories): void {
@@ -4771,6 +4884,7 @@ class FEU_Einsatz_Admin {
         $this->clear_generated_map_queue($post_id, $clear_status);
         $this->clear_background_geocode_schedule($post_id);
         $this->clear_generated_map_publish_hold($post_id);
+        $this->report_share->clear_share_card_generation($post_id);
         $this->cleanup_previous_generated_map_thumbnail($post_id);
         $this->cleanup_generated_map_preview_file($post_id);
         delete_post_meta($post_id, self::GENERATED_MAP_SIGNATURE_META);

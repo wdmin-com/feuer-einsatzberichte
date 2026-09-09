@@ -153,6 +153,15 @@ class FEU_Einsatz_Report_Share {
         }
     }
 
+    public function clear_share_card_generation(int $post_id): void {
+        $post_id = absint($post_id);
+        if ($post_id < 1) {
+            return;
+        }
+
+        wp_clear_scheduled_hook(self::BACKGROUND_GENERATION_HOOK, [$post_id]);
+    }
+
     /** Queue a generated Open Graph card so social crawlers never trigger GD work. */
     public function queue_share_card_generation(int $post_id): void {
         $post_id = absint($post_id);

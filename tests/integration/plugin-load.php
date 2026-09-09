@@ -71,4 +71,65 @@ if (!wp_next_scheduled('feu_einsatz_generate_share_card_background', [(int) $rep
     feu_einsatz_ci_fail('Share-card background generation was not queued.');
 }
 
-WP_CLI::success('Plugin loaded, activated and statistics cache service responded.');
+$participant_id = $database->save_participant(0, [
+    'vorname' => 'CI',
+    'nachname' => 'Teilnehmer',
+    'member_function' => 'Test',
+]);
+if (!$participant_id) {
+    feu_einsatz_ci_fail('Participant fixture could not be saved before purge.');
+}
+
+$backup = $core->get_backup();
+$archive_file = trailingslashit($backup->get_archive_storage_dir()) . 'ci-purge-test.zip';
+file_put_contents($archive_file, 'CI archive fixture');
+$archive_saved = $database->save_archive([
+    'archive_key' => 'ci-purge-test',
+    'filename' => basename($archive_file),
+    'label' => 'CI purge test',
+]);
+if (!$archive_saved) {
+    feu_einsatz_ci_fail('Archive fixture could not be saved before purge.');
+}
+
+FEU_Einsatz_Logger::log('settings_saved', 'settings', 0, 'CI log before purge');
+$purge_code = $admin->generate_factory_reset_code();
+$purge_result = $admin->purge_selected_data_with_code($purge_code, [
+    'participants',
+    'reports',
+    'statistics',
+    'settings',
+    'logs',
+    'archives',
+]);
+
+if (is_wp_error($purge_result)) {
+    feu_einsatz_ci_fail('Selective purge failed: ' . $purge_result->get_error_message());
+}
+if (get_post($report_id) || $database->get_participant((int) $participant_id)) {
+    feu_einsatz_ci_fail('Reports or participants remained after selective purge.');
+}
+if (file_exists($archive_file) || !empty($database->get_archives(10))) {
+    feu_einsatz_ci_fail('Archive files or records remained after selective purge.');
+}
+if (wp_next_scheduled('feu_einsatz_generate_share_card_background', [(int) $report_id])) {
+    feu_einsatz_ci_fail('A deleted report retained its share-card cron event.');
+}
+if (1 !== $database->count_logs(['action_type' => 'data_purge_completed'])) {
+    feu_einsatz_ci_fail('The final user audit record was not preserved after log purge.');
+}
+if (1 !== (int) get_option('feu_einsatz_setup_wizard_pending', 0) || false !== get_option('feu_einsatz_settings_history', false)) {
+    feu_einsatz_ci_fail('Settings purge did not create a clean first-run state.');
+}
+
+$saved_after_purge = $database->save_participant(0, [
+    'vorname' => 'Neu',
+    'nachname' => 'Gespeichert',
+    'member_function' => 'Test',
+]);
+update_option('feu_einsatz_map_zoom', 14, false);
+if (!$saved_after_purge || 14 !== (int) get_option('feu_einsatz_map_zoom')) {
+    feu_einsatz_ci_fail('New data could not be saved after selective purge.');
+}
+
+WP_CLI::success('Plugin loaded; recovery, selective purge, audit logging and post-purge saving succeeded.');

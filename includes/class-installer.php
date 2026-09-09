@@ -512,6 +512,54 @@ class FEU_Einsatz_Installer {
         return $default_options;
     }
 
+    /**
+     * Removes every plugin option/transient and recreates a clean first-run state.
+     * Content tables, reports and media are intentionally handled by their own
+     * independently selectable purge sections.
+     */
+    public static function purge_settings_for_fresh_start(): array {
+        global $wpdb;
+
+        $option_patterns = [
+            $wpdb->esc_like('feu_einsatz_') . '%',
+            $wpdb->esc_like('_transient_feu_einsatz_') . '%',
+            $wpdb->esc_like('_transient_timeout_feu_einsatz_') . '%',
+        ];
+
+        foreach ($option_patterns as $pattern) {
+            $option_names = $wpdb->get_col(
+                $wpdb->prepare(
+                    "SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE %s",
+                    $pattern
+                )
+            );
+            foreach ((array) $option_names as $option_name) {
+                delete_option((string) $option_name);
+            }
+        }
+
+        self::set_default_options();
+        self::install_default_categories();
+
+        $root = get_term_by('slug', 'einsatze', 'category');
+        if ($root && !is_wp_error($root)) {
+            $category_ids = get_terms([
+                'taxonomy' => 'category',
+                'hide_empty' => false,
+                'parent' => (int) $root->term_id,
+                'fields' => 'ids',
+            ]);
+            if (!is_wp_error($category_ids)) {
+                update_option('feu_einsatz_categories', array_values(array_filter(array_map('absint', (array) $category_ids))), false);
+            }
+        }
+
+        update_option('feu_einsatz_setup_wizard_pending', 1, false);
+        update_option('feu_einsatz_schema_version', self::SCHEMA_VERSION, false);
+        update_option('feu_einsatz_version', FEU_EINSATZ_VERSION, false);
+        return self::get_default_options();
+    }
+
     private static function maybe_prepare_default_categories_prompt() {
         $existing = get_term_by('slug', 'einsatze', 'category');
         if (!$existing) {

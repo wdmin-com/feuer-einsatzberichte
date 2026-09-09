@@ -307,6 +307,7 @@ class FEU_Einsatz_Logger {
             'archive_pruned' => __('Archiv bereinigt', 'feuer-einsatzberichte'),
             'settings_saved' => __('Einstellungen gespeichert', 'feuer-einsatzberichte'),
             'settings_cache_cleared' => __('Strassen-Cache geleert', 'feuer-einsatzberichte'),
+            'data_purge_completed' => __('Daten dauerhaft gelöscht', 'feuer-einsatzberichte'),
             'update_check_refreshed' => __('Update-Prüfung aktualisiert', 'feuer-einsatzberichte'),
             'runtime_error' => __('Laufzeitfehler', 'feuer-einsatzberichte'),
         ];
@@ -335,6 +336,7 @@ class FEU_Einsatz_Logger {
             'organization' => __('Organisation', 'feuer-einsatzberichte'),
             'archive' => __('Archiv', 'feuer-einsatzberichte'),
             'settings' => __('Einstellungen', 'feuer-einsatzberichte'),
+            'plugin_data' => __('Plugin-Daten', 'feuer-einsatzberichte'),
             'plugin_error' => __('Plugin-Fehler', 'feuer-einsatzberichte'),
             'plugin_fatal' => __('Plugin-Fatalfehler', 'feuer-einsatzberichte'),
         ];
@@ -565,6 +567,10 @@ class FEU_Einsatz_Logger {
             'category_labels' => __('Einsatzstichworte', 'feuer-einsatzberichte'),
             'categories' => __('Einsatzstichworte', 'feuer-einsatzberichte'),
             'selected_categories' => __('Einsatzstichworte', 'feuer-einsatzberichte'),
+            'sections' => __('Gelöschte Datenbereiche', 'feuer-einsatzberichte'),
+            'performed_by_user_id' => __('Ausgeführt von Benutzer-ID', 'feuer-einsatzberichte'),
+            'performed_by_user_login' => __('Ausgeführt von Benutzerkonto', 'feuer-einsatzberichte'),
+            'performed_by_display_name' => __('Ausgeführt von', 'feuer-einsatzberichte'),
             'name' => __('Name', 'feuer-einsatzberichte'),
             'color' => __('Farbe', 'feuer-einsatzberichte'),
             'post_link' => __('Beitragslink', 'feuer-einsatzberichte'),
