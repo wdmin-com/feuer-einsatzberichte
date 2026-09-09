@@ -1,6 +1,17 @@
 {
   "releases": [
     {
+      "version": "3.2.39",
+      "date": "2026-09-09",
+      "title": "Zuverlaessige Ersteinrichtung",
+      "summary": "Behebt die dauerhafte Einrichtungsanzeige, speichert Pflichtdaten robust und richtet Schalter sowie Auswahlfelder sauber aus.",
+      "changes": [
+        "Behoben: Die Ersteinrichtung speichert Feuerwehrhaus-Adresse, Einsatzstichworte und optionale Beispieldaten zuverlaessig.",
+        "Behoben: Der Einrichtungsdialog erscheint nur auf Dashboard und Einstellungen und blockiert keine anderen Plugin-Bereiche.",
+        "Bedienung: Kraefte-vor-Ort-Schalter, Kategorien, Checkboxen und mobile Darstellung sind korrekt ausgerichtet."
+      ]
+    },
+    {
       "version": "3.2.38",
       "date": "2026-09-08",
       "title": "Aufgeraeumte Administration und korrigierte Texte",
