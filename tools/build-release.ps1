@@ -27,7 +27,8 @@ function Read-JsonFile {
         [string] $Path
     )
 
-    return Get-Content -LiteralPath $Path -Raw | ConvertFrom-Json
+    $utf8 = New-Object System.Text.UTF8Encoding($false)
+    return [System.IO.File]::ReadAllText($Path, $utf8) | ConvertFrom-Json
 }
 
 function Write-JsonFile {
@@ -136,19 +137,14 @@ if ([string]::IsNullOrWhiteSpace($version)) {
     throw 'Version could not be read from update-manifest.json.'
 }
 
-$currentRelease = $releaseNotes.releases | Where-Object { [string] $_.version -eq $version } | Select-Object -First 1
-if ($currentRelease) {
-    $encodedVersion = [System.Net.WebUtility]::HtmlEncode($version)
-    $changeItems = @($currentRelease.changes | ForEach-Object {
+$manifest.sections.changelog = @($releaseNotes.releases | ForEach-Object {
+    $encodedVersion = [System.Net.WebUtility]::HtmlEncode([string] $_.version)
+    $changeItems = @($_.changes | ForEach-Object {
         '<li>' + [System.Net.WebUtility]::HtmlEncode([string] $_) + '</li>'
     }) -join ''
-    $currentHeading = '<h4>' + $encodedVersion + '</h4>'
-    $existingChangelog = [string] $manifest.sections.changelog
 
-    if (-not $existingChangelog.StartsWith($currentHeading)) {
-        $manifest.sections.changelog = $currentHeading + '<ul>' + $changeItems + '</ul>' + $existingChangelog
-    }
-}
+    '<h4>' + $encodedVersion + '</h4><ul>' + $changeItems + '</ul>'
+}) -join ''
 
 $releaseRoot = Join-Path $repoRoot 'release'
 $versionDir = Join-Path $releaseRoot $version
@@ -213,6 +209,59 @@ Copy-Item -LiteralPath $versionZipPath -Destination $versionAliasZipPath -Force
 Copy-Item -LiteralPath $versionZipPath -Destination $latestZipPath -Force
 Copy-Item -LiteralPath $versionZipPath -Destination $latestAliasZipPath -Force
 Copy-Item -LiteralPath $versionZipPath -Destination $snapshotZipPath -Force
+
+$demoManifestRoot = Join-Path $buildRoot 'demo-backup'
+$demoManifestPath = Join-Path $demoManifestRoot 'manifest.json'
+$demoBackupName = "$pluginSlug-demo-hamburg-backup-$version.zip"
+$demoBackupPath = Join-Path $versionDir $demoBackupName
+$demoBackupLatestPath = Join-Path $latestDir "$pluginSlug-demo-hamburg-backup-latest.zip"
+$demoBundleRoot = Join-Path $buildRoot 'demo-package'
+$demoBundleContent = Join-Path $demoBundleRoot "$pluginSlug-demo"
+$demoBundleName = "$pluginSlug-demo-$version.zip"
+$demoBundlePath = Join-Path $versionDir $demoBundleName
+$demoBundleLatestPath = Join-Path $latestDir "$pluginSlug-demo-latest.zip"
+
+foreach ($path in @($demoManifestRoot, $demoBundleRoot)) {
+    if (Test-Path -LiteralPath $path) {
+        Remove-Item -LiteralPath $path -Recurse -Force
+    }
+    [System.IO.Directory]::CreateDirectory($path) | Out-Null
+}
+
+& node (Join-Path $scriptRoot 'build-demo-backup.mjs') $demoManifestPath
+if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $demoManifestPath)) {
+    throw 'Hamburg demo backup manifest could not be generated.'
+}
+
+New-NormalizedZip -SourceRoot $demoManifestRoot -ZipPath $demoBackupPath
+Copy-Item -LiteralPath $demoBackupPath -Destination $demoBackupLatestPath -Force
+Copy-Item -LiteralPath $demoBackupPath -Destination (Join-Path $snapshotDir $demoBackupName) -Force
+
+[System.IO.Directory]::CreateDirectory($demoBundleContent) | Out-Null
+Copy-Item -LiteralPath $versionZipPath -Destination (Join-Path $demoBundleContent $versionZipName) -Force
+Copy-Item -LiteralPath $demoBackupPath -Destination (Join-Path $demoBundleContent $demoBackupName) -Force
+Write-Utf8NoBom -Path (Join-Path $demoBundleContent 'README-DE.txt') -Content @"
+FEUER-EINSATZBERICHTE – HAMBURG-DEMO $version
+
+1. Installieren oder aktualisieren Sie das Plugin mit $versionZipName.
+2. Öffnen Sie in WordPress: Einsatzberichte > Archive.
+3. Laden Sie $demoBackupName hoch.
+4. Stellen Sie das hochgeladene Archiv wieder her.
+
+WICHTIG: Die Wiederherstellung ersetzt die vorhandenen Plugin-Daten. Das Plugin erstellt davor automatisch ein Sicherheitsarchiv.
+
+Demoinhalt:
+- Feuerwehrhaus: Feuerwehrakademie Hamburg, Bredowstraße 4, 22113 Hamburg
+- 25 veröffentlichte, vollständig erfundene Einsatzberichte
+- 10 Einsatzberichte aus 2026 und 15 aus 2025
+- 25 vollständig erfundene Teilnehmer
+- 6 Organisationen, Kategorien, Teilnehmerzuordnungen und Kartenlinien
+
+Alle Personen- und Einsatzangaben sind Demodaten und stellen keine realen Ereignisse dar.
+"@
+New-NormalizedZip -SourceRoot $demoBundleRoot -ZipPath $demoBundlePath
+Copy-Item -LiteralPath $demoBundlePath -Destination $demoBundleLatestPath -Force
+Copy-Item -LiteralPath $demoBundlePath -Destination (Join-Path $snapshotDir $demoBundleName) -Force
 
 $packageHash = Get-FileHashHex -Path $versionZipPath
 $today = Get-Date -Format 'yyyy-MM-dd'

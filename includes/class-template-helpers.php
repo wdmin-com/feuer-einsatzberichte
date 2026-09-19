@@ -3715,6 +3715,8 @@ class FEU_Einsatz_Template_Helpers {
             'time' => (string) get_post_meta($post_id, '_feu_einsatz_uhrzeit', true),
             'latitude' => (string) get_post_meta($post_id, '_feu_einsatz_latitude', true),
             'longitude' => (string) get_post_meta($post_id, '_feu_einsatz_longitude', true),
+            'street_cache_version' => (string) get_post_meta($post_id, FEU_Einsatz_Street_Cache::POST_META_VERSION, true),
+            'street_cache_revision' => (string) get_post_meta($post_id, FEU_Einsatz_Street_Cache::POST_META_REVISION, true),
             'participants' => maybe_serialize(get_post_meta($post_id, '_feu_einsatz_teilnehmer', true)),
             'organizations' => maybe_serialize(get_post_meta($post_id, '_feu_einsatz_organisationen', true)),
             'gallery' => maybe_serialize(get_post_meta($post_id, '_feu_einsatz_gallery', true)),

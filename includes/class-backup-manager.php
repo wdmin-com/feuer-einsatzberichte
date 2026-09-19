@@ -1651,8 +1651,9 @@ class FEU_Einsatz_Backup_Manager {
                 'color' => sanitize_hex_color(isset($row['color']) ? $row['color'] : '#0a4b78') ?: '#0a4b78',
                 'post_link' => esc_url_raw(isset($row['post_link']) ? $row['post_link'] : ''),
                 'is_archived' => !empty($row['is_archived']) ? 1 : 0,
+                'sort_order' => isset($row['sort_order']) ? (int) $row['sort_order'] : 0,
                 'created_at' => isset($row['created_at']) ? $row['created_at'] : current_time('mysql'),
-            ], ['%d', '%s', '%s', '%s', '%d', '%s']);
+            ], ['%d', '%s', '%s', '%s', '%d', '%d', '%s']);
         }
     }
 

@@ -10,6 +10,7 @@ class FEU_Einsatz_Street_Cache {
     const CACHE_PREFIX = 'feu_einsatz_street_geometry_';
     const CACHE_INDEX_OPTION = 'feu_einsatz_street_cache_keys';
     const POST_META_VERSION = '_feu_einsatz_street_cache_version';
+    const POST_META_REVISION = '_feu_einsatz_street_cache_revision';
 
     public static function normalize_address_parts($street, $plz = '', $city = '') {
         $street = self::normalize_string($street);
@@ -117,6 +118,7 @@ class FEU_Einsatz_Street_Cache {
         update_post_meta($post_id, '_feu_einsatz_street_geometry_final', $data['geometry']);
         update_post_meta($post_id, '_feu_einsatz_street_center_final', $data['center']);
         update_post_meta($post_id, self::POST_META_VERSION, self::CACHE_VERSION);
+        update_post_meta($post_id, self::POST_META_REVISION, sprintf('%.6F', microtime(true)));
 
         return true;
     }
@@ -180,6 +182,7 @@ class FEU_Einsatz_Street_Cache {
             '_feu_einsatz_street_center_final',
             '_feu_einsatz_display_address',
             self::POST_META_VERSION,
+            self::POST_META_REVISION,
         ];
     }
 

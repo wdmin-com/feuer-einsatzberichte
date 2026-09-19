@@ -59,12 +59,42 @@ if ($admin->reset_settings_with_code($first_reset_code) || !$admin->reset_settin
 }
 
 update_option('feu_einsatz_social_share_image_mode', 'generated');
+update_option('feu_einsatz_map_preview_highlight_color', '#2563eb', false);
 $report_id = wp_insert_post([
     'post_title' => 'Share-card CI report',
     'post_status' => 'publish',
     'post_type' => 'post',
 ]);
 update_post_meta($report_id, '_feu_einsatz_einsatzbericht', '1');
+update_post_meta($report_id, '_feu_einsatz_strasse', 'Bredowstraße');
+update_post_meta($report_id, '_feu_einsatz_plz', '22113');
+update_post_meta($report_id, '_feu_einsatz_stadt', 'Hamburg');
+update_post_meta($report_id, '_feu_einsatz_latitude', '53.528320');
+update_post_meta($report_id, '_feu_einsatz_longitude', '10.083210');
+$street_geometry = [
+    'geometry' => [[
+        'points' => [
+            ['lat' => 53.527900, 'lng' => 10.081900],
+            ['lat' => 53.528320, 'lng' => 10.083210],
+            ['lat' => 53.528780, 'lng' => 10.084650],
+        ],
+        'highway' => 'secondary',
+        'kind' => 'road',
+    ]],
+    'center' => [53.528320, 10.083210],
+];
+if (!FEU_Einsatz_Street_Cache::set_post_cache((int) $report_id, $street_geometry)) {
+    feu_einsatz_ci_fail('Street geometry fixture could not be saved.');
+}
+$street_revision = get_post_meta($report_id, FEU_Einsatz_Street_Cache::POST_META_REVISION, true);
+$single_context = FEU_Einsatz_Template_Helpers::get_single_context(get_post($report_id));
+if (
+    '' === (string) $street_revision
+    || '#2563eb' !== (string) ($single_context['map']['config']['highlight_color'] ?? '')
+    || empty($single_context['map']['config']['geometry'])
+) {
+    feu_einsatz_ci_fail('Street geometry or selected highlight color did not reach the public map context.');
+}
 $admin->get_report_share()->queue_share_card_generation((int) $report_id);
 
 if (!wp_next_scheduled('feu_einsatz_generate_share_card_background', [(int) $report_id])) {

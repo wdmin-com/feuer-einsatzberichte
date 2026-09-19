@@ -68,3 +68,9 @@ jobs:
         run: |
           wp plugin activate feuer-einsatzberichte --path="$RUNNER_TEMP/wordpress"
           wp eval-file "$GITHUB_WORKSPACE/tests/integration/plugin-load.php" --path="$RUNNER_TEMP/wordpress"
+      - name: Build and restore Hamburg demo backup
+        run: |
+          node "$GITHUB_WORKSPACE/tools/build-demo-backup.mjs" "$RUNNER_TEMP/demo-backup/manifest.json"
+          cd "$RUNNER_TEMP/demo-backup"
+          zip -q "$RUNNER_TEMP/feuer-einsatzberichte-demo-backup.zip" manifest.json
+          DEMO_BACKUP_PATH="$RUNNER_TEMP/feuer-einsatzberichte-demo-backup.zip" wp eval-file "$GITHUB_WORKSPACE/tests/integration/demo-backup.php" --path="$RUNNER_TEMP/wordpress"

@@ -1,6 +1,20 @@
 {
   "releases": [
     {
+      "version": "3.2.43",
+      "date": "2026-09-19",
+      "title": "Hamburg-Demo und robuste Straßenmarkierung",
+      "summary": "Liefert ein importierbares Hamburg-Demoarchiv und stellt sicher, dass aktualisierte Straßengeometrien unmittelbar in der öffentlichen Karte erscheinen.",
+      "changes": [
+        "Neu: Separates Demo-Paket mit einem nativen Plugin-Backup für 25 Hamburger Einsatzberichte, davon 10 aus 2026 und 15 aus 2025.",
+        "Neu: Das Demoarchiv enthält 25 Teilnehmer, sechs Organisationen, Einsatzstichworte, Teilnehmerzuordnungen und eine vollständig konfigurierte Feuerwehrakademie Hamburg.",
+        "Karte: Alle Demo-Einsatzberichte enthalten lokale Straßengeometrien und funktionieren ohne Geometrieabruf beim ersten öffentlichen Seitenaufruf.",
+        "Behoben: Der öffentliche Seiten-Cache berücksichtigt jetzt Revision und Version der Straßengeometrie, sodass eine nachträglich erzeugte Linie nicht durch einen alten Kontext verborgen bleibt.",
+        "Geprüft: Die frei wählbare Farbe der Straßenmarkierung wird gespeichert und an Live-Karte sowie Kartenbild übergeben.",
+        "Qualität: Der WordPress-Integrationstest prüft Straßengeometrie, Cache-Revision und die ausgewählte Markierungsfarbe."
+      ]
+    },
+    {
       "version": "3.2.42",
       "date": "2026-09-09",
       "title": "Selektive und auditierte Datenbereinigung",
