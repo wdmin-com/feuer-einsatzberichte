@@ -89,7 +89,10 @@ if (!is_array($station) || empty($station['latitude']) || empty($station['longit
 
 $dashboard_current = $database->get_statistics_dashboard_data(2026);
 $dashboard_previous = $database->get_statistics_dashboard_data(2025);
-if (10 !== (int) ($dashboard_current['total'] ?? 0) || 15 !== (int) ($dashboard_previous['total'] ?? 0)) {
+if (
+    10 !== (int) ($dashboard_current['total']['total_einsaetze'] ?? 0)
+    || 15 !== (int) ($dashboard_previous['total']['total_einsaetze'] ?? 0)
+) {
     feu_einsatz_demo_ci_fail('Statistics dashboard did not reflect restored demo years.');
 }
 
