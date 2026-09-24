@@ -1,6 +1,18 @@
 {
   "releases": [
     {
+      "version": "3.2.69",
+      "date": "2026-09-24",
+      "title": "Kompakte Statistik-Anordnung",
+      "summary": "Die Kategorieverteilung nutzt den verfügbaren Raum sinnvoller; die operativen Tageskarten stehen übersichtlich nebeneinander.",
+      "changes": [
+        "Behoben: Ein überflüssiges HTML-Element nach dem Donut-Block konnte die Statistik-Gitterstruktur aufbrechen und großen Leerraum erzeugen.",
+        "Layout: Die Kategorieverteilung ist auf eine sinnvolle Lesebreite begrenzt; Diagramm und Liste erscheinen auf großen Bildschirmen nebeneinander.",
+        "Bedienung: Die Umschalter Donut, Balken und Polar sind kompakt horizontal angeordnet.",
+        "Übersicht: Häufigste Wochentage und Spitzen-Tage liegen auf Desktop-Bildschirmen in derselben Reihe und werden erst mobil untereinander dargestellt."
+      ]
+    },
+    {
       "version": "3.2.68",
       "date": "2026-09-24",
       "title": "Farbstarke Statistik und installierbare Release-Prüfung",

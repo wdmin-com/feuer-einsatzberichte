@@ -3191,10 +3191,18 @@
 
 .feu-einsatz-admindek-visuals {
     display: grid;
-    grid-template-columns: minmax(0, 1.45fr) minmax(260px, 0.75fr) repeat(2, minmax(240px, 0.7fr));
+    grid-template-columns: minmax(0, 1.45fr) minmax(300px, 0.9fr);
+    grid-template-areas:
+        "monthly categories"
+        "weekdays peak-days";
     gap: 18px;
     margin: 22px 0;
 }
+
+.feu-einsatz-admindek-card--monthly { grid-area: monthly; }
+.feu-einsatz-admindek-card--categories { grid-area: categories; }
+.feu-einsatz-admindek-card--weekdays { grid-area: weekdays; }
+.feu-einsatz-admindek-card--peak-days { grid-area: peak-days; }
 
 .feu-einsatz-admindek-card {
     position: relative;
@@ -3451,6 +3459,9 @@
 
     .feu-einsatz-admindek-visuals {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-areas:
+            "monthly categories"
+            "weekdays peak-days";
     }
 }
 
@@ -3465,6 +3476,11 @@
 
     .feu-einsatz-admindek-visuals {
         grid-template-columns: 1fr;
+        grid-template-areas:
+            "monthly"
+            "categories"
+            "weekdays"
+            "peak-days";
     }
 
     .feu-einsatz-admindek-card,
@@ -4199,11 +4215,13 @@
 }
 
 .feu-einsatz-category-donut-layout {
-    display: grid;
+    display: grid !important;
     grid-template-columns: minmax(240px, 320px) minmax(260px, 1fr);
     gap: 28px;
     justify-items: stretch;
     align-items: stretch;
+    width: min(100%, 980px);
+    margin: 0;
     padding: 24px;
     border: 1px solid #d8e4f2;
     border-radius: 16px;
@@ -4219,6 +4237,22 @@
     padding: 10px;
     border-radius: 50%;
     background: radial-gradient(circle, #fff 0 47%, transparent 47.5%);
+}
+
+.category-chart-container .feu-admin-chart-switcher {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+    gap: 6px;
+    margin: 0 0 12px;
+}
+
+.category-chart-container .feu-admin-chart-switcher-btn {
+    width: 100%;
+    min-height: 32px;
+    padding: 0 6px;
+    font-size: 11px;
+    line-height: 1.15;
 }
 
 .category-list {

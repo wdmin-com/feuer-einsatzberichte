@@ -950,7 +950,7 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
     </section>
 
     <section class="feu-einsatz-admindek-visuals" aria-label="<?php esc_attr_e('Grafische Statistikübersicht', 'feuer-einsatzberichte'); ?>">
-        <div class="feu-einsatz-admindek-card feu-einsatz-admindek-card--wide">
+        <div class="feu-einsatz-admindek-card feu-einsatz-admindek-card--wide feu-einsatz-admindek-card--monthly">
             <div class="feu-einsatz-admindek-card-head">
                 <div>
                     <span><i class="ti ti-chart-line"></i><?php esc_html_e('Monatsverlauf', 'feuer-einsatzberichte'); ?></span>
@@ -963,7 +963,7 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
             </div>
         </div>
 
-        <div class="feu-einsatz-admindek-card">
+        <div class="feu-einsatz-admindek-card feu-einsatz-admindek-card--categories">
             <div class="feu-einsatz-admindek-card-head">
                 <div>
                     <span><i class="ti ti-chart-donut"></i><?php esc_html_e('Einsatzstichworte', 'feuer-einsatzberichte'); ?></span>
@@ -983,10 +983,9 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
                     <?php endforeach; ?>
                 </div>
             <?php endif; ?>
-            </div>
         </div>
 
-        <div class="feu-einsatz-admindek-card">
+        <div class="feu-einsatz-admindek-card feu-einsatz-admindek-card--weekdays">
             <div class="feu-einsatz-admindek-card-head">
                 <div>
                     <span><i class="ti ti-calendar-week"></i><?php esc_html_e('Häufigste Wochentage', 'feuer-einsatzberichte'); ?></span>
@@ -1005,7 +1004,7 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
             </div>
         </div>
 
-        <div class="feu-einsatz-admindek-card">
+        <div class="feu-einsatz-admindek-card feu-einsatz-admindek-card--peak-days">
             <div class="feu-einsatz-admindek-card-head">
                 <div>
                     <span><i class="ti ti-calendar-star"></i><?php esc_html_e('Spitzen-Tage', 'feuer-einsatzberichte'); ?></span>
