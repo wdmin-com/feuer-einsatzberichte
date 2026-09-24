@@ -1,6 +1,17 @@
 {
   "releases": [
     {
+      "version": "3.2.70",
+      "date": "2026-09-24",
+      "title": "Kontraststarker Einsatzkalender",
+      "summary": "Datum und Einsatzanzahl in der Kalenderansicht sind jetzt bei jeder Ausprägung klar voneinander lesbar.",
+      "changes": [
+        "Kalender: Aktive Tage verwenden eine helle Cyan-Fläche mit dunkler Datumszahl und einem klar abgegrenzten türkisfarbenen Zähler.",
+        "Kalender: Tage mit hoher Einsatzdichte werden in Teal dargestellt; die Datumszahl ist weiß, der Zähler erscheint als kontrastierender bernsteinfarbener Badge.",
+        "Bedienung: Die Anzahl ist nicht länger roter Fließtext, sondern ein eigener kompakter Zähler mit ausreichend Kontrast."
+      ]
+    },
+    {
       "version": "3.2.69",
       "date": "2026-09-24",
       "title": "Kompakte Statistik-Anordnung",

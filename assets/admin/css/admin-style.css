@@ -4022,9 +4022,15 @@
 }
 
 .feu-einsatz-month-day.is-active {
-    background: rgba(10, 75, 120, var(--feu-einsatz-day-intensity, 0.2));
-    border-color: rgba(10, 75, 120, 0.24);
+    border-color: #7dd3fc;
+    background: #e0f2fe;
     cursor: pointer;
+}
+
+.feu-einsatz-month-day.is-active.is-intense {
+    border-color: #0f766e;
+    background: linear-gradient(145deg, #0f766e, #0e7490);
+    box-shadow: 0 3px 8px rgba(14, 116, 144, 0.24);
 }
 
 .feu-einsatz-day-popover {
@@ -4096,10 +4102,34 @@
     color: #0f172a;
 }
 
+.feu-einsatz-month-day.is-active .feu-einsatz-month-day-number {
+    color: #0c4a6e;
+    font-weight: 800;
+}
+
+.feu-einsatz-month-day.is-intense .feu-einsatz-month-day-number {
+    color: #ffffff;
+    text-shadow: 0 1px 1px rgba(15, 23, 42, 0.25);
+}
+
 .feu-einsatz-month-day-count {
+    display: inline-grid;
+    min-width: 16px;
+    min-height: 16px;
+    place-items: center;
+    padding: 0 3px;
+    border-radius: 999px;
+    background: #0e7490;
+    color: #ffffff;
     font-size: 11px;
-    font-weight: 700;
-    color: #ff0000;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.feu-einsatz-month-day.is-intense .feu-einsatz-month-day-count {
+    background: #fef3c7;
+    color: #92400e;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.2);
 }
 
 .feu-einsatz-participant-jump {

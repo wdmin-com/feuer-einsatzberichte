@@ -1356,8 +1356,12 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
                                     $count = isset($count_by_date[$date_str]) ? (int) $count_by_date[$date_str] : 0;
                                     $intensity = $max_count > 0 ? max(0.12, min(1, $count / $max_count)) : 0.12;
                                     $style = $count > 0 ? 'style="--feu-einsatz-day-intensity:' . esc_attr((string) $intensity) . ';"' : '';
+                                    $day_classes = $count > 0 ? 'is-active' : '';
+                                    if ($count > 0 && $intensity >= 0.55) {
+                                        $day_classes .= ' is-intense';
+                                    }
                                     ?>
-                                    <div class="feu-einsatz-month-day <?php echo $count > 0 ? 'is-active' : ''; ?>" <?php echo $style; ?> title="<?php echo esc_attr($day . '.' . $month_number . '.' . $jahr . ': ' . $count . ' Einsätze'); ?>">
+                                    <div class="feu-einsatz-month-day <?php echo esc_attr($day_classes); ?>" <?php echo $style; ?> title="<?php echo esc_attr($day . '.' . $month_number . '.' . $jahr . ': ' . $count . ' Einsätze'); ?>">
                                         <span class="feu-einsatz-month-day-number"><?php echo esc_html($day); ?></span>
                                         <span class="feu-einsatz-month-day-count"><?php echo $count > 0 ? esc_html($count) : ''; ?></span>
                                     </div>
