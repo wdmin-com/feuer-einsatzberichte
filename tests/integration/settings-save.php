@@ -36,6 +36,10 @@ $_POST = [
     'feu_einsatz_settings_section_visibility' => $settings_section_visibility,
 ];
 
+// check_admin_referer() reads the request bag. In a real HTTP request PHP fills
+// this automatically; an eval-file integration test has to mirror it explicitly.
+$_REQUEST = array_merge($_REQUEST, $_POST);
+
 $admin->render_settings();
 
 fwrite(STDERR, "::error title=Settings form integration test::Settings renderer returned without completing the POST redirect.\n");
