@@ -3098,12 +3098,27 @@ class FEU_Einsatz_Template_Helpers {
      * Coordinate-format invariant: normalize_map_geometry() yields associative
      * lat/lng points. Any crop or filter added here must preserve that format (or
      * normalize it explicitly); accepting only numeric [lat, lng] pairs makes the
-     * "length" and "radius" modes silently return an empty street.
+     * "length" mode silently return an empty street. Radius is deliberately a
+     * circle-only presentation and never returns a highlighted street line.
      */
     public static function apply_street_highlight_mode($geometry, $latitude, $longitude, $settings = null) {
-        $lines = self::normalize_map_geometry($geometry);
         $settings = is_array($settings) ? array_merge(self::get_street_highlight_settings(), $settings) : self::get_street_highlight_settings();
         $mode = in_array($settings['mode'], ['full', 'length', 'radius'], true) ? $settings['mode'] : 'full';
+
+        // A radius describes an area around the incident point, not an
+        // additionally highlighted road. Returning no line here is the single
+        // source of truth for public maps, editor previews and generated images.
+        if ('radius' === $mode) {
+            return [
+                'geometry' => [],
+                'mode' => 'radius',
+                'radius_meters' => is_numeric($latitude) && is_numeric($longitude)
+                    ? max(20, min(5000, absint($settings['radius_meters'])))
+                    : 0,
+            ];
+        }
+
+        $lines = self::normalize_map_geometry($geometry);
         if (empty($settings['include_pedestrian'])) {
             $lines = array_values(array_filter($lines, static function($line) {
                 return 'pedestrian' !== ($line['kind'] ?? 'road');
@@ -3114,25 +3129,10 @@ class FEU_Einsatz_Template_Helpers {
             // A coordinate is enough to show the radius circle. This is
             // important while a report is still fetching its street geometry:
             // the map must not degrade to the "not available" placeholder.
-            $radius = 'radius' === $mode && is_numeric($latitude) && is_numeric($longitude)
-                ? max(20, min(5000, absint($settings['radius_meters'])))
-                : 0;
-
-            return ['geometry' => $lines, 'mode' => $mode, 'radius_meters' => $radius];
+            return ['geometry' => $lines, 'mode' => $mode, 'radius_meters' => 0];
         }
 
         $origin = ['lat' => (float) $latitude, 'lng' => (float) $longitude];
-
-        if ('radius' === $mode) {
-            $radius = max(20, min(5000, absint($settings['radius_meters'])));
-            $filtered = [];
-
-            foreach ($lines as $line) {
-                $filtered = array_merge($filtered, self::clip_map_line_to_radius($line, $origin, $radius));
-            }
-
-            return ['geometry' => $filtered, 'mode' => 'radius', 'radius_meters' => $radius];
-        }
 
         $closest = null;
         foreach ($lines as $line_index => $line) {

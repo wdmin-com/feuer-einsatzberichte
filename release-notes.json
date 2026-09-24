@@ -1,6 +1,18 @@
 {
   "releases": [
     {
+      "version": "3.2.75",
+      "date": "2026-09-24",
+      "title": "Radius zeigt ausschließlich den Einsatzbereich",
+      "summary": "Der Kartenmodus Radius zeichnet nur den ausgewählten Kreis um den Einsatzort und keine Straßen-Hervorhebung.",
+      "changes": [
+        "Karte: Im Radiusmodus wird keine Straßen-, Fußweg- oder Zusatzstraßenlinie mehr hervorgehoben.",
+        "Konsistenz: Öffentliche Karte, Editor-Live-Vorschau, Einstellungen-Vorschau sowie erzeugte SVG- und PNG-Karten verwenden dieselbe Kreis-only-Regel.",
+        "Robustheit: Auch eine alte, noch zwischengespeicherte Straßen-Geometrie kann im Browser nicht mehr über dem Radius gezeichnet werden.",
+        "Qualität: Der WordPress-Integrationstest prüft ausdrücklich, dass der Radius keine Liniengeometrie enthält."
+      ]
+    },
+    {
       "version": "3.2.74",
       "date": "2026-09-24",
       "title": "Klarer Berichtseditor mit Live-Karte",

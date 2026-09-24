@@ -430,7 +430,7 @@ $generated_map_rebuild_to = isset($generated_map_rebuild_to) ? (string) $generat
                         <label class="feu-admin-settings-field" data-feu-street-highlight-radius>
                             <span><?php esc_html_e('Radius (Meter)', 'feuer-einsatzberichte'); ?></span>
                             <input type="number" id="feu_einsatz_street_highlight_radius_meters" name="feu_einsatz_street_highlight_radius_meters" min="20" max="5000" step="10" value="<?php echo esc_attr((string) ($street_highlight_radius_meters ?? 100)); ?>" />
-                            <small><?php esc_html_e('Der Kreis markiert den Einsatzbereich. Es wird keine kuenstliche, gerade Strasse erzeugt.', 'feuer-einsatzberichte'); ?></small>
+                            <small><?php esc_html_e('Der Kreis markiert ausschließlich den Einsatzbereich. Im Radiusmodus wird keine Straßenlinie hervorgehoben.', 'feuer-einsatzberichte'); ?></small>
                         </label>
                     </div>
                 </div>

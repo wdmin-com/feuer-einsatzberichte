@@ -1353,7 +1353,9 @@
             var address = String(options.address || '');
             var labelText = String(options.labelText || '');
             var showLabel = !!options.showLabel;
-            var geometry = Array.isArray(options.geometry) ? options.geometry : [];
+            var geometry = options.highlightMode === 'radius'
+                ? []
+                : (Array.isArray(options.geometry) ? options.geometry : []);
             var marker = Array.isArray(options.marker) ? options.marker : null;
             var normalizedSegments = [];
             var mainSegment = null;
@@ -2229,7 +2231,9 @@
             var renderInteractiveMap = function (data) {
                 var latitude = parseFloat(data.latitude);
                 var longitude = parseFloat(data.longitude);
-                var geometry = Array.isArray(data.geometry) ? data.geometry : [];
+                var geometry = data.mode === 'radius'
+                    ? []
+                    : (Array.isArray(data.geometry) ? data.geometry : []);
 
                 if (!window.L || !Number.isFinite(latitude) || !Number.isFinite(longitude)) {
                     return false;

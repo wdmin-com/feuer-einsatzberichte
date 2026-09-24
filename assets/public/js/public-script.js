@@ -268,7 +268,8 @@
         var highlightLongitude = normalizeNumber(config && config.longitude);
         var highlightColor = (config && config.highlight_color) || '#d92d20';
         var areaGeometry = normalizeAreaGeometry(config && config.area_geometry);
-        var orderedGeometry = geometry.slice().sort(function (left, right) {
+        var isRadiusOnly = config && config.highlight_mode === 'radius';
+        var orderedGeometry = (isRadiusOnly ? [] : geometry.slice()).sort(function (left, right) {
             if (left.kind === right.kind) {
                 return 0;
             }
@@ -280,7 +281,7 @@
         // prevent the clearly defined radius around the incident coordinate
         // from appearing. This is also the useful fallback for coordinate-only
         // reports where no street line exists at all.
-        if (config && config.highlight_mode === 'radius' && highlightLatitude !== null && highlightLongitude !== null) {
+        if (isRadiusOnly && highlightLatitude !== null && highlightLongitude !== null) {
             var radius = Math.max(20, Math.min(5000, parseInt(config.highlight_radius_meters, 10) || 100));
             var circle = window.L.circle([highlightLatitude, highlightLongitude], {
                 radius: radius,

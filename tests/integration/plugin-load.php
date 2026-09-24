@@ -126,8 +126,8 @@ $radius_highlight = FEU_Einsatz_Template_Helpers::apply_street_highlight_mode(
     53.528320,
     10.083210
 );
-if ('radius' !== ($radius_highlight['mode'] ?? '') || 120 !== (int) ($radius_highlight['radius_meters'] ?? 0) || empty($radius_highlight['geometry'])) {
-    feu_einsatz_ci_fail('Radius highlight did not retain a visible geometry and radius.');
+if ('radius' !== ($radius_highlight['mode'] ?? '') || 120 !== (int) ($radius_highlight['radius_meters'] ?? 0) || !empty($radius_highlight['geometry'])) {
+    feu_einsatz_ci_fail('Radius highlight must render only the circle, without a street line.');
 }
 
 $side_length_highlight = FEU_Einsatz_Template_Helpers::apply_street_highlight_mode(
@@ -152,7 +152,10 @@ $side_radius_highlight = FEU_Einsatz_Template_Helpers::apply_street_highlight_mo
         'include_pedestrian' => true,
     ]
 );
-foreach ([$side_length_highlight, $side_radius_highlight] as $side_highlight) {
+if (!empty($side_radius_highlight['geometry'])) {
+    feu_einsatz_ci_fail('A report radius must not contain a clipped street line.');
+}
+foreach ([$side_length_highlight] as $side_highlight) {
     foreach ((array) ($side_highlight['geometry'] ?? []) as $segment) {
         foreach ((array) ($segment['points'] ?? []) as $point) {
             if ((float) ($point['lng'] ?? 0) > 10.082800) {
