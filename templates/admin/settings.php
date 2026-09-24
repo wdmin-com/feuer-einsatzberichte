@@ -215,6 +215,9 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
             'feu_einsatz_area_station_logo_size' => max(20, min(96, absint(get_option('feu_einsatz_area_station_logo_size', 40)))),
             'feu_einsatz_default_comments_enabled' => (int) get_option('feu_einsatz_default_comments_enabled', 0),
             'feu_einsatz_default_card_variant' => FEU_Einsatz_Template_Helpers::normalize_report_card_variant(get_option('feu_einsatz_default_card_variant', 'modern')),
+            'feu_einsatz_template_single' => FEU_Einsatz_Template_Manager::get_selected('single'),
+            'feu_einsatz_template_overview' => FEU_Einsatz_Template_Manager::get_selected('overview'),
+            'feu_einsatz_template_sidebar' => FEU_Einsatz_Template_Manager::get_selected('sidebar'),
             'feu_einsatz_related_reports_display' => FEU_Einsatz_Template_Helpers::normalize_related_reports_display(get_option('feu_einsatz_related_reports_display', 'cards')),
             'feu_einsatz_related_reports_count' => max(1, min(12, absint(get_option('feu_einsatz_related_reports_count', 6)))),
             'feu_einsatz_single_desaturate_organizations' => (int) get_option('feu_einsatz_single_desaturate_organizations', 0),
@@ -480,6 +483,14 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
                 isset($_POST['feu_einsatz_default_card_variant']) ? wp_unslash($_POST['feu_einsatz_default_card_variant']) : 'modern'
             )
         );
+        foreach (FEU_Einsatz_Template_Manager::TYPES as $template_type) {
+            FEU_Einsatz_Template_Manager::update_selected(
+                $template_type,
+                isset($_POST[FEU_Einsatz_Template_Manager::get_option_key($template_type)])
+                    ? wp_unslash($_POST[FEU_Einsatz_Template_Manager::get_option_key($template_type)])
+                    : 'default'
+            );
+        }
         update_option(
             'feu_einsatz_related_reports_display',
             FEU_Einsatz_Template_Helpers::normalize_related_reports_display(
@@ -765,6 +776,9 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
             'feu_einsatz_area_station_logo_size' => max(20, min(96, absint(get_option('feu_einsatz_area_station_logo_size', 40)))),
             'feu_einsatz_default_comments_enabled' => (int) get_option('feu_einsatz_default_comments_enabled', 0),
             'feu_einsatz_default_card_variant' => FEU_Einsatz_Template_Helpers::normalize_report_card_variant(get_option('feu_einsatz_default_card_variant', 'modern')),
+            'feu_einsatz_template_single' => FEU_Einsatz_Template_Manager::get_selected('single'),
+            'feu_einsatz_template_overview' => FEU_Einsatz_Template_Manager::get_selected('overview'),
+            'feu_einsatz_template_sidebar' => FEU_Einsatz_Template_Manager::get_selected('sidebar'),
             'feu_einsatz_related_reports_display' => FEU_Einsatz_Template_Helpers::normalize_related_reports_display(get_option('feu_einsatz_related_reports_display', 'cards')),
             'feu_einsatz_related_reports_count' => max(1, min(12, absint(get_option('feu_einsatz_related_reports_count', 6)))),
             'feu_einsatz_single_desaturate_organizations' => (int) get_option('feu_einsatz_single_desaturate_organizations', 0),
@@ -870,6 +884,9 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
             'feu_einsatz_area_station_logo_size' => __('Feuerwehrhaus Logo-Größe', 'feuer-einsatzberichte'),
             'feu_einsatz_default_comments_enabled' => __('Standard-Kommentare', 'feuer-einsatzberichte'),
             'feu_einsatz_default_card_variant' => __('Standard-Kartenstil', 'feuer-einsatzberichte'),
+            'feu_einsatz_template_single' => __('Vorlage Einzelbeitrag', 'feuer-einsatzberichte'),
+            'feu_einsatz_template_overview' => __('Vorlage Einsatzübersicht', 'feuer-einsatzberichte'),
+            'feu_einsatz_template_sidebar' => __('Vorlage Sidebar', 'feuer-einsatzberichte'),
             'feu_einsatz_related_reports_display' => __('Weitere Einsatzberichte', 'feuer-einsatzberichte'),
             'feu_einsatz_related_reports_count' => __('Anzahl weitere Einsatzberichte', 'feuer-einsatzberichte'),
             'feu_einsatz_single_desaturate_organizations' => __('Kräfte vor Ort entsättigen', 'feuer-einsatzberichte'),
@@ -1128,6 +1145,10 @@ $area_station_logo_size = max(20, min(96, absint(get_option('feu_einsatz_area_st
 $area_station_logo_url = $area_station_logo_id ? wp_get_attachment_image_url($area_station_logo_id, 'medium') : '';
 $default_comments_enabled = (int) get_option('feu_einsatz_default_comments_enabled', 0);
 $default_card_variant = FEU_Einsatz_Template_Helpers::normalize_report_card_variant(get_option('feu_einsatz_default_card_variant', 'modern'));
+$selected_templates = [];
+foreach (FEU_Einsatz_Template_Manager::TYPES as $template_type) {
+    $selected_templates[$template_type] = FEU_Einsatz_Template_Manager::get_selected($template_type);
+}
 $related_reports_display = FEU_Einsatz_Template_Helpers::normalize_related_reports_display(get_option('feu_einsatz_related_reports_display', 'cards'));
 $related_reports_count = max(1, min(12, absint(get_option('feu_einsatz_related_reports_count', 6))));
 $single_live_map_show_station = (int) get_option('feu_einsatz_single_live_map_show_station', 0);
@@ -1433,6 +1454,11 @@ $settings_summary_cards = [
             'settings_section_definitions' => FEU_Einsatz_Admin::get_settings_section_definitions(),
             'settings_section_visibility' => FEU_Einsatz_Admin::get_settings_section_visibility(),
         ], 'Einstellungen: Module');
+
+        echo FEU_Einsatz_Template_Helpers::render_guarded('templates/admin/settings/partials/tab-vorlagen.php', [
+            'active_tab' => $active_tab,
+            'selected_templates' => $selected_templates,
+        ], 'Einstellungen: Vorlagen');
 
         echo FEU_Einsatz_Template_Helpers::render_guarded('templates/admin/settings/partials/tab-zugriff.php', [
             'active_tab' => $active_tab,

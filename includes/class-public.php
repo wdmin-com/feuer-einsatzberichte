@@ -1861,18 +1861,18 @@ class FEU_Einsatz_Public {
     public function render_overview_sidebar_shortcode($atts = []) {
         $context = $this->get_overview_context($atts);
 
-        return FEU_Einsatz_Template_Helpers::render('templates/public/overview/sidebar.php', [
+        return FEU_Einsatz_Template_Manager::render('sidebar', [
             'context' => $context,
-        ]);
+        ], 'templates/public/overview/sidebar.php');
     }
 
     public function render_overview_page_shortcode($atts = []) {
         $context = $this->get_overview_context($atts);
         $context['card_variant'] = $this->get_overview_card_variant((array) $atts);
 
-        return FEU_Einsatz_Template_Helpers::render('templates/public/overview/page.php', [
+        return FEU_Einsatz_Template_Manager::render('overview', [
             'context' => $context,
-        ]);
+        ], 'templates/public/overview/page.php');
     }
 
     private function build_alarm_list_context($atts, $shortcode_tag) {

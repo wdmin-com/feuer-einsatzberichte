@@ -35,6 +35,7 @@ $tab_groups = [
             'strassenregister' => ['label' => __('Straßenregister', 'feuer-einsatzberichte'), 'icon' => 'ti ti-road'],
             'manifest' => ['label' => __('Lokaler Betrieb', 'feuer-einsatzberichte'), 'icon' => 'ti ti-package'],
             'shortcodes' => ['label' => __('Shortcodes', 'feuer-einsatzberichte'), 'icon' => 'ti ti-code'],
+            'vorlagen' => ['label' => __('Vorlagen', 'feuer-einsatzberichte'), 'icon' => 'ti ti-layout-template'],
             'daten' => ['label' => __('Daten löschen', 'feuer-einsatzberichte'), 'icon' => 'ti ti-shield-lock'],
         ],
     ],

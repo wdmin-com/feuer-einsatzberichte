@@ -154,6 +154,12 @@ class FEU_Einsatz_Admin {
                 'description' => __('Dokumentation und Beispiele für verfügbare Shortcodes.', 'feuer-einsatzberichte'),
                 'icon' => 'ti ti-code',
             ],
+            'templates' => [
+                'tab' => 'vorlagen',
+                'label' => __('Vorlagen', 'feuer-einsatzberichte'),
+                'description' => __('Eigene HTML- und PHP-Vorlagen für Übersicht, Sidebar und Einzelbeiträge.', 'feuer-einsatzberichte'),
+                'icon' => 'ti ti-layout-template',
+            ],
             'data_cleanup' => [
                 'tab' => 'daten',
                 'label' => __('Daten löschen', 'feuer-einsatzberichte'),

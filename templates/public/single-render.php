@@ -16,6 +16,17 @@ if (empty($context['post']) || !($context['post'] instanceof WP_Post)) {
     return;
 }
 
+// Keep the original renderer as the safe default. A selected custom template
+// receives the same complete context, therefore it cannot accidentally skip
+// map geometry, privacy or gallery handling supplied by the plugin.
+if ('default' !== FEU_Einsatz_Template_Manager::get_selected('single')) {
+    echo FEU_Einsatz_Template_Manager::render('single', [
+        'context' => $context,
+        'report' => (array) ($context['report'] ?? []),
+    ]);
+    return;
+}
+
 $plugin_core = class_exists('Feuer_Einsatzberichte_Core', false) ? Feuer_Einsatzberichte_Core::get_instance() : null;
 $plugin_public = $plugin_core instanceof Feuer_Einsatzberichte_Core ? $plugin_core->get_public() : null;
 $share_capability = (string) apply_filters('feu_einsatz_share_capability', 'manage_options');

@@ -1,0 +1,20 @@
+<!--
+Template Name: HTML macro example
+Template Type: single
+This file is an example for a data-only custom template. Copy it to the
+child-theme template directory and rename it custom_name.html.
+Available macros are documented in the plugin settings. Keep the header and
+footer macros in a single-report HTML template.
+-->
+{{feu:header}}
+<article class="feu-einsatz-html-template container">
+  {{feu:breadcrumbs}}
+  <div class="row g-4"><div class="col-12">{{feu:map}}</div></div>
+  <h1>{{feu:title}}</h1>
+  <p class="lead">{{feu:date}} · {{feu:time}}</p>
+  <div class="feu-einsatz-html-template-description">{{feu:description}}</div>
+  {{feu:gallery}}
+  {{feu:info}}
+  {{feu:related}}
+</article>
+{{feu:footer}}

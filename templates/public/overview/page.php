@@ -22,9 +22,9 @@ $show_sidebar = (!isset($display['overview_show_stats']) || !empty($display['ove
         <?php if ($show_sidebar) : ?>
             <aside class="col-lg-4">
                 <?php
-                echo FEU_Einsatz_Template_Helpers::render('templates/public/overview/sidebar.php', [
+                echo FEU_Einsatz_Template_Manager::render('sidebar', [
                     'context' => $context,
-                ]);
+                ], 'templates/public/overview/sidebar.php');
                 ?>
             </aside>
         <?php endif; ?>

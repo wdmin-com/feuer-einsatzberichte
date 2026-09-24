@@ -40,6 +40,22 @@ if (!$admin instanceof FEU_Einsatz_Admin) {
     feu_einsatz_ci_fail('Plugin admin service is unavailable in the CLI context.');
 }
 
+$single_templates = FEU_Einsatz_Template_Manager::get_templates('single');
+$overview_templates = FEU_Einsatz_Template_Manager::get_templates('overview');
+$sidebar_templates = FEU_Einsatz_Template_Manager::get_templates('sidebar');
+if (
+    !isset($single_templates['custom_single_feuer-theme.php'], $single_templates['custom_single_macros.html'])
+    || !isset($overview_templates['custom_overview_macros.html'])
+    || !isset($sidebar_templates['custom_sidebar_macros.html'])
+) {
+    feu_einsatz_ci_fail('Bundled custom templates were not discovered.');
+}
+FEU_Einsatz_Template_Manager::update_selected('single', 'custom_single_feuer-theme.php');
+if ('custom_single_feuer-theme.php' !== FEU_Einsatz_Template_Manager::get_selected('single')) {
+    feu_einsatz_ci_fail('Custom single template selection was not persisted.');
+}
+FEU_Einsatz_Template_Manager::update_selected('single', 'default');
+
 wp_set_current_user(1);
 update_option('feu_einsatz_map_zoom', 15, false);
 $admin->save_settings_snapshot(['feu_einsatz_map_zoom' => 15]);
