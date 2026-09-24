@@ -1436,6 +1436,14 @@ class FEU_Einsatz_Admin {
             $classes .= ' feu-admin-ui--modern-shell';
         }
 
+        if (false !== strpos($page, 'feu-einsatz-neuer-bericht') || false !== strpos($page, 'feu-einsatz-bericht-bearbeiten')) {
+            $classes .= ' feu-apple-workspace';
+        }
+
+        if (false !== strpos($page, 'feu-einsatz-einstellungen')) {
+            $classes .= ' feu-apple-settings';
+        }
+
         if ('' !== $page && 0 === strpos($page, 'feu-')) {
             $classes .= ' feu-admin-ui--' . sanitize_html_class($page);
         }
@@ -2123,6 +2131,7 @@ class FEU_Einsatz_Admin {
         $is_dashboard_widget_screen = $this->should_load_plugin_dashboard_ui((string) $hook);
         $is_statistics_screen = false !== strpos((string) $hook, 'feu-einsatz-statistiken');
         $is_settings_screen = false !== strpos((string) $hook, 'feu-einsatz-einstellungen');
+        $is_report_editor_screen = false !== strpos((string) $hook, 'feu-einsatz-neuer-bericht') || false !== strpos((string) $hook, 'feu-einsatz-bericht-bearbeiten');
 
         if (!$is_plugin_screen && 'post.php' !== $hook && 'post-new.php' !== $hook && !$is_report_list_screen && !$is_dashboard_widget_screen) {
             return;
@@ -2131,7 +2140,9 @@ class FEU_Einsatz_Admin {
         $admin_style_path = FEU_EINSATZ_PLUGIN_DIR . 'assets/admin/css/admin-style.css';
         $admin_modern_style_path = FEU_EINSATZ_PLUGIN_DIR . 'assets/admin/css/admin-modern.css';
         $admin_wordpress_style_path = FEU_EINSATZ_PLUGIN_DIR . 'assets/admin/css/admin-wordpress.css';
+        $apple_workspace_style_path = FEU_EINSATZ_PLUGIN_DIR . 'assets/admin/css/apple-workspace.css';
         $admin_script_path = FEU_EINSATZ_PLUGIN_DIR . 'assets/admin/js/admin-script.js';
+        $apple_workspace_script_path = FEU_EINSATZ_PLUGIN_DIR . 'assets/admin/js/apple-workspace.js';
         $report_validation_script_path = FEU_EINSATZ_PLUGIN_DIR . 'assets/admin/js/report-create-validation.js';
         $chart_script_path = FEU_EINSATZ_PLUGIN_DIR . 'assets/vendor/chartjs/chart.min.js';
         $tabler_style_path = FEU_EINSATZ_PLUGIN_DIR . 'assets/vendor/tabler/css/tabler.min.css';
@@ -2140,7 +2151,9 @@ class FEU_Einsatz_Admin {
         $admin_style_version = file_exists($admin_style_path) ? (string) filemtime($admin_style_path) : FEU_EINSATZ_VERSION;
         $admin_modern_style_version = file_exists($admin_modern_style_path) ? (string) filemtime($admin_modern_style_path) : FEU_EINSATZ_VERSION;
         $admin_wordpress_style_version = file_exists($admin_wordpress_style_path) ? (string) filemtime($admin_wordpress_style_path) : FEU_EINSATZ_VERSION;
+        $apple_workspace_style_version = file_exists($apple_workspace_style_path) ? (string) filemtime($apple_workspace_style_path) : FEU_EINSATZ_VERSION;
         $admin_script_version = file_exists($admin_script_path) ? (string) filemtime($admin_script_path) : FEU_EINSATZ_VERSION;
+        $apple_workspace_script_version = file_exists($apple_workspace_script_path) ? (string) filemtime($apple_workspace_script_path) : FEU_EINSATZ_VERSION;
         $report_validation_script_version = file_exists($report_validation_script_path) ? (string) filemtime($report_validation_script_path) : FEU_EINSATZ_VERSION;
         $chart_script_version = file_exists($chart_script_path) ? (string) filemtime($chart_script_path) : FEU_EINSATZ_VERSION;
         $tabler_style_version = file_exists($tabler_style_path) ? (string) filemtime($tabler_style_path) : FEU_EINSATZ_VERSION;
@@ -2192,6 +2205,15 @@ class FEU_Einsatz_Admin {
             $admin_wordpress_style_version
         );
 
+        if ($is_settings_screen || $is_report_editor_screen) {
+            wp_enqueue_style(
+                'feu-einsatz-apple-workspace',
+                FEU_EINSATZ_PLUGIN_URL . 'assets/admin/css/apple-workspace.css',
+                ['feu-einsatz-admin-wordpress-style'],
+                $apple_workspace_style_version
+            );
+        }
+
         wp_enqueue_script(
             'feu-einsatz-admin-script',
             FEU_EINSATZ_PLUGIN_URL . 'assets/admin/js/admin-script.js',
@@ -2199,6 +2221,16 @@ class FEU_Einsatz_Admin {
             $admin_script_version,
             true
         );
+
+        if ($is_settings_screen || $is_report_editor_screen) {
+            wp_enqueue_script(
+                'feu-einsatz-apple-workspace',
+                FEU_EINSATZ_PLUGIN_URL . 'assets/admin/js/apple-workspace.js',
+                ['feu-einsatz-admin-script'],
+                $apple_workspace_script_version,
+                true
+            );
+        }
 
         wp_enqueue_script(
             'chart-js',
@@ -2208,7 +2240,7 @@ class FEU_Einsatz_Admin {
             true
         );
 
-        if (false !== strpos((string) $hook, 'feu-einsatz-neuer-bericht') || false !== strpos((string) $hook, 'feu-einsatz-bericht-bearbeiten')) {
+        if ($is_report_editor_screen) {
             wp_enqueue_script(
                 'feu-einsatz-report-create-validation',
                 FEU_EINSATZ_PLUGIN_URL . 'assets/admin/js/report-create-validation.js',

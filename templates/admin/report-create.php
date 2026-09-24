@@ -83,7 +83,7 @@ if ('publish' === $current_post_status) {
         </div>
         <div class="feu-einsatz-admin-hero-meta">
             <span class="feu-einsatz-admin-hero-badge"><?php echo esc_html($is_edit_mode ? __('Bearbeitungsmodus', 'feuer-einsatzberichte') : __('Erstellungsmodus', 'feuer-einsatzberichte')); ?></span>
-            <span class="feu-einsatz-admin-hero-path"><code><?php echo esc_html($is_edit_mode ? 'admin.php?page=feu-einsatz-bericht-bearbeiten' : 'admin.php?page=feu-einsatz-neuer-bericht'); ?></code></span>
+            <span class="feu-einsatz-admin-hero-path"><?php echo esc_html($is_edit_mode ? __('Aenderungen sind erst nach dem Speichern sichtbar.', 'feuer-einsatzberichte') : __('Alle Angaben koennen vor dem Speichern kontrolliert werden.', 'feuer-einsatzberichte')); ?></span>
         </div>
     </div>
 

@@ -1,0 +1,572 @@
+/*
+ * Feuer Einsatzberichte — calm workspace UI
+ * A presentation layer only: field names, form structure and WordPress
+ * behaviours stay untouched so reports, maps, media and autosave remain safe.
+ */
+:root {
+    --feu-apple-bg: #f5f5f7;
+    --feu-apple-surface: rgba(255, 255, 255, .94);
+    --feu-apple-surface-muted: #fbfbfd;
+    --feu-apple-text: #1d1d1f;
+    --feu-apple-secondary: #6e6e73;
+    --feu-apple-border: rgba(0, 0, 0, .10);
+    --feu-apple-blue: #0071e3;
+    --feu-apple-blue-soft: #e8f3ff;
+    --feu-apple-green: #1d8f45;
+    --feu-apple-radius: 18px;
+    --feu-apple-shadow: 0 12px 32px rgba(0, 0, 0, .08), 0 1px 2px rgba(0, 0, 0, .04);
+}
+
+body.feu-apple-workspace,
+body.feu-apple-settings {
+    background: var(--feu-apple-bg);
+    color: var(--feu-apple-text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", sans-serif;
+}
+
+/* Shared controls -------------------------------------------------------- */
+body.feu-apple-workspace .button,
+body.feu-apple-settings .button {
+    min-height: 36px;
+    padding: 0 15px;
+    border-color: transparent;
+    border-radius: 999px;
+    box-shadow: none;
+    font-weight: 600;
+    transition: transform .2s ease, box-shadow .2s ease, background-color .2s ease;
+}
+
+body.feu-apple-workspace .button:hover,
+body.feu-apple-settings .button:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, .12);
+    transform: translateY(-1px);
+}
+
+body.feu-apple-workspace .button-primary,
+body.feu-apple-settings .button-primary {
+    border-color: var(--feu-apple-blue);
+    background: var(--feu-apple-blue);
+}
+
+body.feu-apple-workspace input[type="text"],
+body.feu-apple-workspace input[type="number"],
+body.feu-apple-workspace input[type="time"],
+body.feu-apple-workspace input[type="url"],
+body.feu-apple-workspace textarea,
+body.feu-apple-workspace select,
+body.feu-apple-settings input[type="text"],
+body.feu-apple-settings input[type="number"],
+body.feu-apple-settings input[type="url"],
+body.feu-apple-settings textarea,
+body.feu-apple-settings select {
+    min-height: 42px;
+    border: 1px solid var(--feu-apple-border);
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, .02);
+    color: var(--feu-apple-text);
+    transition: border-color .2s ease, box-shadow .2s ease, background-color .2s ease;
+}
+
+body.feu-apple-workspace input:focus,
+body.feu-apple-workspace textarea:focus,
+body.feu-apple-workspace select:focus,
+body.feu-apple-settings input:focus,
+body.feu-apple-settings textarea:focus,
+body.feu-apple-settings select:focus {
+    border-color: var(--feu-apple-blue);
+    box-shadow: 0 0 0 4px rgba(0, 113, 227, .16);
+    outline: none;
+}
+
+/* Report editor ---------------------------------------------------------- */
+body.feu-apple-workspace .wrap.feu-einsatz-report-create-page {
+    max-width: 1480px;
+    margin: 26px auto 64px;
+    padding: 0 18px;
+}
+
+body.feu-apple-workspace .feu-einsatz-admin-hero {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    margin: 0;
+    padding: 28px 30px;
+    border: 1px solid rgba(255, 255, 255, .72);
+    border-radius: 24px;
+    background: linear-gradient(135deg, #1d1d1f 0%, #29292d 64%, #23588e 150%);
+    box-shadow: 0 18px 42px rgba(0, 0, 0, .18);
+    color: #fff;
+}
+
+body.feu-apple-workspace .feu-einsatz-admin-hero h1 {
+    margin: 6px 0 8px;
+    color: #fff;
+    font-size: clamp(27px, 3vw, 38px);
+    font-weight: 700;
+    letter-spacing: -.035em;
+    line-height: 1.08;
+}
+
+body.feu-apple-workspace .feu-einsatz-admin-hero .description,
+body.feu-apple-workspace .feu-einsatz-admin-hero-kicker {
+    color: rgba(255, 255, 255, .76);
+}
+
+body.feu-apple-workspace .feu-einsatz-admin-hero-kicker,
+body.feu-apple-workspace .feu-einsatz-admin-hero-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 27px;
+    padding: 0 10px;
+    border: 1px solid rgba(255, 255, 255, .2);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .12);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 650;
+    letter-spacing: .02em;
+}
+
+body.feu-apple-workspace .feu-einsatz-admin-hero-path {
+    display: block;
+    max-width: 250px;
+    margin-top: 9px;
+    color: rgba(255, 255, 255, .7);
+    font-size: 12px;
+    line-height: 1.45;
+    text-align: right;
+}
+
+body.feu-apple-workspace .feu-einsatz-report-section-nav,
+body.feu-apple-workspace .feu-apple-editor-steps {
+    display: flex;
+    gap: 8px;
+    margin: 18px 0;
+    overflow-x: auto;
+    padding: 6px;
+    border: 1px solid var(--feu-apple-border);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, .78);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, .04);
+    scrollbar-width: thin;
+}
+
+body.feu-apple-workspace .feu-einsatz-report-section-link,
+body.feu-apple-workspace .feu-apple-editor-step {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 34px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: #515154;
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background-color .2s ease, color .2s ease, transform .2s ease;
+}
+
+body.feu-apple-workspace .feu-einsatz-report-section-link:hover,
+body.feu-apple-workspace .feu-einsatz-report-section-link:focus,
+body.feu-apple-workspace .feu-einsatz-report-section-link.is-active,
+body.feu-apple-workspace .feu-apple-editor-step.is-active {
+    background: #fff;
+    color: var(--feu-apple-blue);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .08);
+    outline: none;
+}
+
+body.feu-apple-workspace .feu-apple-editor-step i {
+    display: grid;
+    width: 17px;
+    height: 17px;
+    place-items: center;
+    border-radius: 50%;
+    background: #e5e5ea;
+    color: #515154;
+    font-size: 10px;
+    font-style: normal;
+}
+
+body.feu-apple-workspace .feu-apple-editor-step.is-complete i {
+    background: #d8f5e1;
+    color: var(--feu-apple-green);
+}
+
+body.feu-apple-workspace .feu-einsatz-report-create-grid {
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 24px;
+    align-items: start;
+}
+
+body.feu-apple-workspace .feu-einsatz-report-create-main,
+body.feu-apple-workspace .feu-einsatz-report-create-side {
+    display: grid;
+    gap: 22px;
+}
+
+body.feu-apple-workspace .postbox.feu-einsatz-form-section {
+    position: relative;
+    margin: 0;
+    overflow: hidden;
+    border: 1px solid var(--feu-apple-border);
+    border-radius: var(--feu-apple-radius);
+    background: var(--feu-apple-surface);
+    box-shadow: var(--feu-apple-shadow);
+    animation: feu-apple-enter .48s cubic-bezier(.2, .8, .2, 1) both;
+}
+
+body.feu-apple-workspace .postbox.feu-einsatz-form-section:nth-child(2) { animation-delay: .04s; }
+body.feu-apple-workspace .postbox.feu-einsatz-form-section:nth-child(3) { animation-delay: .08s; }
+body.feu-apple-workspace .postbox.feu-einsatz-form-section:nth-child(4) { animation-delay: .12s; }
+body.feu-apple-workspace .postbox.feu-einsatz-form-section:nth-child(5) { animation-delay: .16s; }
+
+body.feu-apple-workspace .postbox.feu-einsatz-form-section > .postbox-header {
+    min-height: 64px;
+    padding: 0 24px;
+    border-bottom: 1px solid var(--feu-apple-border);
+    background: linear-gradient(180deg, #fff, #fbfbfd);
+}
+
+body.feu-apple-workspace .postbox.feu-einsatz-form-section > .postbox-header .hndle {
+    padding: 0;
+    color: var(--feu-apple-text);
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: -.018em;
+}
+
+body.feu-apple-workspace .postbox.feu-einsatz-form-section > .inside {
+    margin: 0;
+    padding: 24px;
+    background: transparent;
+}
+
+body.feu-apple-workspace .feu-einsatz-editor-section,
+body.feu-apple-workspace .feu-einsatz-map-profile-fields,
+body.feu-apple-workspace .feu-einsatz-map-advanced,
+body.feu-apple-workspace .feu-einsatz-inline-card {
+    overflow: hidden;
+    border: 1px solid var(--feu-apple-border);
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: none;
+}
+
+body.feu-apple-workspace .feu-einsatz-meta-box--modern,
+body.feu-apple-workspace .feu-einsatz-meta-box-container {
+    display: grid;
+    gap: 18px;
+}
+
+body.feu-apple-workspace .feu-einsatz-editor-section .feu-einsatz-map-profile {
+    padding: 22px;
+    border-bottom: 1px solid var(--feu-apple-border);
+    background: linear-gradient(135deg, #f2f8ff, #fbfbfd 72%);
+}
+
+body.feu-apple-workspace .feu-einsatz-map-profile-kicker {
+    color: var(--feu-apple-blue);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .075em;
+}
+
+body.feu-apple-workspace .feu-einsatz-map-profile-head h4,
+body.feu-apple-workspace .feu-einsatz-map-profile-fields-head h4,
+body.feu-apple-workspace .feu-einsatz-inline-card-title {
+    color: var(--feu-apple-text);
+    font-size: 18px;
+    letter-spacing: -.018em;
+}
+
+body.feu-apple-workspace .feu-einsatz-location-mode-tabs {
+    gap: 12px;
+    padding: 18px 22px 22px;
+    border-bottom: 1px solid var(--feu-apple-border);
+    background: #f8fbff;
+}
+
+body.feu-apple-workspace .feu-einsatz-location-mode-tab {
+    min-height: 80px;
+    padding: 16px;
+    border: 1px solid var(--feu-apple-border);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, .88);
+    transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease, background-color .2s ease;
+}
+
+body.feu-apple-workspace .feu-einsatz-location-mode-tab:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, .07);
+}
+
+body.feu-apple-workspace .feu-einsatz-location-mode-tab:has(input:checked) {
+    border-color: var(--feu-apple-blue);
+    background: var(--feu-apple-blue-soft);
+    box-shadow: inset 0 0 0 1px var(--feu-apple-blue);
+}
+
+body.feu-apple-workspace .feu-einsatz-editor-section .feu-einsatz-form-row {
+    padding: 22px;
+}
+
+body.feu-apple-workspace .feu-einsatz-editor-section .feu-einsatz-form-row + .feu-einsatz-form-row {
+    border-top-color: var(--feu-apple-border);
+}
+
+body.feu-apple-workspace .feu-einsatz-field-label {
+    color: #3a3a3c;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .06em;
+}
+
+body.feu-apple-workspace .feu-einsatz-field-hint,
+body.feu-apple-workspace .description,
+body.feu-apple-workspace small {
+    color: var(--feu-apple-secondary);
+    line-height: 1.45;
+}
+
+body.feu-apple-workspace .feu-einsatz-map-profile-fields {
+    margin: 0;
+    padding: 22px;
+}
+
+body.feu-apple-workspace .feu-einsatz-map-highlight-profile {
+    border-color: #b9d9fb;
+    background: linear-gradient(135deg, #f3f9ff, #fff);
+}
+
+body.feu-apple-workspace .feu-einsatz-map-highlight-controls {
+    gap: 14px;
+}
+
+body.feu-apple-workspace .feu-einsatz-map-advanced > summary {
+    padding: 16px 20px;
+    background: var(--feu-apple-surface-muted);
+    color: var(--feu-apple-text);
+    font-weight: 650;
+    cursor: pointer;
+}
+
+body.feu-apple-workspace .feu-einsatz-map-advanced[open] > summary {
+    border-bottom: 1px solid var(--feu-apple-border);
+}
+
+body.feu-apple-workspace .feu-einsatz-map-advanced > :not(summary) {
+    margin-left: 22px;
+    margin-right: 22px;
+}
+
+body.feu-apple-workspace .feu-einsatz-map-advanced > .feu-einsatz-form-grid { margin-top: 20px; }
+body.feu-apple-workspace .feu-einsatz-map-advanced > .feu-einsatz-map-area-actions { margin-bottom: 20px; }
+
+body.feu-apple-workspace .feu-einsatz-inline-card--map-preview {
+    padding: 22px;
+    border-color: #9fcaf3;
+    background: linear-gradient(180deg, #f4f9ff, #fff);
+}
+
+body.feu-apple-workspace .feu-einsatz-inline-card--map-preview .feu-einsatz-address-map-preview-canvas {
+    min-height: 340px;
+    overflow: hidden;
+    border: 1px solid var(--feu-apple-border);
+    border-radius: 12px;
+    background: #e9eef3;
+}
+
+body.feu-apple-workspace .feu-einsatz-inline-card--media,
+body.feu-apple-workspace .feu-einsatz-inline-card--availability {
+    padding: 22px;
+}
+
+body.feu-apple-workspace .feu-einsatz-editor-shell {
+    border-color: var(--feu-apple-border);
+    border-radius: 14px;
+}
+
+body.feu-apple-workspace .feu-einsatz-report-create-side {
+    position: sticky;
+    top: 46px;
+}
+
+body.feu-apple-workspace .feu-einsatz-form-section--side .inside { padding: 18px; }
+
+body.feu-apple-workspace .feu-einsatz-report-category-item,
+body.feu-apple-workspace .feu-einsatz-participant-chip-card,
+body.feu-apple-workspace .feu-einsatz-toggle-chip {
+    border-radius: 12px !important;
+    border-color: var(--feu-apple-border) !important;
+    transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease, background-color .18s ease;
+}
+
+body.feu-apple-workspace .feu-einsatz-report-category-item:hover,
+body.feu-apple-workspace .feu-einsatz-participant-chip-card:hover,
+body.feu-apple-workspace .feu-einsatz-toggle-chip:hover {
+    border-color: #98c9f8 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, .07);
+    transform: translateY(-1px);
+}
+
+body.feu-apple-workspace .feu-einsatz-participant-chip-card.is-active,
+body.feu-apple-workspace .feu-einsatz-toggle-chip.is-active {
+    border-color: var(--feu-apple-blue) !important;
+    background: var(--feu-apple-blue-soft) !important;
+}
+
+/* Settings workspace ----------------------------------------------------- */
+body.feu-apple-settings .wrap.feu-einsatz-settings {
+    max-width: 1480px;
+    margin: 26px auto 64px;
+    padding: 0 18px;
+}
+
+body.feu-apple-settings .feu-admin-page-header,
+body.feu-apple-settings .feu-einsatz-page-header {
+    margin-bottom: 20px;
+    padding: 26px 28px;
+    border: 1px solid var(--feu-apple-border);
+    border-radius: 22px;
+    background: var(--feu-apple-surface);
+    box-shadow: var(--feu-apple-shadow);
+}
+
+body.feu-apple-settings .feu-admin-settings-shell {
+    gap: 20px;
+}
+
+body.feu-apple-settings .feu-admin-settings-topbar,
+body.feu-apple-settings .feu-admin-settings-nav {
+    padding: 10px;
+    border: 1px solid var(--feu-apple-border);
+    border-radius: 18px;
+    background: var(--feu-apple-surface);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, .05);
+}
+
+body.feu-apple-settings .feu-admin-settings-shell--topnav .feu-admin-settings-nav {
+    gap: 8px;
+}
+
+body.feu-apple-settings .feu-admin-settings-nav-group {
+    padding: 0 4px;
+}
+
+body.feu-apple-settings .feu-admin-settings-nav-title {
+    padding: 9px 8px 5px;
+    color: var(--feu-apple-secondary);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .06em;
+}
+
+body.feu-apple-settings .feu-admin-settings-link.nav-tab {
+    min-height: 38px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: #3a3a3c;
+    font-weight: 600;
+    transition: background-color .2s ease, color .2s ease, box-shadow .2s ease;
+}
+
+body.feu-apple-settings .feu-admin-settings-link.nav-tab-active,
+body.feu-apple-settings .feu-admin-settings-link.nav-tab:hover {
+    background: var(--feu-apple-blue-soft);
+    color: var(--feu-apple-blue);
+    box-shadow: none;
+}
+
+body.feu-apple-settings .feu-einsatz-tab-content {
+    padding: 28px;
+    border: 1px solid var(--feu-apple-border);
+    border-radius: 22px;
+    background: var(--feu-apple-surface);
+    box-shadow: var(--feu-apple-shadow);
+    animation: feu-apple-enter .32s cubic-bezier(.2, .8, .2, 1) both;
+}
+
+body.feu-apple-settings .feu-einsatz-tab-content h2 {
+    color: var(--feu-apple-text);
+    font-size: 26px;
+    letter-spacing: -.03em;
+}
+
+body.feu-apple-settings .feu-einsatz-tab-content h3,
+body.feu-apple-settings .feu-einsatz-tab-content h4 {
+    color: var(--feu-apple-text);
+    letter-spacing: -.015em;
+}
+
+body.feu-apple-settings .feu-admin-settings-surface,
+body.feu-apple-settings .feu-admin-settings-fieldset,
+body.feu-apple-settings .feu-admin-settings-module-card,
+body.feu-apple-settings .feu-admin-settings-check-card {
+    border-color: var(--feu-apple-border);
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: none;
+}
+
+body.feu-apple-settings .feu-admin-settings-check-card,
+body.feu-apple-settings .feu-admin-settings-module-card {
+    transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+
+body.feu-apple-settings .feu-admin-settings-check-card:hover,
+body.feu-apple-settings .feu-admin-settings-module-card:hover {
+    border-color: #a8d0f5;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, .06);
+    transform: translateY(-1px);
+}
+
+body.feu-apple-settings .feu-admin-settings-toggle input[type="checkbox"] {
+    border-color: #c7c7cc;
+    background: #c7c7cc;
+}
+
+body.feu-apple-settings .feu-admin-settings-toggle input[type="checkbox"]:checked {
+    border-color: #34c759;
+    background: #34c759;
+}
+
+@keyframes feu-apple-enter {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 1120px) {
+    body.feu-apple-workspace .feu-einsatz-report-create-grid { grid-template-columns: minmax(0, 1fr) 280px; gap: 18px; }
+}
+
+@media (max-width: 1040px) {
+    body.feu-apple-workspace .feu-einsatz-report-create-grid { grid-template-columns: 1fr; }
+    body.feu-apple-workspace .feu-einsatz-report-create-side { position: static; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 782px) {
+    body.feu-apple-workspace .wrap.feu-einsatz-report-create-page,
+    body.feu-apple-settings .wrap.feu-einsatz-settings { margin-top: 14px; padding: 0 12px; }
+    body.feu-apple-workspace .feu-einsatz-admin-hero { padding: 22px; border-radius: 18px; }
+    body.feu-apple-workspace .postbox.feu-einsatz-form-section > .inside,
+    body.feu-apple-workspace .feu-einsatz-map-profile-fields,
+    body.feu-apple-workspace .feu-einsatz-inline-card--map-preview,
+    body.feu-apple-workspace .feu-einsatz-inline-card--media,
+    body.feu-apple-workspace .feu-einsatz-inline-card--availability,
+    body.feu-apple-settings .feu-einsatz-tab-content { padding: 18px; }
+    body.feu-apple-workspace .feu-einsatz-report-create-side { grid-template-columns: 1fr; }
+    body.feu-apple-workspace .feu-einsatz-inline-card--map-preview .feu-einsatz-address-map-preview-canvas { min-height: 250px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body.feu-apple-workspace *,
+    body.feu-apple-settings * { animation-duration: 1ms !important; transition-duration: 1ms !important; }
+}

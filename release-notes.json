@@ -1,6 +1,18 @@
 {
   "releases": [
     {
+      "version": "3.2.78",
+      "date": "2026-09-25",
+      "title": "Apple-ähnlicher Redaktionsarbeitsplatz",
+      "summary": "Der Einsatzeditor und die Einstellungen erhalten eine ruhige, berührungsfreundliche Arbeitsoberfläche mit klaren Ebenen und ohne Änderungen an den gespeicherten Daten.",
+      "changes": [
+        "Design: Einsatzdetails, Karte, Medien, Teilnehmer, Kategorien und Veröffentlichung erscheinen als deutlich getrennte, großzügige Arbeitskarten mit konsistenten Abständen.",
+        "Bedienung: Die vorhandene Abschnittsnavigation wird zu einer kompakten Fortschrittsleiste mit Nummern und Status, ohne doppelte Navigation oder neue Formularwege.",
+        "Interaktion: Fokuszustände, Umschalter, Karten, Schaltflächen und Bereiche erhalten dezente Übergänge; bei aktivierter reduzierter Bewegung werden Animationen automatisch minimiert.",
+        "Einstellungen: Navigation, Tabs, Eingabefelder, Auswahlkarten und Schalter erhalten dieselbe helle, klare Oberfläche. Speichern, Kartenlogik und sämtliche Feldnamen bleiben unverändert."
+      ]
+    },
+    {
       "version": "3.2.77",
       "date": "2026-09-25",
       "title": "Übersichtlicher Berichtseditor",
