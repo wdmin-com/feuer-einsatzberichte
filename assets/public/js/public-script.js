@@ -630,6 +630,13 @@
             attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
 
+        // Load the base map before optional geometry, labels or station
+        // decoration. A malformed historic segment must never leave a freshly
+        // created Leaflet canvas without a view (and therefore without tiles).
+        if (center) {
+            map.setView(center, zoom);
+        }
+
         if (loadBar) {
             tileLayer.on('tileloadstart', function () {
                 tileTotal++;
@@ -658,19 +665,34 @@
         // A radius remains meaningful even while no road segment intersects
         // it. Render it as a real Leaflet layer rather than falling back to a
         // blank map merely because the clipped line collection is empty.
-        if (
-            geometry.length
-            || areaGeometry.length >= 3
-            || (
-                config.highlight_mode === 'radius'
-                && latitude !== null
-                && longitude !== null
-            )
-        ) {
-            bounds = createStreetLayers(map, geometry, config);
+        try {
+            if (
+                geometry.length
+                || areaGeometry.length >= 3
+                || (
+                    config.highlight_mode === 'radius'
+                    && latitude !== null
+                    && longitude !== null
+                )
+            ) {
+                bounds = createStreetLayers(map, geometry, config);
+            }
+        } catch (error) {
+            // Keep the already loaded base map and its valid incident center.
+            // The optional route layer can be repaired from the street cache
+            // later; hiding the entire map is never a useful fallback here.
+            if (window.console && typeof window.console.warn === 'function') {
+                window.console.warn('[Feuer-Einsatzberichte] Karten-Markierung konnte nicht vollständig gezeichnet werden.', error);
+            }
         }
 
-        addStationLayer(map, config, bounds);
+        try {
+            addStationLayer(map, config, bounds);
+        } catch (error) {
+            if (window.console && typeof window.console.warn === 'function') {
+                window.console.warn('[Feuer-Einsatzberichte] Feuerwehrhaus-Markierung konnte nicht gezeichnet werden.', error);
+            }
+        }
 
         if (bounds.isValid()) {
             map.fitBounds(bounds.pad(0.16), {
@@ -756,10 +778,9 @@
                 } catch (error) {
                     var canvas = runtime.querySelector('.feu-einsatz-live-map');
 
-                    // If Leaflet has already created the map, the radius was
-                    // added before optional street labels. Keep that usable map
-                    // visible instead of covering it with an incorrect
-                    // "insufficient map data" message.
+                    // The renderer sets a base view before optional layers.
+                    // Retain that usable map instead of covering it with an
+                    // incorrect "insufficient map data" message.
                     if (canvas && canvas._leaflet_id) {
                         showReady(runtime);
                         return;

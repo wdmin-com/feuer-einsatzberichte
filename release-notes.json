@@ -1,6 +1,17 @@
 {
   "releases": [
     {
+      "version": "3.2.72",
+      "date": "2026-09-24",
+      "title": "Robuste Live-Karte im Radiusmodus",
+      "summary": "Eine fehlerhafte optionale Straßen- oder Feuerwehrhaus-Markierung kann die Karte im Radiusmodus nicht mehr leer lassen.",
+      "changes": [
+        "Kritisch behoben: Die Leaflet-Grundkarte setzt ihren gültigen Einsatzmittelpunkt jetzt vor optionalen Straßenlinien, Tooltips und Feuerwehrhaus-Markierungen.",
+        "Robustheit: Fehler in einzelnen Geometrie- oder Dekorationslayern werden lokal abgefangen; Karte und bereits gezeichneter Radius bleiben sichtbar.",
+        "Diagnose: Der Browser protokolliert den konkreten fehlerhaften optionalen Layer als Warnung, ohne den Besuchern eine leere Kartenfläche zu zeigen."
+      ]
+    },
+    {
       "version": "3.2.71",
       "date": "2026-09-24",
       "title": "Anpassbare öffentliche Vorlagen",
