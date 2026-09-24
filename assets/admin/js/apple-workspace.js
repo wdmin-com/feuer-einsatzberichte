@@ -95,6 +95,34 @@
         }
         document.body.classList.add('feu-apple-settings');
         settings.classList.add('is-ready');
+
+        // The settings template selects its first available tab on the server.
+        // A direct URL such as #karten must still win after that initialization;
+        // otherwise shared links always opened the Organizations tab.
+        function activateHashTab() {
+            var tabId = (window.location.hash || '').replace(/^#/, '');
+            try {
+                tabId = decodeURIComponent(tabId);
+            } catch (error) {
+                // A malformed external URL must never stop the settings UI.
+                return;
+            }
+            if (!tabId) {
+                return;
+            }
+            var tabs = Array.prototype.slice.call(settings.querySelectorAll('.feu-admin-settings-link[data-tab]'));
+            var target = tabs.filter(function (tab) {
+                return tab.getAttribute('data-tab') === tabId;
+            })[0];
+            if (target && !target.classList.contains('nav-tab-active')) {
+                target.click();
+            }
+        }
+
+        // This file is loaded after the template's inline tab controller, so the
+        // hash correction is deliberately deferred by one task turn.
+        window.setTimeout(activateHashTab, 0);
+        window.addEventListener('hashchange', activateHashTab);
     }
 
     function boot() {

@@ -570,3 +570,405 @@ body.feu-apple-settings .feu-admin-settings-toggle input[type="checkbox"]:checke
     body.feu-apple-workspace *,
     body.feu-apple-settings * { animation-duration: 1ms !important; transition-duration: 1ms !important; }
 }
+
+/* Settings: disciplined layout system ------------------------------------
+ * These rules deliberately sit after the legacy admin styles.  The older
+ * styles mix flex, table and grid declarations; this layer provides one
+ * predictable geometry for every settings tab without touching field names
+ * or save behaviour.
+ */
+body.feu-apple-settings .feu-admin-settings-main,
+body.feu-apple-settings .feu-admin-settings-sections,
+body.feu-apple-settings .feu-einsatz-tab-content,
+body.feu-apple-settings .feu-admin-settings-surface,
+body.feu-apple-settings .feu-admin-settings-fieldset {
+    min-width: 0;
+    max-width: 100%;
+}
+
+body.feu-apple-settings .feu-einsatz-tab-content > * {
+    min-width: 0;
+}
+
+body.feu-apple-settings .feu-admin-settings-form-grid--2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: min(100%, 1060px);
+    gap: 16px;
+}
+
+body.feu-apple-settings .feu-admin-settings-fieldset {
+    padding: 18px;
+    border: 1px solid rgba(60, 60, 67, .14);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, .86);
+}
+
+body.feu-apple-settings .feu-admin-settings-fieldset-head {
+    padding-bottom: 12px;
+    border-bottom-color: rgba(60, 60, 67, .10);
+}
+
+body.feu-apple-settings .feu-admin-settings-field,
+body.feu-apple-settings .feu-admin-settings-field > *,
+body.feu-apple-settings .feu-admin-settings-fieldset > * {
+    min-width: 0;
+}
+
+body.feu-apple-settings .feu-admin-settings-field--color {
+    min-height: 52px;
+    padding: 8px 12px;
+    border-radius: 12px;
+}
+
+body.feu-apple-settings .feu-admin-settings-surface input.regular-text,
+body.feu-apple-settings .feu-admin-settings-field input.regular-text,
+body.feu-apple-settings .feu-admin-settings-surface select.regular-text {
+    width: 100%;
+    max-width: none;
+}
+
+/* The functions tab is intentionally compact: a short label must never
+ * occupy a full desktop work surface. */
+body.feu-apple-settings #tab-funktionen {
+    max-width: 700px;
+}
+
+body.feu-apple-settings #tab-funktionen > p {
+    max-width: 720px;
+}
+
+body.feu-apple-settings .feu-einsatz-function-default-card,
+body.feu-apple-settings #feu-einsatz-functions-list {
+    max-width: 680px;
+}
+
+body.feu-apple-settings .feu-einsatz-function-default-card {
+    margin: 24px 0 14px;
+    padding: 18px;
+    border: 1px solid var(--feu-apple-border);
+    border-radius: 16px;
+    background: var(--feu-apple-surface);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .04);
+}
+
+body.feu-apple-settings .feu-einsatz-function-default-card select {
+    width: min(100%, 420px);
+}
+
+body.feu-apple-settings .feu-einsatz-function-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: center;
+    min-height: 64px;
+    margin: 0 0 8px;
+    padding: 10px 12px 10px 16px;
+    border: 1px solid rgba(60, 60, 67, .12);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, .88);
+}
+
+body.feu-apple-settings .feu-einsatz-function-item input {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+}
+
+body.feu-apple-settings .feu-einsatz-function-actions,
+body.feu-apple-settings .feu-einsatz-organization-order,
+body.feu-apple-settings .feu-einsatz-organization-row-actions {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 6px;
+}
+
+body.feu-apple-settings .feu-einsatz-function-actions .button,
+body.feu-apple-settings .feu-einsatz-organization-order .button,
+body.feu-apple-settings .feu-einsatz-organization-row-actions .button {
+    min-width: 36px;
+    min-height: 34px;
+    padding: 0 11px;
+    border: 1px solid rgba(60, 60, 67, .14);
+    background: #fff;
+    color: #3a3a3c;
+}
+
+body.feu-apple-settings .feu-einsatz-function-actions .button:hover,
+body.feu-apple-settings .feu-einsatz-organization-order .button:hover,
+body.feu-apple-settings .feu-einsatz-organization-row-actions .button:hover {
+    border-color: transparent;
+    background: var(--feu-apple-blue-soft);
+    color: var(--feu-apple-blue);
+}
+
+/* Organizations are a list of compact action cards, never an eight-column
+ * desktop table. This keeps the order controls adjacent and prevents them
+ * from wrapping into an unreadable vertical column. */
+body.feu-apple-settings #tab-organisationen {
+    max-width: 1120px;
+}
+
+body.feu-apple-settings .feu-einsatz-organizations-section {
+    margin-top: 22px;
+}
+
+body.feu-apple-settings .feu-einsatz-add-organization,
+body.feu-apple-settings .feu-einsatz-organizations-list {
+    padding: 20px;
+    border: 1px solid var(--feu-apple-border);
+    border-radius: 18px;
+    background: var(--feu-apple-surface);
+    box-shadow: 0 5px 18px rgba(0, 0, 0, .04);
+}
+
+body.feu-apple-settings .feu-einsatz-organization-form {
+    display: grid;
+    grid-template-columns: minmax(170px, 1fr) minmax(210px, 1.35fr) 48px auto;
+    gap: 10px;
+    align-items: center;
+    max-width: 920px;
+}
+
+body.feu-apple-settings .feu-einsatz-organization-form input.regular-text {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+}
+
+body.feu-apple-settings .feu-einsatz-organization-color-field {
+    width: 48px;
+    min-width: 48px;
+    height: 42px;
+    border-radius: 11px;
+}
+
+body.feu-apple-settings .feu-einsatz-organizations-table {
+    display: grid;
+    gap: 8px;
+    margin-top: 14px;
+}
+
+body.feu-apple-settings .feu-einsatz-organization-row {
+    display: grid;
+    grid-template-columns: minmax(180px, 1.2fr) minmax(180px, .9fr) auto auto;
+    gap: 14px;
+    align-items: center;
+    padding: 12px 14px;
+    border: 1px solid rgba(60, 60, 67, .11);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, .92);
+    transition: border-color .2s ease, transform .2s ease, box-shadow .2s ease;
+}
+
+body.feu-apple-settings .feu-einsatz-organization-row:hover {
+    border-color: #b7d7f6;
+    box-shadow: 0 7px 18px rgba(0, 0, 0, .06);
+    transform: translateY(-1px);
+}
+
+body.feu-apple-settings .feu-einsatz-organization-row.is-archived {
+    opacity: .68;
+}
+
+body.feu-apple-settings .feu-einsatz-organization-identity,
+body.feu-apple-settings .feu-einsatz-organization-meta {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 9px;
+}
+
+body.feu-apple-settings .feu-einsatz-organization-identity > div {
+    display: grid;
+    min-width: 0;
+    gap: 2px;
+}
+
+body.feu-apple-settings .feu-einsatz-organization-identity strong {
+    overflow: hidden;
+    font-size: 14px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+body.feu-apple-settings .feu-einsatz-organization-identity span:not(.feu-einsatz-organization-color-preview) {
+    color: var(--feu-apple-secondary);
+    font-size: 12px;
+}
+
+body.feu-apple-settings .feu-einsatz-organization-color-preview {
+    width: 22px;
+    height: 22px;
+    margin: 0;
+    border: 3px solid rgba(255, 255, 255, .9);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, .12);
+}
+
+body.feu-apple-settings .feu-einsatz-organization-meta {
+    overflow: hidden;
+    color: var(--feu-apple-secondary);
+    font-size: 12px;
+}
+
+body.feu-apple-settings .feu-einsatz-organization-meta code {
+    padding: 3px 6px;
+    border-radius: 6px;
+    background: #f2f2f7;
+    color: #515154;
+    font-size: 11px;
+}
+
+body.feu-apple-settings .feu-einsatz-organization-meta a {
+    overflow: hidden;
+    color: var(--feu-apple-blue);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+body.feu-apple-settings .feu-einsatz-organization-order .button {
+    width: 34px;
+    min-width: 34px;
+    padding: 0;
+    font-size: 15px;
+}
+
+body.feu-apple-settings .feu-einsatz-organization-row-actions .feu-einsatz-delete-organization {
+    color: #a63b31;
+}
+
+/* Map and social tabs use a consistent two-column workbench. A fieldset
+ * cannot overflow its parent, and one-column fallbacks remain intentional. */
+body.feu-apple-settings #tab-karten,
+body.feu-apple-settings #tab-sozial {
+    max-width: 1120px;
+}
+
+body.feu-apple-settings #tab-karten .feu-admin-settings-surface,
+body.feu-apple-settings #tab-sozial .feu-admin-settings-surface {
+    width: 100%;
+    max-width: 1060px;
+}
+
+body.feu-apple-settings #tab-karten .feu-admin-settings-form-grid--2,
+body.feu-apple-settings #tab-sozial .feu-admin-settings-form-grid--2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+body.feu-apple-settings #tab-karten .feu-admin-settings-fieldset--preview,
+body.feu-apple-settings #tab-sozial #feu-einsatz-social-share-preview {
+    grid-column: 1 / -1;
+}
+
+/* The save action should be available without covering the form. */
+body.feu-apple-settings .feu-admin-form-footer {
+    position: sticky;
+    right: 0;
+    bottom: 16px;
+    z-index: 8;
+    width: fit-content;
+    margin: 22px 0 0 auto;
+    padding: 8px;
+    border: 1px solid rgba(255, 255, 255, .75);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, .76);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, .14);
+    backdrop-filter: blur(18px) saturate(145%);
+}
+
+body.feu-apple-settings .feu-admin-form-footer .submit {
+    margin: 0;
+    padding: 0;
+}
+
+body.feu-apple-settings .feu-admin-form-footer .button {
+    min-height: 40px;
+}
+
+/* Report editor: every group has an intentional width.  Legacy CSS contains
+ * several overlapping grid definitions; the final workspace layer makes the
+ * address, time, coordinates and per-report map controls read as one calm
+ * form rather than a collection of unrelated boxes. */
+body.feu-apple-workspace .feu-einsatz-meta-box,
+body.feu-apple-workspace .feu-einsatz-meta-box .feu-einsatz-form-row,
+body.feu-apple-workspace .feu-einsatz-meta-box .feu-einsatz-form-grid,
+body.feu-apple-workspace .feu-einsatz-meta-box .feu-einsatz-field {
+    min-width: 0;
+}
+
+body.feu-apple-workspace .feu-einsatz-meta-box .feu-einsatz-form-grid {
+    display: grid;
+    gap: 16px;
+    align-items: start;
+}
+
+body.feu-apple-workspace .feu-einsatz-meta-box .feu-einsatz-form-grid--address {
+    grid-template-columns: minmax(0, 1fr) minmax(180px, 240px);
+}
+
+body.feu-apple-workspace .feu-einsatz-meta-box .feu-einsatz-form-grid--location {
+    grid-template-columns: minmax(120px, .45fr) minmax(180px, 1fr) minmax(180px, 1fr);
+}
+
+body.feu-apple-workspace .feu-einsatz-meta-box .feu-einsatz-form-grid--timing {
+    grid-template-columns: minmax(0, 1fr) minmax(160px, 220px);
+}
+
+body.feu-apple-workspace .feu-einsatz-meta-box .feu-einsatz-form-grid--coordinates,
+body.feu-apple-workspace .feu-einsatz-meta-box .feu-einsatz-form-grid--map-advanced {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+body.feu-apple-workspace .feu-einsatz-meta-box .feu-einsatz-map-highlight-controls {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 14px;
+    align-items: end;
+}
+
+body.feu-apple-workspace .feu-einsatz-meta-box input.widefat,
+body.feu-apple-workspace .feu-einsatz-meta-box select.widefat,
+body.feu-apple-workspace .feu-einsatz-meta-box textarea.widefat {
+    width: 100%;
+    min-width: 0;
+}
+
+@media (max-width: 920px) {
+    body.feu-apple-settings .feu-admin-settings-form-grid--2,
+    body.feu-apple-settings #tab-karten .feu-admin-settings-form-grid--2,
+    body.feu-apple-settings #tab-sozial .feu-admin-settings-form-grid--2 {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    body.feu-apple-settings .feu-einsatz-organization-form,
+    body.feu-apple-settings .feu-einsatz-organization-row {
+        grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    body.feu-apple-settings .feu-einsatz-organization-meta {
+        grid-column: 1 / -1;
+    }
+
+    body.feu-apple-workspace .feu-einsatz-meta-box .feu-einsatz-form-grid--address,
+    body.feu-apple-workspace .feu-einsatz-meta-box .feu-einsatz-form-grid--location,
+    body.feu-apple-workspace .feu-einsatz-meta-box .feu-einsatz-form-grid--timing,
+    body.feu-apple-workspace .feu-einsatz-meta-box .feu-einsatz-form-grid--coordinates,
+    body.feu-apple-workspace .feu-einsatz-meta-box .feu-einsatz-form-grid--map-advanced {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    body.feu-apple-settings .feu-einsatz-function-item,
+    body.feu-apple-settings .feu-einsatz-organization-form,
+    body.feu-apple-settings .feu-einsatz-organization-row {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    body.feu-apple-settings .feu-einsatz-function-actions,
+    body.feu-apple-settings .feu-einsatz-organization-order,
+    body.feu-apple-settings .feu-einsatz-organization-row-actions {
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+}

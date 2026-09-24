@@ -1,6 +1,19 @@
 {
   "releases": [
     {
+      "version": "3.2.79",
+      "date": "2026-09-25",
+      "title": "Konsistentes Apple-Layout für Einstellungen",
+      "summary": "Die Einstellungen und der Berichtseditor verwenden jetzt eine feste, ruhige Layout-Geometrie statt unterschiedlich breiter und überlaufender Eingabefelder.",
+      "changes": [
+        "Organisationen: Die unübersichtliche Acht-Spalten-Tabelle wird durch kompakte Organisationskarten mit Namen, Status, Farbe, Reihenfolge und klaren Aktionen ersetzt.",
+        "Einstellungen: Funktionen, Karte und Social Media folgen einer begrenzten, responsiven Zwei-Spalten-Struktur; kurze Inhalte erhalten keine künstlich überbreiten Flächen mehr.",
+        "Bedienung: Der Speichern-Bereich ist eine kleine schwebende Aktion und überdeckt weder Formulare noch die Schaltfläche zum Anlegen einer Organisation.",
+        "Navigation: Direkte Links auf eine Einstellungs-Registerkarte wie #karten öffnen zuverlässig genau diese Registerkarte.",
+        "Kompatibilität: Feldnamen, Datenstruktur, Sortierung und vorhandene AJAX-Aktionen bleiben erhalten."
+      ]
+    },
+    {
       "version": "3.2.78",
       "date": "2026-09-25",
       "title": "Apple-ähnlicher Redaktionsarbeitsplatz",

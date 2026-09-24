@@ -2127,7 +2127,7 @@ jQuery(document).ready(function($) {
 
     function collectOrganizationOrder() {
         var ids = [];
-        $('.feu-einsatz-organizations-table tbody tr[data-organization-id]').each(function() {
+        $('.feu-einsatz-organizations-table [data-organization-id]').each(function() {
             ids.push(Number($(this).data('organizationId') || 0));
         });
         return ids.filter(function(id) {
@@ -2136,7 +2136,7 @@ jQuery(document).ready(function($) {
     }
 
     function syncOrganizationMoveButtons() {
-        var $rows = $('.feu-einsatz-organizations-table tbody tr[data-organization-id]');
+        var $rows = $('.feu-einsatz-organizations-table [data-organization-id]');
         $rows.each(function(index) {
             $(this).find('.feu-einsatz-move-organization-up').prop('disabled', index === 0);
             $(this).find('.feu-einsatz-move-organization-down').prop('disabled', index === ($rows.length - 1));
@@ -2528,8 +2528,8 @@ jQuery(document).ready(function($) {
     });
 
     $(document).on('click', '.feu-einsatz-move-organization-up', function() {
-        var $row = $(this).closest('tr');
-        var $previous = $row.prev('tr[data-organization-id]');
+        var $row = $(this).closest('[data-organization-id]');
+        var $previous = $row.prev('[data-organization-id]');
 
         if (!$previous.length) {
             return;
@@ -2541,8 +2541,8 @@ jQuery(document).ready(function($) {
     });
 
     $(document).on('click', '.feu-einsatz-move-organization-down', function() {
-        var $row = $(this).closest('tr');
-        var $next = $row.next('tr[data-organization-id]');
+        var $row = $(this).closest('[data-organization-id]');
+        var $next = $row.next('[data-organization-id]');
 
         if (!$next.length) {
             return;
