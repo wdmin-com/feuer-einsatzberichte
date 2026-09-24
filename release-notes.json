@@ -1,6 +1,19 @@
 {
   "releases": [
     {
+      "version": "3.2.71",
+      "date": "2026-09-24",
+      "title": "Anpassbare öffentliche Vorlagen",
+      "summary": "Einsatzübersicht, Sidebar und einzelne Einsatzberichte lassen sich jetzt sicher über auswählbare Theme-Vorlagen gestalten.",
+      "changes": [
+        "Neu: In Einstellungen → Vorlagen können eigene Vorlagen für Einsatzübersicht, Sidebar und Einzelbeitrag ausgewählt werden.",
+        "Neu: Datenorientierte HTML-Vorlagen unterstützen dokumentierte Makros für Karte, Einsatzdaten, Galerie, Organisationen, Listen und weitere Einsatzberichte.",
+        "Neu: Mitgeliefert wird eine Karte-zuerst-Vorlage im Stil des Feuerwehr-Themes mit Kartenbereich, Beschreibung, Galerie, Kräften vor Ort und vier weiteren Einsatzkarten.",
+        "Sicherheit: Ausführbare PHP-Vorlagen werden ausschließlich aus dem aktiven Child-Theme bzw. Theme gelesen, nie aus Uploads oder Datenbankinhalten.",
+        "Qualität: Der WordPress-Integrationstest prüft das Erkennen und Speichern der mitgelieferten Custom-Vorlagen."
+      ]
+    },
+    {
       "version": "3.2.70",
       "date": "2026-09-24",
       "title": "Kontraststarker Einsatzkalender",
