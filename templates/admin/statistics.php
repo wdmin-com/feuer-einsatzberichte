@@ -399,18 +399,32 @@ $statistics_station_feature = FEU_Einsatz_Template_Helpers::get_station_feature_
 
 $category_total_count = 0;
 $category_visual_rows = [];
+$category_color_palette = ['#0f6cbd', '#e05a33', '#0f9f6e', '#8b5cf6', '#d97706', '#db2777', '#0891b2', '#65a30d', '#c2410c', '#475569'];
+$category_color_usage = [];
 foreach ((array) $categories as $category_entry) {
     $category_total_count += isset($category_entry->anzahl) ? (int) $category_entry->anzahl : 0;
 }
 
-foreach ((array) $categories as $category_entry) {
+foreach ((array) $categories as $category_index => $category_entry) {
     $category_count = isset($category_entry->anzahl) ? (int) $category_entry->anzahl : 0;
     $category_percent = $category_total_count > 0 ? round(($category_count / $category_total_count) * 100, 1) : 0;
+    $configured_color = sanitize_hex_color((string) ($category_entry->farbe ?? ''));
+    $configured_color = $configured_color ? strtolower($configured_color) : '';
+    $generic_colors = ['#0a4b78', '#0073aa'];
+
+    // Default colours used by older category records make every doughnut
+    // segment look identical. Preserve a consciously chosen unique colour,
+    // otherwise assign a stable, high-contrast palette colour for this view.
+    if ('' === $configured_color || in_array($configured_color, $generic_colors, true) || isset($category_color_usage[$configured_color])) {
+        $configured_color = $category_color_palette[$category_index % count($category_color_palette)];
+    }
+    $category_color_usage[$configured_color] = true;
+
     $category_visual_rows[] = [
         'name' => isset($category_entry->kategorie_name) ? (string) $category_entry->kategorie_name : __('Ohne Einsatzstichwort', 'feuer-einsatzberichte'),
         'count' => $category_count,
         'percent' => $category_percent,
-        'color' => sanitize_hex_color((string) ($category_entry->farbe ?? '')) ?: '#0a4b78',
+        'color' => $configured_color,
     ];
 }
 
@@ -957,7 +971,18 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
                 </div>
             </div>
             <div class="feu-einsatz-admindek-donut-wrap">
-                <canvas id="feu-einsatz-admindek-category-chart" height="180"></canvas>
+                <canvas id="feu-einsatz-admindek-category-chart" height="180" role="img" aria-label="<?php esc_attr_e('Kreisdiagramm: Verteilung der Einsatzstichworte', 'feuer-einsatzberichte'); ?>"></canvas>
+            </div>
+            <?php if (!empty($category_visual_rows)): ?>
+                <div class="feu-einsatz-admindek-category-key" aria-label="<?php esc_attr_e('Wichtigste Einsatzstichworte', 'feuer-einsatzberichte'); ?>">
+                    <?php foreach (array_slice($category_visual_rows, 0, 3) as $category_row): ?>
+                        <span title="<?php echo esc_attr(sprintf('%s: %d Einsätze (%s%%)', $category_row['name'], (int) $category_row['count'], number_format_i18n((float) $category_row['percent'], 1))); ?>">
+                            <i style="background-color: <?php echo esc_attr($category_row['color']); ?>"></i>
+                            <?php echo esc_html($category_row['name']); ?>
+                        </span>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
             </div>
         </div>
 
@@ -1179,16 +1204,16 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
                 </div>
             <?php endif; ?>
             <div class="category-stats feu-einsatz-category-donut-layout">
-                <div class="category-chart-container"><canvas id="categoryDonutChart" width="320" height="320"></canvas></div>
+                <div class="category-chart-container"><canvas id="categoryDonutChart" width="320" height="320" role="img" aria-label="<?php esc_attr_e('Kreisdiagramm: Einsatzstichworte mit Anzahl und Prozentanteil', 'feuer-einsatzberichte'); ?>"></canvas></div>
                 <div class="category-list">
                     <?php $total_categories = 0; foreach ($categories as $cat) { $total_categories += (int) $cat->anzahl; } ?>
                     <?php if (empty($categories)): ?>
                         <p><?php esc_html_e('Keine Einsatzstichwort-Daten für dieses Jahr vorhanden.', 'feuer-einsatzberichte'); ?></p>
                     <?php else: ?>
-                        <?php foreach ($categories as $cat): ?>
+                        <?php foreach ($categories as $category_index => $cat): ?>
                             <?php $percent = $total_categories > 0 ? round(((int) $cat->anzahl / $total_categories) * 100, 1) : 0; ?>
                             <div class="category-list-item">
-                                <span class="category-color" style="background: <?php echo esc_attr($cat->farbe ?? '#0073aa'); ?>"></span>
+                                <span class="category-color" style="background: <?php echo esc_attr($category_visual_rows[$category_index]['color'] ?? '#0f6cbd'); ?>"></span>
                                 <span class="category-list-name"><?php echo esc_html($cat->kategorie_name); ?></span>
                                 <span class="category-list-count"><?php echo esc_html($cat->anzahl); ?></span>
                                 <span class="category-list-prozent"><?php echo esc_html($percent); ?>%</span>
@@ -1611,8 +1636,42 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function getCategoryColor(category, index) {
         var visualRow = categoryVisualRows[index] || {};
-        return category.color || category.farbe || visualRow.color || '#0a4b78';
+        return visualRow.color || category.color || category.farbe || '#0f6cbd';
     }
+
+    function getCategoryTotal() {
+        return categories.reduce(function(sum, category) {
+            return sum + Number(category.anzahl || 0);
+        }, 0);
+    }
+
+    var categoryCenterLabelPlugin = {
+        id: 'feuCategoryCenterLabel',
+        afterDraw: function(chart) {
+            if (!chart || !chart.chartArea || chart.config.type !== 'doughnut') {
+                return;
+            }
+
+            var totalValue = getCategoryTotal();
+            var chartArea = chart.chartArea;
+            var centerX = (chartArea.left + chartArea.right) / 2;
+            var centerY = (chartArea.top + chartArea.bottom) / 2;
+            var context = chart.ctx;
+            var compactTotal = new Intl.NumberFormat('de-DE').format(totalValue);
+            var isSmallChart = chart.canvas && chart.canvas.id === 'feu-einsatz-admindek-category-chart';
+
+            context.save();
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            context.fillStyle = '#0f172a';
+            context.font = '800 ' + (isSmallChart ? '24px' : '31px') + ' system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+            context.fillText(compactTotal, centerX, centerY - (isSmallChart ? 6 : 8));
+            context.fillStyle = '#64748b';
+            context.font = '700 ' + (isSmallChart ? '10px' : '11px') + ' system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+            context.fillText('EINSÄTZE', centerX, centerY + (isSmallChart ? 15 : 18));
+            context.restore();
+        }
+    };
 
     function getIsoDateFromCalendarCell(cell) {
         var monthCard = cell ? cell.closest('.feu-einsatz-month-card') : null;
@@ -1860,26 +1919,39 @@ document.addEventListener('DOMContentLoaded', function() {
     function getCategoryChartConfig() {
         return {
             type: 'doughnut',
+            plugins: [categoryCenterLabelPlugin],
             data: {
                 labels: categories.map(function(category) { return category.kategorie_name; }),
                 datasets: [{
                     data: categories.map(function(category) { return parseInt(category.anzahl, 10); }),
                     backgroundColor: categories.map(function(category, index) { return getCategoryColor(category, index); }),
-                    borderWidth: 1
+                    borderColor: '#ffffff',
+                    borderWidth: 4,
+                    borderRadius: 4,
+                    spacing: 3,
+                    hoverOffset: 12
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: true,
+                cutout: '67%',
+                layout: { padding: 8 },
+                animation: {
+                    animateRotate: true,
+                    animateScale: true,
+                    duration: 760
+                },
                 plugins: {
-                    legend: { position: 'bottom' },
+                    legend: { display: false },
                     tooltip: {
+                        displayColors: true,
+                        padding: 12,
+                        cornerRadius: 8,
                         callbacks: {
                             label: function(context) {
                                 var value = Number(context.raw || 0);
-                                var totalValue = categories.reduce(function(sum, category) {
-                                    return sum + Number(category.anzahl || 0);
-                                }, 0);
+                                var totalValue = getCategoryTotal();
                                 var percent = totalValue > 0 ? ((value / totalValue) * 100).toFixed(1) : '0.0';
                                 return context.label + ': ' + value + ' Einsätze (' + percent + '%)';
                             }
@@ -2212,28 +2284,36 @@ document.addEventListener('DOMContentLoaded', function() {
     function getAdmindekCategoryChartConfig() {
         return {
             type: 'doughnut',
+            plugins: [categoryCenterLabelPlugin],
             data: {
                 labels: categories.map(function(category) { return category.kategorie_name; }),
                 datasets: [{
                     data: categories.map(function(category) { return parseInt(category.anzahl, 10) || 0; }),
                     backgroundColor: categories.map(function(category, index) { return getCategoryColor(category, index); }),
                     borderColor: '#ffffff',
-                    borderWidth: 3
+                    borderWidth: 4,
+                    borderRadius: 4,
+                    spacing: 3,
+                    hoverOffset: 10
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                cutout: '66%',
+                cutout: '68%',
+                layout: { padding: 7 },
+                animation: {
+                    animateRotate: true,
+                    animateScale: true,
+                    duration: 760
+                },
                 plugins: {
                     legend: { display: false },
                     tooltip: {
                         callbacks: {
                             label: function(context) {
                                 var value = Number(context.raw || 0);
-                                var totalValue = categories.reduce(function(sum, category) {
-                                    return sum + Number(category.anzahl || 0);
-                                }, 0);
+                                var totalValue = getCategoryTotal();
                                 var percent = totalValue > 0 ? ((value / totalValue) * 100).toFixed(1) : '0.0';
                                 return context.label + ': ' + value + ' Einsätze (' + percent + '%)';
                             }

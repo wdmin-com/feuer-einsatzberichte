@@ -54,6 +54,14 @@ jobs:
           php-version: '8.1'
           extensions: mysqli, gd
           coverage: none
+      - name: Build and verify installable release archive
+        run: |
+          pwsh -File "$GITHUB_WORKSPACE/tools/build-release.ps1"
+          plugin_version="$(node -p "require('./update-manifest.json').version")"
+          plugin_archive="$GITHUB_WORKSPACE/release/$plugin_version/feuer-einsatzberichte-$plugin_version.zip"
+          test -f "$plugin_archive"
+          unzip -t "$plugin_archive"
+          echo "FEU_PLUGIN_ARCHIVE=$plugin_archive" >> "$GITHUB_ENV"
       - name: Download WP-CLI and WordPress
         run: |
           curl -fsSL -o /usr/local/bin/wp https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
@@ -63,7 +71,7 @@ jobs:
         run: |
           wp config create --path="$RUNNER_TEMP/wordpress" --dbname=wordpress_test --dbuser=wordpress --dbpass=wordpress --dbhost=127.0.0.1 --skip-check --force
           wp core install --path="$RUNNER_TEMP/wordpress" --url=http://localhost --title='Plugin CI' --admin_user=admin --admin_password=password --admin_email=ci@example.test --skip-email
-          ln -s "$GITHUB_WORKSPACE" "$RUNNER_TEMP/wordpress/wp-content/plugins/feuer-einsatzberichte"
+          unzip -q "$FEU_PLUGIN_ARCHIVE" -d "$RUNNER_TEMP/wordpress/wp-content/plugins"
       - name: Activate plugin and verify core services
         run: |
           wp plugin activate feuer-einsatzberichte --path="$RUNNER_TEMP/wordpress"

@@ -3278,6 +3278,45 @@
 
 .feu-einsatz-admindek-donut-wrap {
     height: 190px;
+    padding: 4px;
+    border-radius: 18px;
+    background:
+        radial-gradient(circle at center, #ffffff 0 43%, transparent 43.5%),
+        linear-gradient(145deg, #f8fbff 0%, #edf5ff 100%);
+}
+
+.feu-einsatz-admindek-category-key {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-top: 12px;
+}
+
+.feu-einsatz-admindek-category-key span {
+    display: inline-flex;
+    max-width: 100%;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 8px;
+    overflow: hidden;
+    border: 1px solid #dce8f5;
+    border-radius: 999px;
+    background: #fff;
+    color: #334155;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.feu-einsatz-admindek-category-key i {
+    flex: 0 0 auto;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
 }
 
 .feu-einsatz-admindek-progress-list {
@@ -4161,22 +4200,32 @@
 
 .feu-einsatz-category-donut-layout {
     display: grid;
-    grid-template-columns: 1fr;
-    justify-items: center;
+    grid-template-columns: minmax(240px, 320px) minmax(260px, 1fr);
+    gap: 28px;
+    justify-items: stretch;
     align-items: stretch;
-    padding: 18px;
-    border: 1px solid #dbe4ee;
-    border-radius: 4px;
-    background: #f8fafc;
+    padding: 24px;
+    border: 1px solid #d8e4f2;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #fbfdff 0%, #f2f7fd 100%);
+    box-shadow: 0 10px 28px rgba(15, 76, 129, .07);
 }
 
 .category-chart-container {
     flex: 0 0 320px;
     max-width: 320px;
+    width: 100%;
+    align-self: center;
+    padding: 10px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #fff 0 47%, transparent 47.5%);
 }
 
 .category-list {
     flex: 1;
+    min-width: 0;
+    display: grid;
+    align-content: center;
 }
 
 .category-list-item {
@@ -4184,14 +4233,24 @@
     grid-template-columns: 16px minmax(0, 1fr) auto auto;
     gap: 10px;
     align-items: center;
-    padding: 9px 0;
-    border-bottom: 1px solid #f0f0f1;
+    padding: 10px 12px;
+    border: 1px solid transparent;
+    border-bottom-color: #e3ebf5;
+    border-radius: 9px;
+    transition: background-color .18s ease, border-color .18s ease, transform .18s ease;
+}
+
+.category-list-item:hover {
+    border-color: #c9dcf2;
+    background: #ffffff;
+    transform: translateX(2px);
 }
 
 .category-color {
     width: 16px;
     height: 16px;
-    border-radius: 4px;
+    border-radius: 999px;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, .8), 0 2px 5px rgba(15, 23, 42, .18);
 }
 
 .category-list-count,
@@ -4200,9 +4259,12 @@
 }
 
 .category-list-total {
-    margin-top: 12px;
-    padding-top: 12px;
-    border-top: 2px solid #0a4b78;
+    margin-top: 14px;
+    padding: 12px;
+    border: 1px solid #cfe0f3;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #0f4c81;
 }
 
 .category-list--percentages {

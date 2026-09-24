@@ -1,6 +1,19 @@
 {
   "releases": [
     {
+      "version": "3.2.68",
+      "date": "2026-09-24",
+      "title": "Farbstarke Statistik und installierbare Release-Prüfung",
+      "summary": "Einsatzstichworte werden als verständliche, farbige Verteilung dargestellt; der Release-Prozess prüft nun das tatsächlich installierbare ZIP-Paket.",
+      "changes": [
+        "Statistik: Das Kreisdiagramm erhält eine kontrastreiche, stabile Farbpalette, einen Gesamtwert im Zentrum sowie deutlich getrennte Segmente beim Überfahren.",
+        "Bedienung: Die Übersichts-Karte der Einsatzstichworte zeigt die drei wichtigsten Kategorien direkt als farbige Legende; die vollständige Liste bleibt als textliche Alternative verfügbar.",
+        "Barrierefreiheit: Kreisdiagramme besitzen beschreibende ARIA-Labels, während Anzahl und Anteil weiterhin ohne Grafik lesbar sind.",
+        "Qualität: Der WordPress-Integrationstest rendert die Statistikseite und prüft die neue Diagrammstruktur.",
+        "Release-Sicherheit: GitHub Actions baut das ZIP, prüft dessen Integrität und aktiviert genau dieses Paket in einer frischen WordPress-Installation."
+      ]
+    },
+    {
       "version": "3.2.67",
       "date": "2026-09-24",
       "title": "Stabile Radius-Karte und aufgeräumte Einstellungen",

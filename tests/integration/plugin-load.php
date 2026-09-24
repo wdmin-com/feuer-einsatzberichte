@@ -66,6 +66,10 @@ $report_id = wp_insert_post([
     'post_type' => 'post',
 ]);
 update_post_meta($report_id, '_feu_einsatz_einsatzbericht', '1');
+$ci_category_ids = array_values(array_filter(array_map('absint', (array) get_option('feu_einsatz_categories', []))));
+if (!empty($ci_category_ids)) {
+    wp_set_post_categories($report_id, [(int) $ci_category_ids[0]], false);
+}
 update_post_meta($report_id, '_feu_einsatz_strasse', 'Bredowstraße');
 update_post_meta($report_id, '_feu_einsatz_hausnummer', '4');
 update_post_meta($report_id, '_feu_einsatz_plz', '22113');
@@ -276,6 +280,21 @@ if (
 ) {
     feu_einsatz_ci_fail('Street geometry or selected highlight color did not reach the public map context.');
 }
+
+$_GET['year'] = (string) gmdate('Y');
+$_GET['tab'] = 'categories';
+ob_start();
+$admin->render_statistics();
+$statistics_markup = (string) ob_get_clean();
+if (
+    false === strpos($statistics_markup, 'id="categoryDonutChart"')
+    || false === strpos($statistics_markup, 'feuCategoryCenterLabel')
+    || false === strpos($statistics_markup, 'feu-einsatz-admindek-category-key')
+) {
+    feu_einsatz_ci_fail('Statistics category chart markup is incomplete.');
+}
+unset($_GET['year'], $_GET['tab']);
+
 $admin->get_report_share()->queue_share_card_generation((int) $report_id);
 
 if (!wp_next_scheduled('feu_einsatz_generate_share_card_background', [(int) $report_id])) {
