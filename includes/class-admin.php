@@ -2141,6 +2141,7 @@ class FEU_Einsatz_Admin {
         $admin_modern_style_path = FEU_EINSATZ_PLUGIN_DIR . 'assets/admin/css/admin-modern.css';
         $admin_wordpress_style_path = FEU_EINSATZ_PLUGIN_DIR . 'assets/admin/css/admin-wordpress.css';
         $apple_workspace_style_path = FEU_EINSATZ_PLUGIN_DIR . 'assets/admin/css/apple-workspace.css';
+        $apple_admin_system_style_path = FEU_EINSATZ_PLUGIN_DIR . 'assets/admin/css/apple-admin-system.css';
         $admin_script_path = FEU_EINSATZ_PLUGIN_DIR . 'assets/admin/js/admin-script.js';
         $apple_workspace_script_path = FEU_EINSATZ_PLUGIN_DIR . 'assets/admin/js/apple-workspace.js';
         $report_validation_script_path = FEU_EINSATZ_PLUGIN_DIR . 'assets/admin/js/report-create-validation.js';
@@ -2152,6 +2153,7 @@ class FEU_Einsatz_Admin {
         $admin_modern_style_version = file_exists($admin_modern_style_path) ? (string) filemtime($admin_modern_style_path) : FEU_EINSATZ_VERSION;
         $admin_wordpress_style_version = file_exists($admin_wordpress_style_path) ? (string) filemtime($admin_wordpress_style_path) : FEU_EINSATZ_VERSION;
         $apple_workspace_style_version = file_exists($apple_workspace_style_path) ? (string) filemtime($apple_workspace_style_path) : FEU_EINSATZ_VERSION;
+        $apple_admin_system_style_version = file_exists($apple_admin_system_style_path) ? (string) filemtime($apple_admin_system_style_path) : FEU_EINSATZ_VERSION;
         $admin_script_version = file_exists($admin_script_path) ? (string) filemtime($admin_script_path) : FEU_EINSATZ_VERSION;
         $apple_workspace_script_version = file_exists($apple_workspace_script_path) ? (string) filemtime($apple_workspace_script_path) : FEU_EINSATZ_VERSION;
         $report_validation_script_version = file_exists($report_validation_script_path) ? (string) filemtime($report_validation_script_path) : FEU_EINSATZ_VERSION;
@@ -2213,6 +2215,17 @@ class FEU_Einsatz_Admin {
                 $apple_workspace_style_version
             );
         }
+
+        // This is deliberately last: it is the shared component system for all
+        // plugin-owned admin screens and replaces the former mixed visual layers.
+        wp_enqueue_style(
+            'feu-einsatz-apple-admin-system',
+            FEU_EINSATZ_PLUGIN_URL . 'assets/admin/css/apple-admin-system.css',
+            $is_settings_screen || $is_report_editor_screen
+                ? ['feu-einsatz-apple-workspace']
+                : ['feu-einsatz-admin-wordpress-style'],
+            $apple_admin_system_style_version
+        );
 
         wp_enqueue_script(
             'feu-einsatz-admin-script',

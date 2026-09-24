@@ -1,6 +1,19 @@
 {
   "releases": [
     {
+      "version": "3.2.81",
+      "date": "2026-09-25",
+      "title": "Einheitliches Apple-Admin-System",
+      "summary": "Alle Plugin-Bereiche verwenden dieselbe neue Gestaltungsbasis statt einzelner, voneinander abweichender Oberflächen.",
+      "changes": [
+        "Design-System: Eine neue, abschließende Admin-Oberfläche definiert Typografie, Abstände, Flächen, Interaktionszustände, Buttons, Eingaben und Tabellen zentral.",
+        "Seiten: Dashboard, Teilnehmer, Statistik, Archiv, Logs, Einstellungen sowie Berichterstellung verwenden die gleiche helle, reduzierte Apple-Ästhetik.",
+        "Einstellungen: Die Navigation wird als kompakte, horizontale Segmentauswahl dargestellt; Gruppenüberschriften erzeugen keine eigenen Karten mehr.",
+        "Editor: Der Abschnittswechsel ist als zurückhaltende, fixierte Segmentleiste ausgeführt. Formularbereiche sind ruhige Sequenzen ohne dekorative Kopfzeilen.",
+        "Barrierefreiheit: Deutliche Fokuszustände und die Einstellung für reduzierte Bewegung bleiben erhalten."
+      ]
+    },
+    {
       "version": "3.2.80",
       "date": "2026-09-25",
       "title": "Apple-Arbeitsfläche ohne verschachtelte Karten",

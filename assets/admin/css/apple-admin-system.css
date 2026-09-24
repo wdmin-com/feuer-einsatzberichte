@@ -1,0 +1,347 @@
+/*
+ * Feuer Einsatzberichte — Apple admin system
+ * One visual language for every plugin-owned admin screen.  It intentionally
+ * resets the former collection of Tabler/legacy cards instead of decorating
+ * them with another layer of borders.
+ */
+:root {
+    --feu-ui-canvas: #f5f5f7;
+    --feu-ui-surface: #ffffff;
+    --feu-ui-elevated: rgba(255, 255, 255, .82);
+    --feu-ui-text: #1d1d1f;
+    --feu-ui-muted: #6e6e73;
+    --feu-ui-line: rgba(29, 29, 31, .12);
+    --feu-ui-blue: #0071e3;
+    --feu-ui-blue-soft: #eaf4ff;
+    --feu-ui-green: #34c759;
+    --feu-ui-radius: 18px;
+    --feu-ui-control-radius: 11px;
+    --feu-ui-shadow: 0 12px 32px rgba(0, 0, 0, .06);
+}
+
+body.feu-admin-ui--modern-shell #wpcontent,
+body.feu-admin-ui--modern-shell #wpbody-content {
+    background: var(--feu-ui-canvas);
+}
+
+body.feu-admin-ui--modern-shell,
+body.feu-admin-ui--modern-shell input,
+body.feu-admin-ui--modern-shell select,
+body.feu-admin-ui--modern-shell textarea,
+body.feu-admin-ui--modern-shell button {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+}
+
+body.feu-admin-ui--modern-shell .feu-admin-page,
+body.feu-admin-ui--modern-shell .wrap.feu-einsatz-settings,
+body.feu-admin-ui--modern-shell .wrap.feu-einsatz-report-create-page {
+    width: auto;
+    max-width: 1360px;
+    margin: 28px auto 48px;
+    padding: 0 24px;
+}
+
+/* Header: information, not a giant decorative banner. */
+body.feu-admin-ui--modern-shell .feu-admin-page-header,
+body.feu-admin-ui--modern-shell .feu-einsatz-admin-hero {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    margin: 0 0 24px;
+    padding: 8px 2px 18px;
+    border: 0;
+    border-bottom: 1px solid var(--feu-ui-line);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+body.feu-admin-ui--modern-shell .feu-admin-page-heading h1,
+body.feu-admin-ui--modern-shell .feu-einsatz-admin-hero h1 {
+    margin: 4px 0 0;
+    color: var(--feu-ui-text);
+    font-size: clamp(28px, 3vw, 38px);
+    font-weight: 700;
+    letter-spacing: -.045em;
+    line-height: 1.08;
+}
+
+body.feu-admin-ui--modern-shell .feu-admin-page-heading .description,
+body.feu-admin-ui--modern-shell .feu-einsatz-admin-hero .description {
+    max-width: 680px;
+    margin: 8px 0 0;
+    color: var(--feu-ui-muted);
+    font-size: 14px;
+    line-height: 1.55;
+}
+
+body.feu-admin-ui--modern-shell .feu-admin-page-eyebrow,
+body.feu-admin-ui--modern-shell .feu-einsatz-admin-hero .feu-einsatz-hero-kicker {
+    color: var(--feu-ui-blue);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+/* Controls and inputs. */
+body.feu-admin-ui--modern-shell .button,
+body.feu-admin-ui--modern-shell .button-primary,
+body.feu-admin-ui--modern-shell input[type="submit"] {
+    min-height: 38px;
+    padding: 0 15px;
+    border: 0;
+    border-radius: 999px;
+    background: #fff;
+    box-shadow: inset 0 0 0 1px var(--feu-ui-line);
+    color: var(--feu-ui-blue);
+    font-weight: 600;
+    line-height: 38px;
+    text-shadow: none;
+    transition: background-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+
+body.feu-admin-ui--modern-shell .button-primary,
+body.feu-admin-ui--modern-shell input.button-primary[type="submit"] {
+    background: var(--feu-ui-blue);
+    box-shadow: none;
+    color: #fff;
+}
+
+body.feu-admin-ui--modern-shell .button:hover,
+body.feu-admin-ui--modern-shell .button:focus {
+    background: var(--feu-ui-blue-soft);
+    box-shadow: inset 0 0 0 1px rgba(0, 113, 227, .25);
+    color: var(--feu-ui-blue);
+    transform: translateY(-1px);
+}
+
+body.feu-admin-ui--modern-shell .button-primary:hover,
+body.feu-admin-ui--modern-shell input.button-primary[type="submit"]:hover {
+    background: #0077ed;
+    box-shadow: 0 8px 16px rgba(0, 113, 227, .22);
+    color: #fff;
+}
+
+body.feu-admin-ui--modern-shell input[type="text"],
+body.feu-admin-ui--modern-shell input[type="number"],
+body.feu-admin-ui--modern-shell input[type="date"],
+body.feu-admin-ui--modern-shell input[type="time"],
+body.feu-admin-ui--modern-shell input[type="url"],
+body.feu-admin-ui--modern-shell select,
+body.feu-admin-ui--modern-shell textarea {
+    border: 1px solid var(--feu-ui-line);
+    border-radius: var(--feu-ui-control-radius);
+    background: rgba(255, 255, 255, .82);
+    box-shadow: none;
+    color: var(--feu-ui-text);
+}
+
+body.feu-admin-ui--modern-shell input:focus,
+body.feu-admin-ui--modern-shell select:focus,
+body.feu-admin-ui--modern-shell textarea:focus {
+    border-color: var(--feu-ui-blue);
+    box-shadow: 0 0 0 4px rgba(0, 113, 227, .14);
+    outline: none;
+}
+
+/* Shared page primitives: exactly one card level. */
+body.feu-admin-ui--modern-shell .feu-admin-card,
+body.feu-admin-ui--modern-shell .feu-einsatz-archive-card,
+body.feu-admin-ui--modern-shell .feu-einsatz-participant-list,
+body.feu-admin-ui--modern-shell .feu-einsatz-log-empty-card,
+body.feu-admin-ui--modern-shell .feu-admin-table-wrap,
+body.feu-admin-ui--modern-shell .feu-einsatz-table-scroll {
+    border: 1px solid var(--feu-ui-line);
+    border-radius: var(--feu-ui-radius);
+    background: var(--feu-ui-surface);
+    box-shadow: var(--feu-ui-shadow);
+}
+
+body.feu-admin-ui--modern-shell .feu-admin-card-header {
+    min-height: 0;
+    padding: 20px 22px 16px;
+    border-bottom: 1px solid var(--feu-ui-line);
+    background: transparent;
+}
+
+body.feu-admin-ui--modern-shell .feu-admin-card-header h2,
+body.feu-admin-ui--modern-shell .feu-admin-card-header h3 {
+    color: var(--feu-ui-text);
+    font-size: 18px;
+    letter-spacing: -.02em;
+}
+
+body.feu-admin-ui--modern-shell .feu-admin-stat-grid {
+    gap: 14px;
+    margin: 0 0 24px;
+}
+
+body.feu-admin-ui--modern-shell .feu-admin-stat-card {
+    min-height: 112px;
+    padding: 18px;
+    border: 1px solid var(--feu-ui-line);
+    border-radius: var(--feu-ui-radius);
+    background: var(--feu-ui-surface);
+    box-shadow: none;
+}
+
+body.feu-admin-ui--modern-shell .feu-admin-stat-icon {
+    border-radius: 13px;
+    background: var(--feu-ui-blue-soft);
+    color: var(--feu-ui-blue);
+}
+
+body.feu-admin-ui--modern-shell .feu-admin-stat-label { color: var(--feu-ui-muted); }
+body.feu-admin-ui--modern-shell .feu-admin-stat-value { color: var(--feu-ui-text); letter-spacing: -.04em; }
+
+/* Tables become calm data surfaces instead of striped admin grids. */
+body.feu-admin-ui--modern-shell .feu-admin-table,
+body.feu-admin-ui--modern-shell .wp-list-table.feu-admin-table {
+    border: 0;
+    border-collapse: collapse;
+    background: transparent;
+    box-shadow: none;
+}
+
+body.feu-admin-ui--modern-shell .feu-admin-table thead th {
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--feu-ui-line);
+    background: #fbfbfd;
+    color: var(--feu-ui-muted);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+body.feu-admin-ui--modern-shell .feu-admin-table tbody td {
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(29, 29, 31, .07);
+    background: transparent;
+    color: var(--feu-ui-text);
+    vertical-align: middle;
+}
+
+body.feu-admin-ui--modern-shell .feu-admin-table tbody tr:last-child td { border-bottom: 0; }
+body.feu-admin-ui--modern-shell .feu-admin-table tbody tr:hover td { background: #f8fbff; }
+
+/* Settings navigation is an iOS segmented menu, not a bordered mega-card. */
+body.feu-apple-settings .feu-admin-settings-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin: 0 0 30px;
+    padding: 5px;
+    border: 0;
+    border-radius: 16px;
+    background: rgba(118, 118, 128, .12);
+    box-shadow: none;
+}
+
+body.feu-apple-settings .feu-admin-settings-nav-group {
+    display: contents;
+}
+
+body.feu-apple-settings .feu-admin-settings-nav-title {
+    display: none;
+}
+
+body.feu-apple-settings .feu-admin-settings-nav-links {
+    display: contents;
+}
+
+body.feu-apple-settings .feu-admin-settings-link.nav-tab {
+    float: none;
+    min-height: 34px;
+    margin: 0;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 11px;
+    background: transparent;
+    color: #424245;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 34px;
+}
+
+body.feu-apple-settings .feu-admin-settings-link.nav-tab.nav-tab-active {
+    background: #fff;
+    box-shadow: 0 2px 7px rgba(0, 0, 0, .12);
+    color: var(--feu-ui-blue);
+}
+
+body.feu-apple-settings .feu-admin-settings-link .ti { display: none; }
+
+/* Editor: sections are a quiet sequence, with no ornamental header strip. */
+body.feu-apple-workspace .feu-einsatz-report-create-grid { gap: 28px; }
+
+body.feu-apple-workspace .postbox.feu-einsatz-form-section {
+    border: 1px solid var(--feu-ui-line);
+    border-radius: 20px;
+    background: var(--feu-ui-surface);
+    box-shadow: var(--feu-ui-shadow);
+}
+
+body.feu-apple-workspace .postbox.feu-einsatz-form-section > .postbox-header {
+    min-height: 0;
+    padding: 23px 26px 0;
+    border: 0;
+    background: transparent;
+}
+
+body.feu-apple-workspace .postbox.feu-einsatz-form-section > .inside {
+    padding: 22px 26px 26px;
+}
+
+body.feu-apple-workspace .postbox.feu-einsatz-form-section > .postbox-header .hndle {
+    font-size: 21px;
+    font-weight: 700;
+    letter-spacing: -.025em;
+}
+
+body.feu-apple-workspace .feu-einsatz-report-section-nav {
+    position: sticky;
+    top: 32px;
+    z-index: 5;
+    overflow-x: auto;
+    gap: 4px;
+    margin: 0 0 24px;
+    padding: 5px;
+    border: 1px solid rgba(255, 255, 255, .76);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, .76);
+    box-shadow: 0 8px 28px rgba(0, 0, 0, .08);
+    backdrop-filter: blur(16px) saturate(150%);
+}
+
+body.feu-apple-workspace .feu-apple-editor-step {
+    flex: 0 0 auto;
+    min-height: 34px;
+    padding: 0 12px;
+    border-radius: 10px;
+    color: #515154;
+    line-height: 34px;
+}
+
+body.feu-apple-workspace .feu-apple-editor-step.is-active {
+    background: #fff;
+    box-shadow: 0 2px 7px rgba(0, 0, 0, .1);
+    color: var(--feu-ui-blue);
+}
+
+@media (max-width: 782px) {
+    body.feu-admin-ui--modern-shell .feu-admin-page,
+    body.feu-admin-ui--modern-shell .wrap.feu-einsatz-settings,
+    body.feu-admin-ui--modern-shell .wrap.feu-einsatz-report-create-page { margin-top: 18px; padding: 0 14px; }
+    body.feu-admin-ui--modern-shell .feu-admin-page-header,
+    body.feu-admin-ui--modern-shell .feu-einsatz-admin-hero { align-items: flex-start; flex-direction: column; }
+    body.feu-apple-settings .feu-admin-settings-nav { flex-wrap: nowrap; overflow-x: auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body.feu-admin-ui--modern-shell *,
+    body.feu-admin-ui--modern-shell *::before,
+    body.feu-admin-ui--modern-shell *::after { scroll-behavior: auto !important; transition-duration: 1ms !important; }
+}
