@@ -146,6 +146,21 @@ body.feu-admin-ui--modern-shell textarea:focus {
     outline: none;
 }
 
+/* A select must announce itself visually.  The old styles removed the native
+ * browser affordance on several WordPress installations, leaving plain text
+ * that looked like a readonly field. */
+body.feu-admin-ui--modern-shell select:not([multiple]) {
+    min-height: 42px;
+    padding-right: 42px !important;
+    appearance: none;
+    background-color: rgba(255, 255, 255, .82) !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='m4 6 4 4 4-4' stroke='%236e6e73' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important;
+    background-position: right 14px center !important;
+    background-repeat: no-repeat !important;
+    background-size: 16px 16px !important;
+    cursor: pointer;
+}
+
 /* Shared page primitives: exactly one card level. */
 body.feu-admin-ui--modern-shell .feu-admin-card,
 body.feu-admin-ui--modern-shell .feu-einsatz-archive-card,
@@ -317,12 +332,35 @@ body.feu-apple-workspace .feu-einsatz-report-section-nav {
 }
 
 body.feu-apple-workspace .feu-apple-editor-step {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
     flex: 0 0 auto;
     min-height: 34px;
     padding: 0 12px;
     border-radius: 10px;
     color: #515154;
     line-height: 34px;
+}
+
+/* Keep the progress number optically centred.  It cannot inherit a text
+ * baseline or a line-height from the WordPress navigation anymore. */
+body.feu-apple-workspace .feu-apple-editor-step .feu-apple-editor-step-number {
+    display: inline-grid !important;
+    width: 18px;
+    height: 18px;
+    flex: 0 0 18px;
+    place-items: center;
+    margin: 0 !important;
+    padding: 0 !important;
+    border-radius: 50%;
+    font-size: 10px;
+    font-style: normal;
+    font-variant-numeric: tabular-nums;
+    line-height: 1 !important;
+    text-align: center;
+    transform: none !important;
+    vertical-align: middle;
 }
 
 body.feu-apple-workspace .feu-apple-editor-step.is-active {

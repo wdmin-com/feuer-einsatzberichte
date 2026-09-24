@@ -1,6 +1,17 @@
 {
   "releases": [
     {
+      "version": "3.2.82",
+      "date": "2026-09-25",
+      "title": "Eindeutige Auswahlfelder und stabile Abschnittsnavigation",
+      "summary": "Formularelemente erhalten wieder eine eindeutige Bedienungsaufforderung und die Fortschrittsnavigation bleibt pixelgenau ausgerichtet.",
+      "changes": [
+        "Auswahlfelder: Jedes einfache Dropdown zeigt einen klaren Chevron rechts im Feld; reine Textfelder und Mehrfachauswahlen bleiben unverändert.",
+        "Editor: Nummern der Abschnittsnavigation sind technisch von der Text-Baseline entkoppelt und mittig im Kreis ausgerichtet.",
+        "Kompatibilität: Die Korrektur gilt für alle Plugin-Seiten und verändert weder Werte noch das Speicherverhalten."
+      ]
+    },
+    {
       "version": "3.2.81",
       "date": "2026-09-25",
       "title": "Einheitliches Apple-Admin-System",
