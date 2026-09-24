@@ -289,6 +289,118 @@ body.feu-apple-settings .feu-admin-settings-link.nav-tab.nav-tab-active {
 
 body.feu-apple-settings .feu-admin-settings-link .ti { display: none; }
 
+/* Settings hierarchy: page canvas → section title → one grouped surface.
+ * Do not permit a surface to visually wrap another surface.  This applies to
+ * Social, Media, Maps, Modules and every other settings tab alike. */
+body.feu-apple-settings .feu-einsatz-tab-content .feu-admin-settings-stack {
+    display: grid;
+    gap: 44px;
+}
+
+body.feu-apple-settings .feu-einsatz-tab-content .feu-admin-settings-surface {
+    display: grid;
+    gap: 18px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+body.feu-apple-settings .feu-einsatz-tab-content .feu-admin-settings-surface-head {
+    padding: 0 2px;
+    border: 0;
+    background: transparent;
+}
+
+body.feu-apple-settings .feu-einsatz-tab-content .feu-admin-settings-surface-head h2,
+body.feu-apple-settings .feu-einsatz-tab-content .feu-admin-settings-surface-head h3 {
+    margin: 0 0 6px;
+    color: var(--feu-ui-text);
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -.03em;
+}
+
+body.feu-apple-settings .feu-einsatz-tab-content .feu-admin-settings-surface-head h2 {
+    font-size: 28px;
+}
+
+body.feu-apple-settings .feu-einsatz-tab-content .feu-admin-settings-surface-head .description {
+    max-width: 700px;
+    margin: 0;
+    color: var(--feu-ui-muted);
+}
+
+body.feu-apple-settings .feu-einsatz-tab-content .feu-admin-settings-fieldset {
+    display: grid;
+    align-content: start;
+    gap: 16px;
+    margin: 0;
+    padding: 22px;
+    border: 1px solid var(--feu-ui-line);
+    border-radius: 18px;
+    background: var(--feu-ui-surface);
+    box-shadow: none;
+}
+
+body.feu-apple-settings .feu-einsatz-tab-content .feu-admin-settings-fieldset-head {
+    margin: 0;
+    padding: 0 0 12px;
+    border-bottom: 1px solid var(--feu-ui-line);
+}
+
+body.feu-apple-settings .feu-einsatz-tab-content .feu-admin-settings-fieldset-head h3,
+body.feu-apple-settings .feu-einsatz-tab-content .feu-admin-settings-fieldset-head h4 {
+    margin: 0;
+    color: var(--feu-ui-text);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: .01em;
+}
+
+body.feu-apple-settings .feu-einsatz-tab-content .feu-admin-settings-check-grid {
+    display: grid;
+    gap: 0;
+    border-top: 1px solid var(--feu-ui-line);
+}
+
+body.feu-apple-settings .feu-einsatz-tab-content .feu-admin-settings-check-card,
+body.feu-apple-settings .feu-einsatz-tab-content .feu-admin-settings-module-card {
+    min-height: 0;
+    margin: 0;
+    padding: 14px 0;
+    border: 0;
+    border-bottom: 1px solid var(--feu-ui-line);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    transform: none;
+}
+
+body.feu-apple-settings .feu-einsatz-tab-content .feu-admin-settings-check-card:hover,
+body.feu-apple-settings .feu-einsatz-tab-content .feu-admin-settings-module-card:hover {
+    background: transparent;
+    box-shadow: none;
+    transform: none;
+}
+
+body.feu-apple-settings .feu-einsatz-tab-content .feu-admin-settings-check-card:last-child,
+body.feu-apple-settings .feu-einsatz-tab-content .feu-admin-settings-module-card:last-child {
+    border-bottom: 0;
+}
+
+body.feu-apple-settings .feu-einsatz-tab-content .feu-admin-settings-check-copy strong,
+body.feu-apple-settings .feu-einsatz-tab-content .feu-admin-settings-module-card strong {
+    color: var(--feu-ui-text);
+    font-size: 14px;
+}
+
+body.feu-apple-settings .feu-einsatz-tab-content .feu-admin-settings-check-copy small {
+    color: var(--feu-ui-muted);
+}
+
 /* Editor: sections are a quiet sequence, with no ornamental header strip. */
 body.feu-apple-workspace .feu-einsatz-report-create-grid { gap: 28px; }
 
@@ -314,6 +426,33 @@ body.feu-apple-workspace .postbox.feu-einsatz-form-section > .postbox-header .hn
     font-size: 21px;
     font-weight: 700;
     letter-spacing: -.025em;
+}
+
+/* The report editor follows the same hierarchy.  The postbox is its one
+ * surface; internal groups are separated by spacing and hairlines, never by
+ * a second card wrapped around a third card. */
+body.feu-apple-workspace .postbox.feu-einsatz-form-section .feu-einsatz-editor-section,
+body.feu-apple-workspace .postbox.feu-einsatz-form-section .feu-einsatz-map-profile-fields,
+body.feu-apple-workspace .postbox.feu-einsatz-form-section .feu-einsatz-inline-card {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+body.feu-apple-workspace .postbox.feu-einsatz-form-section .feu-einsatz-editor-section {
+    overflow: visible;
+}
+
+body.feu-apple-workspace .postbox.feu-einsatz-form-section .feu-einsatz-form-row,
+body.feu-apple-workspace .postbox.feu-einsatz-form-section .feu-einsatz-map-profile-fields {
+    padding: 22px 0;
+    border-top: 1px solid var(--feu-ui-line);
+}
+
+body.feu-apple-workspace .postbox.feu-einsatz-form-section .feu-einsatz-editor-section > :first-child,
+body.feu-apple-workspace .postbox.feu-einsatz-form-section .feu-einsatz-map-profile-fields:first-child {
+    border-top: 0;
 }
 
 body.feu-apple-workspace .feu-einsatz-report-section-nav {

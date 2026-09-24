@@ -1,6 +1,18 @@
 {
   "releases": [
     {
+      "version": "3.2.84",
+      "date": "2026-09-25",
+      "title": "Flache Einstellungsarchitektur",
+      "summary": "Einstellungen und Berichtseditor verwenden nur noch einen sichtbaren Gruppierungsgrad pro Arbeitsbereich.",
+      "changes": [
+        "Kritisch behoben: Oberflächen, Feldgruppen und Auswahloptionen können sich nicht mehr als drei verschachtelte Karten darstellen.",
+        "Einstellungen: Social Media, Medien, Karten, Module und alle weiteren Tabs trennen Abschnitte über Abstand und Überschriften; nur die jeweilige Feldgruppe besitzt eine Oberfläche.",
+        "Editor: Innerhalb einer Einsatzsektion werden Ort, Karte, Auswahl und Medien über ruhige Trennlinien statt zusätzlicher Karten strukturiert.",
+        "Konsistenz: Einzelne Auswahloptionen erscheinen als Zeilen der Gruppe und nicht als neue Container."
+      ]
+    },
+    {
       "version": "3.2.83",
       "date": "2026-09-25",
       "title": "Design-System im Berichtseditor aktiviert",
