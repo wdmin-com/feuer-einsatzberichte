@@ -1416,6 +1416,9 @@ class FEU_Einsatz_Admin {
             'feu-einsatz-einstellungen',
             'feu-einsatz-archive',
             'feu-einsatz-logs',
+            'feu-einsatz-neuer-bericht',
+            'feu-einsatz-bericht-bearbeiten',
+            'feu-einsatz-schnelleingabe',
         ];
 
         return in_array($page, $modern_pages, true);

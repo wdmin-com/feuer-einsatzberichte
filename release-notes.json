@@ -1,6 +1,17 @@
 {
   "releases": [
     {
+      "version": "3.2.83",
+      "date": "2026-09-25",
+      "title": "Design-System im Berichtseditor aktiviert",
+      "summary": "Der Berichtseditor erhält jetzt tatsächlich dieselbe Design-System-Schicht wie alle anderen Plugin-Seiten.",
+      "changes": [
+        "Kritisch behoben: Die Seitenklasse feu-admin-ui--modern-shell wird für Neuer Bericht, Bericht bearbeiten und Schnelleingabe gesetzt.",
+        "Design: Dropdown-Chevrons, Formulare, Navigation, Abstände und Karten des neuen Admin-Systems werden damit auch im Berichtseditor wirksam.",
+        "Qualität: Die Ursache war eine fehlende Kontextzuordnung, nicht ein Cache-Problem."
+      ]
+    },
+    {
       "version": "3.2.82",
       "date": "2026-09-25",
       "title": "Eindeutige Auswahlfelder und stabile Abschnittsnavigation",
