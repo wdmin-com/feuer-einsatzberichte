@@ -26,6 +26,7 @@ class FEU_Einsatz_Admin {
     const GENERATED_MAP_PROCESS_LOCK_PREFIX = 'feu_einsatz_generate_map_lock_';
     const BACKGROUND_GEOCODE_HOOK = 'feu_einsatz_background_geocode';
     const ROLE_ACCESS_OPTION = 'feu_einsatz_role_access';
+    const SETTINGS_SECTION_VISIBILITY_OPTION = 'feu_einsatz_settings_section_visibility';
     const NOMINATIM_SEARCH_URL = 'https://nominatim.openstreetmap.org/search';
     const OVERPASS_API_URL = 'https://overpass-api.de/api/interpreter';
 
@@ -63,6 +64,18 @@ class FEU_Einsatz_Admin {
         );
         $this->schnelleingabe = new FEU_Einsatz_Schnelleingabe($this->db);
         $this->init_hooks();
+        try {
+            $this->repair_pending_demo_maps();
+        } catch (Throwable $error) {
+            if (class_exists('FEU_Einsatz_Logger')) {
+                FEU_Einsatz_Logger::log(
+                    'map_repair_queue_failed',
+                    'system',
+                    0,
+                    sanitize_text_field($error->getMessage())
+                );
+            }
+        }
     }
 
     public static function get_plugin_full_access_roles() {
@@ -71,6 +84,134 @@ class FEU_Einsatz_Admin {
 
     public static function get_plugin_admin_only_sections() {
         return ['settings', 'archives', 'logs'];
+    }
+
+    /**
+     * Settings pages which may be hidden from the navigation without changing
+     * the feature itself. This is deliberately separate from permissions and
+     * feature flags: hiding a page must never remove report data, disable a
+     * shortcode, or make an existing public view fail.
+     */
+    public static function get_settings_section_definitions() {
+        return [
+            'categories' => [
+                'tab' => 'kategorien',
+                'label' => __('Einsatzstichworte', 'feuer-einsatzberichte'),
+                'description' => __('Kategoriezuordnung und Einsatzstichworte für neue Berichte.', 'feuer-einsatzberichte'),
+                'icon' => 'ti ti-tags',
+            ],
+            'organizations' => [
+                'tab' => 'organisationen',
+                'label' => __('Kräfte vor Ort', 'feuer-einsatzberichte'),
+                'description' => __('Organisationen, Fahrzeuge und deren Darstellung im Einsatzbericht.', 'feuer-einsatzberichte'),
+                'icon' => 'ti ti-building',
+            ],
+            'functions' => [
+                'tab' => 'funktionen',
+                'label' => __('Funktionen', 'feuer-einsatzberichte'),
+                'description' => __('Dienstfunktionen für Teilnehmer verwalten.', 'feuer-einsatzberichte'),
+                'icon' => 'ti ti-badge',
+            ],
+            'maps' => [
+                'tab' => 'karten',
+                'label' => __('Karten', 'feuer-einsatzberichte'),
+                'description' => __('Kartenbild, Straßenmarkierung, Feuerwehrhaus und Einsatzgebiet.', 'feuer-einsatzberichte'),
+                'icon' => 'ti ti-map-2',
+            ],
+            'media' => [
+                'tab' => 'medien',
+                'label' => __('Medien', 'feuer-einsatzberichte'),
+                'description' => __('Wasserzeichen und Medienvorgaben für Einsatzfotos.', 'feuer-einsatzberichte'),
+                'icon' => 'ti ti-photo',
+            ],
+            'social' => [
+                'tab' => 'sozial',
+                'label' => __('Soziale Netzwerke', 'feuer-einsatzberichte'),
+                'description' => __('Teilen-Buttons, Vorschaubilder und Metadaten für soziale Netzwerke.', 'feuer-einsatzberichte'),
+                'icon' => 'ti ti-share-3',
+            ],
+            'access' => [
+                'tab' => 'zugriff',
+                'label' => __('Zugriff', 'feuer-einsatzberichte'),
+                'description' => __('Rollen und sichtbare Plugin-Bereiche im WordPress-Backend.', 'feuer-einsatzberichte'),
+                'icon' => 'ti ti-lock',
+            ],
+            'street_registry' => [
+                'tab' => 'strassenregister',
+                'label' => __('Straßenregister', 'feuer-einsatzberichte'),
+                'description' => __('Lokale Straßen, PLZ, Orte und Stadtteile pflegen.', 'feuer-einsatzberichte'),
+                'icon' => 'ti ti-road',
+            ],
+            'local_operation' => [
+                'tab' => 'manifest',
+                'label' => __('Lokaler Betrieb', 'feuer-einsatzberichte'),
+                'description' => __('Update-Manifest, Paketstatus und technische Wartung.', 'feuer-einsatzberichte'),
+                'icon' => 'ti ti-package',
+            ],
+            'shortcodes' => [
+                'tab' => 'shortcodes',
+                'label' => __('Shortcodes', 'feuer-einsatzberichte'),
+                'description' => __('Dokumentation und Beispiele für verfügbare Shortcodes.', 'feuer-einsatzberichte'),
+                'icon' => 'ti ti-code',
+            ],
+            'data_cleanup' => [
+                'tab' => 'daten',
+                'label' => __('Daten löschen', 'feuer-einsatzberichte'),
+                'description' => __('Geschützte Verwaltung für vollständige, bestätigte Datenlöschungen.', 'feuer-einsatzberichte'),
+                'icon' => 'ti ti-shield-lock',
+            ],
+        ];
+    }
+
+    public static function get_settings_tab_section_map() {
+        $map = [];
+
+        foreach (self::get_settings_section_definitions() as $section_key => $definition) {
+            $tab = sanitize_key((string) ($definition['tab'] ?? ''));
+            if ('' !== $tab) {
+                $map[$tab] = $section_key;
+            }
+        }
+
+        return $map;
+    }
+
+    public static function normalize_settings_section_visibility($settings, $default_visible = true) {
+        $settings = is_array($settings) ? $settings : [];
+        $default_visible = (bool) $default_visible;
+        $normalized = [];
+
+        foreach (self::get_settings_section_definitions() as $section_key => $definition) {
+            // New and upgraded installations keep every section visible until
+            // an administrator explicitly personalises this navigation. During
+            // a submitted form, unchecked checkboxes are omitted by browsers,
+            // so callers can explicitly choose a false default instead.
+            $normalized[$section_key] = !array_key_exists($section_key, $settings)
+                ? ($default_visible ? 1 : 0)
+                : (!empty($settings[$section_key]) ? 1 : 0);
+        }
+
+        return $normalized;
+    }
+
+    public static function get_settings_section_visibility() {
+        return self::normalize_settings_section_visibility(
+            get_option(self::SETTINGS_SECTION_VISIBILITY_OPTION, [])
+        );
+    }
+
+    public static function is_settings_tab_visible($tab) {
+        $tab = sanitize_key((string) $tab);
+        $section_map = self::get_settings_tab_section_map();
+
+        if (!isset($section_map[$tab])) {
+            // General settings and the visibility manager can never disappear;
+            // otherwise an administrator could not restore a hidden page.
+            return in_array($tab, ['allgemein', 'module'], true);
+        }
+
+        $visibility = self::get_settings_section_visibility();
+        return !empty($visibility[$section_map[$tab]]);
     }
 
     public static function get_plugin_legacy_full_roles() {
@@ -323,6 +464,8 @@ class FEU_Einsatz_Admin {
         add_action('admin_post_feu_einsatz_update_report', [$this, 'handle_update_report']);
         add_action('admin_post_feu_einsatz_generate_map_image_now', [$this, 'handle_generate_map_image_now']);
         add_action('admin_post_feu_einsatz_delete_map_image', [$this, 'handle_delete_map_image']);
+        add_action('admin_post_feu_einsatz_save_mannschaft_source', [$this, 'handle_mannschaft_source_save']);
+        add_action('admin_post_feu_einsatz_connect_mannschaft_profile', [$this, 'handle_mannschaft_profile_connection']);
         add_action('admin_post_feu_einsatz_share_image',              [$this->report_share, 'handle_share_image_download']);
         add_action('admin_post_feu_einsatz_share_image_public',         [$this->report_share, 'handle_public_share_image_request']);
         add_action('admin_post_nopriv_feu_einsatz_share_image_public',  [$this->report_share, 'handle_public_share_image_request']);
@@ -341,6 +484,8 @@ class FEU_Einsatz_Admin {
         add_filter('submenu_file', [$this, 'filter_admin_submenu_file']);
         add_action('pre_get_posts', [$this, 'filter_admin_post_list']);
         add_action('wp_ajax_feu_einsatz_generate_map_image', [$this, 'ajax_generate_map_image']);
+        add_action('wp_ajax_feu_einsatz_preview_street_highlight', [$this, 'ajax_preview_street_highlight']);
+        add_action('feu_einsatz_reports_restored', [$this, 'queue_restored_report_maps']);
         add_action(self::GENERATED_MAP_BACKGROUND_HOOK, [$this, 'handle_background_map_preview_generation']);
         add_action('feu_einsatz_background_geocode', [$this, 'handle_background_geocode']);
         add_action(
@@ -2086,7 +2231,14 @@ class FEU_Einsatz_Admin {
             );
         }
 
-        if ($is_statistics_screen || $is_settings_screen) {
+        if (
+            $is_statistics_screen
+            || $is_settings_screen
+            || false !== strpos((string) $hook, 'feu-einsatz-neuer-bericht')
+            || false !== strpos((string) $hook, 'feu-einsatz-bericht-bearbeiten')
+            || 'post.php' === $hook
+            || 'post-new.php' === $hook
+        ) {
             $leaflet_style_path = FEU_EINSATZ_PLUGIN_DIR . 'assets/vendor/leaflet/leaflet.css';
             $leaflet_script_path = FEU_EINSATZ_PLUGIN_DIR . 'assets/vendor/leaflet/leaflet.js';
             $leaflet_style_version = file_exists($leaflet_style_path) ? (string) filemtime($leaflet_style_path) : FEU_EINSATZ_VERSION;
@@ -2236,7 +2388,7 @@ class FEU_Einsatz_Admin {
         $this->maybe_apply_report_availability($post_id, $post->post_status);
 
         $auto_map_image = (int) get_option('feu_einsatz_auto_map_image', 1);
-        if ($auto_map_image && !empty($strasse)) {
+        if ($auto_map_image) {
             $this->maybe_queue_generated_map_preview_generation(
                 $post_id,
                 $strasse,
@@ -2989,11 +3141,14 @@ class FEU_Einsatz_Admin {
             'lat' => round((float) $result['lat'], 6),
             'lng' => round((float) $result['lon'], 6),
             'display_name' => isset($result['display_name']) ? sanitize_text_field((string) $result['display_name']) : '',
+            'house_number' => isset($result['address']['house_number'])
+                ? sanitize_text_field((string) $result['address']['house_number'])
+                : '',
             'geojson' => (isset($result['geojson']) && is_array($result['geojson'])) ? $result['geojson'] : [],
         ];
     }
 
-    private function request_street_geometry_data($strasse, $coordinates) {
+    private function request_street_geometry_data($strasse, $coordinates, $plz = '', $stadt = 'Hamburg') {
         if (
             '' === trim((string) $strasse)
             || !is_array($coordinates)
@@ -3008,6 +3163,26 @@ class FEU_Einsatz_Admin {
 
         if (empty($street_candidates)) {
             return false;
+        }
+
+        /*
+         * MAP GEOMETRY BASELINE - 3.2.60
+         *
+         * Keep this call ahead of the legacy local geometry branches. The public
+         * map, editor preview, and PNG renderer must use one city-wide, paginated
+         * street result. Do not restore a PLZ-only, single-result, or artificial
+         * straight-line fallback here: that caused long streets to be truncated.
+         */
+        if (class_exists('FEU_Einsatz_Template_Helpers')) {
+            $nominatim_geometry = FEU_Einsatz_Template_Helpers::resolve_nominatim_street_geometry(
+                $strasse,
+                $plz,
+                $stadt
+            );
+
+            if ($nominatim_geometry) {
+                return $nominatim_geometry;
+            }
         }
 
         $query_specs = [];
@@ -3184,6 +3359,44 @@ class FEU_Einsatz_Admin {
         return $this->build_map_geometry_payload_from_overpass_elements($payload['elements'], $coordinates);
     }
 
+    private function append_report_extra_street_geometry($post_id, $geometry_payload, $plz, $stadt, $coordinates, $allow_remote = false) {
+        $post_id = absint($post_id);
+        $extra_streets = FEU_Einsatz_Template_Helpers::get_report_map_extra_streets($post_id);
+
+        if (empty($extra_streets)) {
+            return $geometry_payload;
+        }
+
+        $geometry_payload = is_array($geometry_payload) ? $geometry_payload : ['geometry' => [], 'center' => []];
+        $geometry_payload['geometry'] = isset($geometry_payload['geometry']) && is_array($geometry_payload['geometry'])
+            ? $geometry_payload['geometry']
+            : [];
+
+        foreach ($extra_streets as $extra_street) {
+            $extra_payload = FEU_Einsatz_Street_Cache::get($extra_street, $plz, $stadt);
+
+            if (
+                !$extra_payload
+                && $allow_remote
+                && is_array($coordinates)
+                && isset($coordinates['lat'], $coordinates['lng'])
+                && is_numeric($coordinates['lat'])
+                && is_numeric($coordinates['lng'])
+            ) {
+                $extra_payload = $this->request_street_geometry_data($extra_street, $coordinates, $plz, $stadt);
+                if ($extra_payload) {
+                    FEU_Einsatz_Street_Cache::set($extra_street, $plz, $stadt, $extra_payload);
+                }
+            }
+
+            if (is_array($extra_payload) && !empty($extra_payload['geometry'])) {
+                $geometry_payload['geometry'] = array_merge($geometry_payload['geometry'], (array) $extra_payload['geometry']);
+            }
+        }
+
+        return $geometry_payload;
+    }
+
     private function build_map_preview_generation_context($post_id, $strasse, $plz = '', $stadt = 'Hamburg', $geocoded_data = null, $options = []) {
         $options = wp_parse_args($options, [
             'allow_focused_geometry_refresh' => false,
@@ -3200,6 +3413,9 @@ class FEU_Einsatz_Admin {
             $stadt = 'Hamburg';
         }
 
+        $house_number = trim((string) get_post_meta($post_id, '_feu_einsatz_hausnummer', true));
+        $location_mode = FEU_Einsatz_Template_Helpers::get_report_map_location_mode($post_id);
+        $highlight_settings = FEU_Einsatz_Template_Helpers::get_report_street_highlight_settings($post_id);
         $latitude = '';
         $longitude = '';
 
@@ -3211,6 +3427,25 @@ class FEU_Einsatz_Admin {
         ) {
             $latitude = (string) $geocoded_data['lat'];
             $longitude = (string) $geocoded_data['lng'];
+
+            $requested_house_number = strtolower((string) preg_replace('/\s+/', '', $house_number));
+            $resolved_house_number = strtolower((string) preg_replace('/\s+/', '', (string) ($geocoded_data['house_number'] ?? '')));
+            if (
+                class_exists('FEU_Einsatz_Template_Helpers')
+                && ('' === $requested_house_number || $requested_house_number === $resolved_house_number)
+            ) {
+                if ('address' === $location_mode) {
+                    update_post_meta($post_id, '_feu_einsatz_latitude', $latitude);
+                    update_post_meta($post_id, '_feu_einsatz_longitude', $longitude);
+                    FEU_Einsatz_Template_Helpers::mark_report_address_coordinates(
+                        $post_id,
+                        $strasse,
+                        $house_number,
+                        $plz,
+                        $stadt
+                    );
+                }
+            }
         } else {
             $latitude = $this->sanitize_coordinate_value((string) get_post_meta($post_id, '_feu_einsatz_latitude', true), 'lat');
             $longitude = $this->sanitize_coordinate_value((string) get_post_meta($post_id, '_feu_einsatz_longitude', true), 'lng');
@@ -3223,6 +3458,31 @@ class FEU_Einsatz_Admin {
 
             if ($geometry_payload) {
                 FEU_Einsatz_Street_Cache::set_post_cache($post_id, $geometry_payload);
+            }
+        }
+
+        // For limited modes, use a coordinate verified against the stored
+        // house number and enrich the cache around that exact address. Full
+        // street mode intentionally keeps its established city-wide baseline.
+        $highlight_mode = $highlight_settings['mode'];
+        if (
+            in_array($highlight_mode, ['length', 'radius'], true)
+            && '' !== $house_number
+            && 'address' === $location_mode
+            && class_exists('FEU_Einsatz_Template_Helpers')
+        ) {
+            $primed_map_data = FEU_Einsatz_Template_Helpers::prime_public_map_data($post_id, $strasse, $plz, $stadt);
+
+            if (!empty($primed_map_data['coordinates']['lat']) && !empty($primed_map_data['coordinates']['lng'])) {
+                $latitude = (string) $primed_map_data['coordinates']['lat'];
+                $longitude = (string) $primed_map_data['coordinates']['lng'];
+            }
+
+            if (!empty($primed_map_data['geometry'])) {
+                $geometry_payload = [
+                    'geometry' => $primed_map_data['geometry'],
+                    'center' => !empty($primed_map_data['center']) ? $primed_map_data['center'] : [],
+                ];
             }
         }
 
@@ -3244,7 +3504,7 @@ class FEU_Einsatz_Admin {
             $geometry_payload = $this->request_street_geometry_data($strasse, [
                 'lat' => (float) $latitude,
                 'lng' => (float) $longitude,
-            ]);
+            ], $plz, $stadt);
 
             if ($geometry_payload) {
                 FEU_Einsatz_Street_Cache::set($strasse, $plz, $stadt, $geometry_payload);
@@ -3277,6 +3537,68 @@ class FEU_Einsatz_Admin {
                 FEU_Einsatz_Street_Cache::set($strasse, $plz, $stadt, $geometry_payload);
                 FEU_Einsatz_Street_Cache::set_post_cache($post_id, $geometry_payload);
             }
+        }
+
+        $coordinates = is_numeric($latitude) && is_numeric($longitude)
+            ? ['lat' => (float) $latitude, 'lng' => (float) $longitude]
+            : false;
+        $geometry_payload = $this->append_report_extra_street_geometry(
+            $post_id,
+            $geometry_payload,
+            $plz,
+            $stadt,
+            $coordinates,
+            !empty($options['allow_remote_geometry_prime'])
+        );
+
+        $public_precision = FEU_Einsatz_Template_Helpers::get_report_map_public_precision($post_id);
+        $area_geometry = FEU_Einsatz_Template_Helpers::get_report_map_area_points($post_id);
+        if ('exact' !== $public_precision && $coordinates) {
+            $public_coordinates = FEU_Einsatz_Template_Helpers::get_report_map_public_coordinates($post_id, $latitude, $longitude);
+            if ($public_coordinates) {
+                $latitude = (string) $public_coordinates['lat'];
+                $longitude = (string) $public_coordinates['lng'];
+                $coordinates = ['lat' => (float) $latitude, 'lng' => (float) $longitude];
+                $geometry_payload = ['geometry' => [], 'center' => [(float) $latitude, (float) $longitude]];
+                $highlight_settings['mode'] = 'radius';
+                $highlight_settings['radius_meters'] = max((int) $highlight_settings['radius_meters'], (int) $public_coordinates['meters']);
+                $area_geometry = [];
+            }
+        }
+
+        // The cache remains complete. Only the rendering context is reduced, so a
+        // later change of display mode never requires fetching OSM geometry again.
+        // Privacy rounding can intentionally replace a full street with a
+        // broad radius. Read the effective setting here, not the original
+        // per-report mode captured before that replacement.
+        $can_render_radius_without_geometry = 'radius' === ($highlight_settings['mode'] ?? $highlight_mode);
+        if (
+            is_numeric($latitude)
+            && is_numeric($longitude)
+            && (
+                (is_array($geometry_payload) && !empty($geometry_payload['geometry']))
+                || $can_render_radius_without_geometry
+                || !empty($area_geometry)
+            )
+        ) {
+            if (!is_array($geometry_payload)) {
+                $geometry_payload = [
+                    'geometry' => [],
+                    'center' => [(float) $latitude, (float) $longitude],
+                ];
+            }
+            $highlight = FEU_Einsatz_Template_Helpers::apply_street_highlight_mode(
+                $geometry_payload['geometry'] ?? [],
+                (float) $latitude,
+                (float) $longitude,
+                $highlight_settings
+            );
+            $geometry_payload['geometry'] = $highlight['geometry'];
+            $geometry_payload['highlight_mode'] = $highlight['mode'];
+            $geometry_payload['highlight_radius_meters'] = $highlight['radius_meters'];
+            $geometry_payload['highlight_latitude'] = (float) $latitude;
+            $geometry_payload['highlight_longitude'] = (float) $longitude;
+            $geometry_payload['area_geometry'] = $area_geometry;
         }
 
         return [
@@ -3403,6 +3725,10 @@ class FEU_Einsatz_Admin {
 
     private function validate_report_submission_request($post_id = 0) {
         $post_id = absint($post_id);
+        $location_mode = isset($_POST['feu_einsatz_map_location_mode'])
+            ? sanitize_key(wp_unslash($_POST['feu_einsatz_map_location_mode']))
+            : ($post_id ? FEU_Einsatz_Template_Helpers::get_report_map_location_mode($post_id) : 'address');
+        $location_mode = 'coordinates' === $location_mode ? 'coordinates' : 'address';
         $street = isset($_POST['feu_einsatz_strasse'])
             ? sanitize_text_field(wp_unslash($_POST['feu_einsatz_strasse']))
             : ($post_id ? (string) get_post_meta($post_id, '_feu_einsatz_strasse', true) : '');
@@ -3421,6 +3747,12 @@ class FEU_Einsatz_Admin {
         $time_raw = isset($_POST['feu_einsatz_uhrzeit'])
             ? sanitize_text_field(wp_unslash($_POST['feu_einsatz_uhrzeit']))
             : ($post_id ? (string) get_post_meta($post_id, '_feu_einsatz_uhrzeit', true) : '');
+        $latitude = isset($_POST['feu_einsatz_latitude'])
+            ? $this->sanitize_coordinate_value(wp_unslash($_POST['feu_einsatz_latitude']), 'lat')
+            : ($post_id ? $this->sanitize_coordinate_value((string) get_post_meta($post_id, '_feu_einsatz_latitude', true), 'lat') : '');
+        $longitude = isset($_POST['feu_einsatz_longitude'])
+            ? $this->sanitize_coordinate_value(wp_unslash($_POST['feu_einsatz_longitude']), 'lng')
+            : ($post_id ? $this->sanitize_coordinate_value((string) get_post_meta($post_id, '_feu_einsatz_longitude', true), 'lng') : '');
         $submitted_categories = isset($_POST['post_category']) ? array_map('absint', (array) wp_unslash($_POST['post_category'])) : [];
         $allowed_category_ids = wp_list_pluck($this->get_available_report_categories(), 'term_id');
         $selected_categories = empty($allowed_category_ids)
@@ -3435,16 +3767,22 @@ class FEU_Einsatz_Admin {
         $date_raw = trim($date_raw);
         $time_raw = trim($time_raw);
 
-        if ('' === $street) {
-            $errors[] = __('Straße ist ein Pflichtfeld.', 'feuer-einsatzberichte');
-        }
+        if ('coordinates' === $location_mode) {
+            if ('' === $latitude || '' === $longitude) {
+                $errors[] = __('Für genaue Koordinaten sind Breitengrad und Längengrad Pflichtfelder.', 'feuer-einsatzberichte');
+            }
+        } else {
+            if ('' === $street) {
+                $errors[] = __('Straße ist ein Pflichtfeld.', 'feuer-einsatzberichte');
+            }
 
-        if (!preg_match('/^\d{5}$/', $plz)) {
-            $errors[] = __('PLZ ist ein Pflichtfeld und muss genau 5 Ziffern enthalten.', 'feuer-einsatzberichte');
-        }
+            if (!preg_match('/^\d{5}$/', $plz)) {
+                $errors[] = __('PLZ ist ein Pflichtfeld und muss genau 5 Ziffern enthalten.', 'feuer-einsatzberichte');
+            }
 
-        if ('' === $city) {
-            $errors[] = __('Stadt ist ein Pflichtfeld.', 'feuer-einsatzberichte');
+            if ('' === $city) {
+                $errors[] = __('Stadt ist ein Pflichtfeld.', 'feuer-einsatzberichte');
+            }
         }
 
         if (!$this->is_valid_report_date_input($date_raw)) {
@@ -3474,6 +3812,8 @@ class FEU_Einsatz_Admin {
                 && $city === $stored_city;
 
             if (
+                'address' === FEU_Einsatz_Template_Helpers::get_report_map_location_mode($post_id)
+                &&
                 $address_is_unchanged
                 && is_numeric($stored_latitude)
                 && is_numeric($stored_longitude)
@@ -3493,12 +3833,15 @@ class FEU_Einsatz_Admin {
         }
 
         return [
+            'location_mode' => $location_mode,
             'street' => $street,
             'house_number' => $house_number,
             'plz' => $plz,
             'city' => $city,
             'date' => $date_raw,
             'time' => $time_raw,
+            'latitude' => $latitude,
+            'longitude' => $longitude,
             'categories' => $selected_categories,
             'errors' => $errors,
             'geocoded_data' => $geocoded_data,
@@ -3667,6 +4010,10 @@ class FEU_Einsatz_Admin {
     }
 
     private function get_and_save_coordinates($post_id, $strasse, $plz = '', $stadt = 'Hamburg', $hausnummer = '') {
+        if ('coordinates' === FEU_Einsatz_Template_Helpers::get_report_map_location_mode($post_id)) {
+            return false;
+        }
+
         $geocoded_data = $this->request_geocoded_address_data($strasse, $plz, $stadt, $hausnummer);
 
         if (!$geocoded_data) {
@@ -3680,6 +4027,22 @@ class FEU_Einsatz_Admin {
             update_post_meta($post_id, '_feu_einsatz_display_address', $geocoded_data['display_name']);
         }
 
+        $requested_house_number = strtolower((string) preg_replace('/\s+/', '', trim((string) $hausnummer)));
+        $resolved_house_number = strtolower((string) preg_replace('/\s+/', '', trim((string) ($geocoded_data['house_number'] ?? ''))));
+
+        if (
+            class_exists('FEU_Einsatz_Template_Helpers')
+            && ('' === $requested_house_number || $requested_house_number === $resolved_house_number)
+        ) {
+            FEU_Einsatz_Template_Helpers::mark_report_address_coordinates(
+                $post_id,
+                $strasse,
+                $hausnummer,
+                $plz,
+                $stadt
+            );
+        }
+
         return [
             'lat' => (float) $geocoded_data['lat'],
             'lng' => (float) $geocoded_data['lng'],
@@ -3687,7 +4050,73 @@ class FEU_Einsatz_Admin {
     }
 
     private function save_einsatz_details($post_id, $geocoded_data = null) {
-        $fields = ['strasse', 'hausnummer', 'plz', 'stadt', 'datum', 'uhrzeit'];
+        $fields = ['strasse', 'hausnummer', 'plz', 'stadt', 'stadtteil', 'datum', 'uhrzeit'];
+        $previous_location_mode = FEU_Einsatz_Template_Helpers::get_report_map_location_mode($post_id);
+        $previous_map_profile = [
+            'location_mode' => $previous_location_mode,
+            'highlight' => FEU_Einsatz_Template_Helpers::get_report_street_highlight_settings($post_id),
+            'extra_streets' => FEU_Einsatz_Template_Helpers::get_report_map_extra_streets($post_id),
+            'area' => FEU_Einsatz_Template_Helpers::get_report_map_area_geojson($post_id),
+            'precision' => FEU_Einsatz_Template_Helpers::get_report_map_public_precision($post_id),
+        ];
+        $location_mode = isset($_POST['feu_einsatz_map_location_mode'])
+            ? sanitize_key(wp_unslash($_POST['feu_einsatz_map_location_mode']))
+            : FEU_Einsatz_Template_Helpers::get_report_map_location_mode($post_id);
+        $location_mode = 'coordinates' === $location_mode ? 'coordinates' : 'address';
+        update_post_meta($post_id, FEU_Einsatz_Template_Helpers::MAP_LOCATION_MODE_META, $location_mode);
+
+        $highlight_override = isset($_POST['feu_einsatz_map_highlight_override'])
+            ? sanitize_key(wp_unslash($_POST['feu_einsatz_map_highlight_override']))
+            : 'default';
+        $highlight_override = in_array($highlight_override, ['full', 'length', 'radius'], true)
+            ? $highlight_override
+            : 'default';
+
+        $submitted_street = isset($_POST['feu_einsatz_strasse'])
+            ? FEU_Einsatz_Template_Helpers::strip_house_number_from_street(sanitize_text_field(wp_unslash($_POST['feu_einsatz_strasse'])))
+            : '';
+        // Coordinate-only incidents have no street geometry to render. A
+        // radius is the only honest, useful representation in that case.
+        $global_highlight_mode = FEU_Einsatz_Template_Helpers::get_street_highlight_settings()['mode'];
+        if (
+            'coordinates' === $location_mode
+            && '' === $submitted_street
+            && (
+                in_array($highlight_override, ['full', 'length'], true)
+                || ('default' === $highlight_override && in_array($global_highlight_mode, ['full', 'length'], true))
+            )
+        ) {
+            $highlight_override = 'radius';
+        }
+        update_post_meta($post_id, FEU_Einsatz_Template_Helpers::MAP_HIGHLIGHT_OVERRIDE_META, $highlight_override);
+
+        $profile_length = isset($_POST['feu_einsatz_map_highlight_length_meters'])
+            ? max(20, min(5000, absint(wp_unslash($_POST['feu_einsatz_map_highlight_length_meters'])) ?: 100))
+            : 100;
+        $profile_radius = isset($_POST['feu_einsatz_map_highlight_radius_meters'])
+            ? max(20, min(5000, absint(wp_unslash($_POST['feu_einsatz_map_highlight_radius_meters'])) ?: 100))
+            : 100;
+        update_post_meta($post_id, FEU_Einsatz_Template_Helpers::MAP_HIGHLIGHT_LENGTH_META, $profile_length);
+        update_post_meta($post_id, FEU_Einsatz_Template_Helpers::MAP_HIGHLIGHT_RADIUS_META, $profile_radius);
+
+        $extra_streets = isset($_POST['feu_einsatz_map_extra_streets'])
+            ? FEU_Einsatz_Template_Helpers::normalize_report_map_extra_streets(wp_unslash($_POST['feu_einsatz_map_extra_streets']))
+            : [];
+        update_post_meta($post_id, FEU_Einsatz_Template_Helpers::MAP_EXTRA_STREETS_META, $extra_streets);
+
+        $area_geojson = isset($_POST['feu_einsatz_map_area_geojson'])
+            ? FEU_Einsatz_Template_Helpers::normalize_report_map_area_geojson(wp_unslash($_POST['feu_einsatz_map_area_geojson']))
+            : [];
+        if (!empty($area_geojson)) {
+            update_post_meta($post_id, FEU_Einsatz_Template_Helpers::MAP_AREA_GEOJSON_META, $area_geojson);
+        } else {
+            delete_post_meta($post_id, FEU_Einsatz_Template_Helpers::MAP_AREA_GEOJSON_META);
+        }
+
+        $public_precision = isset($_POST['feu_einsatz_map_public_precision'])
+            ? FEU_Einsatz_Template_Helpers::normalize_report_map_public_precision(wp_unslash($_POST['feu_einsatz_map_public_precision']))
+            : 'exact';
+        update_post_meta($post_id, FEU_Einsatz_Template_Helpers::MAP_PUBLIC_PRECISION_META, $public_precision);
         $previous_address_parts = [
             'strasse' => (string) get_post_meta($post_id, '_feu_einsatz_strasse', true),
             'hausnummer' => (string) get_post_meta($post_id, '_feu_einsatz_hausnummer', true),
@@ -3731,6 +4160,14 @@ class FEU_Einsatz_Admin {
             $updated_address_parts['hausnummer']
         );
 
+        // A focused street result belongs to one concrete address. Do not let
+        // an earlier result suppress a fresh geometry lookup after an editor
+        // changes the street, house number, postcode, or city.
+        if (($previous_address !== $updated_address || 'coordinates' === $previous_location_mode) && 'address' === $location_mode) {
+            delete_post_meta($post_id, FEU_Einsatz_Template_Helpers::FOCUSED_GEOMETRY_SOURCE_META);
+            delete_post_meta($post_id, FEU_Einsatz_Template_Helpers::ADDRESS_COORDINATES_META);
+        }
+
         $latitude = isset($_POST['feu_einsatz_latitude'])
             ? $this->sanitize_coordinate_value(wp_unslash($_POST['feu_einsatz_latitude']), 'lat')
             : '';
@@ -3738,10 +4175,14 @@ class FEU_Einsatz_Admin {
             ? $this->sanitize_coordinate_value(wp_unslash($_POST['feu_einsatz_longitude']), 'lng')
             : '';
 
-        if ('' !== $latitude && '' !== $longitude) {
+        if ('coordinates' === $location_mode && '' !== $latitude && '' !== $longitude) {
             update_post_meta($post_id, '_feu_einsatz_latitude', $latitude);
             update_post_meta($post_id, '_feu_einsatz_longitude', $longitude);
+            delete_post_meta($post_id, FEU_Einsatz_Template_Helpers::ADDRESS_COORDINATES_META);
         } elseif (
+            'address' === $location_mode
+            && 'coordinates' !== $previous_location_mode
+            &&
             is_array($geocoded_data)
             && isset($geocoded_data['lat'], $geocoded_data['lng'])
             && is_numeric($geocoded_data['lat'])
@@ -3749,7 +4190,7 @@ class FEU_Einsatz_Admin {
         ) {
             update_post_meta($post_id, '_feu_einsatz_latitude', (string) round((float) $geocoded_data['lat'], 6));
             update_post_meta($post_id, '_feu_einsatz_longitude', (string) round((float) $geocoded_data['lng'], 6));
-        } elseif ('' === $latitude && '' === $longitude && $previous_address !== $updated_address) {
+        } elseif ('address' === $location_mode && ($previous_address !== $updated_address || 'coordinates' === $previous_location_mode)) {
             delete_post_meta($post_id, '_feu_einsatz_latitude');
             delete_post_meta($post_id, '_feu_einsatz_longitude');
         }
@@ -3759,8 +4200,52 @@ class FEU_Einsatz_Admin {
             && !empty($geocoded_data['display_name'])
         ) {
             update_post_meta($post_id, '_feu_einsatz_display_address', sanitize_text_field((string) $geocoded_data['display_name']));
-        } elseif ($previous_address !== $updated_address) {
+        } elseif ($previous_address !== $updated_address || 'coordinates' === $previous_location_mode) {
             delete_post_meta($post_id, '_feu_einsatz_display_address');
+        }
+
+        $current_map_profile = [
+            'location_mode' => $location_mode,
+            'highlight' => FEU_Einsatz_Template_Helpers::get_report_street_highlight_settings($post_id),
+            'extra_streets' => $extra_streets,
+            'area' => $area_geojson,
+            'precision' => $public_precision,
+        ];
+        if (wp_json_encode($previous_map_profile) !== wp_json_encode($current_map_profile)) {
+            $history = get_post_meta($post_id, FEU_Einsatz_Template_Helpers::MAP_HISTORY_META, true);
+            $history = is_array($history) ? $history : [];
+            $history_label = sprintf(
+                __('Kartenprofil: %1$s · %2$s', 'feuer-einsatzberichte'),
+                'coordinates' === $location_mode ? __('Koordinaten', 'feuer-einsatzberichte') : __('Adresse', 'feuer-einsatzberichte'),
+                'hidden' === $public_precision ? __('nicht öffentlich', 'feuer-einsatzberichte') : __('aktualisiert', 'feuer-einsatzberichte')
+            );
+            array_unshift($history, [
+                'changed_at' => current_time('d.m.Y H:i'),
+                'user_id' => get_current_user_id(),
+                'label' => $history_label,
+                'profile' => $current_map_profile,
+            ]);
+            update_post_meta($post_id, FEU_Einsatz_Template_Helpers::MAP_HISTORY_META, array_slice($history, 0, 10));
+        }
+
+        // An old exact generated map must never remain publicly reachable
+        // while the editor switches the report to an approximate map. Remove
+        // it before the queued renderer creates the new, privacy-safe asset.
+        if (
+            'exact' !== $public_precision
+            && $previous_map_profile['precision'] !== $public_precision
+        ) {
+            $this->delete_generated_map_assets($post_id);
+        }
+
+        if ('hidden' === $public_precision) {
+            // This only detaches plugin-generated assets; editor-uploaded
+            // photos are never removed by a map privacy setting.
+            $this->delete_generated_map_assets($post_id);
+            $this->update_generated_map_status($post_id, 'privacy_hidden', [
+                'stage' => 'privacy',
+                'message' => __('Öffentliche Karte und automatisch erzeugtes Kartenbild sind für diesen Bericht deaktiviert.', 'feuer-einsatzberichte'),
+            ]);
         }
     }
 
@@ -3824,8 +4309,20 @@ class FEU_Einsatz_Admin {
 
             $generated_thumbnail_id = $this->get_generated_map_thumbnail_id($post_id);
             $has_generated_preview = '' !== trim((string) get_post_meta($post_id, self::GENERATED_MAP_PREVIEW_URL_META, true));
+            $current_thumbnail_id = absint(get_post_thumbnail_id($post_id));
+            $has_manual_thumbnail = $current_thumbnail_id > 0
+                && $current_thumbnail_id !== $generated_thumbnail_id
+                && '1' !== (string) get_post_meta($current_thumbnail_id, self::GENERATED_MAP_ATTACHMENT_META, true);
 
-            if (!($generated_thumbnail_id > 0 || $has_generated_preview)) {
+            if ($has_manual_thumbnail && !$has_generated_preview) {
+                continue;
+            }
+
+            $street = trim((string) get_post_meta($post_id, '_feu_einsatz_strasse', true));
+            $latitude = trim((string) get_post_meta($post_id, '_feu_einsatz_latitude', true));
+            $longitude = trim((string) get_post_meta($post_id, '_feu_einsatz_longitude', true));
+
+            if ('' === $street && !(is_numeric($latitude) && is_numeric($longitude))) {
                 continue;
             }
 
@@ -3849,6 +4346,84 @@ class FEU_Einsatz_Admin {
         }
 
         return array_values(array_unique($candidate_ids));
+    }
+
+    /**
+     * Rebuild missing map data after an archive restore without blocking the restore request.
+     *
+     * @param int[] $post_ids Restored report IDs.
+     */
+    public function queue_restored_report_maps($post_ids): void {
+        if (1 !== (int) get_option('feu_einsatz_auto_map_image', 1)) {
+            return;
+        }
+
+        $delay_seconds = 5;
+
+        foreach (array_values(array_unique(array_map('absint', (array) $post_ids))) as $post_id) {
+            if (!$post_id || '1' !== (string) get_post_meta($post_id, '_feu_einsatz_einsatzbericht', true)) {
+                continue;
+            }
+
+            if (
+                absint(get_post_thumbnail_id($post_id)) > 0
+                || '' !== trim((string) get_post_meta($post_id, self::GENERATED_MAP_PREVIEW_URL_META, true))
+            ) {
+                continue;
+            }
+
+            $street = trim((string) get_post_meta($post_id, '_feu_einsatz_strasse', true));
+            $postcode = trim((string) get_post_meta($post_id, '_feu_einsatz_plz', true));
+            $city = trim((string) get_post_meta($post_id, '_feu_einsatz_stadt', true));
+
+            if ('' === $street) {
+                continue;
+            }
+
+            $this->maybe_queue_generated_map_preview_generation(
+                $post_id,
+                $street,
+                $postcode,
+                $city,
+                false,
+                $delay_seconds,
+                'archive_restore'
+            );
+            $delay_seconds += 15;
+        }
+    }
+
+    private function repair_pending_demo_maps(): void {
+        $post_ids = array_values(array_unique(array_filter(array_map(
+            'absint',
+            (array) get_option('feu_einsatz_pending_demo_map_repair', [])
+        ))));
+
+        if (empty($post_ids)) {
+            return;
+        }
+
+        delete_option('feu_einsatz_pending_demo_map_repair');
+        $delay_seconds = 5;
+
+        foreach ($post_ids as $post_id) {
+            $street = trim((string) get_post_meta($post_id, '_feu_einsatz_strasse', true));
+            if ('' === $street) {
+                continue;
+            }
+
+            $this->delete_generated_map_assets($post_id);
+            $this->maybe_queue_generated_map_preview_generation(
+                $post_id,
+                $street,
+                trim((string) get_post_meta($post_id, '_feu_einsatz_plz', true)),
+                trim((string) get_post_meta($post_id, '_feu_einsatz_stadt', true)),
+                true,
+                $delay_seconds,
+                'missing_geometry_repair'
+            );
+            $delay_seconds += 15;
+        }
     }
 
     public function count_generated_map_rebuild_candidates() {
@@ -3924,13 +4499,17 @@ class FEU_Einsatz_Admin {
         return 0;
     }
 
-    private function build_generated_map_signature($strasse, $plz = '', $stadt = 'Hamburg') {
+    private function build_generated_map_signature($strasse, $plz = '', $stadt = 'Hamburg', $post_id = 0) {
+        $post_id = absint($post_id);
         $display_street = FEU_Einsatz_Template_Helpers::strip_house_number_from_street((string) $strasse);
         $display_street = trim((string) $display_street);
         $plz = trim((string) $plz);
         $stadt = trim((string) $stadt);
+        $location_mode = $post_id ? FEU_Einsatz_Template_Helpers::get_report_map_location_mode($post_id) : 'address';
+        $latitude = $post_id ? $this->sanitize_coordinate_value((string) get_post_meta($post_id, '_feu_einsatz_latitude', true), 'lat') : '';
+        $longitude = $post_id ? $this->sanitize_coordinate_value((string) get_post_meta($post_id, '_feu_einsatz_longitude', true), 'lng') : '';
 
-        if ('' === $display_street) {
+        if ('' === $display_street && !('coordinates' === $location_mode && '' !== $latitude && '' !== $longitude)) {
             return '';
         }
 
@@ -3942,6 +4521,12 @@ class FEU_Einsatz_Admin {
             'street' => $display_street,
             'plz' => $plz,
             'city' => $stadt,
+            'location_mode' => $location_mode,
+            'coordinates' => 'coordinates' === $location_mode ? [$latitude, $longitude] : [],
+            'report_highlight' => $post_id ? FEU_Einsatz_Template_Helpers::get_report_street_highlight_settings($post_id) : [],
+            'extra_streets' => $post_id ? FEU_Einsatz_Template_Helpers::get_report_map_extra_streets($post_id) : [],
+            'area_geometry' => $post_id ? FEU_Einsatz_Template_Helpers::get_report_map_area_geojson($post_id) : [],
+            'public_precision' => $post_id ? FEU_Einsatz_Template_Helpers::get_report_map_public_precision($post_id) : 'exact',
             'map_style' => [
                 'zoom' => (int) get_option('feu_einsatz_map_zoom', 16),
                 'heading' => $this->get_map_preview_heading(),
@@ -3958,6 +4543,9 @@ class FEU_Einsatz_Admin {
                 'highlight_color' => $this->get_map_preview_highlight_hex_color(),
                 'stroke_width' => $this->get_map_preview_stroke_width(),
                 'font_family' => $this->get_map_preview_font_family(),
+                'street_highlight_mode' => (string) get_option('feu_einsatz_street_highlight_mode', 'full'),
+                'street_highlight_length_meters' => (int) get_option('feu_einsatz_street_highlight_length_meters', 100),
+                'street_highlight_radius_meters' => (int) get_option('feu_einsatz_street_highlight_radius_meters', 100),
             ],
         ]));
     }
@@ -3985,7 +4573,7 @@ class FEU_Einsatz_Admin {
 
     private function has_current_generated_map_signature($post_id, $strasse, $plz = '', $stadt = 'Hamburg') {
         $post_id = absint($post_id);
-        $expected_signature = $this->build_generated_map_signature($strasse, $plz, $stadt);
+        $expected_signature = $this->build_generated_map_signature($strasse, $plz, $stadt, $post_id);
         $stored_signature = trim((string) get_post_meta($post_id, self::GENERATED_MAP_SIGNATURE_META, true));
         $has_generated_asset = $this->has_generated_map_asset($post_id);
 
@@ -4008,7 +4596,16 @@ class FEU_Einsatz_Admin {
         $stadt = trim((string) $stadt);
         $force = !empty($force);
 
-        if (!$post_id || '' === $strasse) {
+        $uses_manual_coordinates = 'coordinates' === FEU_Einsatz_Template_Helpers::get_report_map_location_mode($post_id)
+            && '' !== $this->sanitize_coordinate_value((string) get_post_meta($post_id, '_feu_einsatz_latitude', true), 'lat')
+            && '' !== $this->sanitize_coordinate_value((string) get_post_meta($post_id, '_feu_einsatz_longitude', true), 'lng');
+
+        if (!$post_id || ('' === $strasse && !$uses_manual_coordinates)) {
+            return false;
+        }
+
+        if ('hidden' === FEU_Einsatz_Template_Helpers::get_report_map_public_precision($post_id)) {
+            $this->clear_generated_map_queue($post_id);
             return false;
         }
 
@@ -4016,7 +4613,7 @@ class FEU_Einsatz_Admin {
             $stadt = 'Hamburg';
         }
 
-        $signature = $this->build_generated_map_signature($strasse, $plz, $stadt);
+        $signature = $this->build_generated_map_signature($strasse, $plz, $stadt, $post_id);
 
         if (!$force && $this->has_current_generated_map_signature($post_id, $strasse, $plz, $stadt)) {
             $this->clear_generated_map_queue($post_id);
@@ -4385,6 +4982,16 @@ class FEU_Einsatz_Admin {
                 'status' => 'idle',
                 'class_name' => '',
                 'message' => '',
+                'scheduled_for' => 0,
+                'scheduled_for_display' => '',
+            ];
+        }
+
+        if ('hidden' === FEU_Einsatz_Template_Helpers::get_report_map_public_precision($post_id)) {
+            return [
+                'status' => 'privacy_hidden',
+                'class_name' => 'feu-einsatz-map-generation-status feu-einsatz-map-generation-status--privacy-hidden',
+                'message' => __('Öffentliche Karte und automatisch erzeugtes Kartenbild sind für diesen Bericht deaktiviert.', 'feuer-einsatzberichte'),
                 'scheduled_for' => 0,
                 'scheduled_for_display' => '',
             ];
@@ -4898,13 +5505,29 @@ class FEU_Einsatz_Admin {
         $post_id = absint($post_id);
         $strasse = trim((string) $strasse);
 
-        if ($post_id < 1 || '' === $strasse) {
+        if ('hidden' === FEU_Einsatz_Template_Helpers::get_report_map_public_precision($post_id)) {
+            return new WP_Error(
+                'feu_einsatz_map_hidden',
+                __('Für diesen Bericht ist keine öffentliche Karte freigegeben.', 'feuer-einsatzberichte')
+            );
+        }
+
+        $uses_manual_coordinates = 'coordinates' === FEU_Einsatz_Template_Helpers::get_report_map_location_mode($post_id)
+            && '' !== $this->sanitize_coordinate_value((string) get_post_meta($post_id, '_feu_einsatz_latitude', true), 'lat')
+            && '' !== $this->sanitize_coordinate_value((string) get_post_meta($post_id, '_feu_einsatz_longitude', true), 'lng');
+
+        if ($post_id < 1 || ('' === $strasse && !$uses_manual_coordinates)) {
             return false;
         }
 
         $hausnummer = (string) get_post_meta($post_id, '_feu_einsatz_hausnummer', true);
+        $public_precision = FEU_Einsatz_Template_Helpers::get_report_map_public_precision($post_id);
         $display_street = FEU_Einsatz_Template_Helpers::strip_house_number_from_street($strasse);
-        $address = $this->build_full_address($display_street, $plz, $stadt);
+        $address = 'exact' !== $public_precision
+            ? __('Ungefährer Einsatzbereich', 'feuer-einsatzberichte')
+            : ('' !== $display_street
+                ? $this->build_full_address($display_street, $plz, $stadt)
+                : __('Genauer Einsatzort', 'feuer-einsatzberichte'));
         $context = wp_parse_args((array) $context, [
             'street' => $strasse,
             'house_number' => $hausnummer,
@@ -4981,7 +5604,11 @@ class FEU_Einsatz_Admin {
         $stadt = trim((string) $stadt);
         $delay_seconds = null === $delay_seconds ? $this->get_generated_map_generation_delay_seconds() : absint($delay_seconds);
 
-        if (!$post_id || '' === $strasse) {
+        $uses_manual_coordinates = 'coordinates' === FEU_Einsatz_Template_Helpers::get_report_map_location_mode($post_id)
+            && '' !== $this->sanitize_coordinate_value((string) get_post_meta($post_id, '_feu_einsatz_latitude', true), 'lat')
+            && '' !== $this->sanitize_coordinate_value((string) get_post_meta($post_id, '_feu_einsatz_longitude', true), 'lng');
+
+        if (!$post_id || ('' === $strasse && !$uses_manual_coordinates)) {
             return false;
         }
 
@@ -4989,7 +5616,7 @@ class FEU_Einsatz_Admin {
             $stadt = 'Hamburg';
         }
 
-        $signature = $this->build_generated_map_signature($strasse, $plz, $stadt);
+        $signature = $this->build_generated_map_signature($strasse, $plz, $stadt, $post_id);
         $scheduled_for = time() + max(0, $delay_seconds);
 
         update_post_meta($post_id, self::GENERATED_MAP_QUEUE_META, [
@@ -5050,7 +5677,11 @@ class FEU_Einsatz_Admin {
             : trim((string) get_post_meta($post_id, '_feu_einsatz_stadt', true));
         $force = is_array($queue_payload) && !empty($queue_payload['force']);
 
-        if ('' === $strasse) {
+        $uses_manual_coordinates = 'coordinates' === FEU_Einsatz_Template_Helpers::get_report_map_location_mode($post_id)
+            && '' !== $this->sanitize_coordinate_value((string) get_post_meta($post_id, '_feu_einsatz_latitude', true), 'lat')
+            && '' !== $this->sanitize_coordinate_value((string) get_post_meta($post_id, '_feu_einsatz_longitude', true), 'lng');
+
+        if ('' === $strasse && !$uses_manual_coordinates) {
             $this->clear_generated_map_queue($post_id, true);
             return;
         }
@@ -5223,15 +5854,42 @@ class FEU_Einsatz_Admin {
             && $plz === $stored_plz
             && $city === $stored_city;
         $coordinates = false;
+        $primed_map_data = false;
+        $location_mode = FEU_Einsatz_Template_Helpers::get_report_map_location_mode($post_id);
+        $highlight_settings = FEU_Einsatz_Template_Helpers::get_report_street_highlight_settings($post_id);
+
+        // Length and radius must use the exact house-number coordinate. This
+        // intentionally runs before cached coordinates are read, because old
+        // reports may still hold a historic street-centre coordinate.
+        if (
+            $uses_saved_address
+            && 'address' === $location_mode
+            && '' !== $house_number
+            && class_exists('FEU_Einsatz_Template_Helpers')
+            && in_array($highlight_settings['mode'], ['length', 'radius'], true)
+        ) {
+            $primed_map_data = FEU_Einsatz_Template_Helpers::prime_public_map_data($post_id, $street, $plz, $city);
+
+            if (
+                is_array($primed_map_data)
+                && !empty($primed_map_data['coordinates']['lat'])
+                && !empty($primed_map_data['coordinates']['lng'])
+            ) {
+                $coordinates = [
+                    'lat' => (float) $primed_map_data['coordinates']['lat'],
+                    'lng' => (float) $primed_map_data['coordinates']['lng'],
+                ];
+            }
+        }
 
         if (is_numeric($context['latitude']) && is_numeric($context['longitude'])) {
             $coordinates = [
                 'lat' => (float) $context['latitude'],
                 'lng' => (float) $context['longitude'],
             ];
-        } elseif ($uses_saved_address) {
+        } elseif (!$coordinates && $uses_saved_address) {
             $coordinates = $this->get_cached_coordinates($post_id);
-        } elseif ('' !== $street && !empty($context['allow_remote_geocode'])) {
+        } elseif (!$coordinates && 'address' === $location_mode && '' !== $street && !empty($context['allow_remote_geocode'])) {
             $geocoded_data = $this->request_geocoded_address_data($street, $plz, $city, $house_number);
 
             if ($geocoded_data) {
@@ -5243,6 +5901,13 @@ class FEU_Einsatz_Admin {
         }
 
         $geometry_payload = is_array($context['geometry_payload']) ? $context['geometry_payload'] : false;
+
+        if (!$geometry_payload && is_array($primed_map_data) && !empty($primed_map_data['geometry'])) {
+            $geometry_payload = [
+                'geometry' => $primed_map_data['geometry'],
+                'center' => !empty($primed_map_data['center']) ? $primed_map_data['center'] : [],
+            ];
+        }
 
         if ($geometry_payload) {
             return [
@@ -5273,12 +5938,40 @@ class FEU_Einsatz_Admin {
             $geometry_payload = FEU_Einsatz_Street_Cache::get($street, $plz, $city);
 
             if (!$geometry_payload && $coordinates) {
-                $geometry_payload = $this->request_street_geometry_data($street, $coordinates);
+                $geometry_payload = $this->request_street_geometry_data($street, $coordinates, $plz, $city);
 
                 if ($geometry_payload) {
                     FEU_Einsatz_Street_Cache::set($street, $plz, $city, $geometry_payload);
                 }
             }
+        }
+
+        $highlight_mode = $highlight_settings['mode'];
+        if (
+            is_array($coordinates)
+            && isset($coordinates['lat'], $coordinates['lng'])
+            && (
+                (is_array($geometry_payload) && !empty($geometry_payload['geometry']))
+                || 'radius' === $highlight_mode
+            )
+        ) {
+            if (!is_array($geometry_payload)) {
+                $geometry_payload = [
+                    'geometry' => [],
+                    'center' => [(float) $coordinates['lat'], (float) $coordinates['lng']],
+                ];
+            }
+            $highlight = FEU_Einsatz_Template_Helpers::apply_street_highlight_mode(
+                $geometry_payload['geometry'] ?? [],
+                $coordinates['lat'],
+                $coordinates['lng'],
+                $highlight_settings
+            );
+            $geometry_payload['geometry'] = $highlight['geometry'];
+            $geometry_payload['highlight_mode'] = $highlight['mode'];
+            $geometry_payload['highlight_radius_meters'] = $highlight['radius_meters'];
+            $geometry_payload['highlight_latitude'] = (float) $coordinates['lat'];
+            $geometry_payload['highlight_longitude'] = (float) $coordinates['lng'];
         }
 
         return [
@@ -5293,9 +5986,6 @@ class FEU_Einsatz_Admin {
 
     private function get_map_preview_geometry($post_id) {
         $cached_geometry = FEU_Einsatz_Street_Cache::get_post_cache($post_id);
-        if ($cached_geometry) {
-            return $cached_geometry;
-        }
 
         $strasse = get_post_meta($post_id, '_feu_einsatz_strasse', true);
         if ('' === trim((string) $strasse)) {
@@ -5304,13 +5994,11 @@ class FEU_Einsatz_Admin {
 
         $plz = get_post_meta($post_id, '_feu_einsatz_plz', true);
         $stadt = get_post_meta($post_id, '_feu_einsatz_stadt', true);
-        $cached_geometry = FEU_Einsatz_Street_Cache::get($strasse, $plz, $stadt);
 
-        if ($cached_geometry) {
-            FEU_Einsatz_Street_Cache::set_post_cache($post_id, $cached_geometry);
-            return $cached_geometry;
-        }
-
+        // Let the central resolver invalidate geometry from an older release
+        // before a PNG is rendered. Without this step an old, short post cache
+        // could be returned here indefinitely, even after the frontend learned
+        // the full street geometry.
         if (class_exists('FEU_Einsatz_Template_Helpers')) {
             $primed_map_data = FEU_Einsatz_Template_Helpers::prime_public_map_data($post_id, $strasse, $plz, $stadt);
 
@@ -5324,7 +6012,20 @@ class FEU_Einsatz_Admin {
                     'center' => $primed_map_data['center'],
                 ];
             }
+        }
 
+        if ($cached_geometry) {
+            return $cached_geometry;
+        }
+
+        $cached_geometry = FEU_Einsatz_Street_Cache::get($strasse, $plz, $stadt);
+
+        if ($cached_geometry) {
+            FEU_Einsatz_Street_Cache::set_post_cache($post_id, $cached_geometry);
+            return $cached_geometry;
+        }
+
+        if (class_exists('FEU_Einsatz_Template_Helpers')) {
             $cached_geometry = FEU_Einsatz_Street_Cache::get_post_cache($post_id);
 
             if ($cached_geometry) {
@@ -5349,7 +6050,7 @@ class FEU_Einsatz_Admin {
             return false;
         }
 
-        $remote_geometry = $this->request_street_geometry_data($strasse, $coordinates);
+        $remote_geometry = $this->request_street_geometry_data($strasse, $coordinates, $plz, $stadt);
 
         if (!$remote_geometry) {
             return FEU_Einsatz_Street_Cache::get_post_cache($post_id);
@@ -5578,6 +6279,10 @@ class FEU_Einsatz_Admin {
             return '';
         }
 
+        if ('exact' !== FEU_Einsatz_Template_Helpers::get_report_map_public_precision($post_id)) {
+            return '';
+        }
+
         $street = trim((string) get_post_meta($post_id, '_feu_einsatz_strasse', true));
 
         if ('' === $street && '' !== trim((string) $address)) {
@@ -5619,6 +6324,15 @@ class FEU_Einsatz_Admin {
             }
         }
 
+        foreach ((array) ($geometry_payload['area_geometry'] ?? []) as $point) {
+            if (isset($point['lat'], $point['lng']) && is_numeric($point['lat']) && is_numeric($point['lng'])) {
+                $points[] = [
+                    'lat' => (float) $point['lat'],
+                    'lng' => (float) $point['lng'],
+                ];
+            }
+        }
+
         if (
             empty($points)
             && is_array($coordinates)
@@ -5630,6 +6344,17 @@ class FEU_Einsatz_Admin {
                 'lat' => (float) $coordinates['lat'],
                 'lng' => (float) $coordinates['lng'],
             ];
+        }
+
+        if (
+            is_array($geometry_payload)
+            && 'radius' === ($geometry_payload['highlight_mode'] ?? '')
+            && is_array($coordinates)
+            && isset($coordinates['lat'], $coordinates['lng'])
+        ) {
+            $radius_degrees = max(20, min(5000, absint($geometry_payload['highlight_radius_meters'] ?? 100))) / 111320;
+            $points[] = ['lat' => (float) $coordinates['lat'] + $radius_degrees, 'lng' => (float) $coordinates['lng']];
+            $points[] = ['lat' => (float) $coordinates['lat'] - $radius_degrees, 'lng' => (float) $coordinates['lng']];
         }
 
         if (
@@ -6680,6 +7405,29 @@ class FEU_Einsatz_Admin {
             return ('pedestrian' === $left['kind'] ? 1 : 0) <=> ('pedestrian' === $right['kind'] ? 1 : 0);
         });
 
+        $projected_area = [];
+        foreach ((array) ($geometry_payload['area_geometry'] ?? []) as $point) {
+            if (!isset($point['lat'], $point['lng']) || !is_numeric($point['lat']) || !is_numeric($point['lng'])) {
+                continue;
+            }
+            $projected = $this->get_map_preview_screen_point((float) $point['lat'], (float) $point['lng'], $viewport, $zoom);
+            $projected_area[] = ['x' => $projected['x'], 'y' => $projected['y']];
+        }
+
+        if (count($projected_area) >= 3) {
+            $area_fill = $this->allocate_map_preview_highlight_color($canvas, 96);
+            $area_stroke = $this->allocate_map_preview_highlight_color($canvas, 16);
+            $area_polygon = [];
+            foreach ($projected_area as $point) {
+                $area_polygon[] = (int) round($point['x']);
+                $area_polygon[] = (int) round($point['y']);
+            }
+            imagefilledpolygon($canvas, $area_polygon, $area_fill);
+            $closed_area = $projected_area;
+            $closed_area[] = $projected_area[0];
+            $this->draw_map_preview_polyline($canvas, $closed_area, $area_stroke, 3);
+        }
+
         $ss = 2;
 
         $glow_layer = imagecreatetruecolor($width * $ss, $height * $ss);
@@ -6736,6 +7484,32 @@ class FEU_Einsatz_Admin {
         imagealphablending($canvas, true);
         imagecopy($canvas, $hl_aa, 0, 0, 0, 0, $width, $height);
         imagedestroy($hl_aa);
+
+        if (
+            is_array($geometry_payload)
+            && 'radius' === ($geometry_payload['highlight_mode'] ?? '')
+        ) {
+            // The generation context can contain freshly verified address
+            // coordinates before the next request reads post meta again.
+            // Prefer those so the image circle never falls back to the old
+            // street-centre position.
+            $latitude = $geometry_payload['highlight_latitude'] ?? get_post_meta($post_id, '_feu_einsatz_latitude', true);
+            $longitude = $geometry_payload['highlight_longitude'] ?? get_post_meta($post_id, '_feu_einsatz_longitude', true);
+            if (is_numeric($latitude) && is_numeric($longitude)) {
+                $radius_meters = max(20, min(5000, absint($geometry_payload['highlight_radius_meters'] ?? 100)));
+                $center_point = $this->get_map_preview_screen_point((float) $latitude, (float) $longitude, $viewport, $zoom);
+                $edge_point_y = $this->get_map_preview_screen_point((float) $latitude + ($radius_meters / 111320), (float) $longitude, $viewport, $zoom);
+                $edge_point_x = $this->get_map_preview_screen_point((float) $latitude, (float) $longitude + ($radius_meters / max(1, 111320 * cos(deg2rad((float) $latitude)))), $viewport, $zoom);
+                $radius_pixels_y = max(6, abs((int) round($edge_point_y['y'] - $center_point['y'])));
+                $radius_pixels_x = max(6, abs((int) round($edge_point_x['x'] - $center_point['x'])));
+                $radius_fill = $this->allocate_map_preview_highlight_color($canvas, 96);
+                $radius_stroke = $this->allocate_map_preview_highlight_color($canvas, 18);
+                imagefilledellipse($canvas, (int) round($center_point['x']), (int) round($center_point['y']), $radius_pixels_x * 2, $radius_pixels_y * 2, $radius_fill);
+                imagesetthickness($canvas, 3);
+                imageellipse($canvas, (int) round($center_point['x']), (int) round($center_point['y']), $radius_pixels_x * 2, $radius_pixels_y * 2, $radius_stroke);
+                imagesetthickness($canvas, 1);
+            }
+        }
 
         $street_label = $this->build_map_preview_street_label($post_id, $address);
 
@@ -6962,6 +7736,10 @@ class FEU_Einsatz_Admin {
         $segments = $this->normalize_map_preview_geometry(
             is_array($geometry_payload) && !empty($geometry_payload['geometry']) ? $geometry_payload['geometry'] : []
         );
+        $is_radius_highlight = is_array($geometry_payload) && 'radius' === ($geometry_payload['highlight_mode'] ?? '');
+        $radius_meters = $is_radius_highlight
+            ? max(20, min(5000, absint($geometry_payload['highlight_radius_meters'] ?? 100)))
+            : 0;
         $width = 1200;
         $height = 630;
         $padding = 56;
@@ -6971,6 +7749,23 @@ class FEU_Einsatz_Admin {
             foreach ($segment['points'] as $point) {
                 $all_points[] = [(float) $point[0], (float) $point[1]];
             }
+        }
+
+        $area_points = [];
+        foreach ((array) ($geometry_payload['area_geometry'] ?? []) as $point) {
+            if (isset($point['lat'], $point['lng']) && is_numeric($point['lat']) && is_numeric($point['lng'])) {
+                $area_points[] = [(float) $point['lat'], (float) $point['lng']];
+                $all_points[] = [(float) $point['lat'], (float) $point['lng']];
+            }
+        }
+
+        if ($is_radius_highlight && isset($coordinates['lat'], $coordinates['lng'])) {
+            $radius_latitude = $radius_meters / 111320;
+            $radius_longitude = $radius_meters / max(1, 111320 * cos(deg2rad((float) $coordinates['lat'])));
+            $all_points[] = [(float) $coordinates['lat'] - $radius_latitude, (float) $coordinates['lng']];
+            $all_points[] = [(float) $coordinates['lat'] + $radius_latitude, (float) $coordinates['lng']];
+            $all_points[] = [(float) $coordinates['lat'], (float) $coordinates['lng'] - $radius_longitude];
+            $all_points[] = [(float) $coordinates['lat'], (float) $coordinates['lng'] + $radius_longitude];
         }
 
         if (
@@ -7035,6 +7830,26 @@ class FEU_Einsatz_Admin {
         $pedestrian_stroke_width = $this->get_map_preview_pedestrian_stroke_width();
         $road_glow_width = $road_stroke_width + 6;
         $pedestrian_glow_width = $pedestrian_stroke_width + 3;
+        $radius_svg_markup = '';
+        $area_svg_markup = '';
+
+        if ($is_radius_highlight && isset($coordinates['lat'], $coordinates['lng'])) {
+            $radius_center = $project_point((float) $coordinates['lat'], (float) $coordinates['lng']);
+            $radius_edge_y = $project_point((float) $coordinates['lat'] + ($radius_meters / 111320), (float) $coordinates['lng']);
+            $radius_edge_x = $project_point((float) $coordinates['lat'], (float) $coordinates['lng'] + ($radius_meters / max(1, 111320 * cos(deg2rad((float) $coordinates['lat'])))));
+            $radius_pixels_y = max(8, abs($radius_edge_y[1] - $radius_center[1]));
+            $radius_pixels_x = max(8, abs($radius_edge_x[0] - $radius_center[0]));
+            $radius_svg_markup = '<ellipse cx="' . esc_attr($radius_center[0]) . '" cy="' . esc_attr($radius_center[1]) . '" rx="' . esc_attr($radius_pixels_x) . '" ry="' . esc_attr($radius_pixels_y) . '" fill="' . esc_attr($highlight_hex) . '" fill-opacity="0.18" stroke="' . esc_attr($highlight_hex) . '" stroke-width="3" stroke-opacity="0.92" />';
+        }
+
+        if (count($area_points) >= 3) {
+            $area_svg_points = [];
+            foreach ($area_points as $point) {
+                $projected = $project_point($point[0], $point[1]);
+                $area_svg_points[] = $projected[0] . ',' . $projected[1];
+            }
+            $area_svg_markup = '<polygon points="' . esc_attr(implode(' ', $area_svg_points)) . '" fill="' . esc_attr($highlight_hex) . '" fill-opacity="0.16" stroke="' . esc_attr($highlight_hex) . '" stroke-width="3" stroke-linejoin="round" />';
+        }
 
         foreach ($segments as $segment) {
             $points = [];
@@ -7187,7 +8002,7 @@ class FEU_Einsatz_Admin {
             . '<rect width="' . $width . '" height="' . $height . '" rx="28" fill="url(#ebBg)" />'
             . implode('', $grid_lines)
             . '<g filter="url(#shadow)"><rect x="30" y="30" width="' . ($width - 60) . '" height="' . ($height - 60) . '" rx="24" fill="#ffffff" fill-opacity="0.72" stroke="#0d243f" stroke-opacity="0.08" /></g>'
-            . '<g>' . implode('', $svg_halos) . implode('', $svg_lines) . '</g>'
+            . '<g>' . $area_svg_markup . $radius_svg_markup . implode('', $svg_halos) . implode('', $svg_lines) . '</g>'
             . $street_label_markup
             . $station_markup
             . $panel_markup
@@ -7283,6 +8098,13 @@ class FEU_Einsatz_Admin {
     }
 
     private function generate_map_image($post_id, $address, $context = []) {
+        if ('hidden' === FEU_Einsatz_Template_Helpers::get_report_map_public_precision($post_id)) {
+            return new WP_Error(
+                'feu_einsatz_map_hidden',
+                __('Für diesen Bericht ist keine öffentliche Karte freigegeben.', 'feuer-einsatzberichte')
+            );
+        }
+
         $address = trim((string) $address);
         if ('' === $address) {
             return new WP_Error(
@@ -7295,7 +8117,8 @@ class FEU_Einsatz_Admin {
         $generated_map_signature = $this->build_generated_map_signature(
             $preview_context['street'] ?? '',
             $preview_context['plz'] ?? '',
-            $preview_context['city'] ?? 'Hamburg'
+            $preview_context['city'] ?? 'Hamburg',
+            $post_id
         );
         $coordinates = !empty($preview_context['coordinates']) ? $preview_context['coordinates'] : false;
         $geometry_payload = !empty($preview_context['geometry']) ? $preview_context['geometry'] : false;
@@ -7546,6 +8369,10 @@ class FEU_Einsatz_Admin {
         }
 
         if ('map' === $bucket) {
+            if ('missing' === $status_key) {
+                return __('Kartenbild fehlt', 'feuer-einsatzberichte');
+            }
+
             return 'processing' === $status_key
                 ? __('Karte wird erstellt', 'feuer-einsatzberichte')
                 : __('Wartet auf Kartenbild', 'feuer-einsatzberichte');
@@ -7588,6 +8415,23 @@ class FEU_Einsatz_Admin {
 
             $status = $this->get_generated_map_admin_status((int) $report->ID);
             $bucket = $this->get_generated_map_dashboard_bucket($status);
+            $generated_thumbnail_id = $this->get_generated_map_thumbnail_id((int) $report->ID);
+            $preview_url = trim((string) get_post_meta((int) $report->ID, self::GENERATED_MAP_PREVIEW_URL_META, true));
+            $has_any_thumbnail = absint(get_post_thumbnail_id((int) $report->ID)) > 0;
+            $missing_map_image = $generated_thumbnail_id < 1 && '' === $preview_url && !$has_any_thumbnail;
+
+            if ('idle' === $bucket && $missing_map_image) {
+                $street = trim((string) get_post_meta((int) $report->ID, '_feu_einsatz_strasse', true));
+                $latitude = trim((string) get_post_meta((int) $report->ID, '_feu_einsatz_latitude', true));
+                $longitude = trim((string) get_post_meta((int) $report->ID, '_feu_einsatz_longitude', true));
+
+                if ('' !== $street || (is_numeric($latitude) && is_numeric($longitude))) {
+                    $bucket = 'map';
+                    $status['status'] = 'missing';
+                    $status['stage'] = 'map';
+                    $status['message'] = __('Für diesen Einsatzbericht wurde noch kein Kartenbild erzeugt.', 'feuer-einsatzberichte');
+                }
+            }
 
             if (!in_array($bucket, ['geocode', 'map', 'error'], true)) {
                 continue;
@@ -8122,7 +8966,7 @@ class FEU_Einsatz_Admin {
 
         $map_generation_queued = false;
 
-        if (!$has_preview_image && '' !== trim($strasse)) {
+        if (!$has_preview_image) {
             $map_generation_queued = $this->maybe_queue_generated_map_preview_generation(
                 $post_id,
                 $strasse,
@@ -8304,7 +9148,7 @@ class FEU_Einsatz_Admin {
 
         $auto_map_image = (int) get_option('feu_einsatz_auto_map_image', 1);
         $map_generation_queued = false;
-        if ($auto_map_image && '' !== trim($strasse)) {
+        if ($auto_map_image) {
             $map_generation_queued = $this->maybe_queue_generated_map_preview_generation(
                 $post_id,
                 $strasse,
@@ -8410,6 +9254,53 @@ class FEU_Einsatz_Admin {
         include FEU_EINSATZ_PLUGIN_DIR . 'templates/admin/participants.php';
     }
 
+    public function handle_mannschaft_source_save(): void {
+        if (!self::current_user_can_access_plugin_section('participants') || !current_user_can('manage_options')) {
+            wp_die(esc_html__('Keine Berechtigung.', 'feuer-einsatzberichte'));
+        }
+        check_admin_referer('feu_einsatz_save_mannschaft_source');
+        $provider = isset($_POST['feu_einsatz_participant_provider']) ? sanitize_key(wp_unslash($_POST['feu_einsatz_participant_provider'])) : 'local';
+        if ('mannschaft' === $provider && !FEU_Einsatz_Mannschaft_Integration::is_available()) {
+            $provider = 'local';
+        }
+        update_option('feu_einsatz_participant_provider', $provider, false);
+        if ('mannschaft' === $provider) {
+            Feuer_Einsatzberichte_Core::get_instance()->get_mannschaft_integration()->sync_all();
+        }
+        $redirect_url = add_query_arg('feu_mannschaft_saved', '1', admin_url('admin.php?page=feu-einsatz-teilnehmer'));
+        if (!headers_sent() && wp_safe_redirect($redirect_url)) {
+            exit;
+        }
+
+        wp_die(
+            esc_html__('Die Datenquelle wurde gespeichert. Bitte öffnen Sie die Teilnehmerverwaltung erneut.', 'feuer-einsatzberichte'),
+            esc_html__('Teilnehmerdaten gespeichert', 'feuer-einsatzberichte'),
+            ['response' => 200]
+        );
+    }
+
+    public function handle_mannschaft_profile_connection(): void {
+        if (!self::current_user_can_access_plugin_section('participants') || !current_user_can('manage_options')) {
+            wp_die(esc_html__('Keine Berechtigung.', 'feuer-einsatzberichte'));
+        }
+        check_admin_referer('feu_einsatz_connect_mannschaft_profile');
+
+        $participant_id = absint($_POST['feu_einsatz_participant_id'] ?? 0);
+        $profile_id = absint($_POST['feu_einsatz_mannschaft_profile_id'] ?? 0);
+        $connected = FEU_Einsatz_Mannschaft_Integration::is_enabled()
+            && false !== Feuer_Einsatzberichte_Core::get_instance()
+                ->get_mannschaft_integration()
+                ->connect_existing_participant($participant_id, $profile_id);
+
+        $redirect_url = add_query_arg(
+            'feu_mannschaft_connected',
+            $connected ? '1' : '0',
+            admin_url('admin.php?page=feu-einsatz-teilnehmer')
+        );
+        wp_safe_redirect($redirect_url);
+        exit;
+    }
+
     public function render_statistics() {
         $this->enforce_plugin_section_access('statistics');
         include FEU_EINSATZ_PLUGIN_DIR . 'templates/admin/statistics.php';
@@ -8484,6 +9375,7 @@ class FEU_Einsatz_Admin {
                 'lng' => $longitude,
             ], [
                 'allow_focused_geometry_refresh' => true,
+                'allow_remote_geometry_prime' => true,
                 'fast_tile_mode' => true,
             ]);
 
@@ -8559,6 +9451,198 @@ class FEU_Einsatz_Admin {
         exit;
     }
 
+    /** AJAX preview for unsaved address fields in the report editor. */
+    public function ajax_preview_street_highlight() {
+        check_ajax_referer('feu_einsatz_ajax_nonce', 'nonce');
+
+        if (!self::current_user_can_access_plugin_section('create_report')) {
+            wp_send_json_error(['message' => __('Keine Berechtigung.', 'feuer-einsatzberichte')], 403);
+        }
+
+        $street = isset($_POST['strasse']) ? sanitize_text_field(wp_unslash($_POST['strasse'])) : '';
+        $house_number = isset($_POST['hausnummer']) ? sanitize_text_field(wp_unslash($_POST['hausnummer'])) : '';
+        $postcode = isset($_POST['plz']) ? preg_replace('/\D+/', '', (string) wp_unslash($_POST['plz'])) : '';
+        $city = isset($_POST['stadt']) ? sanitize_text_field(wp_unslash($_POST['stadt'])) : 'Hamburg';
+        $location_mode = isset($_POST['location_mode']) && 'coordinates' === sanitize_key(wp_unslash($_POST['location_mode']))
+            ? 'coordinates'
+            : 'address';
+        $highlight_override = isset($_POST['highlight_mode']) ? sanitize_key(wp_unslash($_POST['highlight_mode'])) : 'default';
+        $street = FEU_Einsatz_Template_Helpers::strip_house_number_from_street($street);
+        $extra_streets = isset($_POST['extra_streets'])
+            ? FEU_Einsatz_Template_Helpers::normalize_report_map_extra_streets(wp_unslash($_POST['extra_streets']))
+            : [];
+        $area_geojson = isset($_POST['area_geojson'])
+            ? FEU_Einsatz_Template_Helpers::normalize_report_map_area_geojson(wp_unslash($_POST['area_geojson']))
+            : [];
+        $area_geometry = [];
+        foreach ((array) ($area_geojson['coordinates'][0] ?? []) as $point) {
+            if (isset($point[0], $point[1]) && is_numeric($point[0]) && is_numeric($point[1])) {
+                $area_geometry[] = ['lat' => (float) $point[1], 'lng' => (float) $point[0]];
+            }
+        }
+        $highlight_settings = FEU_Einsatz_Template_Helpers::get_street_highlight_settings();
+
+        if (in_array($highlight_override, ['full', 'length', 'radius'], true)) {
+            $highlight_settings['mode'] = $highlight_override;
+            $highlight_settings['override_mode'] = $highlight_override;
+        } else {
+            $highlight_settings['override_mode'] = 'default';
+        }
+
+        if (isset($_POST['highlight_length_meters'])) {
+            $highlight_settings['length_meters'] = max(20, min(5000, absint(wp_unslash($_POST['highlight_length_meters'])) ?: 100));
+        }
+        if (isset($_POST['highlight_radius_meters'])) {
+            $highlight_settings['radius_meters'] = max(20, min(5000, absint(wp_unslash($_POST['highlight_radius_meters'])) ?: 100));
+        }
+
+        $preview_cache_key = 'feu_einsatz_editor_map_preview_' . md5(wp_json_encode([
+            $street, $house_number, $postcode, $city, $location_mode, $highlight_settings, $extra_streets, $area_geojson,
+            $_POST['latitude'] ?? '', $_POST['longitude'] ?? '',
+        ]));
+        $cached_preview = get_transient($preview_cache_key);
+        if (is_array($cached_preview)) {
+            $cached_preview['cached'] = true;
+            wp_send_json_success($cached_preview);
+        }
+
+        $rate_key = 'feu_einsatz_editor_map_preview_rate_' . get_current_user_id();
+        $rate_count = absint(get_transient($rate_key));
+        if ($rate_count >= 8) {
+            wp_send_json_error([
+                'message' => __('Bitte kurz warten. Die Kartenvorschau schützt die Kartenanbieter vor zu vielen Anfragen.', 'feuer-einsatzberichte'),
+            ], 429);
+        }
+        set_transient($rate_key, $rate_count + 1, MINUTE_IN_SECONDS);
+
+        $geocoded = false;
+        if ('coordinates' === $location_mode) {
+            $latitude = isset($_POST['latitude']) ? $this->sanitize_coordinate_value(wp_unslash($_POST['latitude']), 'lat') : '';
+            $longitude = isset($_POST['longitude']) ? $this->sanitize_coordinate_value(wp_unslash($_POST['longitude']), 'lng') : '';
+            if ('' === $latitude || '' === $longitude) {
+                wp_send_json_error(['message' => __('Bitte gültige Breiten- und Längengrade eingeben.', 'feuer-einsatzberichte')], 400);
+            }
+            $geocoded = ['lat' => (float) $latitude, 'lng' => (float) $longitude];
+        } else {
+            if ('' === $street || !preg_match('/^\d{5}$/', $postcode)) {
+                wp_send_json_error(['message' => __('Bitte Straße und eine fünfstellige PLZ eingeben.', 'feuer-einsatzberichte')], 400);
+            }
+
+            $geocoded = $this->request_geocoded_address_data($street, $postcode, $city, $house_number);
+            if (!$geocoded || !isset($geocoded['lat'], $geocoded['lng'])) {
+                wp_send_json_error(['message' => __('Die Adresse konnte nicht gefunden werden. Bitte Eingabe prüfen.', 'feuer-einsatzberichte')], 404);
+            }
+
+            // A limited street segment or radius is useful only when the returned
+            // coordinate belongs to the entered house number. Do not draw a
+            // plausible-looking preview at a different address.
+            $requested_house_number = strtolower((string) preg_replace('/\s+/', '', $house_number));
+            $resolved_house_number = strtolower((string) preg_replace('/\s+/', '', (string) ($geocoded['house_number'] ?? '')));
+            if ('' !== $requested_house_number && $requested_house_number !== $resolved_house_number) {
+                wp_send_json_error([
+                    'message' => __('Die Hausnummer konnte für diese Adresse nicht eindeutig bestätigt werden. Bitte Straße, Hausnummer, PLZ und Ort prüfen.', 'feuer-einsatzberichte'),
+                ], 422);
+            }
+        }
+
+        $uses_limited_highlight = in_array($highlight_settings['mode'] ?? 'full', ['length', 'radius'], true);
+        $geometry_payload = '' !== $street ? FEU_Einsatz_Street_Cache::get($street, $postcode, $city) : false;
+        $had_cached_geometry = (bool) $geometry_payload;
+        $has_focused_geometry = false;
+
+        if (!$geometry_payload && '' !== $street && $uses_limited_highlight) {
+            // For a limited display there is no need to fetch an entire long
+            // street first. Start with the exact OSM neighbourhood instead.
+            $geometry_payload = $this->request_focused_street_geometry_data($street, [
+                'lat' => (float) $geocoded['lat'],
+                'lng' => (float) $geocoded['lng'],
+            ]);
+            $has_focused_geometry = (bool) $geometry_payload;
+        }
+
+        if (!$geometry_payload && !$uses_limited_highlight && '' !== $street) {
+            $geometry_payload = $this->request_street_geometry_data($street, $geocoded, $postcode, $city);
+        }
+
+        if ($geometry_payload && '' !== $street && (!$uses_limited_highlight || $had_cached_geometry)) {
+            FEU_Einsatz_Street_Cache::set($street, $postcode, $city, $geometry_payload);
+        }
+
+        if ($uses_limited_highlight && '' !== $street && $geometry_payload && !$has_focused_geometry) {
+            // The broad street cache may contain a different branch of a very
+            // long road. Merge one exact, real OSM query around the confirmed
+            // house coordinate before cropping the editor preview.
+            $focused_geometry_payload = $this->request_focused_street_geometry_data($street, [
+                'lat' => (float) $geocoded['lat'],
+                'lng' => (float) $geocoded['lng'],
+            ]);
+
+            if ($focused_geometry_payload) {
+                $geometry_payload = $geometry_payload
+                    ? ($this->merge_geometry_payloads($geometry_payload, $focused_geometry_payload) ?: $focused_geometry_payload)
+                    : $focused_geometry_payload;
+                if ($had_cached_geometry) {
+                    FEU_Einsatz_Street_Cache::set($street, $postcode, $city, $geometry_payload);
+                }
+            }
+        }
+
+        foreach ($extra_streets as $extra_street) {
+            $extra_payload = FEU_Einsatz_Street_Cache::get($extra_street, $postcode, $city);
+            if (is_array($extra_payload) && !empty($extra_payload['geometry'])) {
+                if (!is_array($geometry_payload)) {
+                    $geometry_payload = ['geometry' => [], 'center' => []];
+                }
+                $geometry_payload['geometry'] = array_merge(
+                    (array) ($geometry_payload['geometry'] ?? []),
+                    (array) $extra_payload['geometry']
+                );
+            }
+        }
+
+        $highlight = FEU_Einsatz_Template_Helpers::apply_street_highlight_mode(
+            is_array($geometry_payload) && !empty($geometry_payload['geometry']) ? $geometry_payload['geometry'] : [],
+            (float) $geocoded['lat'],
+            (float) $geocoded['lng'],
+            $highlight_settings
+        );
+        $markup = FEU_Einsatz_Template_Helpers::build_local_map_preview_markup([
+            'latitude' => (float) $geocoded['lat'],
+            'longitude' => (float) $geocoded['lng'],
+            'center' => is_array($geometry_payload) ? ($geometry_payload['center'] ?? []) : [],
+            'geometry' => $highlight['geometry'],
+            'address' => '' !== $street ? trim($street . ', ' . $postcode . ' ' . $city) : __('Genauer Einsatzort', 'feuer-einsatzberichte'),
+            'height' => 360,
+            'highlight_mode' => $highlight['mode'],
+            'highlight_radius_meters' => $highlight['radius_meters'],
+        ]);
+
+        $response_data = [
+            'markup' => $markup,
+            'geometry' => $highlight['geometry'],
+            'area_geometry' => $area_geometry,
+            'location_mode' => $location_mode,
+            'latitude' => (float) $geocoded['lat'],
+            'longitude' => (float) $geocoded['lng'],
+            'highlight_radius_meters' => $highlight['radius_meters'],
+            'mode' => $highlight['mode'],
+            'diagnostics' => [
+                'segment_count' => count((array) $highlight['geometry']),
+                'extra_street_count' => count($extra_streets),
+                'area_point_count' => count($area_geometry),
+                'source' => $had_cached_geometry ? __('Lokaler Straßencache', 'feuer-einsatzberichte') : __('Aktuelle OSM-Abfrage', 'feuer-einsatzberichte'),
+            ],
+            'message' => empty($highlight['geometry'])
+                ? ('radius' === $highlight['mode']
+                    ? __('Koordinaten übernommen. Der Radius wird auf der Karte angezeigt.', 'feuer-einsatzberichte')
+                    : __('Einsatzort gefunden. Für diese Straße liegt noch keine Liniengeometrie vor.', 'feuer-einsatzberichte'))
+                : __('Kartenvorschau aktualisiert.', 'feuer-einsatzberichte'),
+        ];
+        set_transient($preview_cache_key, $response_data, 2 * MINUTE_IN_SECONDS);
+
+        wp_send_json_success($response_data);
+    }
+
     public function ajax_generate_map_image() {
         check_ajax_referer('feu_einsatz_ajax_nonce', 'nonce');
 
@@ -8576,8 +9660,11 @@ class FEU_Einsatz_Admin {
         $plz = isset($_POST['plz']) ? sanitize_text_field(wp_unslash($_POST['plz'])) : get_post_meta($post_id, '_feu_einsatz_plz', true);
         $stadt = isset($_POST['stadt']) ? sanitize_text_field(wp_unslash($_POST['stadt'])) : get_post_meta($post_id, '_feu_einsatz_stadt', true);
         $display_street = FEU_Einsatz_Template_Helpers::strip_house_number_from_street($strasse);
+        $location_mode = FEU_Einsatz_Template_Helpers::get_report_map_location_mode($post_id);
 
-        if ('' === $address) {
+        if ('coordinates' === $location_mode) {
+            $address = '' !== $address ? $address : __('Genauer Einsatzort', 'feuer-einsatzberichte');
+        } elseif ('' === $address) {
             if ('' !== $display_street) {
                 $address = $this->build_full_address($display_street, $plz, $stadt);
             }
@@ -8607,6 +9694,11 @@ class FEU_Einsatz_Admin {
             ? $this->sanitize_coordinate_value(wp_unslash($_POST['longitude']), 'lng')
             : '';
 
+        if ('coordinates' === $location_mode && ('' === $latitude || '' === $longitude)) {
+            $latitude = $this->sanitize_coordinate_value((string) get_post_meta($post_id, '_feu_einsatz_latitude', true), 'lat');
+            $longitude = $this->sanitize_coordinate_value((string) get_post_meta($post_id, '_feu_einsatz_longitude', true), 'lng');
+        }
+
         if ('' !== $latitude && '' !== $longitude) {
             update_post_meta($post_id, '_feu_einsatz_latitude', $latitude);
             update_post_meta($post_id, '_feu_einsatz_longitude', $longitude);
@@ -8614,7 +9706,7 @@ class FEU_Einsatz_Admin {
 
         $geocoded_data = null;
 
-        if ('' === $latitude || '' === $longitude) {
+        if ('address' === $location_mode && ('' === $latitude || '' === $longitude)) {
             $geocoded_data = $this->request_geocoded_address_data($strasse, $plz, $stadt, $hausnummer);
         }
 
@@ -8623,6 +9715,7 @@ class FEU_Einsatz_Admin {
             'lng' => $longitude,
         ], [
             'allow_focused_geometry_refresh' => true,
+            'allow_remote_geometry_prime' => true,
             'fast_tile_mode' => true,
         ]);
 

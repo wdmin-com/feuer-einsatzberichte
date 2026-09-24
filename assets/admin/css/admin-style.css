@@ -8684,6 +8684,309 @@
     margin: 8px 0 0;
 }
 
+/* Address-map preview in the report editor: it is created only after the
+   complete incident address and date/time have been entered. */
+.feu-einsatz-inline-card--map-preview {
+    margin: 16px 0;
+    padding: 16px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #f8fafc;
+}
+
+.feu-einsatz-inline-card--map-preview[hidden] {
+    display: none !important;
+}
+
+.feu-einsatz-inline-card--map-preview .feu-einsatz-inline-card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.feu-einsatz-map-preview-kicker {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0 0 5px;
+    color: #475569;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .045em;
+    text-transform: uppercase;
+}
+
+.feu-einsatz-map-preview-kicker .dashicons {
+    width: 15px;
+    height: 15px;
+    font-size: 15px;
+    color: #0a4b78;
+}
+
+.feu-einsatz-map-preview-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.feu-einsatz-map-preview-mode {
+    display: inline-flex;
+    align-items: center;
+    min-height: 30px;
+    padding: 0 10px;
+    border: 1px solid #bfdbfe;
+    border-radius: 999px;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.feu-einsatz-address-map-preview-canvas {
+    display: grid;
+    min-height: 220px;
+    margin-top: 12px;
+    overflow: hidden;
+    place-items: center;
+    border: 1px dashed #94a3b8;
+    border-radius: 6px;
+    background: #fff;
+}
+
+.feu-einsatz-address-map-preview-canvas:has(svg) {
+    display: block;
+    min-height: 0;
+    border-style: solid;
+}
+
+.feu-einsatz-address-map-preview-canvas svg {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.feu-einsatz-address-map-preview-leaflet {
+    width: 100%;
+    height: 260px;
+}
+
+.feu-einsatz-inline-card--map-preview.is-loading .feu-einsatz-address-map-preview-canvas {
+    border-color: #93c5fd;
+    background: linear-gradient(110deg, #f8fafc 20%, #eff6ff 40%, #f8fafc 60%);
+    background-size: 220% 100%;
+    animation: feu-einsatz-map-preview-loading 1.2s linear infinite;
+}
+
+@keyframes feu-einsatz-map-preview-loading {
+    to { background-position: -220% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .feu-einsatz-inline-card--map-preview.is-loading .feu-einsatz-address-map-preview-canvas {
+        animation: none;
+    }
+}
+
+.feu-einsatz-address-map-preview-placeholder {
+    max-width: 420px;
+    padding: 20px;
+    color: #475569;
+    text-align: center;
+}
+
+/* Per-report map profile. Kept deliberately compact so it complements the
+   native WordPress editor instead of introducing a second administration UI. */
+.feu-einsatz-map-profile,
+.feu-einsatz-map-profile-fields {
+    margin: 16px 0;
+    padding: 16px;
+    border: 1px solid #dbe4ee;
+    border-radius: 8px;
+    background: #fff;
+}
+
+.feu-einsatz-map-profile-head h4,
+.feu-einsatz-map-profile-fields-head h4 {
+    margin: 2px 0 5px;
+    color: #172033;
+    font-size: 15px;
+    line-height: 1.35;
+}
+
+.feu-einsatz-map-profile-kicker {
+    display: block;
+    color: #2271b1;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .055em;
+    text-transform: uppercase;
+}
+
+.feu-einsatz-location-mode-tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.feu-einsatz-location-mode-tab {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    min-height: 74px;
+    padding: 12px;
+    border: 1px solid #ccd0d4;
+    border-radius: 6px;
+    background: #f6f7f7;
+    cursor: pointer;
+}
+
+.feu-einsatz-location-mode-tab:has(input:checked) {
+    border-color: #2271b1;
+    background: #f0f6fc;
+    box-shadow: 0 0 0 1px #2271b1;
+}
+
+.feu-einsatz-location-mode-tab input {
+    margin: 3px 0 0;
+}
+
+.feu-einsatz-location-mode-tab .dashicons {
+    margin-top: 1px;
+    color: #2271b1;
+}
+
+.feu-einsatz-location-mode-tab strong,
+.feu-einsatz-location-mode-tab small {
+    display: block;
+}
+
+.feu-einsatz-location-mode-tab strong {
+    color: #1d2327;
+    font-size: 13px;
+}
+
+.feu-einsatz-location-mode-tab small {
+    margin-top: 3px;
+    color: #50575e;
+    font-size: 12px;
+    line-height: 1.35;
+}
+
+.feu-einsatz-map-profile-fields[hidden] {
+    display: none !important;
+}
+
+.feu-einsatz-map-profile-fields-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    margin-bottom: 14px;
+}
+
+.feu-einsatz-map-profile-fields-head > .dashicons {
+    margin-top: 2px;
+    color: #2271b1;
+}
+
+.feu-einsatz-form-grid--coordinates,
+.feu-einsatz-map-highlight-controls {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.feu-einsatz-map-highlight-controls {
+    grid-template-columns: minmax(220px, 1.5fr) minmax(150px, .75fr) minmax(150px, .75fr);
+    align-items: end;
+}
+
+.feu-einsatz-map-highlight-controls [hidden] {
+    display: none !important;
+}
+
+.feu-einsatz-map-advanced,
+.feu-einsatz-map-history {
+    margin: 16px 0;
+    padding: 14px 16px;
+    border: 1px solid #dbe4ee;
+    border-radius: 8px;
+    background: #f8fafc;
+}
+
+.feu-einsatz-map-advanced > summary,
+.feu-einsatz-map-history > summary {
+    cursor: pointer;
+    color: #1d2327;
+    font-weight: 600;
+}
+
+.feu-einsatz-form-grid--map-advanced {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    margin-top: 14px;
+}
+
+.feu-einsatz-map-area-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.feu-einsatz-map-preview-diagnostics {
+    margin-top: 12px;
+    padding: 9px 11px;
+    border-left: 3px solid #72aee6;
+    border-radius: 3px;
+    background: #f0f6fc;
+    color: #3858a0;
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+.feu-einsatz-map-coordinate-drag-marker {
+    align-items: center;
+    background: transparent;
+    display: flex;
+    height: 28px;
+    justify-content: center;
+    width: 28px;
+}
+
+.feu-einsatz-map-coordinate-drag-marker span {
+    background: #d92d20;
+    border: 3px solid #fff;
+    border-radius: 50% 50% 50% 0;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, .32);
+    display: block;
+    height: 17px;
+    transform: rotate(-45deg);
+    width: 17px;
+}
+
+.feu-einsatz-map-history ul {
+    margin: 12px 0 0 18px;
+}
+
+@media (max-width: 782px) {
+    .feu-einsatz-location-mode-tabs,
+    .feu-einsatz-form-grid--coordinates,
+    .feu-einsatz-map-highlight-controls {
+        grid-template-columns: 1fr;
+    }
+
+    .feu-einsatz-form-grid--map-advanced {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* =====================================================
    Settings UI — redesigned components
    ===================================================== */
@@ -8957,6 +9260,61 @@
     color: #64748b;
     font-size: 12px;
     line-height: 1.4;
+}
+
+/* Settings navigation visibility manager */
+.feu-admin-settings-module-note {
+    margin: 0 0 16px;
+}
+
+.feu-admin-settings-module-note p {
+    margin: 0.5em 0;
+}
+
+.feu-admin-settings-module-grid {
+    grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+}
+
+.feu-admin-settings-module-card {
+    position: relative;
+    min-height: 84px;
+    padding-right: 82px;
+    transition: border-color 160ms ease, background-color 160ms ease, opacity 160ms ease, transform 160ms ease;
+}
+
+.feu-admin-settings-module-card:hover {
+    transform: translateY(-1px);
+}
+
+.feu-admin-settings-module-card.is-disabled {
+    border-style: dashed;
+    background: #f8fafc;
+    opacity: 0.78;
+}
+
+.feu-admin-settings-module-card .feu-admin-settings-check-copy strong {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.feu-admin-settings-module-state {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    border-radius: 999px;
+    background: #dcfce7;
+    color: #166534;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+    padding: 5px 7px;
+    transition: background-color 160ms ease, color 160ms ease;
+}
+
+.feu-admin-settings-module-card.is-disabled .feu-admin-settings-module-state {
+    background: #e2e8f0;
+    color: #475569;
 }
 
 /* Radio cards */

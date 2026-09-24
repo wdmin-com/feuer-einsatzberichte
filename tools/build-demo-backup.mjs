@@ -68,18 +68,6 @@ const participantNames = [
 const functions = ["Maschinist", "Gruppenführer", "ATF", "ATM", "Melder", "WTF", "WTM", "STF", "STM", "Mannschaft"];
 const categoryIdByCode = Object.fromEntries(categoryDefinitions.map(([id, code]) => [code, id]));
 
-function lineGeometry(lat, lng, index) {
-  const horizontal = index % 2 === 0;
-  const delta = 0.00125;
-  return [{
-    points: horizontal
-      ? [[lat, lng - delta], [lat + 0.00008, lng], [lat + 0.00014, lng + delta]]
-      : [[lat - delta * 0.65, lng - 0.00008], [lat, lng], [lat + delta * 0.65, lng + 0.00012]],
-    highway: index % 5 === 0 ? "secondary" : "residential",
-    kind: "road",
-  }];
-}
-
 function meta(key, value) {
   return { key, value };
 }
@@ -121,7 +109,6 @@ const reports = calls.map((call, index) => {
     });
     return { id: participantId, funktion: participantFunction };
   });
-  const geometry = lineGeometry(lat, lng, index);
   const fullTitle = `${code} – ${title}`;
 
   return {
@@ -150,10 +137,6 @@ const reports = calls.map((call, index) => {
       meta("_feu_einsatz_uhrzeit", time),
       meta("_feu_einsatz_latitude", String(lat)),
       meta("_feu_einsatz_longitude", String(lng)),
-      meta("_feu_einsatz_street_geometry_final", geometry),
-      meta("_feu_einsatz_street_center_final", [lat, lng]),
-      meta("_feu_einsatz_street_cache_version", 13),
-      meta("_feu_einsatz_street_cache_revision", `demo-${version}-${postId}`),
       meta("_feu_einsatz_teilnehmer", assignments),
       meta("_feu_einsatz_organisationen", [1, 2, index % 3 === 0 ? 4 : 3]),
       meta("_feu_einsatz_comments_enabled", "0"),
@@ -162,13 +145,6 @@ const reports = calls.map((call, index) => {
   };
 });
 
-const stationGeometry = {
-  geometry: lineGeometry(stationCenter[0], stationCenter[1], 0),
-  center: stationCenter,
-  version: 13,
-  cached_at: Math.floor(Date.now() / 1000),
-};
-const streetCacheKey = md5(`13|bredowstrasse 4|${stationPostcode}|hamburg`);
 const stationCoordinatesKey = md5(`${stationStreet}|${stationPostcode}|${stationCity}`);
 
 const manifest = {
@@ -222,8 +198,6 @@ const manifest = {
     feu_einsatz_related_reports_count: 6,
   },
   transients: {
-    [`_transient_feu_einsatz_street_geometry_${streetCacheKey}`]: stationGeometry,
-    [`_transient_timeout_feu_einsatz_street_geometry_${streetCacheKey}`]: Math.floor(Date.now() / 1000) + 7257600,
     [`_transient_feu_einsatz_area_station_${stationCoordinatesKey}`]: { latitude: stationCenter[0], longitude: stationCenter[1] },
     [`_transient_timeout_feu_einsatz_area_station_${stationCoordinatesKey}`]: Math.floor(Date.now() / 1000) + 604800,
   },

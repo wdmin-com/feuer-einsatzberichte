@@ -181,6 +181,7 @@ Copy-PluginTree -SourceRoot $repoRoot -TargetRoot $stagePluginRoot -ExcludeTopLe
     'tests',
     'tools',
     'README.md',
+    'feuer-einsatzberichte.git',
     '.gitattributes',
     '.gitignore',
     'update-manifest.json',

@@ -1951,6 +1951,8 @@ class FEU_Einsatz_Backup_Manager {
                 );
             }
 
+            do_action('feu_einsatz_reports_restored', array_values(array_map('absint', $post_map)));
+
             if ($archive_record) {
                 $this->db->save_archive([
                     'id' => (int) $archive_record->id,

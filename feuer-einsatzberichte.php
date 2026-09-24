@@ -3,7 +3,7 @@
  * Plugin Name: Feuer-Einsatzberichte
  * Plugin URI: https://wdmin.com/plugins/feuer-einsatzberichte/
  * Description: Feuer-Einsatzberichte mit Einsatzverwaltung, Karten, Statistik und Archivierung
- * Version: 3.2.43
+ * Version: 3.2.67
  * Update URI: https://wdmin.com/plugins/feuer-einsatzberichte/
  * Requires at least: 7.1
  * Requires PHP: 8.1
@@ -23,7 +23,7 @@ if (!defined('ABSPATH')) {
 // FEU_Einsatz_* remains available as a legacy alias layer.
 // -------------------------------------------------------------------------
 
-define('FEU_EINSATZ_VERSION', '3.2.43');
+define('FEU_EINSATZ_VERSION', '3.2.67');
 define('FEU_EINSATZ_PLUGIN_FILE', __FILE__);
 define('FEU_EINSATZ_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('FEU_EINSATZ_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -137,6 +137,7 @@ final class Feuer_Einsatzberichte_Core {
     private FEU_Einsatz_Updater $updater;
     private FEU_Einsatz_Logger $logger;
     private FEU_Einsatz_Backup_Manager $backup;
+    private FEU_Einsatz_Mannschaft_Integration $mannschaft_integration;
 
     public function get_db(): FEU_Einsatz_Database { return $this->db; }
     public function get_admin(): ?FEU_Einsatz_Admin { return $this->admin; }
@@ -145,6 +146,7 @@ final class Feuer_Einsatzberichte_Core {
     public function get_updater(): FEU_Einsatz_Updater { return $this->updater; }
     public function get_logger(): FEU_Einsatz_Logger { return $this->logger; }
     public function get_backup(): FEU_Einsatz_Backup_Manager { return $this->backup; }
+    public function get_mannschaft_integration(): FEU_Einsatz_Mannschaft_Integration { return $this->mannschaft_integration; }
 
     public static function get_instance(): self {
         if (null === self::$instance) {
@@ -189,6 +191,9 @@ final class Feuer_Einsatzberichte_Core {
 
         require_once FEU_EINSATZ_PLUGIN_DIR . 'includes/class-database.php';
         $this->db = new FEU_Einsatz_Database();
+
+        require_once FEU_EINSATZ_PLUGIN_DIR . 'includes/class-mannschaft-integration.php';
+        $this->mannschaft_integration = new FEU_Einsatz_Mannschaft_Integration($this->db);
 
         require_once FEU_EINSATZ_PLUGIN_DIR . 'includes/class-logger.php';
         $this->logger = FEU_Einsatz_Logger::boot($this->db);

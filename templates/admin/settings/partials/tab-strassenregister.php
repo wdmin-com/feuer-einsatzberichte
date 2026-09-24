@@ -55,6 +55,12 @@ if (!isset($active_tab) || 'strassenregister' !== (string) $active_tab) {
                             class="regular-text feu-einsatz-street-registry-input"
                             placeholder="<?php esc_attr_e('Ort', 'feuer-einsatzberichte'); ?>"
                         />
+                        <input
+                            type="text"
+                            id="feu-einsatz-street-registry-districts"
+                            class="regular-text feu-einsatz-street-registry-input"
+                            placeholder="<?php esc_attr_e('Stadtteile, z.B. Lurup, Osdorf', 'feuer-einsatzberichte'); ?>"
+                        />
                     </div>
 
                     <div class="feu-admin-settings-action-stack">
@@ -127,6 +133,8 @@ if (!isset($active_tab) || 'strassenregister' !== (string) $active_tab) {
                                 $street_registry_street = isset($street_registry_entry->street) ? (string) $street_registry_entry->street : '';
                                 $street_registry_postcode = isset($street_registry_entry->postcode) ? (string) $street_registry_entry->postcode : '';
                                 $street_registry_city = isset($street_registry_entry->city) ? (string) $street_registry_entry->city : '';
+                                $street_registry_districts = json_decode((string) ($street_registry_entry->districts ?? ''), true);
+                                $street_registry_districts = is_array($street_registry_districts) ? array_filter(array_map('strval', $street_registry_districts)) : [];
                                 $street_usage_count = $db ? $db->count_posts_using_street_registry_entry($street_registry_id) : 0;
                                 $street_report_url = add_query_arg(
                                     array_filter(
@@ -152,6 +160,7 @@ if (!isset($active_tab) || 'strassenregister' !== (string) $active_tab) {
                                         <strong><?php echo esc_html($street_registry_street); ?></strong>
                                         <span class="feu-einsatz-street-registry-row-meta">
                                             <?php echo esc_html(implode(' / ', array_filter([$street_registry_postcode, $street_registry_city]))); ?>
+                                            <?php if (!empty($street_registry_districts)) : ?> · <?php echo esc_html(implode(', ', $street_registry_districts)); ?><?php endif; ?>
                                         </span>
                                     </td>
                                     <td><?php echo esc_html((string) max(0, (int) $street_usage_count)); ?></td>
@@ -163,6 +172,7 @@ if (!isset($active_tab) || 'strassenregister' !== (string) $active_tab) {
                                             data-street="<?php echo esc_attr($street_registry_street); ?>"
                                             data-postcode="<?php echo esc_attr($street_registry_postcode); ?>"
                                             data-city="<?php echo esc_attr($street_registry_city); ?>"
+                                            data-districts="<?php echo esc_attr(implode(', ', $street_registry_districts)); ?>"
                                         >
                                             <?php esc_html_e('Bearbeiten', 'feuer-einsatzberichte'); ?>
                                         </button>
@@ -291,6 +301,10 @@ if (!isset($active_tab) || 'strassenregister' !== (string) $active_tab) {
                         id="feu-einsatz-edit-street-registry-city"
                         class="regular-text feu-einsatz-street-registry-input"
                     />
+                </label>
+                <label>
+                    <span><?php esc_html_e('Stadtteile', 'feuer-einsatzberichte'); ?></span>
+                    <input type="text" id="feu-einsatz-edit-street-registry-districts" class="regular-text feu-einsatz-street-registry-input" placeholder="Lurup, Osdorf" />
                 </label>
             </div>
 

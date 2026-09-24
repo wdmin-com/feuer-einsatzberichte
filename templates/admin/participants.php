@@ -13,6 +13,72 @@ $archived_participants = 0;
 $participants_with_photo = 0;
 $active_participant_rows = [];
 $archived_participant_rows = [];
+$mannschaft_available = FEU_Einsatz_Mannschaft_Integration::is_available();
+$participant_provider = (string) get_option('feu_einsatz_participant_provider', 'local');
+$mannschaft_profiles = $mannschaft_available
+    ? Feuer_Einsatzberichte_Core::get_instance()->get_mannschaft_integration()->get_profiles()
+    : [];
+$linked_mannschaft_profile_ids = array_values(array_filter(array_map(
+    'absint',
+    wp_list_pluck($teilnehmer, 'external_id')
+)));
+$unlinked_participant_rows = array_values(array_filter($teilnehmer, static function ($participant) {
+    return empty($participant->external_provider) || empty($participant->external_id);
+}));
+$unlinked_mannschaft_profiles = array_values(array_filter($mannschaft_profiles, static function ($profile) use ($linked_mannschaft_profile_ids) {
+    return !in_array((int) $profile['id'], $linked_mannschaft_profile_ids, true);
+}));
+
+if (FEU_Einsatz_Mannschaft_Integration::is_enabled()) {
+    $management_url = FEU_Einsatz_Mannschaft_Integration::get_management_url();
+    $last_sync = (string) get_option('feu_einsatz_mannschaft_last_sync', '');
+    ?>
+    <div class="wrap feu-einsatz-participants feu-admin-page">
+        <div class="feu-admin-page-header">
+            <div class="feu-admin-page-heading">
+                <?php if (isset($_GET['feu_mannschaft_saved'])) : ?><div class="notice notice-success is-dismissible"><p><?php esc_html_e('Quelle der Teilnehmerdaten wurde gespeichert und die Mannschaft wurde synchronisiert.', 'feuer-einsatzberichte'); ?></p></div><?php endif; ?>
+                <?php if (isset($_GET['feu_mannschaft_connected'])) : ?><div class="notice <?php echo '1' === sanitize_key(wp_unslash($_GET['feu_mannschaft_connected'])) ? 'notice-success' : 'notice-error'; ?> is-dismissible"><p><?php echo '1' === sanitize_key(wp_unslash($_GET['feu_mannschaft_connected'])) ? esc_html__('Profil wurde verbunden. Die bisherigen Einsatz- und Statistikzuordnungen bleiben erhalten.', 'feuer-einsatzberichte') : esc_html__('Profile konnten nicht verbunden werden. Prüfen Sie die Auswahl und ob das Mannschaftsprofil bereits verknüpft ist.', 'feuer-einsatzberichte'); ?></p></div><?php endif; ?>
+                <span class="feu-admin-page-eyebrow"><?php esc_html_e('Mannschaftsverwaltung', 'feuer-einsatzberichte'); ?></span>
+                <h1 class="wp-heading-inline"><?php esc_html_e('Teilnehmer werden von Feuer-Mannschaft verwaltet', 'feuer-einsatzberichte'); ?></h1>
+                <p class="description feu-einsatz-participants-intro"><?php esc_html_e('Namen, Dienstgrade, Funktionen und Fotos werden automatisch aus Feuer-Mannschaft synchronisiert. Bereits gespeicherte Einsatzberichte und Statistiken bleiben unverändert verknüpft.', 'feuer-einsatzberichte'); ?></p>
+                <p><a class="button button-primary" href="<?php echo esc_url($management_url); ?>"><?php esc_html_e('Zu Feuer-Mannschaft wechseln', 'feuer-einsatzberichte'); ?></a></p>
+                <?php if ('' !== $last_sync) : ?><p class="description"><?php echo esc_html(sprintf(__('Letzte Synchronisierung: %s', 'feuer-einsatzberichte'), $last_sync)); ?></p><?php endif; ?>
+                <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                    <input type="hidden" name="action" value="feu_einsatz_save_mannschaft_source" />
+                    <?php wp_nonce_field('feu_einsatz_save_mannschaft_source'); ?>
+                    <input type="hidden" name="feu_einsatz_participant_provider" value="local" />
+                    <button type="submit" class="button"><?php esc_html_e('Lokale Teilnehmerverwaltung wieder aktivieren', 'feuer-einsatzberichte'); ?></button>
+                </form>
+                <p class="description"><?php esc_html_e('Nicht übereinstimmende Namen werden niemals überschrieben: sie bleiben als getrennte, historisch verknüpfte Einträge erhalten. Eine manuelle Zuordnung wird vor dem Zusammenführen erforderlich sein.', 'feuer-einsatzberichte'); ?></p>
+            </div>
+        </div>
+        <?php if (!empty($unlinked_participant_rows) && !empty($unlinked_mannschaft_profiles)) : ?>
+            <div class="feu-admin-settings-surface" style="margin-top:16px; padding:16px; max-width:760px;">
+                <h2><?php esc_html_e('Abweichende Namen verbinden', 'feuer-einsatzberichte'); ?></h2>
+                <p class="description"><?php esc_html_e('Ordnen Sie einen bisherigen lokalen Teilnehmer einmalig einem Mannschaftsprofil zu. Die lokale Teilnehmer-ID bleibt bestehen; Einsatzberichte und Statistik werden nicht verändert.', 'feuer-einsatzberichte'); ?></p>
+                <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                    <input type="hidden" name="action" value="feu_einsatz_connect_mannschaft_profile" />
+                    <?php wp_nonce_field('feu_einsatz_connect_mannschaft_profile'); ?>
+                    <p><label for="feu-einsatz-participant-id"><?php esc_html_e('Bisheriger Teilnehmer', 'feuer-einsatzberichte'); ?></label><br />
+                    <select id="feu-einsatz-participant-id" name="feu_einsatz_participant_id" required>
+                        <?php foreach ($unlinked_participant_rows as $participant) : ?><option value="<?php echo esc_attr($participant->id); ?>"><?php echo esc_html(FEU_Einsatz_Template_Helpers::format_participant_name($participant->vorname, $participant->nachname)); ?></option><?php endforeach; ?>
+                    </select></p>
+                    <p><label for="feu-einsatz-mannschaft-profile-id"><?php esc_html_e('Profil aus Feuer-Mannschaft', 'feuer-einsatzberichte'); ?></label><br />
+                    <select id="feu-einsatz-mannschaft-profile-id" name="feu_einsatz_mannschaft_profile_id" required>
+                        <?php foreach ($unlinked_mannschaft_profiles as $profile) : ?><option value="<?php echo esc_attr($profile['id']); ?>"><?php echo esc_html($profile['name']); ?></option><?php endforeach; ?>
+                    </select></p>
+                    <button type="submit" class="button button-primary"><?php esc_html_e('Profile verbinden', 'feuer-einsatzberichte'); ?></button>
+                </form>
+            </div>
+        <?php endif; ?>
+    </div>
+    <?php
+    return;
+}
+
+if (isset($_GET['feu_mannschaft_saved'])) {
+    echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Quelle der Teilnehmerdaten wurde gespeichert.', 'feuer-einsatzberichte') . '</p></div>';
+}
 
 foreach ($teilnehmer as $participant_entry) {
     if (!empty($participant_entry->is_archived)) {
@@ -63,6 +129,19 @@ if (!function_exists('feu_einsatz_render_default_function_selects')) {
                 <?php esc_html_e('Hier pflegen Sie die komplette Mannschaftsakte. Archivierte Teilnehmer werden auf der Website nicht mehr angezeigt, bleiben aber in Statistik und bestehenden Einsatzberichten erhalten.', 'feuer-einsatzberichte'); ?>
             </p>
         </div>
+    </div>
+
+    <div class="feu-admin-settings-surface" style="margin-bottom:16px; padding:16px;">
+        <h2><?php esc_html_e('Datenquelle und Synchronisierung', 'feuer-einsatzberichte'); ?></h2>
+        <p class="description"><?php esc_html_e('Wählen Sie, ob Teilnehmer lokal verwaltet oder aus Feuer-Mannschaft übernommen werden. Bestehende Einsatzzuordnungen bleiben in beiden Fällen erhalten.', 'feuer-einsatzberichte'); ?></p>
+        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+            <input type="hidden" name="action" value="feu_einsatz_save_mannschaft_source" />
+            <?php wp_nonce_field('feu_einsatz_save_mannschaft_source'); ?>
+            <label><input type="radio" name="feu_einsatz_participant_provider" value="local" <?php checked($participant_provider, 'local'); ?> /> <?php esc_html_e('Lokal in Einsatzberichte verwalten', 'feuer-einsatzberichte'); ?></label><br />
+            <label><input type="radio" name="feu_einsatz_participant_provider" value="mannschaft" <?php checked($participant_provider, 'mannschaft'); ?> <?php disabled(!$mannschaft_available); ?> /> <?php esc_html_e('Aus Feuer-Mannschaft synchronisieren', 'feuer-einsatzberichte'); ?></label>
+            <?php if (!$mannschaft_available) : ?><p class="description"><?php esc_html_e('Feuer-Mannschaft ist derzeit nicht aktiv oder nicht installiert.', 'feuer-einsatzberichte'); ?></p><?php endif; ?>
+            <p><button type="submit" class="button button-primary"><?php esc_html_e('Quelle speichern und synchronisieren', 'feuer-einsatzberichte'); ?></button></p>
+        </form>
     </div>
 
     <div class="feu-admin-stat-grid feu-admin-stat-grid--compact">

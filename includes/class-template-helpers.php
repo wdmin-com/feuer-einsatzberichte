@@ -5,8 +5,38 @@ if (!defined('ABSPATH')) {
 
 class FEU_Einsatz_Template_Helpers {
 
+    /**
+     * Increment when the public report context gains data that must not be
+     * served from an older, otherwise valid transient.
+     */
+    const SINGLE_CONTEXT_CACHE_VERSION = '11';
+
+    /**
+     * Marks geometry that was resolved with the exact, local Overpass query.
+     * A Nominatim result is also marked explicitly once its real street ways
+     * have been merged, so a temporarily unavailable Overpass mirror does not
+     * make an already complete route look stale again.
+     */
+    const FOCUSED_GEOMETRY_SOURCE_META = '_feu_einsatz_street_geometry_source';
+    const ADDRESS_COORDINATES_META = '_feu_einsatz_coordinates_address_key';
+    const MAP_HIGHLIGHT_OVERRIDE_META = '_feu_einsatz_map_highlight_override';
+    const MAP_HIGHLIGHT_LENGTH_META = '_feu_einsatz_map_highlight_length_meters';
+    const MAP_HIGHLIGHT_RADIUS_META = '_feu_einsatz_map_highlight_radius_meters';
+    const MAP_LOCATION_MODE_META = '_feu_einsatz_map_location_mode';
+    const MAP_EXTRA_STREETS_META = '_feu_einsatz_map_extra_streets';
+    const MAP_AREA_GEOJSON_META = '_feu_einsatz_map_area_geojson';
+    const MAP_PUBLIC_PRECISION_META = '_feu_einsatz_map_public_precision';
+    const MAP_HISTORY_META = '_feu_einsatz_map_history';
+    const FOCUSED_GEOMETRY_SOURCE = 'overpass-focused-v7';
+    const NOMINATIM_GEOMETRY_SOURCE = 'nominatim-street-v7';
+    const NOMINATIM_STREET_GEOMETRY_MAX_PAGES = 4;
+
     const NOMINATIM_SEARCH_URL = 'https://nominatim.openstreetmap.org/search';
     const OVERPASS_API_URL = 'https://overpass-api.de/api/interpreter';
+    const OVERPASS_FALLBACK_API_URLS = [
+        'https://overpass.kumi.systems/api/interpreter',
+        'https://overpass.private.coffee/api/interpreter',
+    ];
 
     public static function render($template, $data = []) {
         $plugin_root = realpath(FEU_EINSATZ_PLUGIN_DIR);
@@ -1324,7 +1354,9 @@ class FEU_Einsatz_Template_Helpers {
         if ('' !== $city) {
             $request_variants[] = [
                 'format' => 'jsonv2',
-                'limit' => 1,
+                // Nominatim stores long streets as several OSM ways. Keeping
+                // the first result only produces an arbitrary short section.
+                'limit' => 10,
                 'countrycodes' => 'de',
                 'city' => $city,
                 'postalcode' => $postcode,
@@ -1333,7 +1365,10 @@ class FEU_Einsatz_Template_Helpers {
             ];
             $request_variants[] = [
                 'format' => 'jsonv2',
-                'limit' => 1,
+                // One street commonly consists of several OSM ways. Ask for
+                // enough exact address matches to collect those real ways
+                // instead of retaining only the short house-number segment.
+                'limit' => 10,
                 'countrycodes' => 'de',
                 'q' => $postcode . ', ' . $city . ', Deutschland',
                 'addressdetails' => 1,
@@ -2482,12 +2517,659 @@ class FEU_Einsatz_Template_Helpers {
         return $normalized_geometry;
     }
 
+    /**
+     * Returns the one map-highlight policy used by the editor, frontend and PNG renderer.
+     * Keeping this here prevents a preview from promising a different result than the image.
+     */
+    public static function get_street_highlight_settings() {
+        $mode = sanitize_key((string) get_option('feu_einsatz_street_highlight_mode', 'full'));
+
+        if (!in_array($mode, ['full', 'length', 'radius'], true)) {
+            $mode = 'full';
+        }
+
+        return [
+            'mode' => $mode,
+            'length_meters' => max(20, min(5000, absint(get_option('feu_einsatz_street_highlight_length_meters', 100)) ?: 100)),
+            'radius_meters' => max(20, min(5000, absint(get_option('feu_einsatz_street_highlight_radius_meters', 100)) ?: 100)),
+            'include_pedestrian' => 1 === (int) get_option('feu_einsatz_street_highlight_include_pedestrian', 1),
+        ];
+    }
+
+    /**
+     * Returns the effective highlight policy for one report.  An override is
+     * intentionally opt-in: reports created before this setting retain the
+     * global map behaviour byte-for-byte.
+     */
+    public static function get_report_street_highlight_settings($post_id = 0) {
+        $settings = self::get_street_highlight_settings();
+        $post_id = absint($post_id);
+        $override = $post_id ? sanitize_key((string) get_post_meta($post_id, self::MAP_HIGHLIGHT_OVERRIDE_META, true)) : 'default';
+
+        if (!in_array($override, ['full', 'length', 'radius'], true)) {
+            $settings['override_mode'] = 'default';
+            return $settings;
+        }
+
+        $settings['override_mode'] = $override;
+        $settings['mode'] = $override;
+
+        if ('length' === $override) {
+            $value = absint(get_post_meta($post_id, self::MAP_HIGHLIGHT_LENGTH_META, true));
+            if ($value > 0) {
+                $settings['length_meters'] = max(20, min(5000, $value));
+            }
+        }
+
+        if ('radius' === $override) {
+            $value = absint(get_post_meta($post_id, self::MAP_HIGHLIGHT_RADIUS_META, true));
+            if ($value > 0) {
+                $settings['radius_meters'] = max(20, min(5000, $value));
+            }
+        }
+
+        return $settings;
+    }
+
+    /**
+     * Manual coordinates describe the incident itself and must never be
+     * replaced by an address lookup in background map jobs.
+     */
+    public static function get_report_map_location_mode($post_id = 0) {
+        return 'coordinates' === sanitize_key((string) get_post_meta(absint($post_id), self::MAP_LOCATION_MODE_META, true))
+            ? 'coordinates'
+            : 'address';
+    }
+
+    /**
+     * Public map accuracy is deliberately separate from cookie consent. It
+     * controls the incident data itself and never changes the editor view.
+     */
+    public static function normalize_report_map_public_precision($value) {
+        $precision = sanitize_key((string) $value);
+
+        return in_array($precision, ['exact', 'approx_100', 'approx_500', 'hidden'], true)
+            ? $precision
+            : 'exact';
+    }
+
+    public static function get_report_map_public_precision($post_id = 0) {
+        return self::normalize_report_map_public_precision(
+            get_post_meta(absint($post_id), self::MAP_PUBLIC_PRECISION_META, true)
+        );
+    }
+
+    /**
+     * Normalizes one additional street per line. Keeping this as a small,
+     * bounded list prevents a report editor from accidentally turning one
+     * preview into an unbounded series of OSM lookups.
+     */
+    public static function normalize_report_map_extra_streets($values) {
+        $values = is_array($values) ? $values : preg_split('/[\r\n,;]+/', (string) $values);
+        $streets = [];
+
+        foreach ((array) $values as $street) {
+            $street = self::strip_house_number_from_street(sanitize_text_field((string) $street));
+            $key = strtolower(remove_accents($street));
+
+            if ('' === $street || isset($streets[$key])) {
+                continue;
+            }
+
+            $streets[$key] = $street;
+
+            if (count($streets) >= 5) {
+                break;
+            }
+        }
+
+        return array_values($streets);
+    }
+
+    public static function get_report_map_extra_streets($post_id = 0) {
+        return self::normalize_report_map_extra_streets(
+            get_post_meta(absint($post_id), self::MAP_EXTRA_STREETS_META, true)
+        );
+    }
+
+    /**
+     * Accept only a simple Polygon ring. It is enough for an incident area,
+     * can be rendered by Leaflet, SVG and GD, and keeps stored post meta
+     * predictable. GeoJSON order is [longitude, latitude].
+     */
+    public static function normalize_report_map_area_geojson($value) {
+        if (is_string($value)) {
+            $value = json_decode(wp_unslash($value), true);
+        }
+
+        if (!is_array($value)) {
+            return [];
+        }
+
+        if (isset($value['type'], $value['coordinates']) && 'Polygon' === (string) $value['type']) {
+            $value = $value['coordinates'][0] ?? [];
+        }
+
+        $points = [];
+        foreach ((array) $value as $point) {
+            if (!is_array($point) || !isset($point[0], $point[1]) || !is_numeric($point[0]) || !is_numeric($point[1])) {
+                continue;
+            }
+
+            $longitude = round((float) $point[0], 6);
+            $latitude = round((float) $point[1], 6);
+            if ($latitude < -90 || $latitude > 90 || $longitude < -180 || $longitude > 180) {
+                continue;
+            }
+
+            $points[] = [$longitude, $latitude];
+            if (count($points) >= 40) {
+                break;
+            }
+        }
+
+        if (count($points) < 3) {
+            return [];
+        }
+
+        $first = $points[0];
+        $last = $points[count($points) - 1];
+        if ($first[0] !== $last[0] || $first[1] !== $last[1]) {
+            $points[] = $first;
+        }
+
+        return [
+            'type' => 'Polygon',
+            'coordinates' => [$points],
+        ];
+    }
+
+    public static function get_report_map_area_geojson($post_id = 0) {
+        return self::normalize_report_map_area_geojson(
+            get_post_meta(absint($post_id), self::MAP_AREA_GEOJSON_META, true)
+        );
+    }
+
+    public static function get_report_map_area_points($post_id = 0) {
+        $area = self::get_report_map_area_geojson($post_id);
+        $ring = $area['coordinates'][0] ?? [];
+        $points = [];
+
+        foreach ((array) $ring as $point) {
+            if (isset($point[0], $point[1]) && is_numeric($point[0]) && is_numeric($point[1])) {
+                $points[] = ['lat' => (float) $point[1], 'lng' => (float) $point[0]];
+            }
+        }
+
+        return $points;
+    }
+
+    public static function get_report_map_public_coordinates($post_id, $latitude, $longitude) {
+        if (!is_numeric($latitude) || !is_numeric($longitude)) {
+            return false;
+        }
+
+        $precision = self::get_report_map_public_precision($post_id);
+        if ('hidden' === $precision) {
+            return false;
+        }
+
+        $latitude = (float) $latitude;
+        $longitude = (float) $longitude;
+        $meters = 'approx_500' === $precision ? 500 : ('approx_100' === $precision ? 100 : 0);
+
+        if ($meters < 1) {
+            return ['lat' => $latitude, 'lng' => $longitude, 'precision' => $precision, 'meters' => 0];
+        }
+
+        $latitude_step = $meters / 111320;
+        $longitude_step = $meters / max(1, 111320 * cos(deg2rad($latitude)));
+
+        return [
+            'lat' => round(round($latitude / $latitude_step) * $latitude_step, 6),
+            'lng' => round(round($longitude / $longitude_step) * $longitude_step, 6),
+            'precision' => $precision,
+            'meters' => $meters,
+        ];
+    }
+
+    /**
+     * A limited street segment and a radius are meaningful only around the
+     * incident address - never around the centre of the entire street.
+     *
+     * The key records which street, house number, postcode and city the saved
+     * coordinates belong to. Older reports have no key and are repaired once
+     * when either limited highlighting mode is used.
+     */
+    public static function get_report_address_coordinates_key($street, $house_number = '', $plz = '', $city = 'Hamburg') {
+        $street = self::strip_house_number_from_street($street);
+        $house_number = trim((string) preg_replace('/\s+/', ' ', (string) $house_number));
+        $plz = preg_replace('/\D+/', '', (string) $plz);
+        $city = sanitize_title(remove_accents(trim((string) $city)));
+
+        if ('' === $city) {
+            $city = 'hamburg';
+        }
+
+        return hash('sha256', wp_json_encode([
+            'street' => sanitize_title(remove_accents($street)),
+            'house_number' => strtolower($house_number),
+            'postcode' => $plz,
+            'city' => $city,
+        ]));
+    }
+
+    public static function mark_report_address_coordinates($post_id, $street, $house_number = '', $plz = '', $city = 'Hamburg') {
+        $post_id = absint($post_id);
+
+        if (!$post_id) {
+            return;
+        }
+
+        update_post_meta(
+            $post_id,
+            self::ADDRESS_COORDINATES_META,
+            self::get_report_address_coordinates_key($street, $house_number, $plz, $city)
+        );
+    }
+
+    /**
+     * Returns true only for the modes which must be centred on a house number.
+     * Full-street rendering deliberately keeps its established resolver intact.
+     */
+    private static function uses_precise_incident_anchor($post_id = 0) {
+        return 'address' === self::get_report_map_location_mode($post_id)
+            && in_array(self::get_report_street_highlight_settings($post_id)['mode'], ['length', 'radius'], true);
+    }
+
+    public static function report_needs_precise_incident_anchor($post_id, $street, $plz = '', $city = 'Hamburg') {
+        $post_id = absint($post_id);
+        $house_number = trim((string) get_post_meta($post_id, '_feu_einsatz_hausnummer', true));
+
+        if (!$post_id || 'coordinates' === self::get_report_map_location_mode($post_id) || '' === trim((string) $street) || '' === $house_number || !self::uses_precise_incident_anchor($post_id)) {
+            return false;
+        }
+
+        $expected_key = self::get_report_address_coordinates_key($street, $house_number, $plz, $city);
+        $saved_key = (string) get_post_meta($post_id, self::ADDRESS_COORDINATES_META, true);
+        $latitude = get_post_meta($post_id, '_feu_einsatz_latitude', true);
+        $longitude = get_post_meta($post_id, '_feu_einsatz_longitude', true);
+
+        return $expected_key !== $saved_key || !is_numeric($latitude) || !is_numeric($longitude);
+    }
+
+    private static function normalize_house_number_for_match($value) {
+        return strtolower((string) preg_replace('/\s+/', '', trim((string) $value)));
+    }
+
+    /**
+     * Resolves coordinates for the real event address. A result is only allowed
+     * to replace an existing anchor for a house number if Nominatim confirms the
+     * same house number in its address details.
+     */
+    public static function get_report_incident_coordinates($post_id, $street, $plz = '', $city = 'Hamburg', $require_precise_anchor = false) {
+        $post_id = absint($post_id);
+        $house_number = trim((string) get_post_meta($post_id, '_feu_einsatz_hausnummer', true));
+        $latitude = get_post_meta($post_id, '_feu_einsatz_latitude', true);
+        $longitude = get_post_meta($post_id, '_feu_einsatz_longitude', true);
+        $stored_coordinates = is_numeric($latitude) && is_numeric($longitude)
+            ? ['lat' => (float) $latitude, 'lng' => (float) $longitude]
+            : false;
+
+        if ('coordinates' === self::get_report_map_location_mode($post_id)) {
+            return $stored_coordinates;
+        }
+        $needs_exact_lookup = !$stored_coordinates
+            || ($require_precise_anchor && self::report_needs_precise_incident_anchor($post_id, $street, $plz, $city));
+
+        if (!$needs_exact_lookup) {
+            return $stored_coordinates;
+        }
+
+        $geocoded_data = self::request_geocoded_address_data($street, $plz, $city, $house_number);
+
+        if (!$geocoded_data) {
+            return $stored_coordinates;
+        }
+
+        $requested_house_number = self::normalize_house_number_for_match($house_number);
+        $resolved_house_number = self::normalize_house_number_for_match($geocoded_data['house_number'] ?? '');
+        $is_verified_house = '' === $requested_house_number || $requested_house_number === $resolved_house_number;
+
+        if (!$is_verified_house) {
+            return $stored_coordinates;
+        }
+
+        update_post_meta($post_id, '_feu_einsatz_latitude', (string) $geocoded_data['lat']);
+        update_post_meta($post_id, '_feu_einsatz_longitude', (string) $geocoded_data['lng']);
+
+        if (!empty($geocoded_data['display_name'])) {
+            update_post_meta($post_id, '_feu_einsatz_display_address', $geocoded_data['display_name']);
+        }
+
+        self::mark_report_address_coordinates($post_id, $street, $house_number, $plz, $city);
+
+        return [
+            'lat' => (float) $geocoded_data['lat'],
+            'lng' => (float) $geocoded_data['lng'],
+        ];
+    }
+
+    private static function map_distance_meters(array $a, array $b) {
+        $earth_radius = 6371000;
+        $lat_delta = deg2rad($b['lat'] - $a['lat']);
+        $lng_delta = deg2rad($b['lng'] - $a['lng']);
+        $h = sin($lat_delta / 2) * sin($lat_delta / 2)
+            + cos(deg2rad($a['lat'])) * cos(deg2rad($b['lat'])) * sin($lng_delta / 2) * sin($lng_delta / 2);
+
+        return 2 * $earth_radius * atan2(sqrt($h), sqrt(max(0, 1 - $h)));
+    }
+
+    private static function closest_point_on_map_segment(array $point, array $a, array $b) {
+        $latitude_scale = 111320;
+        $longitude_scale = max(1, $latitude_scale * cos(deg2rad($point['lat'])));
+        $ax = ($a['lng'] - $point['lng']) * $longitude_scale;
+        $ay = ($a['lat'] - $point['lat']) * $latitude_scale;
+        $bx = ($b['lng'] - $point['lng']) * $longitude_scale;
+        $by = ($b['lat'] - $point['lat']) * $latitude_scale;
+        $dx = $bx - $ax;
+        $dy = $by - $ay;
+        $denominator = ($dx * $dx) + ($dy * $dy);
+        $ratio = $denominator > 0 ? max(0, min(1, - (($ax * $dx) + ($ay * $dy)) / $denominator)) : 0;
+
+        return [
+            'ratio' => $ratio,
+            'point' => [
+                'lat' => $a['lat'] + (($b['lat'] - $a['lat']) * $ratio),
+                'lng' => $a['lng'] + (($b['lng'] - $a['lng']) * $ratio),
+            ],
+        ];
+    }
+
+    /**
+     * A city-wide street record can be complete in total but still miss the
+     * branch nearest to a particular house. Limited modes must detect that
+     * situation before cropping, otherwise their marker appears at a remote
+     * (often visually central) part of the street.
+     */
+    private static function get_geometry_distance_to_incident($geometry, array $origin) {
+        $closest_distance = null;
+
+        foreach (self::normalize_map_geometry($geometry) as $line) {
+            foreach ($line['points'] as $index => $point) {
+                if (!isset($line['points'][$index + 1])) {
+                    continue;
+                }
+
+                $candidate = self::closest_point_on_map_segment($origin, $point, $line['points'][$index + 1]);
+                $distance = self::map_distance_meters($origin, $candidate['point']);
+
+                if (null === $closest_distance || $distance < $closest_distance) {
+                    $closest_distance = $distance;
+                }
+            }
+        }
+
+        return $closest_distance;
+    }
+
+    private static function needs_incident_anchor_geometry($geometry, array $coordinates, $post_id = 0) {
+        if (!self::uses_precise_incident_anchor($post_id)) {
+            return false;
+        }
+
+        $distance = self::get_geometry_distance_to_incident($geometry, $coordinates);
+
+        // An address can legitimately sit several metres away from a road
+        // centreline. Above 150 m, however, crop/radius would describe a
+        // different part of the street and must be enriched around the house.
+        return null === $distance || $distance > 150;
+    }
+
+    private static function interpolate_map_point(array $a, array $b, $ratio) {
+        $ratio = max(0, min(1, (float) $ratio));
+
+        return [
+            'lat' => $a['lat'] + (($b['lat'] - $a['lat']) * $ratio),
+            'lng' => $a['lng'] + (($b['lng'] - $a['lng']) * $ratio),
+        ];
+    }
+
+    /**
+     * Finds the point at which a real map segment enters or leaves a radius.
+     * A binary search is used instead of drawing a straight substitute route.
+     */
+    private static function get_map_radius_boundary_point(array $origin, array $a, array $b, $radius, $a_is_inside) {
+        $low = 0.0;
+        $high = 1.0;
+
+        for ($iteration = 0; $iteration < 20; $iteration++) {
+            $middle = ($low + $high) / 2;
+            $candidate = self::interpolate_map_point($a, $b, $middle);
+            $is_inside = self::map_distance_meters($origin, $candidate) <= $radius;
+
+            if ($is_inside === $a_is_inside) {
+                $low = $middle;
+            } else {
+                $high = $middle;
+            }
+        }
+
+        return self::interpolate_map_point($a, $b, ($low + $high) / 2);
+    }
+
+    /**
+     * Returns real polyline fragments that fall inside the configured radius.
+     * In particular, this retains a line that crosses the circle even if its
+     * OSM nodes themselves happen to sit just outside the circle.
+     */
+    private static function clip_map_line_to_radius(array $line, array $origin, $radius) {
+        $points = isset($line['points']) && is_array($line['points']) ? $line['points'] : [];
+
+        if (count($points) < 2) {
+            return [];
+        }
+
+        $fragments = [];
+        $current = [];
+
+        for ($index = 0, $count = count($points) - 1; $index < $count; $index++) {
+            $a = $points[$index];
+            $b = $points[$index + 1];
+            $a_inside = self::map_distance_meters($origin, $a) <= $radius;
+            $b_inside = self::map_distance_meters($origin, $b) <= $radius;
+
+            if ($a_inside && $b_inside) {
+                if (empty($current)) {
+                    $current[] = $a;
+                }
+                $current[] = $b;
+                continue;
+            }
+
+            if ($a_inside) {
+                if (empty($current)) {
+                    $current[] = $a;
+                }
+                $current[] = self::get_map_radius_boundary_point($origin, $a, $b, $radius, true);
+                if (count($current) > 1) {
+                    $fragment = $line;
+                    $fragment['points'] = self::normalize_segment_points($current);
+                    if (count($fragment['points']) > 1) {
+                        $fragments[] = $fragment;
+                    }
+                }
+                $current = [];
+                continue;
+            }
+
+            if ($b_inside) {
+                $current = [self::get_map_radius_boundary_point($origin, $a, $b, $radius, false), $b];
+                continue;
+            }
+
+            // Both endpoints can be outside while a curved/long OSM segment
+            // still crosses the radius. Keep precisely that interior part.
+            $nearest = self::closest_point_on_map_segment($origin, $a, $b);
+            if (self::map_distance_meters($origin, $nearest['point']) < $radius) {
+                $entry = self::get_map_radius_boundary_point($origin, $a, $nearest['point'], $radius, false);
+                $exit = self::get_map_radius_boundary_point($origin, $nearest['point'], $b, $radius, true);
+                $fragment = $line;
+                $fragment['points'] = self::normalize_segment_points([$entry, $exit]);
+                if (count($fragment['points']) > 1) {
+                    $fragments[] = $fragment;
+                }
+            }
+        }
+
+        if (count($current) > 1) {
+            $fragment = $line;
+            $fragment['points'] = self::normalize_segment_points($current);
+            if (count($fragment['points']) > 1) {
+                $fragments[] = $fragment;
+            }
+        }
+
+        return $fragments;
+    }
+
+    /**
+     * Crops a complete polyline around the nearest point, consuming distance
+     * on both sides of the address. The former implementation looked only at
+     * the one OSM edge under the address, so a 100 m setting could collapse to
+     * a few metres whenever that edge had many shape points.
+     */
+    private static function crop_map_line_around_point(array $line, $segment_index, $ratio, $requested_length) {
+        $points = isset($line['points']) && is_array($line['points']) ? $line['points'] : [];
+
+        if (!isset($points[$segment_index], $points[$segment_index + 1])) {
+            return $line;
+        }
+
+        $anchor = self::interpolate_map_point($points[$segment_index], $points[$segment_index + 1], $ratio);
+        $remaining = max(10, (float) $requested_length / 2);
+        $backward = [$anchor];
+        $current = $anchor;
+
+        for ($index = $segment_index; $index >= 0 && $remaining > 0; $index--) {
+            $target = $points[$index];
+            $distance = self::map_distance_meters($current, $target);
+
+            if ($distance <= $remaining) {
+                $backward[] = $target;
+                $remaining -= $distance;
+                $current = $target;
+                continue;
+            }
+
+            $backward[] = self::interpolate_map_point($current, $target, $remaining / max(1, $distance));
+            break;
+        }
+
+        $remaining = max(10, (float) $requested_length / 2);
+        $forward = [$anchor];
+        $current = $anchor;
+
+        for ($index = $segment_index + 1, $count = count($points); $index < $count && $remaining > 0; $index++) {
+            $target = $points[$index];
+            $distance = self::map_distance_meters($current, $target);
+
+            if ($distance <= $remaining) {
+                $forward[] = $target;
+                $remaining -= $distance;
+                $current = $target;
+                continue;
+            }
+
+            $forward[] = self::interpolate_map_point($current, $target, $remaining / max(1, $distance));
+            break;
+        }
+
+        $line['points'] = self::normalize_segment_points(array_merge(array_reverse($backward), array_slice($forward, 1)));
+
+        return $line;
+    }
+
+    /**
+     * Crops the segment nearest to the address. If it is shorter than the requested
+     * length it is intentionally retained whole: inventing a straight extension would
+     * put an incident on a street where no geometry exists.
+     *
+     * Coordinate-format invariant: normalize_map_geometry() yields associative
+     * lat/lng points. Any crop or filter added here must preserve that format (or
+     * normalize it explicitly); accepting only numeric [lat, lng] pairs makes the
+     * "length" and "radius" modes silently return an empty street.
+     */
+    public static function apply_street_highlight_mode($geometry, $latitude, $longitude, $settings = null) {
+        $lines = self::normalize_map_geometry($geometry);
+        $settings = is_array($settings) ? array_merge(self::get_street_highlight_settings(), $settings) : self::get_street_highlight_settings();
+        $mode = in_array($settings['mode'], ['full', 'length', 'radius'], true) ? $settings['mode'] : 'full';
+        if (empty($settings['include_pedestrian'])) {
+            $lines = array_values(array_filter($lines, static function($line) {
+                return 'pedestrian' !== ($line['kind'] ?? 'road');
+            }));
+        }
+
+        if (empty($lines) || !is_numeric($latitude) || !is_numeric($longitude) || 'full' === $mode) {
+            // A coordinate is enough to show the radius circle. This is
+            // important while a report is still fetching its street geometry:
+            // the map must not degrade to the "not available" placeholder.
+            $radius = 'radius' === $mode && is_numeric($latitude) && is_numeric($longitude)
+                ? max(20, min(5000, absint($settings['radius_meters'])))
+                : 0;
+
+            return ['geometry' => $lines, 'mode' => $mode, 'radius_meters' => $radius];
+        }
+
+        $origin = ['lat' => (float) $latitude, 'lng' => (float) $longitude];
+
+        if ('radius' === $mode) {
+            $radius = max(20, min(5000, absint($settings['radius_meters'])));
+            $filtered = [];
+
+            foreach ($lines as $line) {
+                $filtered = array_merge($filtered, self::clip_map_line_to_radius($line, $origin, $radius));
+            }
+
+            return ['geometry' => $filtered, 'mode' => 'radius', 'radius_meters' => $radius];
+        }
+
+        $closest = null;
+        foreach ($lines as $line_index => $line) {
+            foreach ($line['points'] as $point_index => $point) {
+                if (!isset($line['points'][$point_index + 1])) {
+                    continue;
+                }
+                $candidate = self::closest_point_on_map_segment($origin, $point, $line['points'][$point_index + 1]);
+                $distance = self::map_distance_meters($origin, $candidate['point']);
+                if (null === $closest || $distance < $closest['distance']) {
+                    $closest = ['line' => $line_index, 'segment' => $point_index, 'ratio' => $candidate['ratio'], 'distance' => $distance];
+                }
+            }
+        }
+
+        if (null === $closest) {
+            return ['geometry' => $lines, 'mode' => 'length', 'radius_meters' => 0];
+        }
+
+        $requested_length = max(20, min(5000, absint($settings['length_meters'])));
+        $line = self::crop_map_line_around_point(
+            $lines[$closest['line']],
+            $closest['segment'],
+            $closest['ratio'],
+            $requested_length
+        );
+
+        return ['geometry' => [$line], 'mode' => 'length', 'radius_meters' => 0];
+    }
+
     public static function build_local_map_preview_markup($args = []) {
         $args = wp_parse_args($args, [
             'latitude' => null,
             'longitude' => null,
             'center' => [],
             'geometry' => [],
+            'area_geometry' => [],
             'address' => '',
             'height' => 500,
             'station' => false,
@@ -2497,11 +3179,21 @@ class FEU_Einsatz_Template_Helpers {
             'font_stack' => '',
             'heading_text' => '',
             'preview_mode' => 'full',
+            'highlight_mode' => 'full',
+            'highlight_radius_meters' => 0,
         ]);
 
         $width = 1200;
         $height = max(320, min(680, absint($args['height']) ?: 500));
         $geometry_lines = self::normalize_map_geometry($args['geometry']);
+        $area_points = [];
+        foreach ((array) $args['area_geometry'] as $area_point) {
+            $area_lat = is_array($area_point) && isset($area_point['lat']) ? $area_point['lat'] : (is_array($area_point) ? ($area_point[0] ?? null) : null);
+            $area_lng = is_array($area_point) && isset($area_point['lng']) ? $area_point['lng'] : (is_array($area_point) ? ($area_point[1] ?? null) : null);
+            if (is_numeric($area_lat) && is_numeric($area_lng)) {
+                $area_points[] = ['lat' => (float) $area_lat, 'lng' => (float) $area_lng];
+            }
+        }
         $show_station = !empty($args['show_station']);
         $station = $show_station
             ? (is_array($args['station']) ? $args['station'] : self::get_station_feature_from_settings())
@@ -2552,8 +3244,21 @@ class FEU_Einsatz_Template_Helpers {
             }
         }
 
+        foreach ($area_points as $area_point) {
+            $all_points[] = $area_point;
+        }
+
         if (null !== $marker) {
             $all_points[] = $marker;
+
+            if ('radius' === $args['highlight_mode'] && absint($args['highlight_radius_meters']) > 0) {
+                $radius_degrees = absint($args['highlight_radius_meters']) / 111320;
+                $radius_longitude_degrees = absint($args['highlight_radius_meters']) / max(1, 111320 * cos(deg2rad($marker['lat'])));
+                $all_points[] = ['lat' => $marker['lat'] + $radius_degrees, 'lng' => $marker['lng']];
+                $all_points[] = ['lat' => $marker['lat'] - $radius_degrees, 'lng' => $marker['lng']];
+                $all_points[] = ['lat' => $marker['lat'], 'lng' => $marker['lng'] + $radius_longitude_degrees];
+                $all_points[] = ['lat' => $marker['lat'], 'lng' => $marker['lng'] - $radius_longitude_degrees];
+            }
         }
 
         if (
@@ -2632,6 +3337,27 @@ class FEU_Einsatz_Template_Helpers {
 
         $street_halo_markup = [];
         $street_line_markup = [];
+        $area_markup = '';
+        $radius_markup = '';
+
+        if (count($area_points) >= 3) {
+            $polygon_points = [];
+            foreach ($area_points as $area_point) {
+                $projected = $project_point($area_point);
+                $polygon_points[] = $projected['x'] . ',' . $projected['y'];
+            }
+            $area_markup = '<polygon points="' . esc_attr(implode(' ', $polygon_points)) . '" fill="' . esc_attr($line_color) . '" fill-opacity="0.16" stroke="' . esc_attr($line_color) . '" stroke-width="3" stroke-opacity="0.94" stroke-linejoin="round" />';
+        }
+
+        if (null !== $marker && 'radius' === $args['highlight_mode'] && absint($args['highlight_radius_meters']) > 0) {
+            $marker_screen = $project_point($marker);
+            $radius_meters = absint($args['highlight_radius_meters']);
+            $edge_screen_y = $project_point(['lat' => $marker['lat'] + ($radius_meters / 111320), 'lng' => $marker['lng']]);
+            $edge_screen_x = $project_point(['lat' => $marker['lat'], 'lng' => $marker['lng'] + ($radius_meters / max(1, 111320 * cos(deg2rad($marker['lat']))))]);
+            $radius_px_y = max(8, abs($edge_screen_y['y'] - $marker_screen['y']));
+            $radius_px_x = max(8, abs($edge_screen_x['x'] - $marker_screen['x']));
+            $radius_markup = '<ellipse cx="' . esc_attr($marker_screen['x']) . '" cy="' . esc_attr($marker_screen['y']) . '" rx="' . esc_attr($radius_px_x) . '" ry="' . esc_attr($radius_px_y) . '" fill="' . esc_attr($line_color) . '" fill-opacity="0.18" stroke="' . esc_attr($line_color) . '" stroke-width="3" stroke-opacity="0.92" />';
+        }
 
         foreach ($geometry_lines as $segment) {
             $commands = [];
@@ -2784,6 +3510,8 @@ class FEU_Einsatz_Template_Helpers {
                     '<rect x="0" y="0" width="' . esc_attr($width) . '" height="' . esc_attr($height) . '" fill="url(#' . esc_attr($pattern_id) . ')" />' .
                     implode('', $grid_markup) .
                     implode('', $context_markup) .
+                    $area_markup .
+                    $radius_markup .
                     ('full' === $preview_mode
                         ? '<rect x="30" y="30" width="480" height="' . esc_attr($card_height) . '" rx="20" fill="#ffffff" fill-opacity="0.92" stroke="#0f172a" stroke-opacity="0.10" />' .
                             '<text x="56" y="62" fill="#0f172a" font-size="26" font-weight="700">' . esc_html($title) . '</text>' .
@@ -2908,6 +3636,53 @@ class FEU_Einsatz_Template_Helpers {
         ];
     }
 
+    /**
+     * Returns the primary public Overpass endpoint followed by bounded
+     * fallbacks. A public Overpass instance can temporarily return 406/429 or
+     * be under maintenance; such a service failure must not make a saved
+     * short Nominatim fragment look like the complete street.
+     */
+    private static function get_overpass_api_urls() {
+        $urls = array_merge([self::OVERPASS_API_URL], self::OVERPASS_FALLBACK_API_URLS);
+        $urls = apply_filters('feu_einsatz_overpass_api_urls', $urls);
+
+        return array_values(array_unique(array_filter(array_map('esc_url_raw', (array) $urls))));
+    }
+
+    /**
+     * Performs one read-only Overpass request with failover. A valid JSON
+     * response with no matching elements is still a valid result and does not
+     * unnecessarily query another public service.
+     */
+    private static function request_overpass_payload($query, $timeout = 12) {
+        $query = trim((string) $query);
+
+        if ('' === $query) {
+            return false;
+        }
+
+        foreach (self::get_overpass_api_urls() as $endpoint) {
+            $response = wp_safe_remote_post(
+                $endpoint,
+                array_merge(
+                    self::get_map_remote_request_args($timeout),
+                    [
+                        'body' => [
+                            'data' => $query,
+                        ],
+                    ]
+                )
+            );
+            $payload = self::decode_map_json_response($response);
+
+            if (is_array($payload)) {
+                return $payload;
+            }
+        }
+
+        return false;
+    }
+
     private static function decode_map_json_response($response) {
         if (is_wp_error($response)) {
             return false;
@@ -3017,6 +3792,161 @@ class FEU_Einsatz_Template_Helpers {
                 (min($longitudes) + max($longitudes)) / 2,
             ],
         ];
+    }
+
+    /**
+     * Nominatim lists separate OSM ways for one named street. Merge each real
+     * road result so a request for "Steindamm" does not stop at the first
+     * 328-metre way returned by the geocoder.
+     */
+    private static function build_map_geometry_payload_from_geojson_collection($geojson_items) {
+        $payload = false;
+
+        foreach ((array) $geojson_items as $geojson) {
+            $candidate = self::build_map_geometry_payload_from_geojson($geojson);
+
+            if (!$candidate) {
+                continue;
+            }
+
+            $payload = $payload
+                ? self::merge_geometry_payloads($payload, $candidate)
+                : $candidate;
+        }
+
+        return $payload ?: false;
+    }
+
+    /*
+     * MAP GEOMETRY BASELINE - 3.2.60
+     *
+     * This is the canonical resolver for full-street geometry used by the public
+     * Leaflet map, the editor preview, and generated map/share images. Do not
+     * replace it with a PLZ-scoped query (streets cross postal-code areas), one
+     * deduplicated Nominatim response (it hides OSM way segments), or an
+     * artificial straight line between OSM segments.
+     *
+     * A future rewrite must retain all of these guarantees: city-wide lookup,
+     * dedupe=0, exclude_place_ids pagination, real LineString/MultiLineString
+     * geometry only, cache-source versioning, and equivalent output for all map
+     * consumers. Change this baseline only with map examples that prove the
+     * complete geometry for long and branching streets.
+     */
+    /**
+     * Nominatim limits one response to fifty results. Long streets such as
+     * Elbchaussee can contain more OSM ways than that, so continue through a
+     * small, rate-limited result set using the documented exclude_place_ids
+     * cursor. Geometry lookup intentionally omits the report PLZ: a street
+     * can cross several postal-code areas, while the report coordinates still
+     * stay tied to its exact address.
+     */
+    private static function request_nominatim_street_geojson_items($street, $city = 'Hamburg') {
+        $street = trim((string) $street);
+        $city = trim((string) $city);
+
+        if ('' === $street) {
+            return [];
+        }
+
+        if ('' === $city) {
+            $city = 'Hamburg';
+        }
+
+        $query = self::build_full_address($street, '', $city);
+        $geojson_items = [];
+        $seen_geometries = [];
+        $excluded_place_ids = [];
+
+        for ($page = 0; $page < self::NOMINATIM_STREET_GEOMETRY_MAX_PAGES; $page++) {
+            $request_args = [
+                'q' => $query,
+                'format' => 'jsonv2',
+                'limit' => 50,
+                'dedupe' => 0,
+                'polygon_geojson' => 1,
+                'countrycodes' => 'de',
+            ];
+
+            if (!empty($excluded_place_ids)) {
+                $request_args['exclude_place_ids'] = implode(',', array_keys($excluded_place_ids));
+            }
+
+            $request_url = add_query_arg($request_args, self::NOMINATIM_SEARCH_URL);
+            $results = self::decode_map_json_response(
+                wp_safe_remote_get($request_url, self::get_map_remote_request_args(15))
+            );
+
+            if (empty($results) || !is_array($results)) {
+                break;
+            }
+
+            $page_place_ids = [];
+
+            foreach ($results as $result) {
+                if (!is_array($result)) {
+                    continue;
+                }
+
+                if (isset($result['place_id']) && is_numeric($result['place_id'])) {
+                    $place_id = (string) absint($result['place_id']);
+                    $excluded_place_ids[$place_id] = true;
+                    $page_place_ids[$place_id] = true;
+                }
+
+                if (empty($result['geojson']) || !is_array($result['geojson'])) {
+                    continue;
+                }
+
+                $osm_type = isset($result['osm_type']) ? sanitize_key((string) $result['osm_type']) : '';
+                $osm_id = isset($result['osm_id']) ? (string) absint($result['osm_id']) : '';
+                $geojson_type = isset($result['geojson']['type']) ? (string) $result['geojson']['type'] : '';
+
+                if (
+                    !in_array($osm_type, ['way', 'relation'], true)
+                    || '' === $osm_id
+                    || !in_array($geojson_type, ['LineString', 'MultiLineString'], true)
+                ) {
+                    continue;
+                }
+
+                $geometry_key = $osm_type . ':' . $osm_id;
+                if (isset($seen_geometries[$geometry_key])) {
+                    continue;
+                }
+
+                $seen_geometries[$geometry_key] = true;
+                $geojson_items[] = $result['geojson'];
+            }
+
+            if (count($results) < 50 || empty($page_place_ids)) {
+                break;
+            }
+
+            // Public Nominatim permits one request per second. This runs only
+            // for a cache miss or a versioned geometry repair, never per tile.
+            if ($page + 1 < self::NOMINATIM_STREET_GEOMETRY_MAX_PAGES && function_exists('usleep')) {
+                usleep(1100000);
+            }
+        }
+
+        return $geojson_items;
+    }
+
+    /**
+     * Gives every map consumer the same complete, cache-safe street fallback.
+     * It never invents a connection between separated OSM geometries.
+     */
+    public static function resolve_nominatim_street_geometry($street, $plz = '', $city = 'Hamburg') {
+        $geojson_items = self::request_nominatim_street_geojson_items($street, $city);
+
+        if (empty($geojson_items)) {
+            $geocoded_data = self::request_geocoded_address_data($street, $plz, $city);
+            $geojson_items = $geocoded_data && !empty($geocoded_data['street_geojson_items'])
+                ? $geocoded_data['street_geojson_items']
+                : ($geocoded_data ? [$geocoded_data['geojson']] : []);
+        }
+
+        return self::build_map_geometry_payload_from_geojson_collection($geojson_items);
     }
 
     private static function get_overpass_element_highway($element) {
@@ -3243,11 +4173,32 @@ class FEU_Einsatz_Template_Helpers {
         $normalized = [];
 
         foreach (self::get_geometry_segment_points($segment) as $point) {
-            if (!is_array($point) || !isset($point[0], $point[1]) || !is_numeric($point[0]) || !is_numeric($point[1])) {
+            if (!is_array($point)) {
                 continue;
             }
 
-            $candidate = [round((float) $point[0], 6), round((float) $point[1], 6)];
+            $latitude = null;
+            $longitude = null;
+
+            if (isset($point[0], $point[1]) && is_numeric($point[0]) && is_numeric($point[1])) {
+                $latitude = (float) $point[0];
+                $longitude = (float) $point[1];
+            } elseif (isset($point['lat'], $point['lng']) && is_numeric($point['lat']) && is_numeric($point['lng'])) {
+                $latitude = (float) $point['lat'];
+                $longitude = (float) $point['lng'];
+            } elseif (isset($point['lat'], $point['lon']) && is_numeric($point['lat']) && is_numeric($point['lon'])) {
+                $latitude = (float) $point['lat'];
+                $longitude = (float) $point['lon'];
+            } elseif (isset($point['latitude'], $point['longitude']) && is_numeric($point['latitude']) && is_numeric($point['longitude'])) {
+                $latitude = (float) $point['latitude'];
+                $longitude = (float) $point['longitude'];
+            }
+
+            if (null === $latitude || null === $longitude) {
+                continue;
+            }
+
+            $candidate = [round($latitude, 6), round($longitude, 6)];
             $last = !empty($normalized) ? $normalized[count($normalized) - 1] : null;
 
             if ($last && $candidate[0] === $last[0] && $candidate[1] === $last[1]) {
@@ -3698,23 +4649,36 @@ class FEU_Einsatz_Template_Helpers {
     }
 
     private static function get_single_geometry_prime_lock_key($post_id) {
-        return 'feu_einsatz_single_geometry_prime_' . absint($post_id);
+        // Keep an unsuccessful repair attempt from an older implementation
+        // from suppressing the current recovery path.
+        return 'feu_einsatz_single_geometry_prime_v4_' . absint($post_id);
     }
 
     private static function get_single_context_cache_fingerprint(WP_Post $post) {
         $post_id = (int) $post->ID;
 
         return md5(wp_json_encode([
+            'context_cache_version' => self::SINGLE_CONTEXT_CACHE_VERSION,
             'post_id' => $post_id,
             'post_modified_gmt' => (string) $post->post_modified_gmt,
             'post_title' => (string) $post->post_title,
             'street' => (string) get_post_meta($post_id, '_feu_einsatz_strasse', true),
+            'house_number' => (string) get_post_meta($post_id, '_feu_einsatz_hausnummer', true),
             'postcode' => (string) get_post_meta($post_id, '_feu_einsatz_plz', true),
             'city' => (string) get_post_meta($post_id, '_feu_einsatz_stadt', true),
             'date' => (string) get_post_meta($post_id, '_feu_einsatz_datum', true),
             'time' => (string) get_post_meta($post_id, '_feu_einsatz_uhrzeit', true),
             'latitude' => (string) get_post_meta($post_id, '_feu_einsatz_latitude', true),
             'longitude' => (string) get_post_meta($post_id, '_feu_einsatz_longitude', true),
+            'coordinates_address_key' => (string) get_post_meta($post_id, self::ADDRESS_COORDINATES_META, true),
+            'map_location_mode' => (string) get_post_meta($post_id, self::MAP_LOCATION_MODE_META, true),
+            'map_highlight_override' => (string) get_post_meta($post_id, self::MAP_HIGHLIGHT_OVERRIDE_META, true),
+            'map_highlight_length_meters' => (string) get_post_meta($post_id, self::MAP_HIGHLIGHT_LENGTH_META, true),
+            'map_highlight_radius_meters' => (string) get_post_meta($post_id, self::MAP_HIGHLIGHT_RADIUS_META, true),
+            'map_extra_streets' => maybe_serialize(get_post_meta($post_id, self::MAP_EXTRA_STREETS_META, true)),
+            'map_area_geojson' => maybe_serialize(get_post_meta($post_id, self::MAP_AREA_GEOJSON_META, true)),
+            'map_public_precision' => (string) get_post_meta($post_id, self::MAP_PUBLIC_PRECISION_META, true),
+            'street_geometry_source' => (string) get_post_meta($post_id, self::FOCUSED_GEOMETRY_SOURCE_META, true),
             'street_cache_version' => (string) get_post_meta($post_id, FEU_Einsatz_Street_Cache::POST_META_VERSION, true),
             'street_cache_revision' => (string) get_post_meta($post_id, FEU_Einsatz_Street_Cache::POST_META_REVISION, true),
             'participants' => maybe_serialize(get_post_meta($post_id, '_feu_einsatz_teilnehmer', true)),
@@ -3735,6 +4699,9 @@ class FEU_Einsatz_Template_Helpers {
                 'map_privacy_mode' => (string) get_option('feu_einsatz_single_map_privacy_mode', 'always'),
                 'map_height' => (int) get_option('feu_einsatz_map_height', 500),
                 'map_zoom' => (int) get_option('feu_einsatz_map_zoom', 16),
+                'street_highlight_mode' => (string) get_option('feu_einsatz_street_highlight_mode', 'full'),
+                'street_highlight_length_meters' => (int) get_option('feu_einsatz_street_highlight_length_meters', 100),
+                'street_highlight_radius_meters' => (int) get_option('feu_einsatz_street_highlight_radius_meters', 100),
                 'show_station' => (int) get_option('feu_einsatz_single_live_map_show_station', 0),
                 'desaturate_orgs' => (int) get_option('feu_einsatz_single_desaturate_organizations', 0),
                 'watermark_enabled' => (int) get_option('feu_einsatz_photo_watermark_enabled', 1),
@@ -3770,6 +4737,31 @@ class FEU_Einsatz_Template_Helpers {
         return $street;
     }
 
+    /**
+     * A future-ready, human-readable location line for SEO or introduction text.
+     * It deliberately returns an empty district for historic reports that have none.
+     */
+    public static function get_report_location_seo_text($post_id) {
+        $post_id = absint($post_id);
+        $city = trim((string) get_post_meta($post_id, '_feu_einsatz_stadt', true));
+        $district = trim((string) get_post_meta($post_id, '_feu_einsatz_stadtteil', true));
+        $date = trim((string) get_post_meta($post_id, '_feu_einsatz_datum', true));
+
+        if ('' === $city) {
+            return '';
+        }
+
+        $location = $city . ('' !== $district ? ' ' . $district : '');
+        if ('' === $date) {
+            return $location;
+        }
+
+        $timestamp = strtotime($date);
+        $formatted_date = false !== $timestamp ? date_i18n('d.m.Y', $timestamp) : $date;
+
+        return sprintf(__('Feuerwehr-Alarmierung in %1$s am %2$s', 'feuer-einsatzberichte'), $location, $formatted_date);
+    }
+
     private static function get_street_query_candidates($street) {
         $street = trim((string) preg_replace('/\s+/', ' ', (string) $street));
 
@@ -3803,8 +4795,9 @@ class FEU_Einsatz_Template_Helpers {
         return $candidates;
     }
 
-    private static function build_full_address($street, $plz = '', $city = 'Hamburg') {
-        $street = trim((string) $street);
+    private static function build_full_address($street, $plz = '', $city = 'Hamburg', $house_number = '') {
+        $street = self::strip_house_number_from_street($street);
+        $house_number = trim((string) preg_replace('/\s+/', ' ', (string) $house_number));
         $plz = trim((string) $plz);
         $city = trim((string) $city);
 
@@ -3812,15 +4805,16 @@ class FEU_Einsatz_Template_Helpers {
             $city = 'Hamburg';
         }
 
-        $parts = array_filter([$street, $plz, $city], static function ($value) {
+        $street_with_house_number = trim($street . ('' !== $house_number ? ' ' . $house_number : ''));
+        $parts = array_filter([$street_with_house_number, $plz, $city], static function ($value) {
             return '' !== $value;
         });
 
         return implode(', ', $parts) . ', Deutschland';
     }
 
-    private static function request_geocoded_address_data($street, $plz = '', $city = 'Hamburg') {
-        $address = self::build_full_address($street, $plz, $city);
+    private static function request_geocoded_address_data($street, $plz = '', $city = 'Hamburg', $house_number = '') {
+        $address = self::build_full_address($street, $plz, $city, $house_number);
 
         if ('' === trim($address)) {
             return false;
@@ -3830,6 +4824,8 @@ class FEU_Einsatz_Template_Helpers {
             [
                 'q' => $address,
                 'format' => 'jsonv2',
+                // This lookup finds the incident coordinate. Complete street
+                // geometry is resolved separately without a PLZ restriction.
                 'limit' => 1,
                 'addressdetails' => 1,
                 'polygon_geojson' => 1,
@@ -3850,11 +4846,35 @@ class FEU_Einsatz_Template_Helpers {
             return false;
         }
 
+        $street_geojson_items = [];
+
+        foreach ($results as $road_result) {
+            if (!is_array($road_result) || empty($road_result['geojson']) || !is_array($road_result['geojson'])) {
+                continue;
+            }
+
+            $osm_type = isset($road_result['osm_type']) ? sanitize_key((string) $road_result['osm_type']) : '';
+            $geojson_type = isset($road_result['geojson']['type']) ? (string) $road_result['geojson']['type'] : '';
+
+            if (
+                !in_array($osm_type, ['way', 'relation'], true)
+                || !in_array($geojson_type, ['LineString', 'MultiLineString'], true)
+            ) {
+                continue;
+            }
+
+            $street_geojson_items[] = $road_result['geojson'];
+        }
+
         return [
             'lat' => round((float) $result['lat'], 6),
             'lng' => round((float) $result['lon'], 6),
             'display_name' => isset($result['display_name']) ? sanitize_text_field((string) $result['display_name']) : '',
+            'house_number' => isset($result['address']['house_number'])
+                ? sanitize_text_field((string) $result['address']['house_number'])
+                : '',
             'geojson' => (isset($result['geojson']) && is_array($result['geojson'])) ? $result['geojson'] : [],
+            'street_geojson_items' => $street_geojson_items,
         ];
     }
 
@@ -3919,18 +4939,7 @@ class FEU_Einsatz_Template_Helpers {
             }
 
             $query = str_replace(['{{LAT}}', '{{LNG}}'], [$latitude, $longitude], $query);
-            $response = wp_safe_remote_post(
-                self::OVERPASS_API_URL,
-                array_merge(
-                    self::get_map_remote_request_args(16),
-                    [
-                        'body' => [
-                            'data' => $query,
-                        ],
-                    ]
-                )
-            );
-            $payload = self::decode_map_json_response($response);
+            $payload = self::request_overpass_payload($query, 16);
 
             if (empty($payload['elements']) || !is_array($payload['elements'])) {
                 continue;
@@ -3963,18 +4972,7 @@ class FEU_Einsatz_Template_Helpers {
 
                 if ('' !== $supplement_query) {
                     $supplement_query = str_replace(['{{LAT}}', '{{LNG}}'], [$latitude, $longitude], $supplement_query);
-                    $response = wp_safe_remote_post(
-                        self::OVERPASS_API_URL,
-                        array_merge(
-                            self::get_map_remote_request_args(16),
-                            [
-                                'body' => [
-                                    'data' => $supplement_query,
-                                ],
-                            ]
-                        )
-                    );
-                    $payload = self::decode_map_json_response($response);
+                    $payload = self::request_overpass_payload($supplement_query, 16);
 
                     if (!empty($payload['elements']) && is_array($payload['elements'])) {
                         $supplement_payload = self::build_map_geometry_payload_from_overpass_elements($payload['elements'], $coordinates);
@@ -4029,18 +5027,7 @@ class FEU_Einsatz_Template_Helpers {
             $query
         );
 
-        $response = wp_safe_remote_post(
-            self::OVERPASS_API_URL,
-            array_merge(
-                self::get_map_remote_request_args(12),
-                [
-                    'body' => [
-                        'data' => $query,
-                    ],
-                ]
-            )
-        );
-        $payload = self::decode_map_json_response($response);
+        $payload = self::request_overpass_payload($query, 12);
 
         if (empty($payload['elements']) || !is_array($payload['elements'])) {
             return false;
@@ -4055,12 +5042,26 @@ class FEU_Einsatz_Template_Helpers {
         $plz = trim((string) $plz);
         $city = trim((string) $city);
 
-        if (!$post_id || '' === $street) {
+        if (!$post_id) {
             return false;
         }
 
-        $latitude = get_post_meta($post_id, '_feu_einsatz_latitude', true);
-        $longitude = get_post_meta($post_id, '_feu_einsatz_longitude', true);
+        $location_mode = self::get_report_map_location_mode($post_id);
+
+        if ('' === $street && 'coordinates' === $location_mode) {
+            $coordinates = self::get_report_incident_coordinates($post_id, '', $plz, $city);
+
+            return $coordinates ? [
+                'coordinates' => $coordinates,
+                'geometry' => [],
+                'center' => [(float) $coordinates['lat'], (float) $coordinates['lng']],
+            ] : false;
+        }
+
+        if ('' === $street) {
+            return false;
+        }
+
         $geometry_payload = FEU_Einsatz_Street_Cache::get_post_cache($post_id);
 
         if (!$geometry_payload) {
@@ -4071,39 +5072,118 @@ class FEU_Einsatz_Template_Helpers {
             }
         }
 
-        $coordinates = false;
+        $requires_precise_incident_anchor = self::report_needs_precise_incident_anchor($post_id, $street, $plz, $city);
+        $coordinates = self::get_report_incident_coordinates(
+            $post_id,
+            $street,
+            $plz,
+            $city,
+            $requires_precise_incident_anchor
+        );
 
-        if (is_numeric($latitude) && is_numeric($longitude)) {
-            $coordinates = [
-                'lat' => (float) $latitude,
-                'lng' => (float) $longitude,
-            ];
-        }
+        $geometry_source = (string) get_post_meta($post_id, self::FOCUSED_GEOMETRY_SOURCE_META, true);
+        $has_current_geometry_source = in_array(
+            $geometry_source,
+            [self::FOCUSED_GEOMETRY_SOURCE, self::NOMINATIM_GEOMETRY_SOURCE],
+            true
+        );
+        $geometry_needs_enrichment = !$geometry_payload
+            || (!$has_current_geometry_source && self::should_attempt_editor_geometry_refresh($geometry_payload));
+        $nominatim_enriched_geometry = false;
 
-        if (!$coordinates) {
-            $geocoded_data = self::request_geocoded_address_data($street, $plz, $city);
+        if ('address' === $location_mode && (!$coordinates || $geometry_needs_enrichment)) {
+            $house_number = trim((string) get_post_meta($post_id, '_feu_einsatz_hausnummer', true));
+            $geocoded_data = self::request_geocoded_address_data($street, $plz, $city, $house_number);
 
             if ($geocoded_data) {
-                $coordinates = [
-                    'lat' => (float) $geocoded_data['lat'],
-                    'lng' => (float) $geocoded_data['lng'],
-                ];
+                if (!$coordinates) {
+                    $coordinates = [
+                        'lat' => (float) $geocoded_data['lat'],
+                        'lng' => (float) $geocoded_data['lng'],
+                    ];
 
-                update_post_meta($post_id, '_feu_einsatz_latitude', (string) $geocoded_data['lat']);
-                update_post_meta($post_id, '_feu_einsatz_longitude', (string) $geocoded_data['lng']);
+                    update_post_meta($post_id, '_feu_einsatz_latitude', (string) $geocoded_data['lat']);
+                    update_post_meta($post_id, '_feu_einsatz_longitude', (string) $geocoded_data['lng']);
+
+                    if (
+                        '' === $house_number
+                        || self::normalize_house_number_for_match($house_number) === self::normalize_house_number_for_match($geocoded_data['house_number'] ?? '')
+                    ) {
+                        self::mark_report_address_coordinates($post_id, $street, $house_number, $plz, $city);
+                    }
+                }
 
                 if (!empty($geocoded_data['display_name'])) {
                     update_post_meta($post_id, '_feu_einsatz_display_address', $geocoded_data['display_name']);
                 }
             }
-        }
 
-        if (!$geometry_payload && $coordinates) {
-            $geometry_payload = self::request_street_geometry_data($street, $coordinates);
+            // The event PLZ finds the incident coordinate. The road itself can
+            // cross several postal-code areas, so the shared resolver queries
+            // the complete city-wide OSM street geometry independently.
+            $nominatim_geometry_payload = self::resolve_nominatim_street_geometry($street, $plz, $city);
 
-            if ($geometry_payload) {
+            if (
+                $nominatim_geometry_payload
+                && (!$geometry_payload || self::is_geometry_payload_richer($nominatim_geometry_payload, $geometry_payload))
+            ) {
+                $geometry_payload = $geometry_payload
+                    ? self::merge_geometry_payloads($geometry_payload, $nominatim_geometry_payload)
+                    : $nominatim_geometry_payload;
                 FEU_Einsatz_Street_Cache::set($street, $plz, $city, $geometry_payload);
                 FEU_Einsatz_Street_Cache::set_post_cache($post_id, $geometry_payload);
+                update_post_meta($post_id, self::FOCUSED_GEOMETRY_SOURCE_META, self::NOMINATIM_GEOMETRY_SOURCE);
+                $nominatim_enriched_geometry = true;
+            }
+        }
+
+        $needs_focused_anchor_geometry = $coordinates
+            && self::needs_incident_anchor_geometry(
+                is_array($geometry_payload) ? ($geometry_payload['geometry'] ?? []) : [],
+                $coordinates,
+                $post_id
+            );
+
+        if (
+            '' !== $street
+            && $coordinates
+            && (
+                $needs_focused_anchor_geometry
+                || (
+                    !$nominatim_enriched_geometry
+                    && self::NOMINATIM_GEOMETRY_SOURCE !== (string) get_post_meta($post_id, self::FOCUSED_GEOMETRY_SOURCE_META, true)
+                )
+            )
+        ) {
+            // One bounded, exact street query is appropriate for a page view.
+            // The broad multi-radius resolver is reserved for maintenance and
+            // image jobs; it can otherwise keep a public PHP request waiting
+            // for multiple external services. Do not skip this merely because
+            // Nominatim returned a short house-number segment.
+            $focused_geometry_payload = self::request_focused_street_geometry_data($street, $coordinates);
+
+            if ($focused_geometry_payload) {
+                $merged_geometry_payload = $geometry_payload
+                    ? self::merge_geometry_payloads($geometry_payload, $focused_geometry_payload)
+                    : $focused_geometry_payload;
+
+                if (
+                    $merged_geometry_payload
+                    && (
+                        $needs_focused_anchor_geometry
+                        || !$geometry_payload
+                        || self::is_geometry_payload_richer($focused_geometry_payload, $geometry_payload)
+                    )
+                ) {
+                    $geometry_payload = $merged_geometry_payload;
+                    FEU_Einsatz_Street_Cache::set($street, $plz, $city, $geometry_payload);
+                    FEU_Einsatz_Street_Cache::set_post_cache($post_id, $geometry_payload);
+
+                    // The address-centred segment is now available to both
+                    // limited modes. Keep the full-street cache intact and
+                    // merge only real OSM geometry - never a straight line.
+                    update_post_meta($post_id, self::FOCUSED_GEOMETRY_SOURCE_META, self::FOCUSED_GEOMETRY_SOURCE);
+                }
             }
         }
 
@@ -4443,9 +5523,13 @@ class FEU_Einsatz_Template_Helpers {
         $post_id = (int) $post->ID;
         $is_public_request = !is_admin();
         $transient_key = '';
+        // A request may save a report and render its preview again before PHP
+        // exits. Keying only by post ID served the former in-memory context in
+        // that case, even though the post meta had already changed.
+        $memory_cache_key = $post_id . '_' . self::get_single_context_cache_fingerprint($post);
 
-        if (isset($single_context_cache[$post_id])) {
-            return $single_context_cache[$post_id];
+        if (isset($single_context_cache[$memory_cache_key])) {
+            return $single_context_cache[$memory_cache_key];
         }
 
         if ($is_public_request) {
@@ -4455,8 +5539,8 @@ class FEU_Einsatz_Template_Helpers {
                 $cached_context = get_transient($transient_key);
 
                 if (is_array($cached_context) && !empty($cached_context)) {
-                    $single_context_cache[$post_id] = $cached_context;
-                    return $single_context_cache[$post_id];
+                    $single_context_cache[$memory_cache_key] = $cached_context;
+                    return $single_context_cache[$memory_cache_key];
                 }
             }
         }
@@ -4492,6 +5576,57 @@ class FEU_Einsatz_Template_Helpers {
             }
         }
 
+        // Public pages normally render only from the local cache. If a plugin
+        // update invalidated an old cache, repair that one report once on the
+        // server instead of publishing an empty map until an editor opens it.
+        $geometry_source = (string) get_post_meta($post_id, self::FOCUSED_GEOMETRY_SOURCE_META, true);
+        $has_complete_geometry_source = in_array(
+            $geometry_source,
+            [self::FOCUSED_GEOMETRY_SOURCE, self::NOMINATIM_GEOMETRY_SOURCE],
+            true
+        );
+        $needs_focused_geometry = !$has_complete_geometry_source
+            && (empty($street_geometry) || self::should_attempt_editor_geometry_refresh([
+                'geometry' => $street_geometry,
+                'center' => $street_center,
+            ]));
+        $needs_precise_incident_anchor = self::report_needs_precise_incident_anchor($post_id, $street, $postcode, $city);
+
+        if (
+            $is_public_request
+            && '' !== $street
+            && (
+                empty($street_geometry)
+                || !is_numeric($latitude)
+                || !is_numeric($longitude)
+                || $needs_focused_geometry
+                || $needs_precise_incident_anchor
+            )
+        ) {
+            $prime_lock_key = self::get_single_geometry_prime_lock_key($post_id);
+
+            if (false === get_transient($prime_lock_key)) {
+                set_transient(
+                    $prime_lock_key,
+                    1,
+                    defined('MINUTE_IN_SECONDS') ? MINUTE_IN_SECONDS * 10 : 600
+                );
+
+                $primed_map_data = self::prime_public_map_data($post_id, $street, $postcode, $city);
+
+                if (is_array($primed_map_data)) {
+                    if (!empty($primed_map_data['coordinates']['lat']) && !empty($primed_map_data['coordinates']['lng'])) {
+                        $latitude = (string) $primed_map_data['coordinates']['lat'];
+                        $longitude = (string) $primed_map_data['coordinates']['lng'];
+                    }
+                    if (!empty($primed_map_data['geometry'])) {
+                        $street_geometry = $primed_map_data['geometry'];
+                        $street_center = !empty($primed_map_data['center']) ? $primed_map_data['center'] : $street_center;
+                    }
+                }
+            }
+        }
+
         if (
             is_admin()
             && '' !== $street
@@ -4520,6 +5655,23 @@ class FEU_Einsatz_Template_Helpers {
                     $street_geometry = $primed_geometry_payload['geometry'];
                     $street_center = $primed_geometry_payload['center'];
                 }
+            }
+        }
+
+        // Secondary streets are intentionally resolved by the background map
+        // job and read from the shared cache here. A public page never starts
+        // five additional remote lookups merely because a large incident was
+        // configured with several street names.
+        $extra_streets = self::get_report_map_extra_streets($post_id);
+        $primary_street_key = strtolower(remove_accents(self::strip_house_number_from_street($street)));
+        foreach ($extra_streets as $extra_street) {
+            if (strtolower(remove_accents($extra_street)) === $primary_street_key) {
+                continue;
+            }
+
+            $extra_payload = FEU_Einsatz_Street_Cache::get($extra_street, $postcode, $city);
+            if (is_array($extra_payload) && !empty($extra_payload['geometry'])) {
+                $street_geometry = array_merge($street_geometry, (array) $extra_payload['geometry']);
             }
         }
 
@@ -4602,35 +5754,80 @@ class FEU_Einsatz_Template_Helpers {
             $fallback_center = [floatval($latitude), floatval($longitude)];
         }
 
+        $report_highlight_settings = self::get_report_street_highlight_settings($post_id);
+        $highlight = self::apply_street_highlight_mode($street_geometry, $latitude, $longitude, $report_highlight_settings);
+        $street_geometry = $highlight['geometry'];
+        $area_points = self::get_report_map_area_points($post_id);
         $map_address = trim(implode(', ', array_filter([
             $display_street,
             trim($postcode . ' ' . $city),
         ])));
-        $local_map_preview_markup = '';
+        $public_precision = self::get_report_map_public_precision($post_id);
+        $public_coordinates = self::get_report_map_public_coordinates($post_id, $latitude, $longitude);
+        $public_map_hidden = false;
 
-        if (is_admin()) {
+        if (!is_admin() && ('hidden' === $public_precision || !$public_coordinates)) {
+            $public_map_hidden = true;
+            $street_geometry = [];
+            $area_points = [];
+            $fallback_center = [];
+            $map_address = '';
+            // The template returns before it emits its JSON config, but keep
+            // the context itself safe as well for filters and custom themes.
+            $latitude = null;
+            $longitude = null;
+        } elseif (!is_admin() && 'exact' !== $public_precision) {
+            // A rounded point must not be undermined by an exact street line
+            // or a hand-drawn incident polygon. Public output therefore uses
+            // a single, deliberately broad circle around the rounded point.
+            $latitude = $public_coordinates['lat'];
+            $longitude = $public_coordinates['lng'];
+            $street_geometry = [];
+            $area_points = [];
+            $highlight['mode'] = 'radius';
+            $highlight['radius_meters'] = max((int) $highlight['radius_meters'], (int) $public_coordinates['meters']);
+            $fallback_center = [(float) $latitude, (float) $longitude];
+            $map_address = __('Ungefährer Einsatzbereich', 'feuer-einsatzberichte');
+        }
+        $local_map_preview_markup = '';
+        $radius_has_public_preview = 'radius' === ($highlight['mode'] ?? '')
+            && is_numeric($latitude)
+            && is_numeric($longitude);
+
+        if (is_admin() || $radius_has_public_preview) {
+            // A circle around a verified incident coordinate is meaningful on
+            // its own. Keep an SVG fallback for public radius maps as well, so
+            // a browser-side Leaflet error can never degrade into the generic
+            // "not enough map data" placeholder.
             $local_map_preview_markup = self::build_local_map_preview_markup([
                 'latitude' => $latitude,
                 'longitude' => $longitude,
                 'center' => $fallback_center,
                 'geometry' => $street_geometry,
+                'area_geometry' => $area_points,
                 'address' => $map_address,
                 'height' => $map_height,
                 'station' => false,
                 'show_station' => false,
+                'highlight_mode' => $highlight['mode'],
+                'highlight_radius_meters' => $highlight['radius_meters'],
             ]);
         }
         $map_canvas_id = 'feu-einsatz-einsatz-map-' . $post_id;
         $map_config = [
             'title' => get_the_title($post_id),
-            'street' => $display_street,
-            'plz' => $postcode,
-            'city' => $city,
+            'street' => 'exact' === $public_precision || is_admin() ? $display_street : '',
+            'plz' => 'exact' === $public_precision || is_admin() ? $postcode : '',
+            'city' => 'exact' === $public_precision || is_admin() ? $city : '',
             'address' => $map_address,
             'latitude' => is_numeric($latitude) ? (float) $latitude : null,
             'longitude' => is_numeric($longitude) ? (float) $longitude : null,
             'center' => $fallback_center,
             'geometry' => is_array($street_geometry) ? $street_geometry : [],
+            'area_geometry' => $area_points,
+            'highlight_mode' => $highlight['mode'],
+            'highlight_radius_meters' => $highlight['radius_meters'],
+            'public_precision' => $public_precision,
             'zoom' => absint(get_option('feu_einsatz_map_zoom', 16)),
             'station' => is_array($single_live_map_station_feature) ? [
                 'label' => isset($single_live_map_station_feature['label']) ? (string) $single_live_map_station_feature['label'] : '',
@@ -4675,13 +5872,14 @@ class FEU_Einsatz_Template_Helpers {
             }
         }
 
-        $single_context_cache[$post_id] = [
+        $single_context_cache[$memory_cache_key] = [
             'post' => $post,
             'breadcrumbs' => $breadcrumb_items,
             'display' => [
                 'single_info_fields' => $single_info_fields,
                 'single_map_display_mode' => $single_map_display_mode,
                 'single_map_privacy_mode' => $single_map_privacy_mode,
+                'map_public_precision' => $public_precision,
                 'single_desaturate_organizations' => $single_desaturate_organizations,
                 'overview_show_stats' => 1 === (int) get_option('feu_einsatz_overview_show_stats', 1),
                 'overview_show_year_filter' => 1 === (int) get_option('feu_einsatz_overview_show_year_filter', 1),
@@ -4710,6 +5908,7 @@ class FEU_Einsatz_Template_Helpers {
                 'canvas_id' => $map_canvas_id,
                 'config' => $map_config,
                 'has_live_data' => !empty($map_config['geometry'])
+                    || !empty($map_config['area_geometry'])
                     || (is_numeric($map_config['latitude']) && is_numeric($map_config['longitude']))
                     || (is_array($map_config['center']) && isset($map_config['center'][0], $map_config['center'][1]))
                     || (!empty($map_config['station']) && is_numeric($map_config['station']['latitude'] ?? null) && is_numeric($map_config['station']['longitude'] ?? null)),
@@ -4721,6 +5920,7 @@ class FEU_Einsatz_Template_Helpers {
                 'post_image_alt' => $single_map_fallback_image['alt'],
                 'latitude' => is_numeric($latitude) ? (float) $latitude : null,
                 'longitude' => is_numeric($longitude) ? (float) $longitude : null,
+                'publicly_hidden' => $public_map_hidden,
             ],
             'gallery' => [
                 'items' => $gallery_items,
@@ -4746,12 +5946,12 @@ class FEU_Einsatz_Template_Helpers {
         if ($is_public_request && '' !== $transient_key) {
             set_transient(
                 $transient_key,
-                $single_context_cache[$post_id],
+                $single_context_cache[$memory_cache_key],
                 defined('HOUR_IN_SECONDS') ? HOUR_IN_SECONDS : 3600
             );
         }
 
-        return $single_context_cache[$post_id];
+        return $single_context_cache[$memory_cache_key];
     }
 
     public static function get_report_number_data($post_id) {

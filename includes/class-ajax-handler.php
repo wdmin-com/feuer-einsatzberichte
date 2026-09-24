@@ -510,13 +510,14 @@ class FEU_Einsatz_Ajax_Handler {
         $street = isset($_POST['street']) ? sanitize_text_field(wp_unslash($_POST['street'])) : '';
         $postcode = isset($_POST['postcode']) ? sanitize_text_field(wp_unslash($_POST['postcode'])) : '';
         $city = isset($_POST['city']) ? sanitize_text_field(wp_unslash($_POST['city'])) : '';
+        $districts = isset($_POST['districts']) ? wp_unslash($_POST['districts']) : [];
 
         if ('' === trim($street)) {
             wp_send_json_error(['message' => __('Bitte eine Strasse eingeben.', 'feuer-einsatzberichte')], 400);
             return;
         }
 
-        $result = $this->db->save_street_registry_entry($id, $street, $postcode, $city);
+        $result = $this->db->save_street_registry_entry($id, $street, $postcode, $city, $districts);
 
         if (false === $result) {
             wp_send_json_error(['message' => __('Strasse konnte nicht gespeichert werden. Ein identischer Eintrag existiert eventuell bereits.', 'feuer-einsatzberichte')], 500);
@@ -565,6 +566,8 @@ class FEU_Einsatz_Ajax_Handler {
         $street = isset($entry->street) ? (string) $entry->street : '';
         $postcode = isset($entry->postcode) ? (string) $entry->postcode : '';
         $city = isset($entry->city) ? (string) $entry->city : '';
+        $districts = json_decode((string) ($entry->districts ?? ''), true);
+        $districts = is_array($districts) ? array_values(array_filter(array_map('strval', $districts))) : [];
         $usage_count = $this->db->count_posts_using_street_registry_entry((int) $entry->id);
         $report_url = add_query_arg(
             array_filter(
@@ -587,6 +590,7 @@ class FEU_Einsatz_Ajax_Handler {
             'street' => $street,
             'postcode' => $postcode,
             'city' => $city,
+            'districts' => $districts,
             'usage_count' => max(0, (int) $usage_count),
             'report_url' => $report_url,
             'can_delete' => $usage_count < 1,
@@ -595,6 +599,11 @@ class FEU_Einsatz_Ajax_Handler {
 
     public function feu_einsatz_save_participant() {
         if (!$this->verify_section_request('participants')) {
+            return;
+        }
+
+        if (FEU_Einsatz_Mannschaft_Integration::is_enabled()) {
+            wp_send_json_error(['message' => __('Teilnehmer werden von Feuer-Mannschaft verwaltet. Bitte verwalten Sie das Profil dort.', 'feuer-einsatzberichte')], 409);
             return;
         }
 
@@ -716,6 +725,11 @@ class FEU_Einsatz_Ajax_Handler {
             return;
         }
 
+        if (FEU_Einsatz_Mannschaft_Integration::is_enabled()) {
+            wp_send_json_error(['message' => __('Teilnehmer werden von Feuer-Mannschaft verwaltet. Bitte ändern Sie den Status dort.', 'feuer-einsatzberichte')], 409);
+            return;
+        }
+
         $id = isset($_POST['id']) ? absint(wp_unslash($_POST['id'])) : 0;
         $archived = isset($_POST['archived']) ? absint(wp_unslash($_POST['archived'])) : 0;
 
@@ -752,6 +766,11 @@ class FEU_Einsatz_Ajax_Handler {
 
     public function feu_einsatz_delete_participant() {
         if (!$this->verify_section_request('participants')) {
+            return;
+        }
+
+        if (FEU_Einsatz_Mannschaft_Integration::is_enabled()) {
+            wp_send_json_error(['message' => __('Teilnehmer werden von Feuer-Mannschaft verwaltet. Bitte löschen Sie Profile dort.', 'feuer-einsatzberichte')], 409);
             return;
         }
 

@@ -4,6 +4,11 @@ if (!defined('ABSPATH')) {
 }
 
 $factory_reset_code = '';
+$settings_notice_key = 'feu_einsatz_settings_saved_notice_' . get_current_user_id();
+$settings_saved_flash = get_transient($settings_notice_key);
+if (false !== $settings_saved_flash) {
+    delete_transient($settings_notice_key);
+}
 $selected_purge_sections = isset($_POST['feu_einsatz_purge_sections'])
     ? array_values(array_filter(array_map('sanitize_key', (array) wp_unslash($_POST['feu_einsatz_purge_sections']))))
     : [];
@@ -45,6 +50,19 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
         echo '<div class="notice notice-success is-dismissible"><p>' .
              __('Straßen-Cache wurde erfolgreich geleert.', 'feuer-einsatzberichte') .
              '</p></div>';
+    } elseif (isset($_POST['feu_einsatz_refresh_station_geometry'])) {
+        $this->clear_all_street_cache_storage();
+        $station_geometry = FEU_Einsatz_Template_Helpers::get_station_street_geometry_from_settings(true);
+
+        if (is_array($station_geometry) && !empty($station_geometry['geometry'])) {
+            echo '<div class="notice notice-success is-dismissible"><p>'
+                . esc_html__('Die echte Straßen-Geometrie der Feuerwehrhaus-Adresse wurde geladen und wird jetzt in der Vorschau verwendet.', 'feuer-einsatzberichte')
+                . '</p></div>';
+        } else {
+            echo '<div class="notice notice-warning is-dismissible"><p>'
+                . esc_html__('Für die gespeicherte Feuerwehrhaus-Adresse konnte keine Straßen-Geometrie geladen werden. Prüfen Sie Straße, PLZ und Ort und versuchen Sie es erneut.', 'feuer-einsatzberichte')
+                . '</p></div>';
+        }
     } elseif (isset($_POST['feu_einsatz_refresh_update_check'])) {
         FEU_Einsatz_Updater::clear_cached_metadata();
         $updater = Feuer_Einsatzberichte_Core::get_instance()->get_updater();
@@ -157,9 +175,16 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
                  )) .
                  '</p></div>';
         }
-    } elseif (isset($_POST['submit'])) {
+    } elseif (
+        isset($_POST['submit'])
+        || (
+            isset($_POST['feu_einsatz_settings_action'])
+            && 'save' === sanitize_key(wp_unslash($_POST['feu_einsatz_settings_action']))
+        )
+    ) {
         $previous_settings = [
             'feu_einsatz_functions' => array_values((array) get_option('feu_einsatz_functions', [])),
+            'feu_einsatz_participant_provider' => (string) get_option('feu_einsatz_participant_provider', 'local'),
             'feu_einsatz_categories' => array_map('intval', (array) get_option('feu_einsatz_categories', [])),
             'feu_einsatz_map_zoom' => (int) get_option('feu_einsatz_map_zoom', 16),
             'feu_einsatz_map_height' => (int) get_option('feu_einsatz_map_height', 400),
@@ -249,6 +274,7 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
             ),
             'feu_einsatz_role_access' => FEU_Einsatz_Admin::get_plugin_role_access_settings(),
             'feu_einsatz_feature_organizations_enabled' => (int) get_option('feu_einsatz_feature_organizations_enabled', 1),
+            'feu_einsatz_settings_section_visibility' => FEU_Einsatz_Admin::get_settings_section_visibility(),
             'feu_einsatz_default_participant_function' => FEU_Einsatz_Installer::get_default_participant_function(),
             'feu_einsatz_backup_retention_limit' => max(1, absint(get_option('feu_einsatz_backup_retention_limit', 5))),
             'feu_einsatz_photo_watermark_enabled' => (int) get_option('feu_einsatz_photo_watermark_enabled', 1),
@@ -261,6 +287,31 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
         $previous_participant_ranking_pin = FEU_Einsatz_Admin::get_participant_ranking_pin();
 
         update_option('feu_einsatz_update_manifest_url', FEU_Einsatz_Updater::get_default_manifest_url());
+
+        $participant_provider = isset($_POST['feu_einsatz_participant_provider'])
+            ? sanitize_key(wp_unslash($_POST['feu_einsatz_participant_provider']))
+            : (string) get_option('feu_einsatz_participant_provider', 'local');
+        if ('mannschaft' === $participant_provider && !FEU_Einsatz_Mannschaft_Integration::is_available()) {
+            $participant_provider = 'local';
+        }
+        update_option('feu_einsatz_participant_provider', $participant_provider, false);
+
+        // The visibility manager is intentionally opt-in for older forms and
+        // integrations. A save request without its marker must not suddenly
+        // hide every optional settings page.
+        if (isset($_POST['feu_einsatz_settings_section_visibility_present'])) {
+            $settings_section_visibility = FEU_Einsatz_Admin::normalize_settings_section_visibility(
+                isset($_POST['feu_einsatz_settings_section_visibility'])
+                    ? wp_unslash($_POST['feu_einsatz_settings_section_visibility'])
+                    : [],
+                false
+            );
+            update_option(
+                FEU_Einsatz_Admin::SETTINGS_SECTION_VISIBILITY_OPTION,
+                $settings_section_visibility,
+                false
+            );
+        }
 
         if (isset($_POST['feu_einsatz_functions'])) {
             $functions = array_map('sanitize_text_field', (array) wp_unslash($_POST['feu_einsatz_functions']));
@@ -364,6 +415,28 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
                 ? max(3, min(18, absint(wp_unslash($_POST['feu_einsatz_map_preview_stroke_width']))))
                 : 8
         );
+        $street_highlight_mode = isset($_POST['feu_einsatz_street_highlight_mode'])
+            ? sanitize_key(wp_unslash($_POST['feu_einsatz_street_highlight_mode']))
+            : 'full';
+        if (!in_array($street_highlight_mode, ['full', 'length', 'radius'], true)) {
+            $street_highlight_mode = 'full';
+        }
+        update_option('feu_einsatz_street_highlight_mode', $street_highlight_mode, false);
+        update_option(
+            'feu_einsatz_street_highlight_length_meters',
+            isset($_POST['feu_einsatz_street_highlight_length_meters'])
+                ? max(20, min(5000, absint(wp_unslash($_POST['feu_einsatz_street_highlight_length_meters']))))
+                : 100,
+            false
+        );
+        update_option(
+            'feu_einsatz_street_highlight_radius_meters',
+            isset($_POST['feu_einsatz_street_highlight_radius_meters'])
+                ? max(20, min(5000, absint(wp_unslash($_POST['feu_einsatz_street_highlight_radius_meters']))))
+                : 100,
+            false
+        );
+        update_option('feu_einsatz_street_highlight_include_pedestrian', isset($_POST['feu_einsatz_street_highlight_include_pedestrian']) ? 1 : 0, false);
         update_option(
             'feu_einsatz_map_preview_font_family',
             $this->normalize_map_preview_font_family(
@@ -658,6 +731,7 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
         FEU_Einsatz_Updater::clear_cached_metadata();
         $current_settings = [
             'feu_einsatz_functions' => array_values((array) get_option('feu_einsatz_functions', [])),
+            'feu_einsatz_participant_provider' => (string) get_option('feu_einsatz_participant_provider', 'local'),
             'feu_einsatz_categories' => array_map('intval', (array) get_option('feu_einsatz_categories', [])),
             'feu_einsatz_map_zoom' => (int) get_option('feu_einsatz_map_zoom', 16),
             'feu_einsatz_map_height' => (int) get_option('feu_einsatz_map_height', 400),
@@ -678,6 +752,9 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
             'feu_einsatz_map_preview_highlight_color' => (string) get_option('feu_einsatz_map_preview_highlight_color', '#d92d20'),
             'feu_einsatz_map_preview_stroke_width' => max(3, min(18, absint(get_option('feu_einsatz_map_preview_stroke_width', 8)))),
             'feu_einsatz_map_preview_font_family' => $this->normalize_map_preview_font_family(get_option('feu_einsatz_map_preview_font_family', 'auto')),
+            'feu_einsatz_street_highlight_mode' => (string) get_option('feu_einsatz_street_highlight_mode', 'full'),
+            'feu_einsatz_street_highlight_length_meters' => max(20, min(5000, absint(get_option('feu_einsatz_street_highlight_length_meters', 100)))),
+            'feu_einsatz_street_highlight_radius_meters' => max(20, min(5000, absint(get_option('feu_einsatz_street_highlight_radius_meters', 100)))),
             'feu_einsatz_area_page_enabled' => (int) get_option('feu_einsatz_area_page_enabled', 0),
             'feu_einsatz_area_show_calls' => (int) get_option('feu_einsatz_area_show_calls', 1),
             'feu_einsatz_area_postcodes' => FEU_Einsatz_Template_Helpers::sanitize_area_entry_list(get_option('feu_einsatz_area_postcodes', [])),
@@ -747,6 +824,7 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
             ),
             'feu_einsatz_role_access' => FEU_Einsatz_Admin::get_plugin_role_access_settings(),
             'feu_einsatz_feature_organizations_enabled' => (int) get_option('feu_einsatz_feature_organizations_enabled', 1),
+            'feu_einsatz_settings_section_visibility' => FEU_Einsatz_Admin::get_settings_section_visibility(),
             'feu_einsatz_default_participant_function' => FEU_Einsatz_Installer::get_default_participant_function(),
             'feu_einsatz_backup_retention_limit' => max(1, absint(get_option('feu_einsatz_backup_retention_limit', 5))),
             'feu_einsatz_photo_watermark_enabled' => (int) get_option('feu_einsatz_photo_watermark_enabled', 1),
@@ -758,6 +836,7 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
         $current_participant_ranking_pin = FEU_Einsatz_Admin::get_participant_ranking_pin();
         $setting_labels = [
             'feu_einsatz_functions' => __('Funktionen', 'feuer-einsatzberichte'),
+            'feu_einsatz_participant_provider' => __('Quelle der Teilnehmerdaten', 'feuer-einsatzberichte'),
             'feu_einsatz_categories' => __('Einsatzstichworte', 'feuer-einsatzberichte'),
             'feu_einsatz_map_zoom' => __('Karten-Zoom', 'feuer-einsatzberichte'),
             'feu_einsatz_map_height' => __('Kartenhöhe', 'feuer-einsatzberichte'),
@@ -778,6 +857,9 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
             'feu_einsatz_map_preview_highlight_color' => __('Farbe der Straßenmarkierung', 'feuer-einsatzberichte'),
             'feu_einsatz_map_preview_stroke_width' => __('Stärke der Straßenmarkierung', 'feuer-einsatzberichte'),
             'feu_einsatz_map_preview_font_family' => __('Schrift im Kartenbild', 'feuer-einsatzberichte'),
+            'feu_einsatz_street_highlight_mode' => __('Modus der Straßenmarkierung', 'feuer-einsatzberichte'),
+            'feu_einsatz_street_highlight_length_meters' => __('Länge der Straßenmarkierung', 'feuer-einsatzberichte'),
+            'feu_einsatz_street_highlight_radius_meters' => __('Radius der Straßenmarkierung', 'feuer-einsatzberichte'),
             'feu_einsatz_area_page_enabled' => __('Seite Einsatzgebiet', 'feuer-einsatzberichte'),
             'feu_einsatz_area_show_calls' => __('Einsatz-Zonen auf Einsatzgebiet', 'feuer-einsatzberichte'),
             'feu_einsatz_area_postcodes' => __('PLZ/Gebiete Einsatzgebiet', 'feuer-einsatzberichte'),
@@ -829,6 +911,7 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
             'feu_einsatz_social_meta_twitter_site' => __('X/Twitter @Handle', 'feuer-einsatzberichte'),
             'feu_einsatz_role_access' => __('Zugriffsrechte', 'feuer-einsatzberichte'),
             'feu_einsatz_feature_organizations_enabled' => __('Funktion: Kräfte vor Ort', 'feuer-einsatzberichte'),
+            'feu_einsatz_settings_section_visibility' => __('Sichtbare Einstellungsbereiche', 'feuer-einsatzberichte'),
             'feu_einsatz_default_participant_function' => __('Standardfunktion', 'feuer-einsatzberichte'),
             'feu_einsatz_backup_retention_limit' => __('Archiv-Limit', 'feuer-einsatzberichte'),
             'feu_einsatz_photo_watermark_enabled' => __('Foto-Wasserzeichen', 'feuer-einsatzberichte'),
@@ -884,6 +967,10 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
             'feu_einsatz_map_preview_highlight_color',
             'feu_einsatz_map_preview_stroke_width',
             'feu_einsatz_map_preview_font_family',
+            'feu_einsatz_street_highlight_mode',
+            'feu_einsatz_street_highlight_length_meters',
+            'feu_einsatz_street_highlight_radius_meters',
+            'feu_einsatz_street_highlight_include_pedestrian',
             'feu_einsatz_area_station_street',
             'feu_einsatz_area_station_postcode',
             'feu_einsatz_area_station_city',
@@ -912,13 +999,64 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
             $success_message .= ' ' . __('Neue Karten-Einstellungen gelten sofort fuer neue Berichte. Bereits vorhandene Kartenbilder koennen bei Bedarf manuell neu aufgebaut werden.', 'feuer-einsatzberichte');
         }
 
-        echo '<div class="notice notice-success is-dismissible"><p>' .
-             esc_html($success_message) .
-             '</p></div>';
+        // Persist the confirmation across the POST/redirect/GET cycle. This is
+        // deliberately user-scoped, so one administrator never sees another
+        // administrator's confirmation.
+        set_transient($settings_notice_key, $success_message, MINUTE_IN_SECONDS);
+
+        $saved_tab = isset($_POST['feu_einsatz_active_tab'])
+            ? sanitize_key(wp_unslash($_POST['feu_einsatz_active_tab']))
+            : 'allgemein';
+        $saved_tab = in_array($saved_tab, ['allgemein', 'module', 'zugriff', 'medien', 'sozial', 'funktionen', 'organisationen', 'kategorien', 'karten', 'strassenregister', 'manifest', 'shortcodes', 'daten'], true)
+            ? $saved_tab
+            : 'allgemein';
+        if (!FEU_Einsatz_Admin::is_settings_tab_visible($saved_tab)) {
+            $saved_tab = 'module';
+        }
+        $redirect_url = add_query_arg(
+            [
+                'page' => 'feu-einsatz-einstellungen',
+                'settings-updated' => 'true',
+                'tab' => $saved_tab,
+                'map-settings-updated' => $map_preview_settings_changed ? '1' : '0',
+            ],
+            admin_url('admin.php')
+        );
+
+        // A few managed WordPress hosts emit output before this template is reached.
+        // In that case a redirect cannot be sent; continuing to render the settings
+        // page is safer than leaving the administrator on a blank response.
+        if (!headers_sent() && wp_safe_redirect($redirect_url)) {
+            exit;
+        }
+
+        delete_transient($settings_notice_key);
+        echo '<div class="notice notice-success is-dismissible"><p>' . esc_html($success_message) . '</p></div>';
     }
 }
 
-$settings_tabs = ['allgemein', 'zugriff', 'medien', 'sozial', 'funktionen', 'organisationen', 'kategorien', 'karten', 'strassenregister', 'manifest', 'shortcodes'];
+if (isset($_GET['settings-updated']) && 'true' === sanitize_key(wp_unslash($_GET['settings-updated']))) {
+    $saved_notice = is_string($settings_saved_flash) && '' !== $settings_saved_flash
+        ? $settings_saved_flash
+        : __('Einstellungen wurden erfolgreich gespeichert.', 'feuer-einsatzberichte');
+
+    if (
+        (false === $settings_saved_flash || !is_string($settings_saved_flash) || '' === $settings_saved_flash)
+        && isset($_GET['map-settings-updated'])
+        && '1' === sanitize_key(wp_unslash($_GET['map-settings-updated']))
+    ) {
+        $saved_notice .= ' ' . __('Neue Karten-Einstellungen gelten sofort fuer neue Berichte. Bereits vorhandene Kartenbilder koennen bei Bedarf manuell neu aufgebaut werden.', 'feuer-einsatzberichte');
+    }
+
+    echo '<div class="notice notice-success is-dismissible"><p>' . esc_html($saved_notice) . '</p></div>';
+} elseif (is_string($settings_saved_flash) && '' !== $settings_saved_flash) {
+    echo '<div class="notice notice-success is-dismissible"><p>' . esc_html($settings_saved_flash) . '</p></div>';
+}
+
+$settings_tabs = ['allgemein', 'module', 'zugriff', 'medien', 'sozial', 'funktionen', 'organisationen', 'kategorien', 'karten', 'strassenregister', 'manifest', 'shortcodes', 'daten'];
+$visible_settings_tabs = array_values(array_filter($settings_tabs, static function ($tab) {
+    return FEU_Einsatz_Admin::is_settings_tab_visible($tab);
+}));
 $active_tab = 'allgemein';
 $legacy_settings_tab_aliases = [
     'einzelbeitrag' => 'allgemein',
@@ -930,14 +1068,14 @@ if (isset($_POST['feu_einsatz_active_tab'])) {
     $requested_tab = sanitize_key(wp_unslash($_POST['feu_einsatz_active_tab']));
     $requested_tab = $legacy_settings_tab_aliases[$requested_tab] ?? $requested_tab;
 
-    if (in_array($requested_tab, $settings_tabs, true)) {
+    if (in_array($requested_tab, $visible_settings_tabs, true)) {
         $active_tab = $requested_tab;
     }
 } elseif (isset($_GET['tab'])) {
     $requested_tab = sanitize_key(wp_unslash($_GET['tab']));
     $requested_tab = $legacy_settings_tab_aliases[$requested_tab] ?? $requested_tab;
 
-    if (in_array($requested_tab, $settings_tabs, true)) {
+    if (in_array($requested_tab, $visible_settings_tabs, true)) {
         $active_tab = $requested_tab;
     }
 }
@@ -970,6 +1108,13 @@ $map_label_style = $this->normalize_map_label_style(get_option('feu_einsatz_map_
 $map_label_text_color = sanitize_hex_color((string) get_option('feu_einsatz_map_label_text_color', '#ffffff')) ?: '#ffffff';
 $map_preview_highlight_color = (string) get_option('feu_einsatz_map_preview_highlight_color', '#d92d20');
 $map_preview_stroke_width = max(3, min(18, absint(get_option('feu_einsatz_map_preview_stroke_width', 8))));
+$street_highlight_mode = sanitize_key((string) get_option('feu_einsatz_street_highlight_mode', 'full'));
+if (!in_array($street_highlight_mode, ['full', 'length', 'radius'], true)) {
+    $street_highlight_mode = 'full';
+}
+$street_highlight_length_meters = max(20, min(5000, absint(get_option('feu_einsatz_street_highlight_length_meters', 100)) ?: 100));
+$street_highlight_radius_meters = max(20, min(5000, absint(get_option('feu_einsatz_street_highlight_radius_meters', 100)) ?: 100));
+$street_highlight_include_pedestrian = 1 === (int) get_option('feu_einsatz_street_highlight_include_pedestrian', 1);
 $map_preview_font_family = $this->normalize_map_preview_font_family(get_option('feu_einsatz_map_preview_font_family', 'auto'));
 $map_preview_font_options = $this->get_map_preview_font_option_definitions();
 $area_page_enabled = (int) get_option('feu_einsatz_area_page_enabled', 0);
@@ -1110,32 +1255,12 @@ $map_preview_live_sample_geometry = (
 )
     ? $map_preview_live_geometry_payload['geometry']
     : [];
-
-if ($is_karten_tab && empty($map_preview_live_sample_geometry)) {
-    $map_preview_live_sample_geometry = [
-        [
-            'kind' => 'road',
-            'points' => [
-                [
-                    'lat' => $map_preview_live_center['lat'] - 0.00042,
-                    'lng' => $map_preview_live_center['lng'] - 0.00115,
-                ],
-                [
-                    'lat' => $map_preview_live_center['lat'] - 0.00014,
-                    'lng' => $map_preview_live_center['lng'] - 0.00038,
-                ],
-                [
-                    'lat' => $map_preview_live_center['lat'] + 0.00018,
-                    'lng' => $map_preview_live_center['lng'] + 0.00042,
-                ],
-                [
-                    'lat' => $map_preview_live_center['lat'] + 0.00044,
-                    'lng' => $map_preview_live_center['lng'] + 0.00116,
-                ],
-            ],
-        ],
-    ];
-}
+$map_preview_live_highlight = FEU_Einsatz_Template_Helpers::apply_street_highlight_mode(
+    $map_preview_live_sample_geometry,
+    $map_preview_live_center['lat'] + 0.00015,
+    $map_preview_live_center['lng'] + 0.00015
+);
+$map_preview_live_sample_geometry = $map_preview_live_highlight['geometry'];
 
 $map_preview_live_fallback_markup = $is_karten_tab
     ? FEU_Einsatz_Template_Helpers::build_local_map_preview_markup([
@@ -1154,6 +1279,8 @@ $map_preview_live_fallback_markup = $is_karten_tab
             : '"Segoe UI", Arial, sans-serif',
         'heading_text' => $map_preview_heading_text,
         'preview_mode' => 'minimal',
+        'highlight_mode' => $map_preview_live_highlight['mode'],
+        'highlight_radius_meters' => $map_preview_live_highlight['radius_meters'],
     ])
     : '';
 $participant_ranking_pin_is_configured = '' !== FEU_Einsatz_Admin::get_participant_ranking_pin();
@@ -1275,6 +1402,7 @@ $settings_summary_cards = [
 
         <form method="post" action="" id="feu-einsatz-settings-form" class="feu-admin-settings-main">
         <?php wp_nonce_field('feu_einsatz_save_settings', 'feu_einsatz_settings_nonce'); ?>
+        <input type="hidden" name="feu_einsatz_settings_action" value="save" />
         <input type="hidden" name="feu_einsatz_active_tab" id="feu_einsatz_active_tab" value="<?php echo esc_attr($active_tab); ?>" />
 
         <div class="feu-admin-settings-sections">
@@ -1299,6 +1427,12 @@ $settings_summary_cards = [
             'factory_reset_code' => $factory_reset_code,
             'selected_purge_sections' => $selected_purge_sections,
         ], 'Einstellungen: Allgemein');
+
+        echo FEU_Einsatz_Template_Helpers::render_guarded('templates/admin/settings/partials/tab-module.php', [
+            'active_tab' => $active_tab,
+            'settings_section_definitions' => FEU_Einsatz_Admin::get_settings_section_definitions(),
+            'settings_section_visibility' => FEU_Einsatz_Admin::get_settings_section_visibility(),
+        ], 'Einstellungen: Module');
 
         echo FEU_Einsatz_Template_Helpers::render_guarded('templates/admin/settings/partials/tab-zugriff.php', [
             'active_tab' => $active_tab,
@@ -1402,6 +1536,10 @@ $settings_summary_cards = [
             'map_label_text_color' => $map_label_text_color,
             'map_preview_highlight_color' => $map_preview_highlight_color,
             'map_preview_stroke_width' => $map_preview_stroke_width,
+            'street_highlight_mode' => $street_highlight_mode,
+            'street_highlight_length_meters' => $street_highlight_length_meters,
+            'street_highlight_radius_meters' => $street_highlight_radius_meters,
+            'street_highlight_include_pedestrian' => $street_highlight_include_pedestrian,
             'map_preview_font_family' => $map_preview_font_family,
             'map_preview_font_options' => $map_preview_font_options,
             'single_live_map_show_station' => $single_live_map_show_station,
@@ -1456,6 +1594,12 @@ $settings_summary_cards = [
         echo FEU_Einsatz_Template_Helpers::render_guarded('templates/admin/settings/partials/tab-shortcodes.php', [
             'active_tab' => $active_tab,
         ], 'Einstellungen: Shortcodes');
+
+        echo FEU_Einsatz_Template_Helpers::render_guarded('templates/admin/settings/partials/tab-daten.php', [
+            'active_tab' => $active_tab,
+            'factory_reset_code' => $factory_reset_code,
+            'selected_purge_sections' => $selected_purge_sections,
+        ], 'Einstellungen: Daten löschen');
         ?>
         </div>
 
@@ -1465,7 +1609,8 @@ $settings_summary_cards = [
                        name="submit"
                        id="submit"
                        class="button button-primary"
-                       value="<?php _e('Einstellungen speichern', 'feuer-einsatzberichte'); ?>" />
+                       formnovalidate
+                       value="<?php echo esc_attr__('Einstellungen speichern', 'feuer-einsatzberichte'); ?>" />
             </p>
         </div>
         </form>
@@ -1478,7 +1623,7 @@ echo FEU_Einsatz_Template_Helpers::render('templates/admin/settings/partials/org
 
 <script>
 jQuery(document).ready(function($) {
-    var allowedTabs = ['allgemein', 'zugriff', 'medien', 'sozial', 'funktionen', 'organisationen', 'kategorien', 'karten', 'strassenregister', 'manifest', 'shortcodes'];
+    var allowedTabs = <?php echo wp_json_encode($visible_settings_tabs); ?>;
     var legacyTabAliases = {
         einzelbeitrag: 'allgemein',
         uebersicht: 'allgemein',
@@ -1531,7 +1676,9 @@ jQuery(document).ready(function($) {
         factoryResetCodeRequired: <?php echo wp_json_encode(__('Bitte geben Sie den neu erzeugten 7-stelligen Sicherheitscode ein.', 'feuer-einsatzberichte')); ?>,
         purgeSelectionRequired: <?php echo wp_json_encode(__('Bitte wählen Sie mindestens einen Datenbereich aus.', 'feuer-einsatzberichte')); ?>,
         factoryResetConfirm: <?php echo wp_json_encode(__('Die ausgewählten Daten werden dauerhaft und ohne Wiederherstellungsmöglichkeit gelöscht. Wirklich fortfahren?', 'feuer-einsatzberichte')); ?>,
-        restoreConfirm: <?php echo wp_json_encode(__('Die aktuelle Konfiguration durch den vorherigen Stand ersetzen?', 'feuer-einsatzberichte')); ?>
+        restoreConfirm: <?php echo wp_json_encode(__('Die aktuelle Konfiguration durch den vorherigen Stand ersetzen?', 'feuer-einsatzberichte')); ?>,
+        sectionVisible: <?php echo wp_json_encode(__('Sichtbar', 'feuer-einsatzberichte')); ?>,
+        sectionHidden: <?php echo wp_json_encode(__('Ausgeblendet', 'feuer-einsatzberichte')); ?>
     };
 
     $('.feu-einsatz-delete-organization').each(function() {
@@ -1635,6 +1782,13 @@ jQuery(document).ready(function($) {
         markSettingsDirty(getFieldKey($(this)));
     });
 
+    $settingsForm.on('change', '.feu-admin-settings-module-card input[type="checkbox"]', function() {
+        var $card = $(this).closest('.feu-admin-settings-module-card');
+        var isVisible = $(this).is(':checked');
+        $card.toggleClass('is-disabled', !isVisible);
+        $card.find('.feu-admin-settings-module-state').text(isVisible ? texts.sectionVisible : texts.sectionHidden);
+    });
+
     $('[data-feu-select-all-purge]').on('click', function() {
         $settingsForm.find('input[name="feu_einsatz_purge_sections[]"]').prop('checked', true).trigger('change');
     });
@@ -1710,10 +1864,12 @@ jQuery(document).ready(function($) {
         $('#feu-einsatz-street-registry-street').val('');
         $('#feu-einsatz-street-registry-postcode').val('');
         $('#feu-einsatz-street-registry-city').val('');
+        $('#feu-einsatz-street-registry-districts').val('');
         $('#feu-einsatz-add-street-registry-entry').text(texts.streetAdd);
         delete dirtyFieldKeys['feu-einsatz-street-registry-street'];
         delete dirtyFieldKeys['feu-einsatz-street-registry-postcode'];
         delete dirtyFieldKeys['feu-einsatz-street-registry-city'];
+        delete dirtyFieldKeys['feu-einsatz-street-registry-districts'];
     }
 
     function escapeHtml(value) {
@@ -1726,7 +1882,7 @@ jQuery(document).ready(function($) {
     }
 
     function getStreetRegistrySearchValue(entry) {
-        return [entry.street, entry.postcode, entry.city]
+        return [entry.street, entry.postcode, entry.city, entry.districts]
             .map(function(value) {
                 return String(value || '').trim().toLowerCase();
             })
@@ -1735,7 +1891,7 @@ jQuery(document).ready(function($) {
     }
 
     function getStreetRegistryMeta(entry) {
-        return [entry.postcode, entry.city]
+        return [entry.postcode, entry.city, Array.isArray(entry.districts) ? entry.districts.join(', ') : entry.districts]
             .map(function(value) {
                 return String(value || '').trim();
             })
@@ -1792,20 +1948,21 @@ jQuery(document).ready(function($) {
         var street = String(entry && entry.street ? entry.street : '');
         var postcode = String(entry && entry.postcode ? entry.postcode : '');
         var city = String(entry && entry.city ? entry.city : '');
+        var districts = Array.isArray(entry && entry.districts) ? entry.districts : String(entry && entry.districts ? entry.districts : '').split(',').filter(Boolean);
         var usageCount = Number(entry && entry.usage_count ? entry.usage_count : 0);
         var reportUrl = String(entry && entry.report_url ? entry.report_url : '#');
         var canDelete = !entry || entry.can_delete !== false;
-        var meta = getStreetRegistryMeta({ postcode: postcode, city: city });
+        var meta = getStreetRegistryMeta({ postcode: postcode, city: city, districts: districts });
 
         return '' +
-            '<tr data-street-registry-id="' + id + '" data-search="' + escapeHtml(getStreetRegistrySearchValue({ street: street, postcode: postcode, city: city })) + '">' +
+            '<tr data-street-registry-id="' + id + '" data-search="' + escapeHtml(getStreetRegistrySearchValue({ street: street, postcode: postcode, city: city, districts: districts })) + '">' +
                 '<td>' +
                     '<strong>' + escapeHtml(street) + '</strong>' +
                     '<span class="feu-einsatz-street-registry-row-meta">' + escapeHtml(meta) + '</span>' +
                 '</td>' +
                 '<td>' + Math.max(0, usageCount) + '</td>' +
                 '<td class="feu-einsatz-table-actions">' +
-                    '<button type="button" class="button button-small feu-einsatz-edit-street-registry-entry" data-id="' + id + '" data-street="' + escapeHtml(street) + '" data-postcode="' + escapeHtml(postcode) + '" data-city="' + escapeHtml(city) + '">' +
+                    '<button type="button" class="button button-small feu-einsatz-edit-street-registry-entry" data-id="' + id + '" data-street="' + escapeHtml(street) + '" data-postcode="' + escapeHtml(postcode) + '" data-city="' + escapeHtml(city) + '" data-districts="' + escapeHtml(districts.join(', ')) + '">' +
                         'Bearbeiten' +
                     '</button>' +
                     '<a class="button button-small" href="' + escapeHtml(reportUrl) + '">Einsaetze ansehen</a>' +
@@ -1926,6 +2083,7 @@ jQuery(document).ready(function($) {
         $('#feu-einsatz-edit-street-registry-street').val(String(entry.street || ''));
         $('#feu-einsatz-edit-street-registry-postcode').val(String(entry.postcode || ''));
         $('#feu-einsatz-edit-street-registry-city').val(String(entry.city || ''));
+        $('#feu-einsatz-edit-street-registry-districts').val(Array.isArray(entry.districts) ? entry.districts.join(', ') : String(entry.districts || ''));
         $('#feu-einsatz-edit-street-registry-modal').fadeIn(160);
         window.setTimeout(function() {
             $('#feu-einsatz-edit-street-registry-street').trigger('focus');
@@ -2044,6 +2202,7 @@ jQuery(document).ready(function($) {
         var street = $('#feu-einsatz-street-registry-street').val().trim();
         var postcode = $('#feu-einsatz-street-registry-postcode').val().trim();
         var city = $('#feu-einsatz-street-registry-city').val().trim();
+        var districts = $('#feu-einsatz-street-registry-districts').val().trim();
         var $button = $(this);
 
         if (!street) {
@@ -2059,7 +2218,8 @@ jQuery(document).ready(function($) {
             id: id,
             street: street,
             postcode: postcode,
-            city: city
+            city: city,
+            districts: districts
         }).done(function(response) {
             if (response && response.success) {
                 showNotice('success', texts.streetSaved);
@@ -2088,7 +2248,8 @@ jQuery(document).ready(function($) {
             id: Number($(this).data('id') || 0),
             street: String($(this).data('street') || ''),
             postcode: String($(this).data('postcode') || ''),
-            city: String($(this).data('city') || '')
+            city: String($(this).data('city') || ''),
+            districts: String($(this).data('districts') || '')
         });
     });
 
@@ -2097,6 +2258,7 @@ jQuery(document).ready(function($) {
         var street = $('#feu-einsatz-edit-street-registry-street').val().trim();
         var postcode = $('#feu-einsatz-edit-street-registry-postcode').val().trim();
         var city = $('#feu-einsatz-edit-street-registry-city').val().trim();
+        var districts = $('#feu-einsatz-edit-street-registry-districts').val().trim();
         var $button = $('#feu-einsatz-save-street-registry-modal');
 
         if (!id || !street) {
@@ -2112,7 +2274,8 @@ jQuery(document).ready(function($) {
             id: id,
             street: street,
             postcode: postcode,
-            city: city
+            city: city,
+            districts: districts
         }).done(function(response) {
             if (response && response.success && response.data && response.data.entry) {
                 upsertStreetRegistryRow(response.data.entry);

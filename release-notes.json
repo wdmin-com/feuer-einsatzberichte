@@ -1,6 +1,304 @@
 {
   "releases": [
     {
+      "version": "3.2.67",
+      "date": "2026-09-24",
+      "title": "Stabile Radius-Karte und aufgeräumte Einstellungen",
+      "summary": "Radius-Markierungen bleiben sichtbar, auch wenn ein optionaler Browser-Layer fehlschlägt; die Einstellungsnavigation lässt sich ohne Datenverlust auf die benötigten Bereiche reduzieren.",
+      "changes": [
+        "Kritisch behoben: Eine bereits initialisierte Leaflet-Karte wird nicht mehr durch den allgemeinen Hinweis „Kartenansicht nicht verfügbar“ verdeckt.",
+        "Karte: Der Radius wird vor optionalen Straßen-Geometrien gerendert und bleibt daher auch bei fehlerhaften oder historischen Linien sichtbar.",
+        "Fallback: Öffentliche Radius-Karten erhalten zusätzlich eine lokale SVG-Vorschau mit Kreis, falls der JavaScript-Kartenlayer nicht geladen werden kann.",
+        "Neu: Der Reiter „Module“ steuert übersichtlich, welche Einstellungsbereiche in der Navigation sichtbar sind. Verstecken ändert weder Daten noch die öffentliche Funktion des Plugins.",
+        "Qualität: Integrationstest deckt die Radius-SVG ohne Straßenlinie sowie das Speichern der Modul-Sichtbarkeit ab."
+      ]
+    },
+    {
+      "version": "3.2.66",
+      "date": "2026-09-23",
+      "title": "Einsatzbereich, Kartenprivatsphäre und Editor-Diagnose",
+      "summary": "Einsatzorte lassen sich präziser beschreiben, prüfen und datenschutzgerecht veröffentlichen – ohne die bestehende Straßenlogik zu verändern.",
+      "changes": [
+        "Neu: Pro Einsatz können bis zu fünf weitere betroffene Straßen und ein frei zeichnbarer Einsatzbereich gespeichert werden; Live-Karte, SVG-Fallback und erzeugtes Kartenbild verwenden dieselben Daten.",
+        "Neu: Neben Adresse ist ein eigenständiger Koordinatenmodus verfügbar. Ein Marker kann direkt in der Live-Karte gesetzt oder verschoben werden.",
+        "Neu: Die öffentliche Karte kann je Bericht exakt, ungefähr auf 100 oder 500 Meter gerundet oder vollständig ausgeblendet werden.",
+        "Datenschutz: Beim Wechsel auf eine ungefähre oder ausgeblendete Karte werden alte automatisch erzeugte exakte Kartenbilder entfernt; ausgeblendete Karten können nicht manuell neu erzeugt werden.",
+        "Bedienung: Schnellprofile für ganze Straße, 100-Meter-Abschnitt sowie 500-/1.000-Meter-Radius und eine kompakte Diagnose erleichtern die Kontrolle vor dem Speichern.",
+        "Robustheit: Karten-Kontexte werden nach einer Änderung innerhalb derselben Anfrage neu aufgebaut; der Wechsel von Koordinaten zurück zur Adresse verwirft den alten Punkt zuverlässig.",
+        "Qualität: Der Integrationstest prüft Bereichs-GeoJSON, Zusatzstraßen, Datenschutzkoordinaten, den SVG-Bereich und den sicheren Wechsel des Ortsmodus."
+      ]
+    },
+    {
+      "version": "3.2.65",
+      "date": "2026-09-23",
+      "title": "Individuelle Kartenprofile je Einsatz",
+      "summary": "Einsatzberichte können ihre Kartenmarkierung und den Einsatzort unabhängig von der globalen Kartenregel definieren.",
+      "changes": [
+        "Neu: Jeder Einsatz kann die globale Kartenregel übernehmen oder ausschließlich für diesen Bericht ganze Straße, Straßenabschnitt oder Radius auswählen.",
+        "Neu: Abschnittslänge und Radius sind je Einsatz einstellbar; Live-Vorschau, öffentliche Karte und erzeugtes Kartenbild verwenden denselben Wert.",
+        "Neu: Einsatzdetails bieten einen zweiten, klar getrennten Modus für genaue Koordinaten – geeignet für Wald-, Flächen- und Sonderlagen.",
+        "Sicherheit: Manuell gespeicherte Koordinaten werden von Hintergrund-Geokodierung nicht überschrieben.",
+        "Robustheit: Ein Radius mit reinen Koordinaten bleibt ohne Straßenlinie sichtbar und kann automatisch als Kartenbild erzeugt werden.",
+        "Qualität: Der WordPress-Integrationstest deckt pro Einsatz gesetzten Radius, Koordinatenmodus und die koordinatenbasierte Kartenanzeige ab."
+      ]
+    },
+    {
+      "version": "3.2.64",
+      "date": "2026-09-23",
+      "title": "Radius-Karte ohne Straßenlinie",
+      "summary": "Stellt die Live-Karte im Radiusmodus auch dann bereit, wenn noch keine Straßenlinie im Cache liegt.",
+      "changes": [
+        "Kritisch behoben: Der Radiusmodus fiel bei leerer Liniengeometrie fälschlich auf „Kartenansicht nicht verfügbar“ zurück.",
+        "Frontend: Gültige Einsatzkoordinaten reichen im Radiusmodus jetzt ausdrücklich für die Leaflet-Karte und den sichtbaren Kreis aus.",
+        "Cache: Die öffentliche Berichtskonfiguration und die Sperre für die einmalige Kartenreparatur erhalten neue Versionen, damit alte Fehlerzustände nicht weiterverwendet werden.",
+        "Verhalten: Sobald echte Straßenlinien vorliegen, werden sie weiterhin korrekt innerhalb des Radius markiert."
+      ]
+    },
+    {
+      "version": "3.2.63",
+      "date": "2026-09-23",
+      "title": "Live-Karte ohne Laden beim Öffnen",
+      "summary": "Verhindert Kartenanfragen beim Öffnen des Editors und lässt bei vorhandenen Daten eine bewusste Vorschau-Anfrage zu.",
+      "changes": [
+        "Editor: Bereits ausgefüllte Berichte öffnen ohne automatisch geladene Karte und ohne OSM-Anfrage.",
+        "Bedienung: Bei vollständigen bestehenden Einsatzdaten bleibt eine inaktive Vorschaukarte mit klarer Schaltfläche zum gezielten Laden verfügbar.",
+        "Neue Berichte: Das Kartenfenster erscheint automatisch erst, wenn alle Pflichtdaten für den Einsatzort und Zeitpunkt vorhanden sind."
+      ]
+    },
+    {
+      "version": "3.2.62",
+      "date": "2026-09-23",
+      "title": "Gezielte Live-Karte im Berichtseditor",
+      "summary": "Zeigt die Karten-Vorschau erst nach vollständiger Eingabe der Einsatzdaten und verankert sie am bestätigten Hausnummernstandort.",
+      "changes": [
+        "Editor: Beim Öffnen eines Beitrags wird keine Karte und keine externe Kartenabfrage mehr gestartet.",
+        "Live-Vorschau: Nach Straße, Hausnummer, PLZ, Stadt, Datum und Uhrzeit erscheint eine kompakte Karte direkt unter den Einsatzdaten.",
+        "Sicherheit der Darstellung: Die Hausnummer muss durch die Adresssuche bestätigt sein; bei einer abweichenden Adresse wird keine falsche Karte gezeichnet.",
+        "Genauigkeit: Für Straßenabschnitt und Radius wird vor der Anzeige echte OSM-Geometrie aus der unmittelbaren Umgebung der Einsatzadresse verwendet.",
+        "Bedienung: Die aktive Darstellungsregel aus den Einstellungen wird als Hinweis gezeigt; Aktualisieren lädt die Vorschau gezielt neu."
+      ]
+    },
+    {
+      "version": "3.2.61",
+      "date": "2026-09-23",
+      "title": "Präzise Adresse für Abschnitt und Radius",
+      "summary": "Begrenzt Straßenabschnitte und den Radius zuverlässig um die eingegebene Hausnummer statt um die Straßenmitte.",
+      "changes": [
+        "Kritisch behoben: Die Modi Straßenabschnitt und Radius verwenden nun die zu Straße, Hausnummer, PLZ und Ort verifizierte Einsatzkoordinate.",
+        "Selbstheilung: Ältere Berichte mit einer gespeicherten Straßenmittelpunkt-Koordinate werden beim ersten Aufruf eines begrenzten Modus automatisch und sicher aktualisiert.",
+        "Karte: Fehlt am Einsatzort ein echter Straßenast im Cache, wird ausschließlich dieser Bereich der realen OSM-Geometrie ergänzt; die Ganzstraßen-Logik bleibt unverändert.",
+        "Konsistenz: Öffentliche Karte, Bearbeitungs-Vorschau und erzeugtes Kartenbild erhalten denselben Anker und dieselbe Begrenzung.",
+        "Radius: Kreis und Fläche sind in Leaflet, SVG-Fallback und PNG deutlich sichtbar und verwenden eine metergetreue horizontale sowie vertikale Ausdehnung.",
+        "Qualität: Der Integrationstest prüft zusätzlich, dass begrenzte Geometrien beim angegebenen Hausadresspunkt bleiben."
+      ]
+    },
+    {
+      "version": "3.2.60",
+      "date": "2026-09-23",
+      "title": "Vollständige Straßen über PLZ-Grenzen und sichtbare Bereiche",
+      "summary": "Behebt abgeschnittene lange Straßen sowie leere Abschnitts- und Radiusmarkierungen.",
+      "changes": [
+        "Kritisch behoben: Die Straßen-Geometrie war an die PLZ des Einsatzortes gebunden. Für ganze Straßen wird jetzt der gesamte Ort abgefragt und eine paginierte OSM-Ergebnisliste verwendet.",
+        "Karte: Elbchaussee und andere Straßen mit mehr als 50 OSM-Abschnitten werden über bis zu vier rate-limitierte Ergebnis-Seiten vollständig geladen und lokal gespeichert.",
+        "Behoben: Die Begrenzung auf Straßenabschnitt oder Radius verlor intern lat/lng-Punkte; die resultierende Liniengeometrie war dadurch leer.",
+        "Radius: Der Kreis wird nun auch dann als Leaflet-Ebene gezeigt, wenn kein Straßenabschnitt in den gewählten Radius fällt.",
+        "Qualität: Der WordPress-Integrationstest prüft sichtbare Abschnitts- und Radius-Geometrien."
+      ]
+    },
+    {
+      "version": "3.2.59",
+      "date": "2026-09-23",
+      "title": "Lückenlose reale Straßen-Geometrie",
+      "summary": "Lädt alle gleichnamigen OSM-Teilstücke einer Straße ohne künstliche Verbindungslinien.",
+      "changes": [
+        "Kritisch behoben: Nominatim fasste gleichnamige OSM-Wege standardmäßig zusammen; dadurch fehlten zwischen zurückgegebenen Segmenten reale Straßenabschnitte.",
+        "Karte: Die Abfrage deaktiviert diese Deduplizierung und fasst bis zu 50 echte LineString- und MultiLineString-Wege einer Straße zusammen.",
+        "Konsistenz: Frontend-Karte, Berichtseditor und erzeugtes Kartenbild verwenden jetzt dieselbe vollständige Nominatim-Geometrie.",
+        "Cache: Kurze oder unterbrochene Geometrien aus den vorherigen Releases werden bei der nächsten Karten- oder Bildanforderung automatisch ersetzt."
+      ]
+    },
+    {
+      "version": "3.2.58",
+      "date": "2026-09-23",
+      "title": "Ganze Straße aus realen OSM-Teilstücken",
+      "summary": "Fasst mehrere echte OSM-Linien derselben Straße zusammen, auch wenn ein Overpass-Dienst nicht erreichbar ist.",
+      "changes": [
+        "Kritisch behoben: Die Geokodierung verwendete bislang nur den ersten OSM-Weg eines Straßennamens; lange Straßen blieben deshalb als kurzer Abschnitt sichtbar.",
+        "Karte: Bis zu zehn passende LineString- und MultiLineString-Ergebnisse von Nominatim werden zu einer echten Straßen-Geometrie zusammengeführt.",
+        "Robustheit: Die zusammengeführte Geometrie wird im lokalen Straßen- und Berichtscache gespeichert und funktioniert unabhängig von einem temporär nicht verfügbaren Overpass-Dienst.",
+        "Cache: Bereits gespeicherte kurze Geometrien werden nach diesem Update erneut bewertet."
+      ]
+    },
+    {
+      "version": "3.2.57",
+      "date": "2026-09-23",
+      "title": "Zuverlässige vollständige Straßen-Geometrie",
+      "summary": "Beseitigt die Abhängigkeit von einem vorübergehend nicht verfügbaren Overpass-Dienst.",
+      "changes": [
+        "Kritisch behoben: Der primäre Overpass-Dienst antwortet derzeit mit HTTP 406; dadurch blieb ein kurzer Straßenabschnitt im Cache erhalten.",
+        "Karte: Zwei öffentliche Overpass-Fallbacks werden automatisch verwendet, wenn der primäre Dienst nicht antwortet.",
+        "Cache: Eine kurze, unveränderte Antwort wird nicht mehr als vollständige Straßen-Geometrie markiert und nach dem Update erneut geprüft.",
+        "Kompatibilität: Ein neuer Kontextschlüssel aktiviert die Korrektur auch für bereits veröffentlichte Einsatzberichte."
+      ]
+    },
+    {
+      "version": "3.2.56",
+      "date": "2026-09-23",
+      "title": "Präzise Straßenbereiche und Radius-Karte",
+      "summary": "Vollständige Straßen-Geometrie, belastbare Radiusdarstellung und konsistente Kartenbilder.",
+      "changes": [
+        "Kritisch behoben: Eine vom Geokodierer gelieferte Kurzlinie am Hausanschluss blockiert nicht mehr die vollständige Straßen-Geometrie.",
+        "Karte: Öffentliche Berichte ergänzen einmalig eine genaue OSM-Straßenabfrage, speichern das Ergebnis lokal und verwenden es danach ohne erneute Remote-Abfrage.",
+        "Radius: Der Kreis bleibt auch bei einer sehr kurzen oder noch fehlenden Liniengeometrie sichtbar; Straßenlinien werden an der echten Kreisgrenze abgeschnitten.",
+        "Straßenabschnitt: Die Längenangabe wird über die komplette Polyline vor und hinter dem Einsatzort berechnet, nicht nur über einen einzelnen Kartenknoten.",
+        "Kartenbild und Live-Karte verwenden dieselbe Markierungslogik."
+      ]
+    },
+    {
+      "version": "3.2.55",
+      "date": "2026-09-23",
+      "title": "Kritische Reparatur der Straßenlinie",
+      "summary": "Stellt die echte Straßenmarkierung in der öffentlichen Leaflet-Karte wieder her.",
+      "changes": [
+        "Kritisch behoben: Der Karten-Renderer akzeptiert gespeicherte Geometriepunkte wieder im Format {lat, lng}.",
+        "Karte: Straßenlinien aus dem Plugin-Cache werden nicht mehr fälschlich verworfen, während Karte und OSM-Kacheln bereits sichtbar sind.",
+        "Kompatibilität: Kompakte Punkte [lat, lng] sowie lat/lng-, lat/lon- und latitude/longitude-Daten werden unterstützt."
+      ]
+    },
+    {
+      "version": "3.2.54",
+      "date": "2026-09-23",
+      "title": "Klare Kartenfreigabe und Einsatz-URLs",
+      "summary": "Macht blockierte Karten verständlich und führt Einsatzberichte unter /einsaetze/.",
+      "changes": [
+        "Bedienung: Wenn ein Cookie-Plugin Karten blockiert, erklärt die Karte den Grund und öffnet direkt dessen Cookie-Einstellungen.",
+        "URL: Einsatzberichte verwenden künftig die eindeutige, suchmaschinenfreundliche Adresse /einsaetze/<beitragsname>/.",
+        "Kompatibilität: Alte direkte Einsatz-URLs leiten dauerhaft auf die neue Adresse weiter; normale WordPress-Beiträge bleiben unverändert."
+      ]
+    },
+    {
+      "version": "3.2.53",
+      "date": "2026-09-23",
+      "title": "Erzwungene Karten-Kontextreparatur",
+      "summary": "Leere Karten-Kontexte aus früheren Versionen werden nicht mehr ausgeliefert.",
+      "changes": [
+        "Kritisch behoben: Ein bereits zwischengespeicherter Einsatzbericht ohne Kartenkoordinaten kann die Straßenmarkierung nicht länger blockieren.",
+        "Cache: Öffentliche Karten erhalten einen neuen Kontextschlüssel und werden nach dem Update sofort aus den aktuellen Einsatzdaten aufgebaut.",
+        "Selbstheilung: Ein fehlgeschlagener alter Geometrieabruf sperrt die erneute Wiederherstellung nicht mehr."
+      ]
+    },
+    {
+      "version": "3.2.52",
+      "date": "2026-09-23",
+      "title": "Kritische Kartenwiederherstellung",
+      "summary": "Stellt Straßenlinien und Kartenbilder nach einem Cache-Formatwechsel wieder zuverlässig her.",
+      "changes": [
+        "Kritisch behoben: Bereits gespeicherte Straßen-Geometrien werden nach einem Plugin-Update nicht mehr verworfen.",
+        "Selbstheilung: Öffentliche Einsatzberichte laden fehlende Koordinaten und die reale Straßenlinie einmalig serverseitig nach und speichern sie lokal.",
+        "Kartenbild: Die manuelle Erzeugung lädt fehlende Straßen-Geometrie zuverlässig vor dem Rendern nach."
+      ]
+    },
+    {
+      "version": "3.2.51",
+      "date": "2026-09-22",
+      "title": "Kartenabschnitte, Stadtteile und Mannschaft-Integration",
+      "summary": "Erweitert die Einsatzort-Daten, Straßengeometrie und die sichere Synchronisation von Teilnehmerdaten.",
+      "changes": [
+        "Neu: Stadtteil als optionales Feld im Einsatzbericht; bestehende Berichte bleiben unverändert.",
+        "Neu: Straßenregister speichert mehrere Stadtteile pro Straße und behält sie beim Bearbeiten per AJAX.",
+        "Neu: Auswahl für ganze Straße, begrenzten Straßenabschnitt oder Radius um den Einsatzort.",
+        "Neu: Fußgänger- und Sonderwege können in der Straßenmarkierung ein- oder ausgeblendet werden.",
+        "Neu: Adressvorschau im Berichtseditor zeigt die reale Straßenmarkierung vor dem Speichern.",
+        "Verbessert: Karten-Konfiguration wird in Live-Karte, lokaler Vorschau und Kartenbild konsistent verwendet."
+      ]
+    },
+    {
+      "version": "3.2.50",
+      "date": "2026-09-20",
+      "title": "Wiederherstellung der bewährten Einstellungsspeicherung",
+      "summary": "Stellt den in Version 3.2.27 zuverlässig funktionierenden nativen Formularweg wieder her.",
+      "changes": [
+        "Kritisch behoben: Die Hauptschaltfläche verwendet wieder das bewährte native Submit-Feld aus Version 3.2.27.",
+        "Formular: Die Einstellungen werden wieder an die aktuell geöffnete WordPress-Adminseite gesendet.",
+        "Robustheit: Verborgene oder inaktive Einstellungsfelder können die Hauptspeicherung nicht durch Browser-Validierung blockieren.",
+        "Kompatibilität: Die neue explizite Speicheraktion bleibt als serverseitiger Rückfall erhalten."
+      ]
+    },
+    {
+      "version": "3.2.49",
+      "date": "2026-09-20",
+      "title": "Reparatur des leeren Karten-Kontextcaches",
+      "summary": "Verhindert, dass ein zuvor gespeicherter Seitenkontext ohne Straßengeometrie die neue automatische Reparatur umgeht.",
+      "changes": [
+        "Kritisch behoben: Ein leerer Karten-Kontext wird nicht länger vor der Geometrie-Reparatur aus dem Cache zurückgegeben.",
+        "Cache: Die Plugin-Version ist jetzt Bestandteil des Seitenkontext-Schlüssels, sodass Kartenverbesserungen nach einem Update sofort wirksam werden.",
+        "Selbstheilung: Bei Adresse und Koordinaten, aber fehlender Linie, wird der veraltete Kontext gelöscht und die echte Straße neu geladen.",
+        "Geprüft: Die betroffene Wandsbeker Marktstraße liefert mehrere reale OSM-LineString-Segmente."
+      ]
+    },
+    {
+      "version": "3.2.48",
+      "date": "2026-09-20",
+      "title": "Selbstheilende Straßenmarkierung",
+      "summary": "Stellt fehlende Straßenlinien beim ersten Aufruf eines Einsatzberichts kontrolliert wieder her, auch wenn WP-Cron auf dem Hosting nicht ausgeführt wurde.",
+      "changes": [
+        "Behoben: Öffentliche Einsatzberichte bleiben nicht länger dauerhaft ohne Linie, wenn die Hintergrundaufgabe des Hostings ausgefallen ist.",
+        "Neu: Fehlende Geometrie wird einmalig über den schnellen OSM-Anbieter geladen und anschließend lokal für weitere Aufrufe gespeichert.",
+        "Performance: Eine Sperre verhindert parallele oder wiederholte Remote-Abfragen für denselben Bericht.",
+        "Genauigkeit: Die Markierung verwendet echte LineString-Daten der Straße und keine künstliche Verbindungslinie."
+      ]
+    },
+    {
+      "version": "3.2.47",
+      "date": "2026-09-20",
+      "title": "Hotfix gegen Zeitüberschreitung der Kartenabfrage",
+      "summary": "Verhindert kritische WordPress-Fehler durch zu viele aufeinanderfolgende externe Geometrieabfragen.",
+      "changes": [
+        "Kritisch behoben: Die Kartenabfrage kann nicht länger durch zahlreiche serielle Overpass-Aufrufe das PHP-Zeitlimit überschreiten.",
+        "Performance: Die schnelle Nominatim-Geometrie wird zuerst geladen; Overpass dient nur noch als einzelner begrenzter Rückfall.",
+        "Stabilität: Fehler beim Einreihen alter Karten werden protokolliert und legen nicht mehr die gesamte Plugin-Administration lahm.",
+        "Kompatibilität: Die Update-Migration prüft vorhandene Kartendaten ohne zusätzliche Klassenabhängigkeit während des Bootstrap-Vorgangs."
+      ]
+    },
+    {
+      "version": "3.2.46",
+      "date": "2026-09-20",
+      "title": "Reale Straßenlinien in Vorschau und Beiträgen",
+      "summary": "Stellt die echte OSM-Straßengeometrie auch dann bereit, wenn der primäre Overpass-Dienst auf dem WordPress-Host nicht antwortet.",
+      "changes": [
+        "Karte: Nominatim dient als zweiter OSM-Geometrieanbieter, wenn Overpass nicht erreichbar, blockiert oder rate-limitiert ist.",
+        "Vorschau: Ein manueller Neuabruf wird nicht länger durch einen zuvor gespeicherten Fehlversuch blockiert.",
+        "Beiträge: Berichte ohne Geometrie werden beim Update erneut zur Hintergrundreparatur vorgemerkt.",
+        "Genauigkeit: Es wird ausschließlich reale LineString- oder MultiLineString-Geometrie verwendet; künstliche gerade Linien bleiben ausgeschlossen."
+      ]
+    },
+    {
+      "version": "3.2.45",
+      "date": "2026-09-20",
+      "title": "Kritische Reparatur der Einstellungsspeicherung",
+      "summary": "Entfernt einen DOM-Namenskonflikt der Speichern-Schaltfläche und macht den vollständigen Speichervorgang durch einen eindeutigen POST-Redirect nachvollziehbar.",
+      "changes": [
+        "Kritisch behoben: Die Speichern-Schaltfläche überschreibt nicht länger den nativen form.submit()-Mechanismus des Browsers.",
+        "Robustheit: Das Formular sendet jetzt an eine explizite WordPress-Admin-URL und benötigt weder JavaScript noch die Übertragung eines Submit-Button-Namens.",
+        "Bedienung: Nach erfolgreichem Speichern erfolgt eine eindeutige Weiterleitung zur zuletzt geöffneten Registerkarte mit sichtbarer Erfolgsbestätigung.",
+        "Kompatibilität: Der Speichervorgang bleibt auch mit zusätzlichem WordPress- oder Drittanbieter-Admin-JavaScript funktionsfähig."
+      ]
+    },
+    {
+      "version": "3.2.44",
+      "date": "2026-09-20",
+      "title": "Zuverlässige Einstellungen und echte Straßengeometrie",
+      "summary": "Behebt die Speicherung der Einstellungen, entfernt künstliche Kartenlinien und macht fehlende Kartenbilder direkt im Dashboard bearbeitbar.",
+      "changes": [
+        "Kritisch behoben: Die Hauptschaltfläche der Einstellungen sendet jetzt eine eindeutige Speicheraktion und funktioniert auch dann zuverlässig, wenn der Browser den Namen der angeklickten Schaltfläche nicht übermittelt.",
+        "Karte: Demo-Berichte enthalten keine künstlichen Drei-Punkt-Linien mehr; nach Import und beim Update werden echte Straßengeometrien im Hintergrund geladen und Kartenbilder neu aufgebaut.",
+        "Vorschau: Die Kartenbild-Vorschau zeigt keine erfundene gerade Linie mehr und bietet eine gezielte Schaltfläche zum Laden der echten Straßen-Geometrie.",
+        "Dashboard: Kartenbild-Status listet nun auch Einsatzberichte ohne Bild auf und ermöglicht die direkte Generierung ohne Öffnen des Beitragseditors.",
+        "Sicherheit: Daten dauerhaft löschen befindet sich in einer eigenen, klar gekennzeichneten Registerkarte außerhalb der allgemeinen Einstellungen.",
+        "Demo-Migration: Bereits importierte Hamburger Demodaten mit synthetischer Geometrie werden erkannt, bereinigt und automatisch zur Neuerstellung vorgemerkt."
+      ]
+    },
+    {
       "version": "3.2.43",
       "date": "2026-09-19",
       "title": "Hamburg-Demo und robuste Straßenmarkierung",

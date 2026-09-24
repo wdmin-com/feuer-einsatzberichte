@@ -173,6 +173,13 @@ $generated_map_rebuild_to = isset($generated_map_rebuild_to) ? (string) $generat
                             />
                             <small><?php esc_html_e('Steuert die sichtbare Hoehe der Karte im Einzelbeitrag.', 'feuer-einsatzberichte'); ?></small>
                         </label>
+                        <label class="feu-admin-settings-check-card feu-admin-settings-field--full">
+                            <input type="checkbox" id="feu_einsatz_street_highlight_include_pedestrian" name="feu_einsatz_street_highlight_include_pedestrian" value="1" <?php checked(!empty($street_highlight_include_pedestrian)); ?> />
+                            <span class="feu-admin-settings-check-copy">
+                                <strong><?php esc_html_e('Fussgaenger- und Sonderwege einbeziehen', 'feuer-einsatzberichte'); ?></strong>
+                                <small><?php esc_html_e('Zeigt auch zugeordnete Fussgaengerzonen, Wege und Abschnitte ohne Fahrbahn. Deaktivieren Sie dies nur, wenn ausschliesslich befahrbare Strassen erscheinen sollen.', 'feuer-einsatzberichte'); ?></small>
+                            </span>
+                        </label>
                     </div>
                 </div>
 
@@ -401,6 +408,31 @@ $generated_map_rebuild_to = isset($generated_map_rebuild_to) ? (string) $generat
                             <strong><span data-feu-map-preview-stroke-value><?php echo esc_html((string) (isset($map_preview_stroke_width) ? (int) $map_preview_stroke_width : 8)); ?></span> px</strong>
                         </label>
                     </div>
+
+                    <div class="feu-admin-settings-fieldset-head" style="margin-top: 24px;">
+                        <h4><?php esc_html_e('Auswahl der Strassenmarkierung', 'feuer-einsatzberichte'); ?></h4>
+                        <p class="description"><?php esc_html_e('Die Auswahl gilt identisch fuer Live-Karte, lokale Vorschau und automatisch erzeugtes Kartenbild.', 'feuer-einsatzberichte'); ?></p>
+                    </div>
+                    <div class="feu-admin-settings-form-grid feu-admin-settings-form-grid--2">
+                        <label class="feu-admin-settings-field">
+                            <span><?php esc_html_e('Markierungsmodus', 'feuer-einsatzberichte'); ?></span>
+                            <select id="feu_einsatz_street_highlight_mode" name="feu_einsatz_street_highlight_mode">
+                                <option value="full" <?php selected(($street_highlight_mode ?? 'full'), 'full'); ?>><?php esc_html_e('Ganze Strasse anzeigen', 'feuer-einsatzberichte'); ?></option>
+                                <option value="length" <?php selected(($street_highlight_mode ?? 'full'), 'length'); ?>><?php esc_html_e('Strassenabschnitt um Einsatzort', 'feuer-einsatzberichte'); ?></option>
+                                <option value="radius" <?php selected(($street_highlight_mode ?? 'full'), 'radius'); ?>><?php esc_html_e('Radius um Einsatzort', 'feuer-einsatzberichte'); ?></option>
+                            </select>
+                        </label>
+                        <label class="feu-admin-settings-field" data-feu-street-highlight-length>
+                            <span><?php esc_html_e('Abschnittslaenge (Meter)', 'feuer-einsatzberichte'); ?></span>
+                            <input type="number" id="feu_einsatz_street_highlight_length_meters" name="feu_einsatz_street_highlight_length_meters" min="20" max="5000" step="10" value="<?php echo esc_attr((string) ($street_highlight_length_meters ?? 100)); ?>" />
+                            <small><?php esc_html_e('Der Einsatzort liegt moeglichst mittig im Abschnitt. Ist die ermittelte Strasse kuerzer, bleibt sie vollstaendig sichtbar.', 'feuer-einsatzberichte'); ?></small>
+                        </label>
+                        <label class="feu-admin-settings-field" data-feu-street-highlight-radius>
+                            <span><?php esc_html_e('Radius (Meter)', 'feuer-einsatzberichte'); ?></span>
+                            <input type="number" id="feu_einsatz_street_highlight_radius_meters" name="feu_einsatz_street_highlight_radius_meters" min="20" max="5000" step="10" value="<?php echo esc_attr((string) ($street_highlight_radius_meters ?? 100)); ?>" />
+                            <small><?php esc_html_e('Der Kreis markiert den Einsatzbereich. Es wird keine kuenstliche, gerade Strasse erzeugt.', 'feuer-einsatzberichte'); ?></small>
+                        </label>
+                    </div>
                 </div>
             </div>
 
@@ -408,6 +440,14 @@ $generated_map_rebuild_to = isset($generated_map_rebuild_to) ? (string) $generat
                 <div class="feu-admin-settings-fieldset-head">
                     <h4><?php esc_html_e('Live-Vorschau Kartenbild', 'feuer-einsatzberichte'); ?></h4>
                     <p class="description"><?php esc_html_e('Die Vorschau verwendet standardmaessig die Feuerwehrhaus-Adresse als Beispiel und zeigt live, wie Strassenmarkierung, Panel-Text und Attribution im Kartenbild aussehen.', 'feuer-einsatzberichte'); ?></p>
+                    <?php if (empty($live_preview_geometry)) : ?>
+                        <div class="notice notice-info inline">
+                            <p><?php esc_html_e('Noch keine echte Straßen-Geometrie im lokalen Cache. Es wird bewusst keine künstliche Linie angezeigt.', 'feuer-einsatzberichte'); ?></p>
+                            <button type="submit" name="feu_einsatz_refresh_station_geometry" value="1" class="button button-secondary" formnovalidate>
+                                <?php esc_html_e('Straßen-Geometrie jetzt laden', 'feuer-einsatzberichte'); ?>
+                            </button>
+                        </div>
+                    <?php endif; ?>
                 </div>
 
                 <div
@@ -440,6 +480,8 @@ $generated_map_rebuild_to = isset($generated_map_rebuild_to) ? (string) $generat
                             data-feu-map-preview-station-label="<?php echo esc_attr($live_preview_station_label); ?>"
                             data-feu-map-preview-station-logo="<?php echo esc_url($live_preview_station_logo); ?>"
                             data-feu-map-preview-station-logo-size="<?php echo esc_attr((string) $live_preview_station_logo_size); ?>"
+                            data-feu-map-preview-highlight-mode="<?php echo esc_attr((string) ($street_highlight_mode ?? 'full')); ?>"
+                            data-feu-map-preview-highlight-radius="<?php echo esc_attr((string) ($street_highlight_radius_meters ?? 100)); ?>"
                         >
                             <div class="feu-einsatz-map-live-preview-map" data-feu-map-preview-map></div>
                             <div class="feu-einsatz-map-live-preview-fallback" data-feu-map-preview-fallback>

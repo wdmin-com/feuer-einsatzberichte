@@ -32,12 +32,25 @@
     }
 
     function normalizePoint(point) {
-        if (!Array.isArray(point) || point.length < 2) {
-            return null;
-        }
+        var lat = null;
+        var lng = null;
 
-        var lat = normalizeNumber(point[0]);
-        var lng = normalizeNumber(point[1]);
+        if (Array.isArray(point) && point.length >= 2) {
+            lat = normalizeNumber(point[0]);
+            lng = normalizeNumber(point[1]);
+        } else if (point && typeof point === 'object') {
+            // The PHP map cache intentionally stores named values. Accept
+            // those alongside compact coordinate pairs so a valid cached
+            // street is not discarded by the public Leaflet renderer.
+            lat = normalizeNumber(
+                point.lat !== undefined ? point.lat : point.latitude
+            );
+            lng = normalizeNumber(
+                point.lng !== undefined
+                    ? point.lng
+                    : (point.lon !== undefined ? point.lon : point.longitude)
+            );
+        }
 
         if (lat === null || lng === null) {
             return null;
@@ -236,10 +249,25 @@
         return street || strings.streetFallback;
     }
 
+    function normalizeAreaGeometry(value) {
+        var source = Array.isArray(value) ? value : [];
+
+        return source.map(function (point) {
+            var lat = normalizeNumber(point && (point.lat !== undefined ? point.lat : point[0]));
+            var lng = normalizeNumber(point && (point.lng !== undefined ? point.lng : point[1]));
+
+            return lat !== null && lng !== null ? [lat, lng] : null;
+        }).filter(Boolean);
+    }
+
     function createStreetLayers(map, geometry, config) {
         var strings = getStrings();
         var streetLabel = getStreetLabel(config, strings);
         var bounds = window.L.latLngBounds([]);
+        var highlightLatitude = normalizeNumber(config && config.latitude);
+        var highlightLongitude = normalizeNumber(config && config.longitude);
+        var highlightColor = (config && config.highlight_color) || '#d92d20';
+        var areaGeometry = normalizeAreaGeometry(config && config.area_geometry);
         var orderedGeometry = geometry.slice().sort(function (left, right) {
             if (left.kind === right.kind) {
                 return 0;
@@ -247,6 +275,24 @@
 
             return left.kind === 'road' ? -1 : 1;
         });
+
+        // Draw the radius first. A malformed historic street segment must not
+        // prevent the clearly defined radius around the incident coordinate
+        // from appearing. This is also the useful fallback for coordinate-only
+        // reports where no street line exists at all.
+        if (config && config.highlight_mode === 'radius' && highlightLatitude !== null && highlightLongitude !== null) {
+            var radius = Math.max(20, Math.min(5000, parseInt(config.highlight_radius_meters, 10) || 100));
+            var circle = window.L.circle([highlightLatitude, highlightLongitude], {
+                radius: radius,
+                color: highlightColor,
+                weight: 3,
+                opacity: 0.92,
+                fillColor: highlightColor,
+                fillOpacity: 0.18,
+                interactive: false
+            }).addTo(map);
+            bounds.extend(circle.getBounds());
+        }
 
         orderedGeometry.forEach(function (segment) {
             bounds.extend(window.L.latLngBounds(segment.points));
@@ -261,6 +307,19 @@
         var pedestrianSegments = orderedGeometry.filter(function (s) { return s.kind === 'pedestrian'; });
         var roadPoints = roadSegments.map(function (s) { return s.points; });
         var pedestrianPoints = pedestrianSegments.map(function (s) { return s.points; });
+
+        if (areaGeometry.length >= 3) {
+            window.L.polygon(areaGeometry, {
+                color: highlightColor,
+                weight: 3,
+                opacity: 0.94,
+                fillColor: highlightColor,
+                fillOpacity: 0.16,
+                lineJoin: 'round',
+                interactive: false
+            }).addTo(map);
+            bounds.extend(window.L.latLngBounds(areaGeometry));
+        }
 
         // Glow — один мультиполилайн на каждый тип, без стыков
         if (roadPoints.length) {
@@ -290,8 +349,6 @@
         // Highlight — посегментно для тултипов
         var labelStyle = (config && config.label_style) || 'bubble';
         var labelTextColor = (config && config.label_text_color) || '#ffffff';
-        var highlightColor = (config && config.highlight_color) || '#d92d20';
-
         orderedGeometry.forEach(function (segment) {
             var labelText = segment.kind === 'pedestrian'
                 ? strings.pedestrianPartLabel + ': ' + streetLabel
@@ -424,13 +481,23 @@
     }
 
     function showReady(runtime) {
+        var fallback = runtime.querySelector('.feu-einsatz-map-runtime-fallback');
+
         runtime.classList.add('is-ready');
         runtime.classList.remove('has-error');
+
+        // Do not rely solely on a stylesheet to remove the fallback. Cached
+        // stylesheets or a theme rule must never leave the unavailable-message
+        // over an already initialized Leaflet map.
+        if (fallback) {
+            fallback.hidden = true;
+        }
     }
 
     function showFallback(runtime, coordinates) {
         var strings = getStrings();
         runtime.classList.add('has-error');
+        runtime.classList.remove('is-ready');
 
         var fallback = runtime.querySelector('.feu-einsatz-map-runtime-fallback');
         var placeholderCoordinates = fallback ? fallback.querySelector('.feu-einsatz-map-placeholder-coordinates') : null;
@@ -509,6 +576,15 @@
             return;
         }
 
+        // Some themes restore a page from the browser cache and invoke the
+        // initializer again. Leaflet throws when the same container is reused;
+        // the original map is still valid, so retain it instead of replacing it
+        // with the generic unavailable fallback.
+        if (canvas._leaflet_id) {
+            showReady(runtime);
+            return;
+        }
+
         var config = {};
 
         try {
@@ -519,6 +595,7 @@
         }
 
         var geometry = normalizeGeometry(config.geometry);
+        var areaGeometry = normalizeAreaGeometry(config.area_geometry);
         var center = normalizeCenter(config.center);
         var latitude = normalizeNumber(config.latitude);
         var longitude = normalizeNumber(config.longitude);
@@ -528,7 +605,11 @@
             center = [latitude, longitude];
         }
 
-        if (!geometry.length && !center) {
+        if (!center && areaGeometry.length) {
+            center = areaGeometry[0];
+        }
+
+        if (!geometry.length && !areaGeometry.length && !center) {
             showFallback(runtime, null);
             return;
         }
@@ -574,7 +655,18 @@
 
         var bounds = window.L.latLngBounds([]);
 
-        if (geometry.length) {
+        // A radius remains meaningful even while no road segment intersects
+        // it. Render it as a real Leaflet layer rather than falling back to a
+        // blank map merely because the clipped line collection is empty.
+        if (
+            geometry.length
+            || areaGeometry.length >= 3
+            || (
+                config.highlight_mode === 'radius'
+                && latitude !== null
+                && longitude !== null
+            )
+        ) {
             bounds = createStreetLayers(map, geometry, config);
         }
 
@@ -601,6 +693,7 @@
     function initMapConsent(runtime) {
         var allowButton = runtime.querySelector('[data-feu-map-action="allow"]');
         var declineButton = runtime.querySelector('[data-feu-map-action="decline"]');
+        var cookieSettingsButton = runtime.querySelector('[data-feu-map-open-cookie-settings]');
 
         if (allowButton) {
             allowButton.addEventListener('click', function () {
@@ -613,6 +706,16 @@
             declineButton.addEventListener('click', function () {
                 runtime.setAttribute('data-map-enabled', '0');
                 showDeclinedState(runtime);
+            });
+        }
+
+        if (cookieSettingsButton) {
+            cookieSettingsButton.addEventListener('click', function () {
+                var cookieSettingsTrigger = document.querySelector('[data-feuer-cookie-open]');
+
+                if (cookieSettingsTrigger) {
+                    cookieSettingsTrigger.click();
+                }
             });
         }
     }
@@ -635,9 +738,9 @@
                 return;
             }
 
-            if (privacyMode !== 'always') {
-                initMapConsent(runtime);
+            initMapConsent(runtime);
 
+            if (privacyMode !== 'always') {
                 if (!enabled) {
                     return;
                 }
@@ -651,6 +754,17 @@
                 try {
                     renderMap(runtime);
                 } catch (error) {
+                    var canvas = runtime.querySelector('.feu-einsatz-live-map');
+
+                    // If Leaflet has already created the map, the radius was
+                    // added before optional street labels. Keep that usable map
+                    // visible instead of covering it with an incorrect
+                    // "insufficient map data" message.
+                    if (canvas && canvas._leaflet_id) {
+                        showReady(runtime);
+                        return;
+                    }
+
                     showFallback(runtime, null);
                 }
             });

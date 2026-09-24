@@ -1185,9 +1185,18 @@
         updateSocialShareLivePreview();
         updateShareSettingsStatus();
 
+        function updateStreetHighlightFields() {
+            var mode = $('#feu_einsatz_street_highlight_mode').val() || 'full';
+            $('[data-feu-street-highlight-length]').toggle(mode === 'length');
+            $('[data-feu-street-highlight-radius]').toggle(mode === 'radius');
+        }
+
+        $(document).on('change', '#feu_einsatz_street_highlight_mode', updateStreetHighlightFields);
+        updateStreetHighlightFields();
+
         $(document).on(
             'input change',
-            '#feu_einsatz_map_preview_heading_text, #feu_einsatz_map_preview_show_panel, #feu_einsatz_map_preview_show_panel_heading, #feu_einsatz_map_preview_show_panel_address, #feu_einsatz_map_preview_panel_position, #feu_einsatz_map_preview_street_label_prefix, #feu_einsatz_map_preview_street_label_position, #feu_einsatz_map_preview_show_attribution, #feu_einsatz_map_preview_attribution_text, #feu_einsatz_map_preview_attribution_position, #feu_einsatz_map_preview_highlight_color, #feu_einsatz_map_preview_stroke_width, #feu_einsatz_map_preview_font_family, #feu_einsatz_map_preview_show_street_label, #feu_einsatz_area_station_street, #feu_einsatz_area_station_postcode, #feu_einsatz_area_station_city, #feu_einsatz_area_station_logo_size, #feu_einsatz_photo_watermark_text, #feu_einsatz_map_zoom, #feu_einsatz_map_height',
+            '#feu_einsatz_map_preview_heading_text, #feu_einsatz_map_preview_show_panel, #feu_einsatz_map_preview_show_panel_heading, #feu_einsatz_map_preview_show_panel_address, #feu_einsatz_map_preview_panel_position, #feu_einsatz_map_preview_street_label_prefix, #feu_einsatz_map_preview_street_label_position, #feu_einsatz_map_preview_show_attribution, #feu_einsatz_map_preview_attribution_text, #feu_einsatz_map_preview_attribution_position, #feu_einsatz_map_preview_highlight_color, #feu_einsatz_map_preview_stroke_width, #feu_einsatz_map_preview_font_family, #feu_einsatz_map_preview_show_street_label, #feu_einsatz_area_station_street, #feu_einsatz_area_station_postcode, #feu_einsatz_area_station_city, #feu_einsatz_area_station_logo_size, #feu_einsatz_photo_watermark_text, #feu_einsatz_map_zoom, #feu_einsatz_map_height, #feu_einsatz_street_highlight_mode, #feu_einsatz_street_highlight_length_meters, #feu_einsatz_street_highlight_radius_meters',
             updateMapPreviewLivePreview
         );
 
@@ -1263,26 +1272,6 @@
                 .trim()
                 .replace(/\s+/g, ' ')
                 .toLowerCase();
-        }
-
-        function buildMapPreviewFallbackGeometry(centerLat, centerLng) {
-            centerLat = parseFloat(centerLat);
-            centerLng = parseFloat(centerLng);
-
-            if (!Number.isFinite(centerLat) || !Number.isFinite(centerLng)) {
-                centerLat = 53.5853;
-                centerLng = 9.8827;
-            }
-
-            return [{
-                kind: 'road',
-                points: [
-                    [centerLat - 0.00042, centerLng - 0.00115],
-                    [centerLat - 0.00014, centerLng - 0.00038],
-                    [centerLat + 0.00018, centerLng + 0.00042],
-                    [centerLat + 0.00044, centerLng + 0.00116]
-                ]
-            }];
         }
 
         function readMapPreviewGeometry($stage, stationStreet, stationPostcode, stationCity) {
@@ -1692,6 +1681,18 @@
             clearMapPreviewLeafletLayers();
             renderMapPreviewLeafletOverlay($overlay, options);
 
+            if (options.highlightMode === 'radius' && Array.isArray(options.marker) && options.marker.length >= 2) {
+                addMapPreviewLeafletLayer(window.L.circle(options.marker, {
+                    radius: Math.max(20, Math.min(5000, parseInt(options.highlightRadius, 10) || 100)),
+                    color: options.color,
+                    weight: 3,
+                    opacity: 0.92,
+                    fillColor: options.color,
+                    fillOpacity: 0.18,
+                    interactive: false
+                }));
+            }
+
             geometry.slice(1).forEach(function (segment) {
                 var latLngs = getMapPreviewLatLngs(segment);
                 var isPedestrian = String(segment && segment.kind || '') === 'pedestrian';
@@ -1803,6 +1804,8 @@
             var color = $('#feu_einsatz_map_preview_highlight_color').val() || '#d92d20';
             var strokeWidth = parseInt($('#feu_einsatz_map_preview_stroke_width').val() || '8', 10);
             var showLabel = $('#feu_einsatz_map_preview_show_street_label').is(':checked');
+            var highlightMode = $('#feu_einsatz_street_highlight_mode').val() || $stage.attr('data-feu-map-preview-highlight-mode') || 'full';
+            var highlightRadius = parseInt($('#feu_einsatz_street_highlight_radius_meters').val() || $stage.attr('data-feu-map-preview-highlight-radius') || '100', 10);
             var stationStreet = $.trim($('#feu_einsatz_area_station_street').val() || '');
             var stationPostcode = $.trim($('#feu_einsatz_area_station_postcode').val() || '');
             var stationCity = $.trim($('#feu_einsatz_area_station_city').val() || '') || 'Hamburg';
@@ -1875,10 +1878,6 @@
 
             geometry = readMapPreviewGeometry($stage, stationStreet, stationPostcode, stationCity);
 
-            if (!geometry.length) {
-                geometry = buildMapPreviewFallbackGeometry(centerLat, centerLng);
-            }
-
             previewOptions = {
                 height: mapHeight,
                 color: color,
@@ -1897,6 +1896,8 @@
                 attributionText: attributionText,
                 attributionPosition: attributionPosition,
                 geometry: geometry,
+                highlightMode: highlightMode,
+                highlightRadius: highlightRadius,
                 marker: [centerLat, centerLng],
                 station: {
                     label: stationLabel,
@@ -2010,6 +2011,449 @@
                 }
             });
         }
+
+        function initAddressMapPreview() {
+            var $preview = $('[data-feu-address-map-preview]');
+            var $canvas = $('[data-feu-address-map-preview-canvas]');
+            var $status = $('[data-feu-address-map-preview-status]');
+            var $previewMode = $('[data-feu-address-map-preview-mode]');
+            var $locationPanels = $('[data-feu-location-panel]');
+            var $lengthField = $('[data-feu-highlight-length-field]');
+            var $radiusField = $('[data-feu-highlight-radius-field]');
+            var $diagnostics = $('[data-feu-map-diagnostics]');
+            var $areaInput = $('#feu_einsatz_map_area_geojson');
+            var $areaStatus = $('[data-feu-map-area-status]');
+            var $areaClear = $('[data-feu-map-area-clear]');
+            var timer = null;
+            var request = null;
+            var map = null;
+            var layers = [];
+            var lastRenderedAddressKey = '';
+            var areaDrawing = false;
+
+            if (!$preview.length || !$canvas.length || !window.feu_einsatz_ajax) {
+                return;
+            }
+
+            var labelForMode = function (mode, length, radius) {
+                if (mode === 'radius') {
+                    return Math.round(Number(radius) || 100) + ' m Radius';
+                }
+                if (mode === 'length') {
+                    return Math.round(Number(length) || 100) + ' m Straßenabschnitt';
+                }
+                return mode === 'default' ? ($previewMode.data('default-map-label') || 'Standard aus Einstellungen') : 'Ganze Straße';
+            };
+
+            var syncMapProfileControls = function () {
+                var locationMode = $('input[name="feu_einsatz_map_location_mode"]:checked').val() === 'coordinates' ? 'coordinates' : 'address';
+                var highlightMode = String($('#feu_einsatz_map_highlight_override').val() || 'default');
+                var hasStreet = $.trim($('#feu_einsatz_strasse').val() || '') !== '';
+
+                $locationPanels.each(function () {
+                    var $panel = $(this);
+                    $panel.prop('hidden', String($panel.attr('data-feu-location-panel')) !== locationMode);
+                });
+                $lengthField.prop('hidden', highlightMode !== 'length');
+                $radiusField.prop('hidden', highlightMode !== 'radius');
+                $('#feu_einsatz_strasse, #feu_einsatz_plz, #feu_einsatz_stadt').prop('required', locationMode === 'address');
+                $('#feu_einsatz_map_highlight_override option[value="full"], #feu_einsatz_map_highlight_override option[value="length"]')
+                    .prop('disabled', locationMode === 'coordinates' && !hasStreet);
+                if (
+                    locationMode === 'coordinates'
+                    && !hasStreet
+                    && (
+                        highlightMode === 'full'
+                        || highlightMode === 'length'
+                        || (highlightMode === 'default' && ['full', 'length'].indexOf(String($previewMode.data('default-map-mode') || '')) !== -1)
+                    )
+                ) {
+                    $('#feu_einsatz_map_highlight_override').val('radius');
+                    highlightMode = 'radius';
+                }
+                $previewMode.text(labelForMode(
+                    highlightMode,
+                    $('#feu_einsatz_map_highlight_length_meters').val(),
+                    $('#feu_einsatz_map_highlight_radius_meters').val()
+                ));
+            };
+
+            var readRequiredDetails = function () {
+                var street = $.trim($('#feu_einsatz_strasse').val() || '');
+                var houseNumber = $.trim($('#feu_einsatz_hausnummer').val() || '');
+                var postcode = String($('#feu_einsatz_plz').val() || '').replace(/\D/g, '');
+                var city = $.trim($('#feu_einsatz_stadt').val() || '');
+                var locationMode = $('input[name="feu_einsatz_map_location_mode"]:checked').val() === 'coordinates' ? 'coordinates' : 'address';
+                var latitude = $.trim($('#feu_einsatz_latitude').val() || '');
+                var longitude = $.trim($('#feu_einsatz_longitude').val() || '');
+                var highlightMode = String($('#feu_einsatz_map_highlight_override').val() || 'default');
+                var highlightLength = $.trim($('#feu_einsatz_map_highlight_length_meters').val() || '100');
+                var highlightRadius = $.trim($('#feu_einsatz_map_highlight_radius_meters').val() || '100');
+                var date = $.trim($('#feu_einsatz_datum').val() || '');
+                var time = $.trim($('#feu_einsatz_uhrzeit').val() || '');
+                var validDate = /^(?:\d{2}\.\d{2}\.\d{4}|\d{4}-\d{2}-\d{2})$/.test(date);
+                var validTime = /^\d{2}:\d{2}$/.test(time);
+                var normalizedLatitude = latitude.replace(',', '.');
+                var normalizedLongitude = longitude.replace(',', '.');
+                var numericLatitude = parseFloat(normalizedLatitude);
+                var numericLongitude = parseFloat(normalizedLongitude);
+                var validCoordinates = Number.isFinite(numericLatitude) && Number.isFinite(numericLongitude)
+                    && numericLatitude >= -90 && numericLatitude <= 90 && numericLongitude >= -180 && numericLongitude <= 180;
+                var addressReady = !!street && postcode.length === 5 && !!city;
+                var locationReady = locationMode === 'coordinates' ? validCoordinates : addressReady;
+                var extraStreets = String($('#feu_einsatz_map_extra_streets').val() || '');
+                var areaGeojson = String($areaInput.val() || '');
+
+                return {
+                    street: street,
+                    houseNumber: houseNumber,
+                    postcode: postcode,
+                    city: city,
+                    locationMode: locationMode,
+                    latitude: normalizedLatitude,
+                    longitude: normalizedLongitude,
+                    highlightMode: highlightMode,
+                    highlightLength: highlightLength,
+                    highlightRadius: highlightRadius,
+                    ready: locationReady && validDate && validTime,
+                    extraStreets: extraStreets,
+                    areaGeojson: areaGeojson,
+                    addressKey: [locationMode, street, houseNumber, postcode, city, normalizedLatitude, normalizedLongitude, highlightMode, highlightLength, highlightRadius, extraStreets, areaGeojson].join('|').toLowerCase()
+                };
+            };
+
+            var getAreaPoints = function () {
+                var source;
+                var ring;
+
+                try {
+                    source = JSON.parse(String($areaInput.val() || ''));
+                    ring = source && source.type === 'Polygon' && Array.isArray(source.coordinates) ? source.coordinates[0] : [];
+                } catch (error) {
+                    ring = [];
+                }
+
+                return (Array.isArray(ring) ? ring : []).map(function (point) {
+                    var lng = parseFloat(point && point[0]);
+                    var lat = parseFloat(point && point[1]);
+                    return Number.isFinite(lat) && Number.isFinite(lng) ? [lat, lng] : null;
+                }).filter(Boolean);
+            };
+
+            var storeAreaPoints = function (points) {
+                var normalized = (Array.isArray(points) ? points : []).map(function (point) {
+                    return [Number(point[1].toFixed(6)), Number(point[0].toFixed(6))];
+                });
+
+                if (normalized.length < 3) {
+                    $areaInput.val('');
+                    $areaClear.prop('hidden', true);
+                    $areaStatus.text('Optional: mindestens drei Punkte in der Live-Karte setzen und anschließend abschließen.');
+                    return;
+                }
+
+                normalized.push(normalized[0]);
+                $areaInput.val(JSON.stringify({ type: 'Polygon', coordinates: [normalized] }));
+                $areaClear.prop('hidden', false);
+                $areaStatus.text(normalized.length - 1 + ' Punkte gespeichert. Der Bereich wird nach dem Speichern auch im Kartenbild verwendet.');
+            };
+
+            var destroyInteractiveMap = function () {
+                if (map) {
+                    map.remove();
+                    map = null;
+                }
+
+                layers = [];
+            };
+
+            var hidePreview = function () {
+                window.clearTimeout(timer);
+
+                if (request && request.readyState !== 4) {
+                    request.abort();
+                }
+
+                request = null;
+                destroyInteractiveMap();
+                $canvas.empty();
+                lastRenderedAddressKey = '';
+                $preview.prop('hidden', true).removeClass('is-loading');
+            };
+
+            var showPreview = function () {
+                $preview.prop('hidden', false);
+            };
+
+            var renderInteractiveMap = function (data) {
+                var latitude = parseFloat(data.latitude);
+                var longitude = parseFloat(data.longitude);
+                var geometry = Array.isArray(data.geometry) ? data.geometry : [];
+
+                if (!window.L || !Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+                    return false;
+                }
+
+                destroyInteractiveMap();
+                $canvas.empty().append('<div class="feu-einsatz-address-map-preview-leaflet"></div>');
+                var element = $canvas.find('.feu-einsatz-address-map-preview-leaflet')[0];
+                map = window.L.map(element, { scrollWheelZoom: true, zoomControl: true });
+                window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxNativeZoom: 19,
+                    maxZoom: 20,
+                    attribution: '&copy; OpenStreetMap contributors'
+                }).addTo(map);
+                var bounds = window.L.latLngBounds([]);
+                var color = '#d92d20';
+
+                geometry.forEach(function (segment) {
+                    var points = Array.isArray(segment && segment.points) ? segment.points : [];
+                    if (points.length < 2) {
+                        return;
+                    }
+                    var isPedestrian = String(segment.kind || '') === 'pedestrian';
+                    var line = window.L.polyline(points, {
+                        color: isPedestrian ? '#d97706' : color,
+                        weight: isPedestrian ? 5 : 8,
+                        opacity: 0.96,
+                        lineCap: 'round',
+                        lineJoin: 'round',
+                        dashArray: isPedestrian ? '14 9' : null
+                    }).addTo(map);
+                    layers.push(line);
+                    bounds.extend(line.getBounds());
+                });
+
+                var areaGeometry = Array.isArray(data.area_geometry) ? data.area_geometry : getAreaPoints();
+                var areaPoints = areaGeometry.map(function (point) {
+                    var lat = parseFloat(point && (point.lat !== undefined ? point.lat : point[0]));
+                    var lng = parseFloat(point && (point.lng !== undefined ? point.lng : point[1]));
+                    return Number.isFinite(lat) && Number.isFinite(lng) ? [lat, lng] : null;
+                }).filter(Boolean);
+                if (areaPoints.length >= 3) {
+                    var area = window.L.polygon(areaPoints, {
+                        color: color, weight: 3, opacity: 0.94, fillColor: color, fillOpacity: 0.16, interactive: false
+                    }).addTo(map);
+                    layers.push(area);
+                    bounds.extend(area.getBounds());
+                }
+
+                if (data.mode === 'radius' && Number(data.highlight_radius_meters) > 0) {
+                    var circle = window.L.circle([latitude, longitude], {
+                        radius: Number(data.highlight_radius_meters), color: color, weight: 3,
+                        opacity: 0.92, fillColor: color, fillOpacity: 0.18
+                    }).addTo(map);
+                    layers.push(circle);
+                    bounds.extend(circle.getBounds());
+                }
+
+                var marker;
+                if (data.location_mode === 'coordinates') {
+                    marker = window.L.marker([latitude, longitude], {
+                        draggable: true,
+                        keyboard: true,
+                        title: 'Einsatzkoordinaten verschieben',
+                        icon: window.L.divIcon({
+                            className: 'feu-einsatz-map-coordinate-drag-marker',
+                            html: '<span aria-hidden="true"></span>',
+                            iconSize: [28, 28],
+                            iconAnchor: [14, 14]
+                        })
+                    }).addTo(map);
+                    marker.on('dragend', function (event) {
+                        var markerPosition = event.target.getLatLng();
+                        $('#feu_einsatz_latitude').val(markerPosition.lat.toFixed(6));
+                        $('#feu_einsatz_longitude').val(markerPosition.lng.toFixed(6));
+                        $status.text('Koordinaten mit dem Marker verschoben. Karte wird aktualisiert …');
+                        $('#feu_einsatz_latitude').trigger('change');
+                    });
+                } else {
+                    marker = window.L.circleMarker([latitude, longitude], {
+                        radius: 8, color: '#ffffff', weight: 3, fillColor: color, fillOpacity: 1
+                    }).addTo(map);
+                }
+                layers.push(marker);
+                bounds.extend(marker.getLatLng());
+                map.fitBounds(bounds.isValid() ? bounds.pad(0.18) : window.L.latLngBounds([[latitude, longitude], [latitude, longitude]]), { maxZoom: 17 });
+                map.on('click', function (event) {
+                    if (areaDrawing) {
+                        var points = getAreaPoints();
+                        points.push([event.latlng.lat, event.latlng.lng]);
+                        storeAreaPoints(points);
+                        renderInteractiveMap($.extend({}, data, { area_geometry: getAreaPoints().map(function (point) { return { lat: point[0], lng: point[1] }; }) }));
+                        return;
+                    }
+
+                    if ($('input[name="feu_einsatz_map_location_mode"]:checked').val() === 'coordinates') {
+                        $('#feu_einsatz_latitude').val(event.latlng.lat.toFixed(6));
+                        $('#feu_einsatz_longitude').val(event.latlng.lng.toFixed(6));
+                        $status.text('Koordinaten aus der Karte übernommen. Karte wird aktualisiert …');
+                        $('#feu_einsatz_latitude').trigger('change');
+                    }
+                });
+                window.setTimeout(function () { map.invalidateSize(); }, 0);
+                return true;
+            };
+
+            var update = function (force) {
+                var details = readRequiredDetails();
+
+                if (!details.ready) {
+                    hidePreview();
+                    return;
+                }
+
+                showPreview();
+
+                if (!force && details.addressKey === lastRenderedAddressKey) {
+                    return;
+                }
+
+                if (request && request.readyState !== 4) {
+                    request.abort();
+                }
+
+                $preview.addClass('is-loading');
+                $status.text(details.locationMode === 'coordinates' ? 'Koordinaten und Kartenmarkierung werden geprüft …' : 'Adresse und Straßengeometrie werden geprüft …');
+                var activeRequest = $.ajax({
+                    url: feu_einsatz_ajax.ajax_url,
+                    type: 'POST',
+                    timeout: 30000,
+                    data: {
+                        action: 'feu_einsatz_preview_street_highlight',
+                        nonce: feu_einsatz_ajax.nonce,
+                        strasse: details.street,
+                        hausnummer: details.houseNumber,
+                        plz: details.postcode,
+                        stadt: details.city,
+                        extra_streets: details.extraStreets,
+                        area_geojson: details.areaGeojson,
+                        location_mode: details.locationMode,
+                        latitude: details.latitude,
+                        longitude: details.longitude,
+                        highlight_mode: details.highlightMode,
+                        highlight_length_meters: details.highlightLength,
+                        highlight_radius_meters: details.highlightRadius
+                    }
+                });
+                request = activeRequest;
+
+                activeRequest.done(function (response) {
+                    if (readRequiredDetails().addressKey !== details.addressKey) {
+                        return;
+                    }
+
+                    if (response && response.success && response.data) {
+                        var previewData = $.extend({ location_mode: details.locationMode }, response.data);
+                        if (!renderInteractiveMap(previewData)) {
+                            $canvas.html(previewData.markup || '');
+                        }
+                        lastRenderedAddressKey = details.addressKey;
+                        $status.text(previewData.message || 'Kartenvorschau aktualisiert.');
+                        if (previewData.diagnostics) {
+                            var diagnostics = previewData.diagnostics;
+                            $diagnostics.text(
+                                'Diagnose: ' + (diagnostics.segment_count || 0) + ' Linienabschnitte · '
+                                + (diagnostics.extra_street_count || 0) + ' weitere Straßen · '
+                                + (diagnostics.area_point_count || 0) + ' Bereichspunkte · '
+                                + (diagnostics.source || '')
+                            ).prop('hidden', false);
+                        }
+                    } else {
+                        $canvas.empty();
+                        $status.text((response && response.data && response.data.message) || 'Kartenvorschau konnte nicht erstellt werden.');
+                    }
+                }).fail(function (xhr, status) {
+                    if (status !== 'abort') {
+                        $canvas.empty();
+                        $status.text('Kartenvorschau ist momentan nicht verfügbar. Bitte Eingabe oder Kartenverbindung prüfen.');
+                    }
+                }).always(function () {
+                    if (request === activeRequest) {
+                        $preview.removeClass('is-loading');
+                        request = null;
+                    }
+                });
+            };
+
+            $('#feu_einsatz_strasse, #feu_einsatz_hausnummer, #feu_einsatz_plz, #feu_einsatz_stadt, #feu_einsatz_datum, #feu_einsatz_uhrzeit, #feu_einsatz_latitude, #feu_einsatz_longitude, #feu_einsatz_map_highlight_override, #feu_einsatz_map_highlight_length_meters, #feu_einsatz_map_highlight_radius_meters, #feu_einsatz_map_extra_streets, input[name="feu_einsatz_map_location_mode"]').on('input change', function () {
+                syncMapProfileControls();
+                var details = readRequiredDetails();
+                window.clearTimeout(timer);
+
+                if (!details.ready) {
+                    hidePreview();
+                    return;
+                }
+
+                showPreview();
+
+                if (details.addressKey === lastRenderedAddressKey) {
+                    return;
+                }
+
+                timer = window.setTimeout(function () {
+                    update(false);
+                }, 850);
+            });
+            $('[data-feu-map-profile-preset]').on('change', function () {
+                var preset = String($(this).val() || 'custom');
+                var presets = {
+                    standard: { mode: 'default' },
+                    full: { mode: 'full' },
+                    segment_100: { mode: 'length', length: 100 },
+                    radius_500: { mode: 'radius', radius: 500 },
+                    radius_1000: { mode: 'radius', radius: 1000 }
+                };
+                var values = presets[preset];
+                if (!values) {
+                    return;
+                }
+                $('#feu_einsatz_map_highlight_override').val(values.mode);
+                if (values.length) { $('#feu_einsatz_map_highlight_length_meters').val(values.length); }
+                if (values.radius) { $('#feu_einsatz_map_highlight_radius_meters').val(values.radius); }
+                $('#feu_einsatz_map_highlight_override').trigger('change');
+            });
+            $('[data-feu-map-area-start]').on('click', function () {
+                areaDrawing = !areaDrawing;
+                $(this).text(areaDrawing ? 'Bereich fertig zeichnen' : 'Bereich in Live-Karte zeichnen');
+                $areaStatus.text(areaDrawing ? 'Jetzt mindestens drei Punkte direkt in der Live-Karte anklicken.' : 'Bereichszeichnung beendet.');
+                if (!map) {
+                    update(true);
+                }
+            });
+            $areaClear.on('click', function () {
+                areaDrawing = false;
+                storeAreaPoints([]);
+                if (map) {
+                    update(true);
+                }
+            });
+            $preview.on('click', '[data-feu-address-map-preview-refresh]', function () {
+                window.clearTimeout(timer);
+                update(true);
+            });
+
+            syncMapProfileControls();
+            if (getAreaPoints().length >= 3) {
+                $areaClear.prop('hidden', false);
+                $areaStatus.text(getAreaPoints().length + ' Punkte gespeichert.');
+            }
+
+            // No remote map request is made when the editor opens. The card is
+            // activated only after the required report details are completed.
+            // Existing reports receive an inactive card so an editor can opt
+            // into the same preview without an automatic page-load request.
+            if (readRequiredDetails().ready) {
+                showPreview();
+                $status.text('Einsatzdaten sind vollständig. Die Live-Karte wird erst auf Anfrage geladen.');
+                $canvas.html('<span class="feu-einsatz-address-map-preview-placeholder">Karte bei Bedarf mit „Karte aktualisieren“ laden.</span>');
+            } else {
+                hidePreview();
+            }
+        }
+
+        initAddressMapPreview();
 
         function buildAddress(strasse, hausnummer, plz, stadt) {
             var parts = [];

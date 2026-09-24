@@ -273,11 +273,14 @@ class FEU_Einsatz_Installer {
             gallery_ids longtext NULL,
             primary_image_id int(11) DEFAULT 0,
             default_functions longtext NULL,
+            external_provider varchar(40) DEFAULT '',
+            external_id bigint(20) unsigned DEFAULT 0,
             is_archived tinyint(1) DEFAULT 0,
             is_deleted tinyint(1) DEFAULT 0,
             created_at datetime DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
-            KEY archived_order (is_archived, sort_order)
+            KEY archived_order (is_archived, sort_order),
+            KEY external_participant (external_provider, external_id)
         ) $charset_collate;";
         dbDelta($sql1);
         
@@ -315,6 +318,7 @@ class FEU_Einsatz_Installer {
             street varchar(191) NOT NULL,
             postcode varchar(5) DEFAULT '',
             city varchar(120) DEFAULT 'Hamburg',
+            districts text NULL,
             sort_order int(11) DEFAULT 0,
             created_at datetime DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
@@ -415,6 +419,10 @@ class FEU_Einsatz_Installer {
             'feu_einsatz_map_preview_highlight_color' => '#d92d20',
             'feu_einsatz_map_preview_stroke_width' => 8,
             'feu_einsatz_map_preview_font_family' => 'auto',
+            'feu_einsatz_street_highlight_mode' => 'full',
+            'feu_einsatz_street_highlight_length_meters' => 100,
+            'feu_einsatz_street_highlight_radius_meters' => 100,
+            'feu_einsatz_street_highlight_include_pedestrian' => 1,
             'feu_einsatz_area_page_enabled' => 0,
             'feu_einsatz_area_show_calls' => 1,
             'feu_einsatz_area_postcodes' => [],
@@ -466,6 +474,7 @@ class FEU_Einsatz_Installer {
             'feu_einsatz_social_meta_schema_enabled' => 1,
             'feu_einsatz_social_meta_twitter_site' => '',
             'feu_einsatz_role_access' => [],
+            'feu_einsatz_participant_provider' => 'local',
             'feu_einsatz_feature_organizations_enabled' => 1,
             'feu_einsatz_photo_watermark_enabled' => 1,
             'feu_einsatz_photo_watermark_text' => get_bloginfo('name'),
@@ -848,8 +857,74 @@ class FEU_Einsatz_Installer {
         }
 
         if (version_compare($current_version, FEU_EINSATZ_VERSION, '<')) {
+            if (version_compare($current_version, '3.2.44', '<')) {
+                self::prepare_legacy_demo_map_repair();
+            }
+            if (version_compare($current_version, '3.2.46', '<')) {
+                self::prepare_missing_map_geometry_repair();
+            }
             self::migrate_existing_data();
             update_option('feu_einsatz_version', FEU_EINSATZ_VERSION);
+        }
+    }
+
+    private static function prepare_legacy_demo_map_repair(): void {
+        $demo_report_ids = get_posts([
+            'post_type' => 'post',
+            'post_status' => ['draft', 'future', 'publish', 'pending', 'private'],
+            'posts_per_page' => -1,
+            'fields' => 'ids',
+            'no_found_rows' => true,
+            'meta_key' => '_feu_einsatz_demo_record',
+            'meta_value' => '1',
+        ]);
+
+        if (empty($demo_report_ids)) {
+            return;
+        }
+
+        $demo_report_ids = array_values(array_unique(array_filter(array_map('absint', $demo_report_ids))));
+
+        FEU_Einsatz_Street_Cache::clear_all();
+
+        foreach ($demo_report_ids as $post_id) {
+            delete_post_meta($post_id, '_feu_einsatz_street_geometry_final');
+            delete_post_meta($post_id, '_feu_einsatz_street_center_final');
+            delete_post_meta($post_id, '_feu_einsatz_street_cache_version');
+            delete_post_meta($post_id, '_feu_einsatz_street_cache_revision');
+        }
+
+        update_option('feu_einsatz_pending_demo_map_repair', $demo_report_ids, false);
+    }
+
+    private static function prepare_missing_map_geometry_repair(): void {
+        $report_ids = get_posts([
+            'post_type' => 'post',
+            'post_status' => ['draft', 'future', 'publish', 'pending', 'private'],
+            'posts_per_page' => -1,
+            'fields' => 'ids',
+            'no_found_rows' => true,
+            'meta_key' => '_feu_einsatz_einsatzbericht',
+            'meta_value' => '1',
+        ]);
+
+        if (empty($report_ids)) {
+            return;
+        }
+
+        $repair_ids = [];
+
+        foreach (array_map('absint', $report_ids) as $post_id) {
+            $geometry = get_post_meta($post_id, '_feu_einsatz_street_geometry_final', true);
+            $center = get_post_meta($post_id, '_feu_einsatz_street_center_final', true);
+
+            if (!is_array($geometry) || empty($geometry) || !is_array($center) || count($center) < 2) {
+                $repair_ids[] = $post_id;
+            }
+        }
+
+        if (!empty($repair_ids)) {
+            update_option('feu_einsatz_pending_demo_map_repair', array_values(array_unique($repair_ids)), false);
         }
     }
     

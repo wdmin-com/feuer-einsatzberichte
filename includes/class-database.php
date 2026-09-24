@@ -568,6 +568,8 @@ class FEU_Einsatz_Database {
             'gallery_ids' => "ALTER TABLE {$this->table_participants} ADD COLUMN gallery_ids LONGTEXT NULL AFTER category_ids",
             'primary_image_id' => "ALTER TABLE {$this->table_participants} ADD COLUMN primary_image_id int(11) DEFAULT 0 AFTER gallery_ids",
             'default_functions' => "ALTER TABLE {$this->table_participants} ADD COLUMN default_functions LONGTEXT NULL AFTER primary_image_id",
+            'external_provider' => "ALTER TABLE {$this->table_participants} ADD COLUMN external_provider varchar(40) DEFAULT '' AFTER default_functions",
+            'external_id' => "ALTER TABLE {$this->table_participants} ADD COLUMN external_id bigint(20) unsigned DEFAULT 0 AFTER external_provider",
             'is_archived' => "ALTER TABLE {$this->table_participants} ADD COLUMN is_archived tinyint(1) DEFAULT 0 AFTER default_functions",
             'is_deleted' => "ALTER TABLE {$this->table_participants} ADD COLUMN is_deleted tinyint(1) DEFAULT 0 AFTER is_archived",
         ];
@@ -592,6 +594,16 @@ class FEU_Einsatz_Database {
         if (!$index_exists) {
             $this->wpdb->query(
                 "ALTER TABLE {$this->table_participants} ADD KEY archived_order (is_archived, sort_order)"
+            );
+        }
+
+        $external_index_exists = $this->wpdb->get_var(
+            "SHOW INDEX FROM {$this->table_participants} WHERE Key_name = 'external_participant'"
+        );
+
+        if (!$external_index_exists) {
+            $this->wpdb->query(
+                "ALTER TABLE {$this->table_participants} ADD KEY external_participant (external_provider, external_id)"
             );
         }
     }
@@ -651,6 +663,7 @@ class FEU_Einsatz_Database {
             'street' => "ALTER TABLE {$this->table_street_registry} ADD COLUMN street varchar(191) NOT NULL AFTER id",
             'postcode' => "ALTER TABLE {$this->table_street_registry} ADD COLUMN postcode varchar(5) DEFAULT '' AFTER street",
             'city' => "ALTER TABLE {$this->table_street_registry} ADD COLUMN city varchar(120) DEFAULT 'Hamburg' AFTER postcode",
+            'districts' => "ALTER TABLE {$this->table_street_registry} ADD COLUMN districts text NULL AFTER city",
             'sort_order' => "ALTER TABLE {$this->table_street_registry} ADD COLUMN sort_order int(11) DEFAULT 0 AFTER city",
             'created_at' => "ALTER TABLE {$this->table_street_registry} ADD COLUMN created_at datetime DEFAULT CURRENT_TIMESTAMP AFTER sort_order",
         ];
@@ -819,7 +832,7 @@ class FEU_Einsatz_Database {
     private function normalize_entry_date($value) {
         $value = sanitize_text_field((string) $value);
 
-        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
+        if (preg_match('/^(?:\d{4}|\d{4}-\d{2}-\d{2})$/', $value)) {
             return $value;
         }
 
@@ -915,6 +928,8 @@ class FEU_Einsatz_Database {
             ? absint($participant->primary_image_id)
             : 0;
         $participant->default_functions = $default_functions;
+        $participant->external_provider = isset($participant->external_provider) ? (string) $participant->external_provider : '';
+        $participant->external_id = isset($participant->external_id) ? absint($participant->external_id) : 0;
         $participant->is_archived = !empty($participant->is_archived) ? 1 : 0;
         $participant->is_deleted = !empty($participant->is_deleted) ? 1 : 0;
         $participant->usage_count = isset($participant->usage_count) ? (int) $participant->usage_count : 0;
@@ -1099,6 +1114,7 @@ class FEU_Einsatz_Database {
             street varchar(191) NOT NULL,
             postcode varchar(5) DEFAULT '',
             city varchar(120) DEFAULT 'Hamburg',
+            districts text NULL,
             sort_order int(11) DEFAULT 0,
             created_at datetime DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
@@ -1120,6 +1136,13 @@ class FEU_Einsatz_Database {
         ]);
 
         $where = [];
+
+        // In managed mode only profiles projected from Feuer-Mannschaft are
+        // offered for new assignments. Historic local participants remain
+        // readable by ID in old reports and statistics.
+        if (class_exists('FEU_Einsatz_Mannschaft_Integration') && FEU_Einsatz_Mannschaft_Integration::is_enabled()) {
+            $where[] = "t.external_provider = 'mannschaft'";
+        }
 
         if (empty($args['include_deleted'])) {
             $where[] = 't.is_deleted = 0';
@@ -1229,6 +1252,95 @@ class FEU_Einsatz_Database {
         $inserted = $this->wpdb->insert($this->table_participants, $data, $formats);
 
         return false === $inserted ? false : (int) $this->wpdb->insert_id;
+    }
+
+    /**
+     * Stores a read-only projection of a participant managed by another plugin.
+     * Local IDs stay stable, preserving existing report/statistics relations.
+     */
+    public function sync_external_participant($provider, $external_id, array $participant) {
+        $provider = sanitize_key($provider);
+        $external_id = absint($external_id);
+
+        if ('' === $provider || $external_id < 1) {
+            return false;
+        }
+
+        $participant = $this->normalize_participant_data($participant);
+        $data = [
+            'vorname' => $participant['vorname'], 'nachname' => $participant['nachname'],
+            'job_title' => $participant['job_title'], 'entry_date' => $participant['entry_date'],
+            'rank_title' => $participant['rank_title'], 'member_function' => $participant['member_function'],
+            'education' => $participant['education'], 'description' => $participant['description'],
+            'sort_order' => $participant['sort_order'],
+            'category_ids' => wp_json_encode($participant['category_ids']),
+            'gallery_ids' => wp_json_encode($participant['gallery_ids']),
+            'primary_image_id' => $participant['primary_image_id'],
+            'default_functions' => wp_json_encode($participant['default_functions']),
+            'external_provider' => $provider, 'external_id' => $external_id,
+            'is_archived' => $participant['is_archived'], 'is_deleted' => $participant['is_deleted'],
+        ];
+        $formats = ['%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%d', '%s', '%s', '%d', '%d', '%d'];
+        $id = (int) $this->wpdb->get_var($this->wpdb->prepare(
+            "SELECT id FROM {$this->table_participants} WHERE external_provider = %s AND external_id = %d ORDER BY id ASC LIMIT 1",
+            $provider, $external_id
+        ));
+
+        if ($id < 1 && '' !== $participant['vorname'] && '' !== $participant['nachname']) {
+            $id = (int) $this->wpdb->get_var($this->wpdb->prepare(
+                "SELECT id FROM {$this->table_participants} WHERE external_id = 0 AND vorname = %s AND nachname = %s ORDER BY id ASC LIMIT 1",
+                $participant['vorname'], $participant['nachname']
+            ));
+        }
+
+        if ($id > 0) {
+            return false === $this->wpdb->update($this->table_participants, $data, ['id' => $id], $formats, ['%d']) ? false : $id;
+        }
+
+        return false === $this->wpdb->insert($this->table_participants, $data, $formats) ? false : (int) $this->wpdb->insert_id;
+    }
+
+    /**
+     * Connects an existing local participant to an external profile without
+     * changing the local participant ID used by historic reports.
+     */
+    public function map_existing_participant_to_external($provider, $external_id, $participant_id, array $participant) {
+        $provider = sanitize_key($provider);
+        $external_id = absint($external_id);
+        $participant_id = absint($participant_id);
+
+        if ('' === $provider || $external_id < 1 || $participant_id < 1) {
+            return false;
+        }
+
+        $mapped_id = (int) $this->wpdb->get_var($this->wpdb->prepare(
+            "SELECT id FROM {$this->table_participants} WHERE external_provider = %s AND external_id = %d ORDER BY id ASC LIMIT 1",
+            $provider,
+            $external_id
+        ));
+        if ($mapped_id > 0 && $mapped_id !== $participant_id) {
+            return false;
+        }
+
+        $participant = $this->normalize_participant_data($participant);
+        $data = [
+            'vorname' => $participant['vorname'], 'nachname' => $participant['nachname'],
+            'job_title' => $participant['job_title'], 'entry_date' => $participant['entry_date'],
+            'rank_title' => $participant['rank_title'], 'member_function' => $participant['member_function'],
+            'education' => $participant['education'], 'description' => $participant['description'],
+            'sort_order' => $participant['sort_order'],
+            'category_ids' => wp_json_encode($participant['category_ids']),
+            'gallery_ids' => wp_json_encode($participant['gallery_ids']),
+            'primary_image_id' => $participant['primary_image_id'],
+            'default_functions' => wp_json_encode($participant['default_functions']),
+            'external_provider' => $provider, 'external_id' => $external_id,
+            'is_archived' => $participant['is_archived'], 'is_deleted' => $participant['is_deleted'],
+        ];
+        $formats = ['%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%d', '%s', '%s', '%d', '%d', '%d'];
+
+        return false === $this->wpdb->update($this->table_participants, $data, ['id' => $participant_id], $formats, ['%d'])
+            ? false
+            : $participant_id;
     }
     
     /**
@@ -2044,7 +2156,7 @@ class FEU_Einsatz_Database {
         return $this->wpdb->get_results($sql);
     }
 
-    public function save_street_registry_entry($id, $street, $postcode = '', $city = '') {
+    public function save_street_registry_entry($id, $street, $postcode = '', $city = '', $districts = []) {
         if (!$this->street_registry_table_exists()) {
             return false;
         }
@@ -2052,6 +2164,10 @@ class FEU_Einsatz_Database {
         $street = trim(sanitize_text_field((string) $street));
         $postcode = preg_replace('/\D+/', '', (string) $postcode);
         $city = trim(sanitize_text_field((string) $city));
+        $districts = is_array($districts) ? $districts : preg_split('/[,;\n]+/', (string) $districts);
+        $districts = array_values(array_unique(array_filter(array_map(static function($district) {
+            return trim(sanitize_text_field((string) $district));
+        }, $districts))));
 
         if ('' === $street) {
             return false;
@@ -2065,6 +2181,7 @@ class FEU_Einsatz_Database {
             'street' => $street,
             'postcode' => $postcode,
             'city' => $city,
+            'districts' => wp_json_encode($districts),
         ];
 
         if ($id > 0) {
@@ -2072,7 +2189,7 @@ class FEU_Einsatz_Database {
                 $this->table_street_registry,
                 $data,
                 ['id' => absint($id)],
-                ['%s', '%s', '%s'],
+                ['%s', '%s', '%s', '%s'],
                 ['%d']
             );
         }
@@ -2083,7 +2200,7 @@ class FEU_Einsatz_Database {
         $inserted = $this->wpdb->insert(
             $this->table_street_registry,
             $data,
-            ['%s', '%s', '%s', '%d']
+            ['%s', '%s', '%s', '%s', '%d']
         );
 
         return false === $inserted ? false : (int) $this->wpdb->insert_id;
@@ -2103,6 +2220,7 @@ class FEU_Einsatz_Database {
                     street.meta_value AS street,
                     COALESCE(plz.meta_value, '') AS postcode,
                     COALESCE(city.meta_value, '') AS city
+                    , COALESCE(district.meta_value, '') AS district
                 FROM {$this->wpdb->postmeta} street
                 LEFT JOIN {$this->wpdb->postmeta} plz
                     ON plz.post_id = street.post_id
@@ -2110,6 +2228,9 @@ class FEU_Einsatz_Database {
                 LEFT JOIN {$this->wpdb->postmeta} city
                     ON city.post_id = street.post_id
                     AND city.meta_key = %s
+                LEFT JOIN {$this->wpdb->postmeta} district
+                    ON district.post_id = street.post_id
+                    AND district.meta_key = %s
                 INNER JOIN {$this->wpdb->posts} posts
                     ON posts.ID = street.post_id
                 WHERE street.meta_key = %s
@@ -2122,6 +2243,7 @@ class FEU_Einsatz_Database {
                 ",
                 '_feu_einsatz_plz',
                 '_feu_einsatz_stadt',
+                '_feu_einsatz_stadtteil',
                 '_feu_einsatz_strasse',
                 $limit
             )
@@ -2133,6 +2255,7 @@ class FEU_Einsatz_Database {
             $street = trim(sanitize_text_field((string) ($row->street ?? '')));
             $postcode = preg_replace('/\D+/', '', (string) ($row->postcode ?? ''));
             $city = trim(sanitize_text_field((string) ($row->city ?? '')));
+            $district = trim(sanitize_text_field((string) ($row->district ?? '')));
 
             if ('' === $street) {
                 continue;
@@ -2142,7 +2265,7 @@ class FEU_Einsatz_Database {
                 $postcode = '';
             }
 
-            $result = $this->save_street_registry_entry(0, $street, $postcode, $city);
+            $result = $this->save_street_registry_entry(0, $street, $postcode, $city, '' !== $district ? [$district] : []);
 
             if (false !== $result) {
                 $imported++;

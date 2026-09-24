@@ -67,6 +67,11 @@ jobs:
       - name: Activate plugin and verify core services
         run: |
           wp plugin activate feuer-einsatzberichte --path="$RUNNER_TEMP/wordpress"
+          wp eval-file "$GITHUB_WORKSPACE/tests/integration/settings-save.php" --path="$RUNNER_TEMP/wordpress"
+          test "$(wp option get feu_einsatz_map_zoom --path="$RUNNER_TEMP/wordpress")" = "17"
+          test "$(wp option get feu_einsatz_map_height --path="$RUNNER_TEMP/wordpress")" = "420"
+          test "$(wp eval 'echo FEU_Einsatz_Admin::is_settings_tab_visible("sozial") ? "1" : "0";' --path="$RUNNER_TEMP/wordpress")" = "0"
+          test "$(wp eval 'echo FEU_Einsatz_Admin::is_settings_tab_visible("module") ? "1" : "0";' --path="$RUNNER_TEMP/wordpress")" = "1"
           wp eval-file "$GITHUB_WORKSPACE/tests/integration/plugin-load.php" --path="$RUNNER_TEMP/wordpress"
       - name: Build and restore Hamburg demo backup
         run: |

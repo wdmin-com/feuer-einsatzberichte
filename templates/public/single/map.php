@@ -12,7 +12,15 @@ $map_display_mode = isset($display['single_map_display_mode'])
 $map_privacy_mode = isset($display['single_map_privacy_mode'])
     ? FEU_Einsatz_Template_Helpers::normalize_single_map_privacy_mode($display['single_map_privacy_mode'])
     : 'always';
-$has_live_data = !empty($map['has_live_data']);
+$map_config = isset($map['config']) && is_array($map['config']) ? $map['config'] : [];
+$publicly_hidden = !empty($map['publicly_hidden']);
+$radius_has_coordinates = 'radius' === ($map_config['highlight_mode'] ?? '')
+    && isset($map_config['latitude'], $map_config['longitude'])
+    && is_numeric($map_config['latitude'])
+    && is_numeric($map_config['longitude']);
+// A radius is a complete map feature with an address coordinate alone. Do not
+// let an old cached has_live_data flag replace it with the unavailable state.
+$has_live_data = !empty($map['has_live_data']) || $radius_has_coordinates;
 $cookie_map_integration_active = FEU_Einsatz_Template_Helpers::has_cookie_map_consent_integration();
 $cookie_map_consent_granted = !$cookie_map_integration_active || FEU_Einsatz_Template_Helpers::has_cookie_map_consent();
 $show_live_map = 'live' === $map_display_mode && $has_live_data && (!$cookie_map_integration_active || $cookie_map_consent_granted);
@@ -24,6 +32,20 @@ $post_image_available = $post_image_attachment_id > 0 || '' !== $post_image_url;
 if ('disabled' === $map_display_mode) {
     return;
 }
+
+if ($publicly_hidden) :
+    echo FEU_Einsatz_Template_Helpers::render_cookie_macro('header'); ?>
+    <div class="col-12 col-lg-7 feu-einsatz-single-map-col d-flex">
+        <div class="feu-einsatz-map-container h-100 feu-einsatz-map-runtime">
+            <div class="feu-einsatz-map-placeholder">
+                <strong><?php echo esc_html__('Kartenansicht nicht veröffentlicht.', 'feuer-einsatzberichte'); ?></strong>
+                <p><?php echo esc_html__('Der Einsatzort wird für diesen Bericht bewusst nicht öffentlich auf einer Karte dargestellt.', 'feuer-einsatzberichte'); ?></p>
+            </div>
+        </div>
+    </div>
+    <?php echo FEU_Einsatz_Template_Helpers::render_cookie_macro('footer');
+    return;
+endif;
 
 ob_start();
 if ($post_image_attachment_id > 0) :
@@ -108,8 +130,12 @@ if ($show_live_map) {
                     <?php echo $post_image_available ? $post_image_markup : $preview_markup; ?>
                 </div>
             <?php elseif ('live' === $map_display_mode && $has_live_data && $cookie_map_integration_active && !$cookie_map_consent_granted) : ?>
-                <div class="feu-einsatz-map-privacy-preview is-visible" data-feu-map-preview>
-                    <?php echo $post_image_markup; ?>
+                <div class="feu-einsatz-map-consent is-visible" data-feu-map-cookie-consent>
+                    <strong><?php echo esc_html__('Live-Karte ist noch nicht freigegeben', 'feuer-einsatzberichte'); ?></strong>
+                    <p><?php echo esc_html__('Die Straßenmarkierung ist vorbereitet. Bitte aktivieren Sie in den Cookie-Einstellungen die Kategorie „Karten“ beziehungsweise „Leaflet / OpenStreetMap“.', 'feuer-einsatzberichte'); ?></p>
+                    <button type="button" class="btn btn-danger btn-sm" data-feu-map-open-cookie-settings>
+                        <?php echo esc_html__('Cookie-Einstellungen öffnen', 'feuer-einsatzberichte'); ?>
+                    </button>
                 </div>
             <?php elseif ('live' === $map_display_mode && $has_live_data && 'always' !== $map_privacy_mode) : ?>
                 <div class="feu-einsatz-map-consent" data-feu-map-consent>

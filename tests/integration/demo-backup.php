@@ -52,10 +52,10 @@ foreach ($report_ids as $report_id) {
         $year_counts[$year]++;
     }
 
-    $geometry = get_post_meta($report_id, '_feu_einsatz_street_geometry_final', true);
-    $revision = get_post_meta($report_id, FEU_Einsatz_Street_Cache::POST_META_REVISION, true);
-    if (!is_array($geometry) || empty($geometry) || '' === (string) $revision) {
-        feu_einsatz_demo_ci_fail("Report {$report_id} has no restorable street geometry.");
+    $latitude = get_post_meta($report_id, '_feu_einsatz_latitude', true);
+    $longitude = get_post_meta($report_id, '_feu_einsatz_longitude', true);
+    if (!is_numeric($latitude) || !is_numeric($longitude)) {
+        feu_einsatz_demo_ci_fail("Report {$report_id} has no usable coordinates for street geometry lookup.");
     }
 }
 
@@ -96,4 +96,4 @@ if (
     feu_einsatz_demo_ci_fail('Statistics dashboard did not reflect restored demo years.');
 }
 
-WP_CLI::success('Hamburg demo backup restored: 25 reports, 25 participants, street maps and yearly statistics verified.');
+WP_CLI::success('Hamburg demo backup restored: 25 reports, 25 participants, map source data and yearly statistics verified.');

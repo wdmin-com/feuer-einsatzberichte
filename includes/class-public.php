@@ -5,6 +5,8 @@ if (!defined('ABSPATH')) {
 
 class FEU_Einsatz_Public {
 
+    const REPORT_PERMALINK_REWRITE_VERSION = '1';
+
     private $db;
     private $overview_context_cache = [];
     private $area_page_context_cache = null;
@@ -63,6 +65,11 @@ class FEU_Einsatz_Public {
     }
 
     private function init_hooks() {
+        add_action('init', [$this, 'register_report_permalink_rewrite'], 20);
+        add_filter('query_vars', [$this, 'register_report_permalink_query_var']);
+        add_action('pre_get_posts', [$this, 'restrict_report_permalink_query']);
+        add_filter('post_link', [$this, 'filter_report_permalink'], 20, 3);
+        add_action('template_redirect', [$this, 'redirect_legacy_report_permalink']);
         add_filter('theme_page_templates', [$this, 'register_page_templates']);
         add_filter('template_include', [$this, 'load_einsatzbericht_template']);
         add_filter('comments_open', [$this, 'force_comments_open_for_reports'], 10, 2);
@@ -81,6 +88,97 @@ class FEU_Einsatz_Public {
         $this->register_shortcode_aliases('latest', [$this, 'render_latest_reports_shortcode']);
         $this->register_shortcode_aliases('alarm_list', [$this, 'render_alarm_list_shortcode']);
         $this->register_shortcode_aliases('area_page', [$this, 'render_area_page_shortcode']);
+    }
+
+    /**
+     * Report posts are normal WordPress posts for compatibility, but their
+     * public URLs must remain separated from editorial blog posts.
+     */
+    public function register_report_permalink_rewrite() {
+        add_rewrite_rule(
+            '^einsaetze/([^/]+)/?$',
+            'index.php?name=$matches[1]&feu_einsatz_permalink=1',
+            'top'
+        );
+
+        if (self::REPORT_PERMALINK_REWRITE_VERSION !== get_option('feu_einsatz_permalink_rewrite_version', '')) {
+            update_option('feu_einsatz_permalink_rewrite_version', self::REPORT_PERMALINK_REWRITE_VERSION, false);
+            flush_rewrite_rules(false);
+        }
+    }
+
+    public function register_report_permalink_query_var($query_vars) {
+        $query_vars[] = 'feu_einsatz_permalink';
+
+        return $query_vars;
+    }
+
+    public function restrict_report_permalink_query($query) {
+        if (
+            !($query instanceof WP_Query)
+            || !$query->is_main_query()
+            || is_admin()
+            || '1' !== (string) $query->get('feu_einsatz_permalink')
+        ) {
+            return;
+        }
+
+        $meta_query = (array) $query->get('meta_query');
+        $meta_query[] = [
+            'key' => '_feu_einsatz_einsatzbericht',
+            'value' => '1',
+            'compare' => '=',
+        ];
+
+        $query->set('post_type', 'post');
+        $query->set('meta_query', $meta_query);
+    }
+
+    public function filter_report_permalink($permalink, $post, $leavename = false) {
+        $post = $post instanceof WP_Post ? $post : get_post($post);
+
+        if (!($post instanceof WP_Post) || !$this->is_einsatzbericht_post((int) $post->ID)) {
+            return $permalink;
+        }
+
+        $slug = $leavename ? '%postname%' : $post->post_name;
+
+        if ('' === trim((string) $slug)) {
+            return $permalink;
+        }
+
+        return home_url(user_trailingslashit('einsaetze/' . $slug));
+    }
+
+    public function redirect_legacy_report_permalink() {
+        if (
+            is_admin()
+            || wp_doing_ajax()
+            || is_feed()
+            || is_preview()
+            || !is_singular('post')
+        ) {
+            return;
+        }
+
+        $post = get_queried_object();
+
+        if (!($post instanceof WP_Post) || !$this->is_einsatzbericht_post((int) $post->ID)) {
+            return;
+        }
+
+        $canonical_url = $this->filter_report_permalink('', $post);
+        $canonical_path = untrailingslashit((string) wp_parse_url($canonical_url, PHP_URL_PATH));
+        $request_path = isset($_SERVER['REQUEST_URI'])
+            ? untrailingslashit((string) wp_parse_url(wp_unslash($_SERVER['REQUEST_URI']), PHP_URL_PATH))
+            : '';
+
+        if ('' === $canonical_path || '' === $request_path || $canonical_path === $request_path) {
+            return;
+        }
+
+        wp_safe_redirect($canonical_url, 301);
+        exit;
     }
 
     private function is_einsatzbericht_post($post_id) {

@@ -89,12 +89,8 @@ class FEU_Einsatz_Street_Cache {
     }
 
     public static function get_post_cache($post_id) {
+        $post_id = absint($post_id);
         $version = (int) get_post_meta($post_id, self::POST_META_VERSION, true);
-
-        if ($version !== self::CACHE_VERSION) {
-            return false;
-        }
-
         $geometry = get_post_meta($post_id, '_feu_einsatz_street_geometry_final', true);
         $center = get_post_meta($post_id, '_feu_einsatz_street_center_final', true);
 
@@ -105,6 +101,14 @@ class FEU_Einsatz_Street_Cache {
 
         if (!self::is_valid_payload($payload)) {
             return false;
+        }
+
+        // A cache-format change must never make an already saved street line
+        // disappear from existing reports. The renderer normalizes legacy line
+        // structures, so retain and stamp a valid older payload lazily.
+        if ($version !== self::CACHE_VERSION) {
+            update_post_meta($post_id, self::POST_META_VERSION, self::CACHE_VERSION);
+            update_post_meta($post_id, self::POST_META_REVISION, sprintf('%.6F', microtime(true)));
         }
 
         return $payload;
