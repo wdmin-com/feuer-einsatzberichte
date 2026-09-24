@@ -1,6 +1,18 @@
 {
   "releases": [
     {
+      "version": "3.2.76",
+      "date": "2026-09-24",
+      "title": "Sichere manuelle Mannschaft-Synchronisierung",
+      "summary": "Feuer-Mannschaft dient ausschließlich als manuelle Quelle für Namen, Dienstgrad/Position und Profilfoto; Einsatzberichte behält eine eindeutige lokale Teilnehmerliste.",
+      "changes": [
+        "Synchronisierung: Automatische Übernahme bei Profiländerungen sowie die frühere Umschaltung der Datenquelle wurden entfernt.",
+        "Datenintegrität: Importiert werden ausschließlich Vorname, Nachname, Dienstgrad/Position und das Profilfoto. Funktionen, Ausbildungen, Beschreibungen, Galerie, Kategorien, Status und Einsatzzuordnungen bleiben lokal.",
+        "Bedienung: Teilnehmer verwalten enthält eine explizite Schaltfläche für die manuelle Synchronisierung und eine sichere Zuordnung bei abweichenden Namen.",
+        "Stabilität: Alle aktiven und archivierten lokalen Teilnehmer bleiben unabhängig vom Zustand des Mannschaft-Plugins sichtbar und bearbeitbar."
+      ]
+    },
+    {
       "version": "3.2.75",
       "date": "2026-09-24",
       "title": "Radius zeigt ausschließlich den Einsatzbereich",

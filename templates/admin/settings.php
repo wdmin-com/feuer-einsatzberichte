@@ -291,13 +291,9 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
 
         update_option('feu_einsatz_update_manifest_url', FEU_Einsatz_Updater::get_default_manifest_url());
 
-        $participant_provider = isset($_POST['feu_einsatz_participant_provider'])
-            ? sanitize_key(wp_unslash($_POST['feu_einsatz_participant_provider']))
-            : (string) get_option('feu_einsatz_participant_provider', 'local');
-        if ('mannschaft' === $participant_provider && !FEU_Einsatz_Mannschaft_Integration::is_available()) {
-            $participant_provider = 'local';
-        }
-        update_option('feu_einsatz_participant_provider', $participant_provider, false);
+        // The deprecated provider switch is kept local even if an older form
+        // submits it. Mannschaft is now an explicit manual import only.
+        update_option('feu_einsatz_participant_provider', 'local', false);
 
         // The visibility manager is intentionally opt-in for older forms and
         // integrations. A save request without its marker must not suddenly

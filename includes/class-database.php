@@ -1137,13 +1137,6 @@ class FEU_Einsatz_Database {
 
         $where = [];
 
-        // In managed mode only profiles projected from Feuer-Mannschaft are
-        // offered for new assignments. Historic local participants remain
-        // readable by ID in old reports and statistics.
-        if (class_exists('FEU_Einsatz_Mannschaft_Integration') && FEU_Einsatz_Mannschaft_Integration::is_enabled()) {
-            $where[] = "t.external_provider = 'mannschaft'";
-        }
-
         if (empty($args['include_deleted'])) {
             $where[] = 't.is_deleted = 0';
         }
@@ -1298,6 +1291,126 @@ class FEU_Einsatz_Database {
         }
 
         return false === $this->wpdb->insert($this->table_participants, $data, $formats) ? false : (int) $this->wpdb->insert_id;
+    }
+
+    /**
+     * Manually imports only the identity fields from an external participant.
+     *
+     * Functions, education, description, assignments and local lifecycle
+     * flags intentionally remain owned by Einsatzberichte. This keeps the
+     * participant table a single local roster instead of a second projection.
+     */
+    public function sync_external_participant_identity($provider, $external_id, array $identity) {
+        $provider = sanitize_key($provider);
+        $external_id = absint($external_id);
+        $identity = $this->normalize_external_participant_identity($identity);
+
+        if ('' === $provider || $external_id < 1 || '' === $identity['vorname'] || '' === $identity['nachname']) {
+            return false;
+        }
+
+        $participant_id = (int) $this->wpdb->get_var($this->wpdb->prepare(
+            "SELECT id FROM {$this->table_participants} WHERE external_provider = %s AND external_id = %d ORDER BY id ASC LIMIT 1",
+            $provider,
+            $external_id
+        ));
+
+        // Existing local entries with exactly the same person are linked to
+        // the source instead of creating a duplicate roster entry.
+        if ($participant_id < 1) {
+            $participant_id = (int) $this->wpdb->get_var($this->wpdb->prepare(
+                "SELECT id FROM {$this->table_participants} WHERE external_id = 0 AND vorname = %s AND nachname = %s ORDER BY id ASC LIMIT 1",
+                $identity['vorname'],
+                $identity['nachname']
+            ));
+        }
+
+        return $this->save_external_participant_identity($provider, $external_id, $participant_id, $identity);
+    }
+
+    /**
+     * Links a selected local participant to Mannschaft and imports only the
+     * fields permitted by the manual synchronization contract.
+     */
+    public function map_existing_participant_identity_to_external($provider, $external_id, $participant_id, array $identity) {
+        $provider = sanitize_key($provider);
+        $external_id = absint($external_id);
+        $participant_id = absint($participant_id);
+        $identity = $this->normalize_external_participant_identity($identity);
+
+        if ('' === $provider || $external_id < 1 || $participant_id < 1) {
+            return false;
+        }
+
+        $mapped_id = (int) $this->wpdb->get_var($this->wpdb->prepare(
+            "SELECT id FROM {$this->table_participants} WHERE external_provider = %s AND external_id = %d ORDER BY id ASC LIMIT 1",
+            $provider,
+            $external_id
+        ));
+        if ($mapped_id > 0 && $mapped_id !== $participant_id) {
+            return false;
+        }
+
+        return $this->save_external_participant_identity($provider, $external_id, $participant_id, $identity);
+    }
+
+    private function normalize_external_participant_identity(array $identity): array {
+        return [
+            'vorname' => sanitize_text_field($identity['vorname'] ?? ''),
+            'nachname' => sanitize_text_field($identity['nachname'] ?? ''),
+            'job_title' => sanitize_text_field($identity['job_title'] ?? ''),
+            'rank_title' => sanitize_text_field($identity['rank_title'] ?? ''),
+            'primary_image_id' => absint($identity['primary_image_id'] ?? 0),
+        ];
+    }
+
+    private function save_external_participant_identity($provider, $external_id, $participant_id, array $identity) {
+        $existing = $participant_id > 0 ? $this->get_participant($participant_id) : null;
+        $data = [
+            'vorname' => $identity['vorname'],
+            'nachname' => $identity['nachname'],
+            'job_title' => $identity['job_title'],
+            'rank_title' => $identity['rank_title'],
+            // A missing source photo must never erase a locally selected one.
+            'primary_image_id' => $identity['primary_image_id'] > 0
+                ? $identity['primary_image_id']
+                : ($existing ? absint($existing->primary_image_id) : 0),
+        ];
+
+        if ($existing) {
+            $data = array_merge([
+                'entry_date' => $existing->entry_date,
+                'member_function' => $existing->member_function,
+                'education' => $existing->education,
+                'description' => $existing->description,
+                'sort_order' => $existing->sort_order,
+                'category_ids' => $existing->category_ids,
+                'gallery_ids' => $existing->gallery_ids,
+                'default_functions' => $existing->default_functions,
+                'is_archived' => $existing->is_archived,
+                'is_deleted' => $existing->is_deleted,
+            ], $data);
+        }
+
+        $saved = $this->save_participant($participant_id, $data);
+        if (false === $saved) {
+            return false;
+        }
+
+        $id = $participant_id > 0 ? $participant_id : (int) $saved;
+        if ($id < 1) {
+            return false;
+        }
+
+        $updated = $this->wpdb->update(
+            $this->table_participants,
+            ['external_provider' => $provider, 'external_id' => $external_id],
+            ['id' => $id],
+            ['%s', '%d'],
+            ['%d']
+        );
+
+        return false === $updated ? false : $id;
     }
 
     /**
