@@ -1,6 +1,18 @@
 {
   "releases": [
     {
+      "version": "3.2.86",
+      "date": "2026-09-25",
+      "title": "Korrigierte Admin-Komposition",
+      "summary": "Die lokale Plugin-Navigation folgt nicht mehr beim Scrollen; klare Karten sind nur noch dort sichtbar, wo sie eine eigene Arbeitsaufgabe enthalten.",
+      "changes": [
+        "Kritisch behoben: Das Einstellungen-Menü und die Abschnittsnavigation im Berichtseditor sind nicht mehr sticky und können keinen Inhalt überdecken.",
+        "Einstellungen: Die Navigation ist auf Desktop-Bildschirmen eine statische, schlanke Seitenleiste; auf kleinen Bildschirmen wird sie kontrolliert zur horizontalen Leiste.",
+        "Editor: Live-Karte, individuelle Kartendarstellung, Medien und Status werden wieder als eigenständige Arbeitskarten dargestellt; rein dekorative Verschachtelungen bleiben entfernt.",
+        "Qualität: Widersprüchliche CSS-Regeln für die Abschnittsnummern wurden entfernt. Datenfelder, Speicherlogik und Kartenfunktionen bleiben unverändert."
+      ]
+    },
+    {
       "version": "3.2.85",
       "date": "2026-09-25",
       "title": "Produktoberfläche nach Referenzraster",

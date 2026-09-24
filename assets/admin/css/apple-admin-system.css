@@ -306,18 +306,21 @@ body.feu-apple-settings .feu-admin-stat-grid--compact .feu-admin-stat-card {
 
 body.feu-apple-settings .feu-admin-settings-shell--topnav {
     display: grid;
-    grid-template-columns: 196px minmax(0, 1fr);
-    gap: 38px;
+    grid-template-columns: 210px minmax(0, 1fr) !important;
+    gap: 34px;
     align-items: start;
 }
 
 body.feu-apple-settings .feu-admin-settings-topbar {
-    position: sticky;
-    top: 48px;
+    /* The navigation belongs to the page flow.  A sticky second navigation
+     * competes with WordPress' own admin bar and hides content while editing. */
+    position: static !important;
+    top: auto;
 }
 
 body.feu-apple-settings .feu-admin-settings-nav {
-    display: grid;
+    display: grid !important;
+    width: auto !important;
     gap: 2px;
     margin: 0;
     padding: 0 14px 0 0;
@@ -557,9 +560,9 @@ body.feu-apple-workspace .postbox.feu-einsatz-form-section .feu-einsatz-map-prof
 }
 
 body.feu-apple-workspace .feu-einsatz-report-section-nav {
-    position: sticky;
-    top: 32px;
-    z-index: 5;
+    position: static;
+    top: auto;
+    z-index: auto;
     overflow-x: auto;
     gap: 4px;
     margin: 0 0 24px;
@@ -590,25 +593,6 @@ body.feu-apple-workspace .feu-apple-editor-step .feu-apple-editor-step-number {
     display: none !important;
 }
 
-/* Keep the progress number optically centred.  It cannot inherit a text
- * baseline or a line-height from the WordPress navigation anymore. */
-body.feu-apple-workspace .feu-apple-editor-step .feu-apple-editor-step-number {
-    display: inline-grid !important;
-    width: 18px;
-    height: 18px;
-    flex: 0 0 18px;
-    place-items: center;
-    margin: 0 !important;
-    padding: 0 !important;
-    border-radius: 50%;
-    font-size: 10px;
-    font-style: normal;
-    font-variant-numeric: tabular-nums;
-    line-height: 1 !important;
-    text-align: center;
-    transform: none !important;
-    vertical-align: middle;
-}
 
 body.feu-apple-workspace .feu-einsatz-admin-hero .feu-einsatz-hero-meta {
     display: none;
@@ -624,6 +608,25 @@ body.feu-apple-workspace .feu-apple-editor-step.is-active {
     color: var(--feu-ui-blue);
 }
 
+/* A card communicates a separate task, not merely a wrapper in the markup.
+ * These editor areas contain their own action and state (preview, media and
+ * availability), so they deliberately remain distinct, single-level cards. */
+body.feu-apple-workspace .postbox.feu-einsatz-form-section .feu-einsatz-inline-card--map-preview,
+body.feu-apple-workspace .postbox.feu-einsatz-form-section .feu-einsatz-inline-card--media,
+body.feu-apple-workspace .postbox.feu-einsatz-form-section .feu-einsatz-inline-card--availability,
+body.feu-apple-workspace .postbox.feu-einsatz-form-section .feu-einsatz-map-highlight-profile {
+    padding: 20px;
+    border: 1px solid var(--feu-ui-line);
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .025);
+}
+
+body.feu-apple-workspace .postbox.feu-einsatz-form-section .feu-einsatz-inline-card--map-preview + .feu-einsatz-inline-card--media,
+body.feu-apple-workspace .postbox.feu-einsatz-form-section .feu-einsatz-inline-card--availability + .feu-einsatz-map-highlight-profile {
+    margin-top: 18px;
+}
+
 @media (max-width: 782px) {
     body.feu-admin-ui--modern-shell .feu-admin-page,
     body.feu-admin-ui--modern-shell .wrap.feu-einsatz-settings,
@@ -631,7 +634,7 @@ body.feu-apple-workspace .feu-apple-editor-step.is-active {
     body.feu-admin-ui--modern-shell .feu-admin-page-header,
     body.feu-admin-ui--modern-shell .feu-einsatz-admin-hero { align-items: flex-start; flex-direction: column; }
     body.feu-apple-settings .feu-admin-stat-grid--compact { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    body.feu-apple-settings .feu-admin-settings-shell--topnav { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+    body.feu-apple-settings .feu-admin-settings-shell--topnav { grid-template-columns: minmax(0, 1fr) !important; gap: 20px; }
     body.feu-apple-settings .feu-admin-settings-topbar { position: static; }
     body.feu-apple-settings .feu-admin-settings-nav { display: flex; overflow-x: auto; padding: 0 0 8px; border-right: 0; border-bottom: 1px solid var(--feu-ui-line); }
     body.feu-apple-settings .feu-admin-settings-nav-group,
