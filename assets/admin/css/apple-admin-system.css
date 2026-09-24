@@ -289,6 +289,107 @@ body.feu-apple-settings .feu-admin-settings-link.nav-tab.nav-tab-active {
 
 body.feu-apple-settings .feu-admin-settings-link .ti { display: none; }
 
+/* Settings is a product workspace: navigation lives in a quiet side rail and
+ * the active panel owns the main column.  This replaces the former giant
+ * horizontal tab card. */
+body.feu-apple-settings .feu-admin-stat-grid--compact {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    max-width: 980px;
+    margin: 0 0 28px;
+}
+
+body.feu-apple-settings .feu-admin-stat-grid--compact .feu-admin-stat-card {
+    min-height: 96px;
+    padding: 16px;
+    border-radius: 15px;
+}
+
+body.feu-apple-settings .feu-admin-settings-shell--topnav {
+    display: grid;
+    grid-template-columns: 196px minmax(0, 1fr);
+    gap: 38px;
+    align-items: start;
+}
+
+body.feu-apple-settings .feu-admin-settings-topbar {
+    position: sticky;
+    top: 48px;
+}
+
+body.feu-apple-settings .feu-admin-settings-nav {
+    display: grid;
+    gap: 2px;
+    margin: 0;
+    padding: 0 14px 0 0;
+    border: 0;
+    border-right: 1px solid var(--feu-ui-line);
+    border-radius: 0;
+    background: transparent;
+}
+
+body.feu-apple-settings .feu-admin-settings-nav-group,
+body.feu-apple-settings .feu-admin-settings-nav-links {
+    display: grid;
+    gap: 2px;
+}
+
+body.feu-apple-settings .feu-admin-settings-nav-group {
+    padding: 0 0 14px;
+}
+
+body.feu-apple-settings .feu-admin-settings-nav-group + .feu-admin-settings-nav-group {
+    padding-top: 14px;
+    border-top: 1px solid var(--feu-ui-line);
+}
+
+body.feu-apple-settings .feu-admin-settings-nav-title {
+    display: block;
+    margin: 0 0 5px;
+    padding: 0 10px;
+    color: #86868b;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+}
+
+body.feu-apple-settings .feu-admin-settings-link.nav-tab {
+    display: flex;
+    align-items: center;
+    min-height: 34px;
+    padding: 0 10px;
+    border: 0;
+    border-radius: 9px;
+    color: #424245;
+    font-size: 13px;
+    line-height: 34px;
+}
+
+body.feu-apple-settings .feu-admin-settings-link.nav-tab:hover {
+    background: rgba(0, 113, 227, .07);
+    color: var(--feu-ui-blue);
+}
+
+body.feu-apple-settings .feu-admin-settings-link.nav-tab.nav-tab-active {
+    background: rgba(0, 113, 227, .12);
+    box-shadow: none;
+    color: #0066cc;
+}
+
+body.feu-apple-settings .feu-admin-settings-main,
+body.feu-apple-settings .feu-admin-settings-sections {
+    min-width: 0;
+}
+
+body.feu-apple-settings .feu-einsatz-tab-content {
+    width: 100%;
+    max-width: 1080px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
 /* Settings hierarchy: page canvas → section title → one grouped surface.
  * Do not permit a surface to visually wrap another surface.  This applies to
  * Social, Media, Maps, Modules and every other settings tab alike. */
@@ -482,6 +583,13 @@ body.feu-apple-workspace .feu-apple-editor-step {
     line-height: 34px;
 }
 
+/* The reference navigation is label-led.  Progress numbers add no useful
+ * information here and were the source of visual baseline collisions, so the
+ * existing anchors stay intact while their decorative counters are removed. */
+body.feu-apple-workspace .feu-apple-editor-step .feu-apple-editor-step-number {
+    display: none !important;
+}
+
 /* Keep the progress number optically centred.  It cannot inherit a text
  * baseline or a line-height from the WordPress navigation anymore. */
 body.feu-apple-workspace .feu-apple-editor-step .feu-apple-editor-step-number {
@@ -502,6 +610,14 @@ body.feu-apple-workspace .feu-apple-editor-step .feu-apple-editor-step-number {
     vertical-align: middle;
 }
 
+body.feu-apple-workspace .feu-einsatz-admin-hero .feu-einsatz-hero-meta {
+    display: none;
+}
+
+body.feu-apple-workspace .feu-apple-editor-step .feu-apple-editor-step-number {
+    display: none !important;
+}
+
 body.feu-apple-workspace .feu-apple-editor-step.is-active {
     background: #fff;
     box-shadow: 0 2px 7px rgba(0, 0, 0, .1);
@@ -514,7 +630,15 @@ body.feu-apple-workspace .feu-apple-editor-step.is-active {
     body.feu-admin-ui--modern-shell .wrap.feu-einsatz-report-create-page { margin-top: 18px; padding: 0 14px; }
     body.feu-admin-ui--modern-shell .feu-admin-page-header,
     body.feu-admin-ui--modern-shell .feu-einsatz-admin-hero { align-items: flex-start; flex-direction: column; }
-    body.feu-apple-settings .feu-admin-settings-nav { flex-wrap: nowrap; overflow-x: auto; }
+    body.feu-apple-settings .feu-admin-stat-grid--compact { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    body.feu-apple-settings .feu-admin-settings-shell--topnav { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+    body.feu-apple-settings .feu-admin-settings-topbar { position: static; }
+    body.feu-apple-settings .feu-admin-settings-nav { display: flex; overflow-x: auto; padding: 0 0 8px; border-right: 0; border-bottom: 1px solid var(--feu-ui-line); }
+    body.feu-apple-settings .feu-admin-settings-nav-group,
+    body.feu-apple-settings .feu-admin-settings-nav-links { display: contents; }
+    body.feu-apple-settings .feu-admin-settings-nav-group { padding: 0; border: 0 !important; }
+    body.feu-apple-settings .feu-admin-settings-nav-title { display: none; }
+    body.feu-apple-settings .feu-admin-settings-link.nav-tab { flex: 0 0 auto; }
 }
 
 @media (prefers-reduced-motion: reduce) {

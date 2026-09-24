@@ -1,6 +1,18 @@
 {
   "releases": [
     {
+      "version": "3.2.85",
+      "date": "2026-09-25",
+      "title": "Produktoberfläche nach Referenzraster",
+      "summary": "Die Plugin-Einstellungen folgen jetzt einer echten Produkt-Dashboard-Komposition mit Seitenleiste, freier Inhaltsfläche und ruhiger Informationshierarchie.",
+      "changes": [
+        "Einstellungen: Die große horizontale Tab-Karte wird durch eine schlanke, gruppierte Seitenleiste ersetzt. Die aktive Einstellung erhält nur eine dezente blaue Fläche.",
+        "Komposition: Kopfbereich, Kennzahlen, Navigation und Arbeitsfläche folgen einem festen Raster mit klarer Maximalbreite und großzügigem Leerraum.",
+        "Editor: Der dunkle Dekor-Header wird neutralisiert und die rein dekorativen Abschnittsnummern werden entfernt. Die Navigation bleibt vollständig funktional und labelbasiert.",
+        "Design: Weiß, #F5F5F7, klare Haarlinien, Systemtypografie, ruhige Karten und Apple Blue ersetzen optische Effekte ohne Informationswert."
+      ]
+    },
+    {
       "version": "3.2.84",
       "date": "2026-09-25",
       "title": "Flache Einstellungsarchitektur",
