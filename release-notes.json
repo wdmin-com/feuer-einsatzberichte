@@ -1,6 +1,19 @@
 {
   "releases": [
     {
+      "version": "3.2.74",
+      "date": "2026-09-24",
+      "title": "Klarer Berichtseditor mit Live-Karte",
+      "summary": "Der Berichtseditor führt jetzt verständlich durch Einsatzort, Live-Karte, individuelle Markierung und Fotos.",
+      "changes": [
+        "Editor: Einsatzort, Adresse, Zeitpunkt und Koordinaten liegen in einem klar abgegrenzten Arbeitsbereich mit konsistenten Abständen.",
+        "Live-Karte: Vollständige Einsatzdaten laden die Vorschau automatisch – auch beim Öffnen eines bereits gespeicherten Berichts. Die Grundkarte wird vor optionalen OSM-Linien initialisiert.",
+        "Karte: Die individuelle Darstellung steht direkt unter der Live-Vorschau; ganze Straße, Straßenabschnitt und Radius einschließlich Meterwert bleiben pro Bericht speicherbar.",
+        "Medien: Eine neue Galerie-Zone bietet Auswahl aus der Mediathek, einen direkten Upload-Einstieg und den WordPress-Drag-and-Drop-Upload.",
+        "Design: Karten-, Orts- und Medienbereiche erhalten eigenständige, responsive WordPress-konforme Oberflächen statt zusammenlaufender Formularfelder."
+      ]
+    },
+    {
       "version": "3.2.73",
       "date": "2026-09-24",
       "title": "Reparierte Vorlagen-Einstellungen",

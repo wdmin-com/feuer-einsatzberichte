@@ -720,8 +720,9 @@
             $form.appendTo(document.body).trigger('submit');
         });
 
-        $(document).on('click', '#feu-einsatz-add-gallery-images', function (event) {
+        $(document).on('click', '#feu-einsatz-add-gallery-images, [data-feu-gallery-upload]', function (event) {
             var mediaApi = getMediaApi();
+            var openUpload = $(this).is('[data-feu-gallery-upload]');
 
             event.preventDefault();
 
@@ -760,6 +761,46 @@
             }
 
             galleryFrame.open();
+
+            if (openUpload) {
+                window.setTimeout(function () {
+                    if (galleryFrame.content && typeof galleryFrame.content.mode === 'function') {
+                        galleryFrame.content.mode('upload');
+                    }
+                }, 0);
+            }
+        });
+
+        $(document).on('click', '[data-feu-gallery-dropzone]', function (event) {
+            if ($(event.target).closest('button, a, input, select, textarea').length) {
+                return;
+            }
+
+            event.preventDefault();
+            $('[data-feu-gallery-upload]').trigger('click');
+        });
+
+        $(document).on('keydown', '[data-feu-gallery-dropzone]', function (event) {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                $('[data-feu-gallery-upload]').trigger('click');
+            }
+        });
+
+        $(document).on('dragenter dragover', '[data-feu-gallery-dropzone]', function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+            $(this).addClass('is-dragging');
+        });
+
+        $(document).on('dragleave dragend drop', '[data-feu-gallery-dropzone]', function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+            $(this).removeClass('is-dragging');
+
+            if (event.type === 'drop') {
+                $('[data-feu-gallery-upload]').trigger('click');
+            }
         });
 
         $(document).on('click', '.feu-einsatz-remove-gallery-image', function () {
@@ -2203,6 +2244,9 @@
                     maxZoom: 20,
                     attribution: '&copy; OpenStreetMap contributors'
                 }).addTo(map);
+                // Set a valid center before optional street geometry is drawn.
+                // The base map must remain usable even if an OSM line is incomplete.
+                map.setView([latitude, longitude], 15);
                 var bounds = window.L.latLngBounds([]);
                 var color = '#d92d20';
 
@@ -2440,14 +2484,15 @@
                 $areaStatus.text(getAreaPoints().length + ' Punkte gespeichert.');
             }
 
-            // No remote map request is made when the editor opens. The card is
-            // activated only after the required report details are completed.
-            // Existing reports receive an inactive card so an editor can opt
-            // into the same preview without an automatic page-load request.
+            // A complete address or coordinate pair is enough to load the
+            // preview. This also gives existing reports the same immediate
+            // visual confirmation as a newly created report.
             if (readRequiredDetails().ready) {
                 showPreview();
-                $status.text('Einsatzdaten sind vollständig. Die Live-Karte wird erst auf Anfrage geladen.');
-                $canvas.html('<span class="feu-einsatz-address-map-preview-placeholder">Karte bei Bedarf mit „Karte aktualisieren“ laden.</span>');
+                $status.text('Einsatzdaten sind vollständig. Live-Karte wird geladen …');
+                window.setTimeout(function () {
+                    update(false);
+                }, 150);
             } else {
                 hidePreview();
             }

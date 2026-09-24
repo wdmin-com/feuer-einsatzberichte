@@ -155,11 +155,12 @@ $street_highlight_mode_label = 'full' === $street_highlight_mode
 
 <div class="feu-einsatz-meta-box<?php echo $use_modern_form ? ' feu-einsatz-meta-box--modern' : ''; ?>">
     <?php if ($show_basic_fields) : ?>
+        <section class="feu-einsatz-editor-section feu-einsatz-editor-section--location" aria-labelledby="feu-einsatz-location-heading">
         <div class="feu-einsatz-map-profile" data-feu-map-profile>
             <div class="feu-einsatz-map-profile-head">
                 <div>
                     <span class="feu-einsatz-map-profile-kicker"><?php esc_html_e('Einsatzort & Karte', 'feuer-einsatzberichte'); ?></span>
-                    <h4><?php esc_html_e('Ort für diesen Einsatz festlegen', 'feuer-einsatzberichte'); ?></h4>
+                    <h4 id="feu-einsatz-location-heading"><?php esc_html_e('Ort für diesen Einsatz festlegen', 'feuer-einsatzberichte'); ?></h4>
                     <p class="description"><?php esc_html_e('Standardmäßig nutzt der Bericht die allgemeinen Kartenregeln. Bei besonderen Lagen kannst du Ort und Kartenmarkierung nur für diesen Einsatz anpassen.', 'feuer-einsatzberichte'); ?></p>
                 </div>
             </div>
@@ -322,46 +323,7 @@ $street_highlight_mode_label = 'full' === $street_highlight_mode
                 <?php esc_html_e('Komma und Punkt werden akzeptiert. Du kannst die Position auch unten direkt mit einem Klick in der Live-Karte setzen.', 'feuer-einsatzberichte'); ?>
             </p>
         </div>
-
-        <div class="feu-einsatz-form-row feu-einsatz-map-profile-fields feu-einsatz-map-highlight-profile" data-feu-map-highlight-profile>
-            <div class="feu-einsatz-map-profile-fields-head">
-                <span class="dashicons dashicons-admin-customizer" aria-hidden="true"></span>
-                <div>
-                    <h4><?php esc_html_e('Kartenmarkierung für diesen Einsatz', 'feuer-einsatzberichte'); ?></h4>
-                    <p class="description"><?php esc_html_e('„Standard“ übernimmt die globale Einstellung. Eine Auswahl hier gilt ausschließlich für diesen Bericht und auch für das erzeugte Kartenbild.', 'feuer-einsatzberichte'); ?></p>
-                </div>
-            </div>
-            <div class="feu-einsatz-map-highlight-controls">
-                <label class="feu-einsatz-field">
-                    <span class="feu-einsatz-field-label"><?php esc_html_e('Schnellprofil', 'feuer-einsatzberichte'); ?></span>
-                    <select id="feu_einsatz_map_profile_preset" class="widefat" data-feu-map-profile-preset>
-                        <option value="custom"><?php esc_html_e('Individuell / unverändert', 'feuer-einsatzberichte'); ?></option>
-                        <option value="standard"><?php esc_html_e('Standard aus Einstellungen', 'feuer-einsatzberichte'); ?></option>
-                        <option value="full"><?php esc_html_e('Ganze Straße', 'feuer-einsatzberichte'); ?></option>
-                        <option value="segment_100"><?php esc_html_e('Verkehrsunfall – Abschnitt 100 m', 'feuer-einsatzberichte'); ?></option>
-                        <option value="radius_500"><?php esc_html_e('Wald- / Flächenlage – Radius 500 m', 'feuer-einsatzberichte'); ?></option>
-                        <option value="radius_1000"><?php esc_html_e('Großschaden – Radius 1.000 m', 'feuer-einsatzberichte'); ?></option>
-                    </select>
-                </label>
-                <label class="feu-einsatz-field">
-                    <span class="feu-einsatz-field-label"><?php esc_html_e('Darstellung', 'feuer-einsatzberichte'); ?></span>
-                    <select name="feu_einsatz_map_highlight_override" id="feu_einsatz_map_highlight_override" class="widefat">
-                        <option value="default" <?php selected($map_highlight_override, 'default'); ?>><?php printf(esc_html__('Standard übernehmen (%s)', 'feuer-einsatzberichte'), esc_html($street_highlight_mode_label)); ?></option>
-                        <option value="full" <?php selected($map_highlight_override, 'full'); ?>><?php esc_html_e('Ganze Straße', 'feuer-einsatzberichte'); ?></option>
-                        <option value="length" <?php selected($map_highlight_override, 'length'); ?>><?php esc_html_e('Straßenabschnitt', 'feuer-einsatzberichte'); ?></option>
-                        <option value="radius" <?php selected($map_highlight_override, 'radius'); ?>><?php esc_html_e('Radius um Einsatzort', 'feuer-einsatzberichte'); ?></option>
-                    </select>
-                </label>
-                <label class="feu-einsatz-field" data-feu-highlight-length-field hidden>
-                    <span class="feu-einsatz-field-label"><?php esc_html_e('Länge des Abschnitts (m)', 'feuer-einsatzberichte'); ?></span>
-                    <input type="number" min="20" max="5000" step="10" name="feu_einsatz_map_highlight_length_meters" id="feu_einsatz_map_highlight_length_meters" value="<?php echo esc_attr($map_highlight_length); ?>" class="widefat" />
-                </label>
-                <label class="feu-einsatz-field" data-feu-highlight-radius-field hidden>
-                    <span class="feu-einsatz-field-label"><?php esc_html_e('Radius (m)', 'feuer-einsatzberichte'); ?></span>
-                    <input type="number" min="20" max="5000" step="10" name="feu_einsatz_map_highlight_radius_meters" id="feu_einsatz_map_highlight_radius_meters" value="<?php echo esc_attr($map_highlight_radius); ?>" class="widefat" />
-                </label>
-            </div>
-        </div>
+        </section>
 
         <details class="feu-einsatz-form-row feu-einsatz-map-advanced" data-feu-map-advanced>
             <summary><?php esc_html_e('Erweiterter Einsatzbereich, weitere Straßen und Datenschutz', 'feuer-einsatzberichte'); ?></summary>
@@ -415,6 +377,46 @@ $street_highlight_mode_label = 'full' === $street_highlight_mode
             </div>
             <div class="feu-einsatz-map-preview-diagnostics" data-feu-map-diagnostics hidden></div>
         </div>
+
+        <section class="feu-einsatz-form-row feu-einsatz-map-profile-fields feu-einsatz-map-highlight-profile" data-feu-map-highlight-profile aria-labelledby="feu-einsatz-map-highlight-heading">
+            <div class="feu-einsatz-map-profile-fields-head">
+                <span class="dashicons dashicons-admin-customizer" aria-hidden="true"></span>
+                <div>
+                    <h4 id="feu-einsatz-map-highlight-heading"><?php esc_html_e('Darstellung auf der Karte', 'feuer-einsatzberichte'); ?></h4>
+                    <p class="description"><?php esc_html_e('Diese Auswahl gilt nur für diesen Bericht und ebenso für das erzeugte Kartenbild.', 'feuer-einsatzberichte'); ?></p>
+                </div>
+            </div>
+            <div class="feu-einsatz-map-highlight-controls">
+                <label class="feu-einsatz-field">
+                    <span class="feu-einsatz-field-label"><?php esc_html_e('Schnellprofil', 'feuer-einsatzberichte'); ?></span>
+                    <select id="feu_einsatz_map_profile_preset" class="widefat" data-feu-map-profile-preset>
+                        <option value="custom"><?php esc_html_e('Individuell / unverändert', 'feuer-einsatzberichte'); ?></option>
+                        <option value="standard"><?php esc_html_e('Standard aus Einstellungen', 'feuer-einsatzberichte'); ?></option>
+                        <option value="full"><?php esc_html_e('Ganze Straße', 'feuer-einsatzberichte'); ?></option>
+                        <option value="segment_100"><?php esc_html_e('Verkehrsunfall – Abschnitt 100 m', 'feuer-einsatzberichte'); ?></option>
+                        <option value="radius_500"><?php esc_html_e('Wald- / Flächenlage – Radius 500 m', 'feuer-einsatzberichte'); ?></option>
+                        <option value="radius_1000"><?php esc_html_e('Großschaden – Radius 1.000 m', 'feuer-einsatzberichte'); ?></option>
+                    </select>
+                </label>
+                <label class="feu-einsatz-field">
+                    <span class="feu-einsatz-field-label"><?php esc_html_e('Darstellung', 'feuer-einsatzberichte'); ?></span>
+                    <select name="feu_einsatz_map_highlight_override" id="feu_einsatz_map_highlight_override" class="widefat">
+                        <option value="default" <?php selected($map_highlight_override, 'default'); ?>><?php printf(esc_html__('Standard übernehmen (%s)', 'feuer-einsatzberichte'), esc_html($street_highlight_mode_label)); ?></option>
+                        <option value="full" <?php selected($map_highlight_override, 'full'); ?>><?php esc_html_e('Ganze Straße', 'feuer-einsatzberichte'); ?></option>
+                        <option value="length" <?php selected($map_highlight_override, 'length'); ?>><?php esc_html_e('Straßenabschnitt', 'feuer-einsatzberichte'); ?></option>
+                        <option value="radius" <?php selected($map_highlight_override, 'radius'); ?>><?php esc_html_e('Radius um Einsatzort', 'feuer-einsatzberichte'); ?></option>
+                    </select>
+                </label>
+                <label class="feu-einsatz-field" data-feu-highlight-length-field hidden>
+                    <span class="feu-einsatz-field-label"><?php esc_html_e('Länge des Abschnitts (m)', 'feuer-einsatzberichte'); ?></span>
+                    <input type="number" min="20" max="5000" step="10" name="feu_einsatz_map_highlight_length_meters" id="feu_einsatz_map_highlight_length_meters" value="<?php echo esc_attr($map_highlight_length); ?>" class="widefat" />
+                </label>
+                <label class="feu-einsatz-field" data-feu-highlight-radius-field hidden>
+                    <span class="feu-einsatz-field-label"><?php esc_html_e('Radius (m)', 'feuer-einsatzberichte'); ?></span>
+                    <input type="number" min="20" max="5000" step="10" name="feu_einsatz_map_highlight_radius_meters" id="feu_einsatz_map_highlight_radius_meters" value="<?php echo esc_attr($map_highlight_radius); ?>" class="widefat" />
+                </label>
+            </div>
+        </section>
 
         <?php if (!empty($map_history)) : ?>
             <details class="feu-einsatz-form-row feu-einsatz-map-history">
@@ -622,12 +624,20 @@ $street_highlight_mode_label = 'full' === $street_highlight_mode
                 <?php endforeach; ?>
             </div>
 
-            <p>
-                <button type="button" id="feu-einsatz-add-gallery-images" class="button">
-                    <span class="dashicons dashicons-format-gallery"></span>
-                    <?php esc_html_e('Fotos aus Mediathek waehlen', 'feuer-einsatzberichte'); ?>
-                </button>
-            </p>
+            <div class="feu-einsatz-gallery-dropzone" data-feu-gallery-dropzone tabindex="0" role="button" aria-describedby="feu-einsatz-gallery-dropzone-help">
+                <span class="dashicons dashicons-cloud-upload" aria-hidden="true"></span>
+                <strong><?php esc_html_e('Fotos hinzufügen', 'feuer-einsatzberichte'); ?></strong>
+                <span id="feu-einsatz-gallery-dropzone-help"><?php esc_html_e('Klicken zum Auswählen. Neue Dateien können im folgenden WordPress-Uploadfenster auch per Drag & Drop hochgeladen werden.', 'feuer-einsatzberichte'); ?></span>
+                <span class="feu-einsatz-gallery-dropzone-actions">
+                    <button type="button" id="feu-einsatz-add-gallery-images" class="button button-secondary">
+                        <span class="dashicons dashicons-format-gallery" aria-hidden="true"></span>
+                        <?php esc_html_e('Mediathek öffnen', 'feuer-einsatzberichte'); ?>
+                    </button>
+                    <button type="button" class="button button-link" data-feu-gallery-upload>
+                        <?php esc_html_e('Neue Fotos hochladen', 'feuer-einsatzberichte'); ?>
+                    </button>
+                </span>
+            </div>
         </div>
     <?php endif; ?>
 

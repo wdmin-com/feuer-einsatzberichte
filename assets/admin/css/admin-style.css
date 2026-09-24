@@ -9114,6 +9114,352 @@
 }
 
 /* =====================================================
+   Report editor — focused workflow (location → preview → media)
+   ===================================================== */
+.feu-einsatz-meta-box {
+    display: grid;
+    gap: 18px;
+    padding: 18px;
+    color: #1d2327;
+}
+
+.feu-einsatz-meta-box > .feu-einsatz-form-row,
+.feu-einsatz-meta-box > .feu-einsatz-editor-section {
+    margin: 0;
+}
+
+.feu-einsatz-editor-section {
+    display: grid;
+    gap: 0;
+    overflow: hidden;
+    border: 1px solid #d8e1eb;
+    border-radius: 10px;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .035);
+}
+
+.feu-einsatz-editor-section .feu-einsatz-map-profile {
+    margin: 0;
+    padding: 20px 20px 16px;
+    border: 0;
+    border-bottom: 1px solid #e7edf3;
+    border-radius: 0;
+    background: linear-gradient(135deg, #f8fbff 0%, #ffffff 72%);
+}
+
+.feu-einsatz-editor-section .feu-einsatz-map-profile-head .description {
+    max-width: 780px;
+    margin: 6px 0 0;
+    color: #576779;
+    line-height: 1.55;
+}
+
+.feu-einsatz-editor-section .feu-einsatz-form-row {
+    margin: 0;
+    padding: 18px 20px;
+}
+
+.feu-einsatz-editor-section .feu-einsatz-form-row + .feu-einsatz-form-row {
+    border-top: 1px solid #edf1f5;
+}
+
+.feu-einsatz-meta-box .feu-einsatz-form-grid {
+    display: grid;
+    align-items: start;
+    gap: 16px;
+}
+
+.feu-einsatz-meta-box .feu-einsatz-form-grid--address {
+    grid-template-columns: minmax(0, 1.8fr) minmax(180px, .72fr);
+}
+
+.feu-einsatz-meta-box .feu-einsatz-form-grid--location {
+    grid-template-columns: minmax(130px, .55fr) minmax(180px, 1fr) minmax(180px, 1fr);
+}
+
+.feu-einsatz-meta-box .feu-einsatz-form-grid--timing,
+.feu-einsatz-meta-box .feu-einsatz-form-grid--coordinates {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.feu-einsatz-meta-box .feu-einsatz-field {
+    display: grid;
+    min-width: 0;
+    gap: 7px;
+}
+
+.feu-einsatz-meta-box .feu-einsatz-field-label {
+    min-width: 0;
+    color: #34445a;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .055em;
+    text-transform: uppercase;
+}
+
+.feu-einsatz-meta-box .feu-einsatz-form-row input:not([type="hidden"]),
+.feu-einsatz-meta-box .feu-einsatz-form-row select,
+.feu-einsatz-meta-box .feu-einsatz-form-row textarea {
+    box-sizing: border-box;
+    min-height: 40px;
+    margin: 0;
+    border-color: #b9c7d6;
+    border-radius: 6px;
+    background: #fff;
+    box-shadow: inset 0 1px 1px rgba(15, 23, 42, .025);
+}
+
+.feu-einsatz-meta-box .feu-einsatz-form-row input:focus,
+.feu-einsatz-meta-box .feu-einsatz-form-row select:focus,
+.feu-einsatz-meta-box .feu-einsatz-form-row textarea:focus {
+    border-color: #2271b1;
+    box-shadow: 0 0 0 1px #2271b1;
+}
+
+.feu-einsatz-meta-box .feu-einsatz-field-hint {
+    margin: 0;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+.feu-einsatz-location-mode-tabs {
+    margin-top: 18px;
+    gap: 12px;
+}
+
+.feu-einsatz-location-mode-tab {
+    min-height: 82px;
+    padding: 14px;
+    border-color: #cbd7e3;
+    border-radius: 8px;
+    background: #fff;
+    transition: border-color .16s ease, background-color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+
+.feu-einsatz-location-mode-tab:hover {
+    border-color: #8fb6d8;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, .06);
+    transform: translateY(-1px);
+}
+
+.feu-einsatz-location-mode-tab:has(input:checked) {
+    border-color: #2271b1;
+    background: #f0f7ff;
+    box-shadow: inset 0 0 0 1px #2271b1;
+}
+
+.feu-einsatz-map-profile-fields {
+    padding: 18px 20px;
+    border-color: #d8e1eb;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .035);
+}
+
+.feu-einsatz-map-profile-fields-head {
+    margin-bottom: 16px;
+}
+
+.feu-einsatz-map-profile-fields-head h4 {
+    font-size: 16px;
+}
+
+.feu-einsatz-inline-card--map-preview {
+    overflow: hidden;
+    padding: 0;
+    border: 1px solid #9fc1de;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 10px 28px rgba(27, 92, 144, .08);
+}
+
+.feu-einsatz-inline-card--map-preview .feu-einsatz-inline-card-head {
+    margin: 0;
+    padding: 18px 20px;
+    border-bottom: 1px solid #dbeaf6;
+    background: linear-gradient(135deg, #edf7ff, #f9fcff);
+}
+
+.feu-einsatz-inline-card--map-preview .feu-einsatz-inline-card-title {
+    font-size: 16px;
+}
+
+.feu-einsatz-map-preview-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.feu-einsatz-map-preview-mode {
+    padding: 6px 9px;
+    border-radius: 999px;
+    background: #d9efff;
+    color: #075985;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.feu-einsatz-address-map-preview-canvas {
+    min-height: 300px;
+    border: 0;
+    border-radius: 0;
+    background: #eef4f8;
+}
+
+.feu-einsatz-address-map-preview-leaflet {
+    height: 300px;
+}
+
+.feu-einsatz-map-preview-diagnostics {
+    margin: 0;
+    border: 0;
+    border-top: 1px solid #dbeaf6;
+    border-radius: 0;
+}
+
+.feu-einsatz-map-highlight-profile {
+    border-top: 3px solid #2271b1;
+}
+
+.feu-einsatz-map-highlight-controls {
+    grid-template-columns: minmax(220px, 1.35fr) minmax(190px, 1fr) minmax(160px, .7fr);
+    gap: 16px;
+}
+
+.feu-einsatz-map-advanced {
+    margin: 0;
+    border-radius: 8px;
+}
+
+.feu-einsatz-inline-card--media {
+    padding: 20px;
+    border: 1px solid #d8e1eb;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .035);
+}
+
+.feu-einsatz-inline-card--media .feu-einsatz-inline-card-head {
+    margin-bottom: 16px;
+}
+
+.feu-einsatz-gallery-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+    gap: 12px;
+    margin: 0 0 14px;
+}
+
+.feu-einsatz-gallery-item {
+    width: auto;
+    overflow: hidden;
+    border: 1px solid #d8e1eb;
+    border-radius: 8px;
+    background: #f8fafc;
+    aspect-ratio: 1 / .78;
+}
+
+.feu-einsatz-gallery-thumb {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 0;
+}
+
+.feu-einsatz-gallery-remove-button {
+    top: 7px;
+    right: 7px;
+    width: 28px;
+    height: 28px;
+    line-height: 28px;
+    background: rgba(127, 29, 29, .92);
+}
+
+.feu-einsatz-gallery-dropzone {
+    display: grid;
+    justify-items: center;
+    gap: 7px;
+    padding: 24px;
+    border: 2px dashed #9dbbd4;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #f8fbff, #f0f7ff);
+    color: #475569;
+    cursor: pointer;
+    text-align: center;
+    transition: border-color .16s ease, background-color .16s ease, box-shadow .16s ease;
+}
+
+.feu-einsatz-gallery-dropzone:hover,
+.feu-einsatz-gallery-dropzone:focus,
+.feu-einsatz-gallery-dropzone.is-dragging {
+    border-color: #2271b1;
+    background: #eaf5ff;
+    box-shadow: 0 0 0 3px rgba(34, 113, 177, .12);
+    outline: 0;
+}
+
+.feu-einsatz-gallery-dropzone > .dashicons {
+    width: 32px;
+    height: 32px;
+    color: #2271b1;
+    font-size: 32px;
+}
+
+.feu-einsatz-gallery-dropzone strong {
+    color: #1d3550;
+    font-size: 14px;
+}
+
+.feu-einsatz-gallery-dropzone > span:not(.dashicons):not(.feu-einsatz-gallery-dropzone-actions) {
+    max-width: 620px;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.feu-einsatz-gallery-dropzone-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+@media (max-width: 782px) {
+    .feu-einsatz-meta-box {
+        gap: 14px;
+        padding: 10px;
+    }
+
+    .feu-einsatz-editor-section .feu-einsatz-map-profile,
+    .feu-einsatz-editor-section .feu-einsatz-form-row,
+    .feu-einsatz-map-profile-fields,
+    .feu-einsatz-inline-card--media {
+        padding: 14px;
+    }
+
+    .feu-einsatz-meta-box .feu-einsatz-form-grid--address,
+    .feu-einsatz-meta-box .feu-einsatz-form-grid--location,
+    .feu-einsatz-meta-box .feu-einsatz-form-grid--timing,
+    .feu-einsatz-meta-box .feu-einsatz-form-grid--coordinates,
+    .feu-einsatz-map-highlight-controls {
+        grid-template-columns: 1fr;
+    }
+
+    .feu-einsatz-inline-card--map-preview .feu-einsatz-inline-card-head {
+        padding: 14px;
+    }
+
+    .feu-einsatz-map-preview-actions {
+        justify-content: flex-start;
+    }
+}
+
+/* =====================================================
    Settings UI — redesigned components
    ===================================================== */
 
