@@ -34,6 +34,9 @@ $template_types = [
                                 </option>
                             <?php endforeach; ?>
                         </select>
+                        <?php if ('single' === $type) : ?>
+                            <small><?php esc_html_e('Hier wählen Sie den Stil der öffentlichen Detailseite eines Einsatzes. Wählen Sie „Feuerwehr Theme – Karte zuerst“ für den neuen Karten-oben-Stil.', 'feuer-einsatzberichte'); ?></small>
+                        <?php endif; ?>
                     </label>
                 <?php endforeach; ?>
             </div>

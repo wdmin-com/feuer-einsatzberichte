@@ -1024,7 +1024,7 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
         $saved_tab = isset($_POST['feu_einsatz_active_tab'])
             ? sanitize_key(wp_unslash($_POST['feu_einsatz_active_tab']))
             : 'allgemein';
-        $saved_tab = in_array($saved_tab, ['allgemein', 'module', 'zugriff', 'medien', 'sozial', 'funktionen', 'organisationen', 'kategorien', 'karten', 'strassenregister', 'manifest', 'shortcodes', 'daten'], true)
+        $saved_tab = in_array($saved_tab, ['allgemein', 'module', 'vorlagen', 'zugriff', 'medien', 'sozial', 'funktionen', 'organisationen', 'kategorien', 'karten', 'strassenregister', 'manifest', 'shortcodes', 'daten'], true)
             ? $saved_tab
             : 'allgemein';
         if (!FEU_Einsatz_Admin::is_settings_tab_visible($saved_tab)) {
@@ -1070,7 +1070,7 @@ if (isset($_GET['settings-updated']) && 'true' === sanitize_key(wp_unslash($_GET
     echo '<div class="notice notice-success is-dismissible"><p>' . esc_html($settings_saved_flash) . '</p></div>';
 }
 
-$settings_tabs = ['allgemein', 'module', 'zugriff', 'medien', 'sozial', 'funktionen', 'organisationen', 'kategorien', 'karten', 'strassenregister', 'manifest', 'shortcodes', 'daten'];
+$settings_tabs = ['allgemein', 'module', 'vorlagen', 'zugriff', 'medien', 'sozial', 'funktionen', 'organisationen', 'kategorien', 'karten', 'strassenregister', 'manifest', 'shortcodes', 'daten'];
 $visible_settings_tabs = array_values(array_filter($settings_tabs, static function ($tab) {
     return FEU_Einsatz_Admin::is_settings_tab_visible($tab);
 }));

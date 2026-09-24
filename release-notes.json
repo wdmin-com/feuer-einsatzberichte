@@ -1,6 +1,17 @@
 {
   "releases": [
     {
+      "version": "3.2.73",
+      "date": "2026-09-24",
+      "title": "Reparierte Vorlagen-Einstellungen",
+      "summary": "Die Vorlagen-Registerkarte und die sichtbare Auswahl des neuen Einzelbeitrags-Stils funktionieren jetzt vollständig.",
+      "changes": [
+        "Kritisch behoben: Der Tab „Vorlagen“ ist in der serverseitigen und browserseitigen Tab-Freigabe registriert und kann nicht mehr auf „Allgemein“ zurückfallen.",
+        "Bedienung: Beim Auswahlfeld für den Einzelbeitrag erklärt ein direkter Hinweis den Stil „Feuerwehr Theme – Karte zuerst“.",
+        "Speichern: Nach dem Speichern bleibt der Administrator auf der geöffneten Vorlagen-Registerkarte."
+      ]
+    },
+    {
       "version": "3.2.72",
       "date": "2026-09-24",
       "title": "Robuste Live-Karte im Radiusmodus",
