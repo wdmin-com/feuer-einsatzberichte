@@ -249,6 +249,23 @@ delete_post_meta($report_id, FEU_Einsatz_Template_Helpers::MAP_HIGHLIGHT_OVERRID
 delete_post_meta($report_id, FEU_Einsatz_Template_Helpers::MAP_HIGHLIGHT_RADIUS_META);
 delete_post_meta($report_id, FEU_Einsatz_Template_Helpers::MAP_LOCATION_MODE_META);
 
+// The preceding assertion intentionally removes a manually entered point.
+// Reproduce the subsequent successful address-geocoding job before testing the
+// public renderer; otherwise the test asks a public page to display data that
+// it correctly refuses to invent.
+update_post_meta($report_id, '_feu_einsatz_latitude', '53.528320');
+update_post_meta($report_id, '_feu_einsatz_longitude', '10.083210');
+FEU_Einsatz_Template_Helpers::mark_report_address_coordinates(
+    $report_id,
+    'Bredowstraße',
+    '4',
+    '22113',
+    'Hamburg'
+);
+if (!FEU_Einsatz_Street_Cache::set_post_cache((int) $report_id, $street_geometry)) {
+    feu_einsatz_ci_fail('Restored address geometry fixture could not be saved.');
+}
+
 update_option('feu_einsatz_street_highlight_mode', 'full', false);
 $street_revision = get_post_meta($report_id, FEU_Einsatz_Street_Cache::POST_META_REVISION, true);
 $single_context = FEU_Einsatz_Template_Helpers::get_single_context(get_post($report_id));
