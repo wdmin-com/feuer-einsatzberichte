@@ -1,6 +1,19 @@
 {
   "releases": [
     {
+      "version": "3.2.80",
+      "date": "2026-09-25",
+      "title": "Apple-Arbeitsfläche ohne verschachtelte Karten",
+      "summary": "Die Karten-Einstellungen und die Kartensteuerung im Berichtseditor wurden als neue, flache Arbeitsoberflächen gestaltet.",
+      "changes": [
+        "Karten-Einstellungen: Die äußeren Karten wurden entfernt. Abschnittstitel stehen frei, während zusammengehörige Eingaben in genau einer klaren Gruppe liegen.",
+        "Bedienung: Schalter erscheinen als ruhige iOS-ähnliche Zeilen statt als mehrere umrahmte Mini-Karten.",
+        "Vorschau: Die Live-Karte ist die einzige bewusst große Fläche und erhält keinen weiteren verschachtelten Rahmen.",
+        "Berichtseditor: Darstellung auf der Karte ist jetzt eine zweispaltige Kontrollfläche mit separatem Erklärungstext und gleich breiten Auswahlfeldern.",
+        "Responsivität: Alle neuen Arbeitsflächen wechseln unterhalb von 920 Pixeln kontrolliert in eine Spalte."
+      ]
+    },
+    {
       "version": "3.2.79",
       "date": "2026-09-25",
       "title": "Konsistentes Apple-Layout für Einstellungen",

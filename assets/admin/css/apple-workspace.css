@@ -972,3 +972,274 @@ body.feu-apple-workspace .feu-einsatz-meta-box textarea.widefat {
         flex-wrap: wrap;
     }
 }
+
+/* Apple workspace v2 -----------------------------------------------------
+ * The former layer only rounded the legacy nested boxes.  That made the
+ * settings read as cards inside cards.  This is a structural visual reset:
+ * a section has a quiet heading, then one level of grouped controls. */
+body.feu-apple-settings #tab-karten .feu-admin-settings-stack {
+    display: grid;
+    gap: 44px;
+    max-width: 1120px;
+}
+
+body.feu-apple-settings #tab-karten .feu-admin-settings-surface {
+    display: grid;
+    gap: 20px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+body.feu-apple-settings #tab-karten .feu-admin-settings-surface-head {
+    padding: 0 2px;
+    border: 0;
+    background: transparent;
+}
+
+body.feu-apple-settings #tab-karten .feu-admin-settings-surface-head h2,
+body.feu-apple-settings #tab-karten .feu-admin-settings-surface-head h3 {
+    margin: 0 0 6px;
+    color: #1d1d1f;
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -.035em;
+}
+
+body.feu-apple-settings #tab-karten .feu-admin-settings-surface-head h3 {
+    font-size: 21px;
+}
+
+body.feu-apple-settings #tab-karten .feu-admin-settings-surface-head .description {
+    max-width: 680px;
+    margin: 0;
+    color: #6e6e73;
+    font-size: 14px;
+    line-height: 1.55;
+}
+
+body.feu-apple-settings #tab-karten .feu-admin-settings-fieldset {
+    display: grid;
+    align-content: start;
+    gap: 16px;
+    padding: 24px;
+    border: 1px solid rgba(29, 29, 31, .09);
+    border-radius: 20px;
+    background: #fff;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, .035);
+}
+
+body.feu-apple-settings #tab-karten .feu-admin-settings-fieldset-head {
+    margin: 0;
+    padding: 0 0 12px;
+    border-bottom: 1px solid rgba(29, 29, 31, .09);
+}
+
+body.feu-apple-settings #tab-karten .feu-admin-settings-fieldset-head h3,
+body.feu-apple-settings #tab-karten .feu-admin-settings-fieldset-head h4 {
+    margin: 0;
+    color: #1d1d1f;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: .015em;
+}
+
+body.feu-apple-settings #tab-karten .feu-admin-settings-fieldset-head .description {
+    margin: 7px 0 0;
+    color: #6e6e73;
+    line-height: 1.5;
+}
+
+body.feu-apple-settings #tab-karten .feu-admin-settings-check-grid {
+    display: grid;
+    gap: 0;
+    border-top: 1px solid rgba(29, 29, 31, .08);
+}
+
+body.feu-apple-settings #tab-karten .feu-admin-settings-check-card {
+    min-height: 0;
+    margin: 0;
+    padding: 15px 0;
+    border: 0;
+    border-bottom: 1px solid rgba(29, 29, 31, .08);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    transform: none;
+}
+
+body.feu-apple-settings #tab-karten .feu-admin-settings-check-card:hover {
+    border-color: rgba(29, 29, 31, .08);
+    background: transparent;
+    box-shadow: none;
+    transform: none;
+}
+
+body.feu-apple-settings #tab-karten .feu-admin-settings-check-card input[type="checkbox"] {
+    width: 42px;
+    height: 24px;
+    margin: 0 12px 0 0;
+    border: 0;
+    border-radius: 999px;
+    background: #d1d1d6;
+    box-shadow: none;
+    appearance: none;
+    cursor: pointer;
+}
+
+body.feu-apple-settings #tab-karten .feu-admin-settings-check-card input[type="checkbox"]::before {
+    width: 20px;
+    height: 20px;
+    margin: 2px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .2);
+    content: '';
+    transform: none;
+}
+
+body.feu-apple-settings #tab-karten .feu-admin-settings-check-card input[type="checkbox"]:checked {
+    background: #0071e3;
+}
+
+body.feu-apple-settings #tab-karten .feu-admin-settings-check-card input[type="checkbox"]:checked::before {
+    transform: translateX(18px);
+}
+
+body.feu-apple-settings #tab-karten .feu-admin-settings-check-copy strong {
+    color: #1d1d1f;
+    font-size: 14px;
+}
+
+body.feu-apple-settings #tab-karten .feu-admin-settings-check-copy small {
+    max-width: 54ch;
+    color: #6e6e73;
+    line-height: 1.45;
+}
+
+body.feu-apple-settings #tab-karten .feu-admin-settings-form-grid {
+    gap: 16px;
+}
+
+body.feu-apple-settings #tab-karten .feu-admin-settings-field {
+    gap: 7px;
+}
+
+body.feu-apple-settings #tab-karten .feu-admin-settings-field > span {
+    color: #424245;
+    font-size: 12px;
+    font-weight: 650;
+}
+
+body.feu-apple-settings #tab-karten .feu-admin-settings-field input,
+body.feu-apple-settings #tab-karten .feu-admin-settings-field select,
+body.feu-apple-settings #tab-karten .feu-admin-settings-field textarea {
+    min-height: 42px;
+    border: 1px solid rgba(29, 29, 31, .16);
+    border-radius: 11px;
+    background: #fbfbfd;
+    box-shadow: none;
+}
+
+body.feu-apple-settings #tab-karten .feu-admin-settings-field textarea {
+    min-height: 132px;
+}
+
+body.feu-apple-settings #tab-karten .feu-admin-settings-field input:focus,
+body.feu-apple-settings #tab-karten .feu-admin-settings-field select:focus,
+body.feu-apple-settings #tab-karten .feu-admin-settings-field textarea:focus {
+    border-color: #0071e3;
+    box-shadow: 0 0 0 4px rgba(0, 113, 227, .13);
+}
+
+/* The map preview is the only intentional large canvas, so its card is a
+ * single clean surface rather than a panel nested in another panel. */
+body.feu-apple-settings #tab-karten .feu-admin-settings-fieldset--preview {
+    gap: 20px;
+    padding: 0;
+    overflow: hidden;
+}
+
+body.feu-apple-settings #tab-karten .feu-admin-settings-fieldset--preview > .feu-admin-settings-fieldset-head {
+    padding: 24px 24px 0;
+    border: 0;
+}
+
+body.feu-apple-settings #tab-karten .feu-admin-settings-fieldset--preview > .feu-einsatz-map-live-preview {
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+/* Per-report map display gets a real, horizontal control surface.  The old
+ * flex layout gave the title most of the width and squeezed controls into a
+ * narrow column, making them appear attached to the heading. */
+body.feu-apple-workspace .feu-einsatz-map-highlight-profile {
+    display: grid;
+    grid-template-columns: minmax(220px, .72fr) minmax(0, 1.28fr);
+    gap: 28px;
+    align-items: start;
+    padding: 24px;
+    border: 1px solid rgba(0, 113, 227, .18);
+    border-radius: 18px;
+    background: #f7fbff;
+    box-shadow: none;
+}
+
+body.feu-apple-workspace .feu-einsatz-map-highlight-profile .feu-einsatz-map-profile-fields-head {
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr);
+    gap: 10px;
+    align-items: start;
+    margin: 0;
+}
+
+body.feu-apple-workspace .feu-einsatz-map-highlight-profile .feu-einsatz-map-profile-fields-head h4 {
+    margin: 0 0 5px;
+    font-size: 18px;
+}
+
+body.feu-apple-workspace .feu-einsatz-map-highlight-profile .feu-einsatz-map-profile-fields-head .description {
+    margin: 0;
+}
+
+body.feu-apple-workspace .feu-einsatz-map-highlight-profile .feu-einsatz-map-highlight-controls {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    margin: 0;
+}
+
+body.feu-apple-workspace .feu-einsatz-map-highlight-profile .feu-einsatz-map-highlight-controls .feu-einsatz-field {
+    min-width: 0;
+}
+
+body.feu-apple-workspace .feu-einsatz-map-highlight-profile .feu-einsatz-map-highlight-controls .widefat {
+    min-width: 0;
+    min-height: 44px;
+}
+
+@media (max-width: 920px) {
+    body.feu-apple-workspace .feu-einsatz-map-highlight-profile {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 18px;
+    }
+}
+
+@media (max-width: 600px) {
+    body.feu-apple-settings #tab-karten .feu-admin-settings-fieldset {
+        padding: 18px;
+        border-radius: 16px;
+    }
+
+    body.feu-apple-settings #tab-karten .feu-admin-settings-fieldset--preview {
+        padding: 0;
+    }
+
+    body.feu-apple-workspace .feu-einsatz-map-highlight-profile .feu-einsatz-map-highlight-controls {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
