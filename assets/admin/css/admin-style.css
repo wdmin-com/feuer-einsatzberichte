@@ -10193,6 +10193,308 @@ body.feu-admin-ui--modern-shell .feu-admin-settings-main .feu-einsatz-tab-conten
     align-content: start;
 }
 
+/*
+ * Report editor — clarity pass.
+ *
+ * Keep these rules last. Earlier generic "modern form" rules deliberately
+ * remove card surfaces for settings screens, but doing so here made address,
+ * map preview and map controls look like one unstructured form.
+ */
+.feu-einsatz-report-create-page {
+    max-width: 1540px;
+    margin: 20px auto 48px;
+    color: #1d2327;
+}
+
+.feu-einsatz-report-create-page .feu-einsatz-admin-hero {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin: 0;
+    padding: 22px 24px;
+    border: 1px solid #c3d9ee;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .04);
+}
+
+.feu-einsatz-report-create-page .feu-einsatz-admin-hero h1 {
+    margin: 2px 0 6px;
+    color: #1d2327;
+    font-size: 26px;
+}
+
+.feu-einsatz-report-create-page .feu-einsatz-admin-hero-path {
+    display: none;
+}
+
+.feu-einsatz-report-create-page .feu-einsatz-report-section-nav {
+    gap: 6px;
+    margin: 14px 0 18px;
+    padding: 10px 12px;
+    border: 1px solid #dcdcde;
+    border-radius: 8px;
+    background: #fff;
+}
+
+.feu-einsatz-report-create-page .feu-einsatz-report-section-link {
+    min-height: 32px;
+    padding: 0 10px;
+    border-color: transparent;
+    border-radius: 5px;
+    background: #f6f7f7;
+    color: #3858a0;
+}
+
+.feu-einsatz-report-create-page .feu-einsatz-report-section-link:hover,
+.feu-einsatz-report-create-page .feu-einsatz-report-section-link:focus {
+    border-color: #72aee6;
+    background: #f0f6fc;
+    color: #135e96;
+    box-shadow: none;
+}
+
+.feu-einsatz-report-create-page .feu-einsatz-report-create-grid {
+    grid-template-columns: minmax(0, 1fr) 310px;
+    gap: 20px;
+}
+
+.feu-einsatz-report-create-page .postbox.feu-einsatz-form-section {
+    margin: 0 0 20px;
+    border-color: #c3c4c7;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .04);
+}
+
+.feu-einsatz-report-create-page .postbox.feu-einsatz-form-section > .postbox-header {
+    min-height: 56px;
+    padding: 0 20px;
+    border-bottom-color: #dcdcde;
+    background: #f6f7f7;
+}
+
+.feu-einsatz-report-create-page .postbox.feu-einsatz-form-section > .postbox-header .hndle {
+    color: #1d2327;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.feu-einsatz-report-create-page .postbox.feu-einsatz-form-section > .inside {
+    padding: 20px;
+    gap: 18px;
+}
+
+/* The individual work areas inside "Einsatzdetails" are intentionally
+ * surfaced again; they are not generic settings rows. */
+.feu-einsatz-report-create-page .feu-einsatz-meta-box--modern,
+.feu-einsatz-report-create-page .feu-einsatz-meta-box-container {
+    display: grid;
+    gap: 18px;
+}
+
+.feu-einsatz-report-create-page .feu-einsatz-editor-section,
+.feu-einsatz-report-create-page .feu-einsatz-map-profile-fields,
+.feu-einsatz-report-create-page .feu-einsatz-map-advanced,
+.feu-einsatz-report-create-page .feu-einsatz-inline-card {
+    box-sizing: border-box;
+    border: 1px solid #dcdcde;
+    border-radius: 6px;
+    background: #fff;
+    box-shadow: none;
+}
+
+.feu-einsatz-report-create-page .feu-einsatz-editor-section {
+    overflow: hidden;
+    border-color: #c3d9ee;
+}
+
+.feu-einsatz-report-create-page .feu-einsatz-editor-section .feu-einsatz-map-profile {
+    padding: 20px;
+    border-bottom-color: #dcdcde;
+    background: #f0f6fc;
+}
+
+.feu-einsatz-report-create-page .feu-einsatz-map-profile-kicker {
+    color: #135e96;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .06em;
+}
+
+.feu-einsatz-report-create-page .feu-einsatz-map-profile-head h4,
+.feu-einsatz-report-create-page .feu-einsatz-map-profile-fields-head h4,
+.feu-einsatz-report-create-page .feu-einsatz-inline-card-title {
+    color: #1d2327;
+    font-size: 16px;
+}
+
+.feu-einsatz-report-create-page .feu-einsatz-editor-section .feu-einsatz-form-row {
+    padding: 20px;
+}
+
+.feu-einsatz-report-create-page .feu-einsatz-location-mode-tabs {
+    gap: 12px;
+    padding: 16px 20px 20px;
+    border-bottom: 1px solid #dcdcde;
+    background: #f0f6fc;
+}
+
+.feu-einsatz-report-create-page .feu-einsatz-location-mode-tab {
+    min-height: 72px;
+    padding: 14px 16px;
+    border: 1px solid #c3c4c7;
+    border-radius: 6px;
+    background: #fff;
+}
+
+.feu-einsatz-report-create-page .feu-einsatz-location-mode-tab:has(input:checked) {
+    border-color: #2271b1;
+    background: #f0f6fc;
+    box-shadow: inset 0 0 0 1px #2271b1;
+}
+
+.feu-einsatz-report-create-page .feu-einsatz-map-profile-fields {
+    margin: 0;
+    padding: 20px;
+}
+
+.feu-einsatz-report-create-page .feu-einsatz-map-profile-fields-head {
+    margin: 0 0 16px;
+}
+
+.feu-einsatz-report-create-page .feu-einsatz-map-highlight-profile {
+    border-color: #c3d9ee;
+    background: #f8fbff;
+}
+
+.feu-einsatz-report-create-page .feu-einsatz-map-advanced {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+.feu-einsatz-report-create-page .feu-einsatz-map-advanced > summary {
+    padding: 14px 16px;
+    background: #f6f7f7;
+    color: #1d2327;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.feu-einsatz-report-create-page .feu-einsatz-map-advanced[open] > summary {
+    border-bottom: 1px solid #dcdcde;
+}
+
+.feu-einsatz-report-create-page .feu-einsatz-map-advanced > :not(summary) {
+    margin-right: 20px;
+    margin-left: 20px;
+}
+
+.feu-einsatz-report-create-page .feu-einsatz-map-advanced > .feu-einsatz-form-grid {
+    margin-top: 18px;
+}
+
+.feu-einsatz-report-create-page .feu-einsatz-map-advanced > .feu-einsatz-map-area-actions {
+    margin-top: 14px;
+    margin-bottom: 20px;
+}
+
+.feu-einsatz-report-create-page .feu-einsatz-inline-card--map-preview {
+    margin: 0;
+    padding: 20px;
+    border-color: #72aee6;
+    background: #f8fbff;
+}
+
+.feu-einsatz-report-create-page .feu-einsatz-inline-card--map-preview .feu-einsatz-address-map-preview-canvas {
+    min-height: 330px;
+    border: 1px solid #8c8f94;
+    border-radius: 4px;
+    background: #fff;
+}
+
+.feu-einsatz-report-create-page .feu-einsatz-inline-card--media,
+.feu-einsatz-report-create-page .feu-einsatz-inline-card--availability {
+    margin: 0;
+    padding: 20px;
+}
+
+.feu-einsatz-report-create-page .feu-einsatz-form-stack {
+    gap: 22px;
+}
+
+.feu-einsatz-report-create-page .feu-einsatz-field-label {
+    color: #1d2327;
+    font-size: 12px;
+    letter-spacing: .02em;
+}
+
+.feu-einsatz-report-create-page .feu-einsatz-field-hint {
+    max-width: 720px;
+    margin: 0;
+    color: #646970;
+}
+
+.feu-einsatz-report-create-page .feu-einsatz-report-create-side {
+    position: sticky;
+    top: 46px;
+}
+
+.feu-einsatz-report-create-page .feu-einsatz-form-section--side .inside {
+    padding: 16px;
+}
+
+.feu-einsatz-report-create-page .feu-einsatz-report-category-item {
+    min-height: 42px;
+    border-color: #dcdcde;
+    border-radius: 4px;
+}
+
+@media (max-width: 1200px) {
+    .feu-einsatz-report-create-page .feu-einsatz-report-create-grid {
+        grid-template-columns: minmax(0, 1fr) 280px;
+        gap: 16px;
+    }
+}
+
+@media (max-width: 1040px) {
+    .feu-einsatz-report-create-page .feu-einsatz-report-create-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .feu-einsatz-report-create-page .feu-einsatz-report-create-side {
+        position: static;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 782px) {
+    .feu-einsatz-report-create-page {
+        margin-top: 12px;
+    }
+
+    .feu-einsatz-report-create-page .feu-einsatz-admin-hero,
+    .feu-einsatz-report-create-page .postbox.feu-einsatz-form-section > .inside {
+        padding: 16px;
+    }
+
+    .feu-einsatz-report-create-page .feu-einsatz-report-create-side {
+        grid-template-columns: 1fr;
+    }
+
+    .feu-einsatz-report-create-page .feu-einsatz-inline-card--map-preview .feu-einsatz-address-map-preview-canvas {
+        min-height: 250px;
+    }
+
+    .feu-einsatz-report-create-page .feu-einsatz-map-profile-fields,
+    .feu-einsatz-report-create-page .feu-einsatz-inline-card--map-preview,
+    .feu-einsatz-report-create-page .feu-einsatz-inline-card--media,
+    .feu-einsatz-report-create-page .feu-einsatz-inline-card--availability {
+        padding: 16px;
+    }
+}
+
 @media (max-width: 1040px) {
     .feu-einsatz-participant-panel-grid {
         grid-template-columns: 1fr;

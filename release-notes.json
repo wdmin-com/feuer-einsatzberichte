@@ -1,6 +1,18 @@
 {
   "releases": [
     {
+      "version": "3.2.77",
+      "date": "2026-09-25",
+      "title": "Übersichtlicher Berichtseditor",
+      "summary": "Der Berichtseditor trennt Einsatzort, Live-Karte, Kartenregeln, Medien und Seitenleiste wieder in klar erkennbare Arbeitsbereiche.",
+      "changes": [
+        "Design: Interne Bereiche von Einsatzdetails erhalten wieder eigene Karten, Hintergründe, Abstände und Überschriften statt ineinander zu laufen.",
+        "Karte: Die Live-Vorschau ist als klar abgegrenzte Arbeitsfläche hervorgehoben; Adresse, Koordinaten, erweitertes Einsatzgebiet und Kartendarstellung sind deutlich voneinander getrennt.",
+        "Bedienung: Die Seitennavigation, Formularüberschriften und Kategorien sind ruhiger und besser lesbar; die Seitenleiste bleibt auf großen Bildschirmen erreichbar und wird auf kleineren Bildschirmen sauber unter den Inhalt gesetzt.",
+        "Kompatibilität: Es wurden ausschließlich Darstellungsregeln geändert. Speichern, Kartenlogik, Fotos und vorhandene Feldnamen bleiben unverändert."
+      ]
+    },
+    {
       "version": "3.2.76",
       "date": "2026-09-24",
       "title": "Sichere manuelle Mannschaft-Synchronisierung",
