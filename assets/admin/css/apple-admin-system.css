@@ -559,6 +559,28 @@ body.feu-apple-workspace .postbox.feu-einsatz-form-section .feu-einsatz-map-prof
     border-top: 0;
 }
 
+/* The old generic form-row flex rule squeezed the coordinate grid to roughly
+ * 170px per input.  This location panel occupies the full editor width. */
+body.feu-apple-workspace .postbox.feu-einsatz-form-section .feu-einsatz-map-profile-fields[data-feu-location-panel="coordinates"] {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+    width: 100%;
+    min-width: 0;
+}
+
+body.feu-apple-workspace .postbox.feu-einsatz-form-section .feu-einsatz-map-profile-fields[data-feu-location-panel="coordinates"] .feu-einsatz-form-grid--coordinates {
+    width: 100%;
+    min-width: 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 600px) {
+    body.feu-apple-workspace .postbox.feu-einsatz-form-section .feu-einsatz-map-profile-fields[data-feu-location-panel="coordinates"] .feu-einsatz-form-grid--coordinates {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
 body.feu-apple-workspace .feu-einsatz-report-section-nav {
     position: static;
     top: auto;

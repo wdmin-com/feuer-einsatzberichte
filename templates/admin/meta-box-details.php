@@ -270,6 +270,29 @@ $street_highlight_mode_label = 'full' === $street_highlight_mode
             </div>
         </div>
 
+        <div class="feu-einsatz-form-row feu-einsatz-map-profile-fields" data-feu-location-panel="coordinates" hidden>
+            <div class="feu-einsatz-map-profile-fields-head">
+                <span class="dashicons dashicons-location" aria-hidden="true"></span>
+                <div>
+                    <h4><?php esc_html_e('Genaue Einsatzkoordinaten', 'feuer-einsatzberichte'); ?></h4>
+                    <p class="description"><?php esc_html_e('Die Koordinaten werden nicht durch die Adresssuche ersetzt. Für Flächenlagen eignet sich zusätzlich der Kartenmodus „Radius“.', 'feuer-einsatzberichte'); ?></p>
+                </div>
+            </div>
+            <div class="feu-einsatz-form-grid feu-einsatz-form-grid--coordinates">
+                <div class="feu-einsatz-field">
+                    <label class="feu-einsatz-field-label" for="feu_einsatz_latitude"><?php esc_html_e('Breitengrad', 'feuer-einsatzberichte'); ?></label>
+                    <input type="text" id="feu_einsatz_latitude" name="feu_einsatz_latitude" value="<?php echo esc_attr($map_latitude); ?>" class="widefat" placeholder="z.B. 53,575320" inputmode="decimal" autocomplete="off" />
+                </div>
+                <div class="feu-einsatz-field">
+                    <label class="feu-einsatz-field-label" for="feu_einsatz_longitude"><?php esc_html_e('Längengrad', 'feuer-einsatzberichte'); ?></label>
+                    <input type="text" id="feu_einsatz_longitude" name="feu_einsatz_longitude" value="<?php echo esc_attr($map_longitude); ?>" class="widefat" placeholder="z.B. 9,993682" inputmode="decimal" autocomplete="off" />
+                </div>
+            </div>
+            <p class="description feu-einsatz-field-hint">
+                <?php esc_html_e('Komma und Punkt werden akzeptiert. Du kannst die Position auch unten direkt mit einem Klick in der Live-Karte setzen.', 'feuer-einsatzberichte'); ?>
+            </p>
+        </div>
+
         <div class="feu-einsatz-form-row feu-einsatz-form-grid feu-einsatz-form-grid--timing">
             <div class="feu-einsatz-field">
                 <label class="feu-einsatz-field-label" for="feu_einsatz_datum">
@@ -299,29 +322,6 @@ $street_highlight_mode_label = 'full' === $street_highlight_mode
                     required
                 />
             </div>
-        </div>
-
-        <div class="feu-einsatz-form-row feu-einsatz-map-profile-fields" data-feu-location-panel="coordinates" hidden>
-            <div class="feu-einsatz-map-profile-fields-head">
-                <span class="dashicons dashicons-location" aria-hidden="true"></span>
-                <div>
-                    <h4><?php esc_html_e('Genaue Einsatzkoordinaten', 'feuer-einsatzberichte'); ?></h4>
-                    <p class="description"><?php esc_html_e('Die Koordinaten werden nicht durch die Adresssuche ersetzt. Für Flächenlagen eignet sich zusätzlich der Kartenmodus „Radius“.', 'feuer-einsatzberichte'); ?></p>
-                </div>
-            </div>
-            <div class="feu-einsatz-form-grid feu-einsatz-form-grid--coordinates">
-                <div class="feu-einsatz-field">
-                    <label class="feu-einsatz-field-label" for="feu_einsatz_latitude"><?php esc_html_e('Breitengrad', 'feuer-einsatzberichte'); ?></label>
-                    <input type="text" id="feu_einsatz_latitude" name="feu_einsatz_latitude" value="<?php echo esc_attr($map_latitude); ?>" class="widefat" placeholder="z.B. 53,575320" inputmode="decimal" autocomplete="off" />
-                </div>
-                <div class="feu-einsatz-field">
-                    <label class="feu-einsatz-field-label" for="feu_einsatz_longitude"><?php esc_html_e('Längengrad', 'feuer-einsatzberichte'); ?></label>
-                    <input type="text" id="feu_einsatz_longitude" name="feu_einsatz_longitude" value="<?php echo esc_attr($map_longitude); ?>" class="widefat" placeholder="z.B. 9,993682" inputmode="decimal" autocomplete="off" />
-                </div>
-            </div>
-            <p class="description feu-einsatz-field-hint">
-                <?php esc_html_e('Komma und Punkt werden akzeptiert. Du kannst die Position auch unten direkt mit einem Klick in der Live-Karte setzen.', 'feuer-einsatzberichte'); ?>
-            </p>
         </div>
         </section>
 

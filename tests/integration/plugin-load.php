@@ -199,6 +199,22 @@ if (false === strpos($radius_preview_markup, '<ellipse')) {
     feu_einsatz_ci_fail('A coordinate-only radius did not produce an SVG fallback circle.');
 }
 
+$unverified_house_preview_markup = FEU_Einsatz_Template_Helpers::build_local_map_preview_markup([
+    'latitude' => 53.528320,
+    'longitude' => 10.083210,
+    'geometry' => $street_geometry['geometry'],
+    'address' => 'Bredowstraße, 22113 Hamburg',
+    'highlight_mode' => 'full',
+    'show_marker' => false,
+]);
+if (
+    false === strpos($unverified_house_preview_markup, 'vector-effect="non-scaling-stroke"')
+    || false !== strpos($unverified_house_preview_markup, '<circle')
+    || false !== strpos($unverified_house_preview_markup, '53.528320, 10.083210')
+) {
+    feu_einsatz_ci_fail('Street-only preview must retain the street line without a false house marker or exact-coordinate label.');
+}
+
 $extra_streets = FEU_Einsatz_Template_Helpers::normalize_report_map_extra_streets("Bredowstraße\nBredowstraße\nMusterweg");
 if (['Bredowstraße', 'Musterweg'] !== $extra_streets) {
     feu_einsatz_ci_fail('Additional report streets were not normalized deterministically.');

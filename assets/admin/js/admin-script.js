@@ -2132,10 +2132,6 @@
                 var highlightMode = String($('#feu_einsatz_map_highlight_override').val() || 'default');
                 var highlightLength = $.trim($('#feu_einsatz_map_highlight_length_meters').val() || '100');
                 var highlightRadius = $.trim($('#feu_einsatz_map_highlight_radius_meters').val() || '100');
-                var date = $.trim($('#feu_einsatz_datum').val() || '');
-                var time = $.trim($('#feu_einsatz_uhrzeit').val() || '');
-                var validDate = /^(?:\d{2}\.\d{2}\.\d{4}|\d{4}-\d{2}-\d{2})$/.test(date);
-                var validTime = /^\d{2}:\d{2}$/.test(time);
                 var normalizedLatitude = latitude.replace(',', '.');
                 var normalizedLongitude = longitude.replace(',', '.');
                 var numericLatitude = parseFloat(normalizedLatitude);
@@ -2158,7 +2154,7 @@
                     highlightMode: highlightMode,
                     highlightLength: highlightLength,
                     highlightRadius: highlightRadius,
-                    ready: locationReady && validDate && validTime,
+                    ready: locationReady,
                     extraStreets: extraStreets,
                     areaGeojson: areaGeojson,
                     addressKey: [locationMode, street, houseNumber, postcode, city, normalizedLatitude, normalizedLongitude, highlightMode, highlightLength, highlightRadius, extraStreets, areaGeojson].join('|').toLowerCase()
@@ -2315,14 +2311,20 @@
                         $status.text('Koordinaten mit dem Marker verschoben. Karte wird aktualisiert …');
                         $('#feu_einsatz_latitude').trigger('change');
                     });
-                } else {
+                } else if (data.address_exact !== false) {
                     marker = window.L.circleMarker([latitude, longitude], {
                         radius: 8, color: '#ffffff', weight: 3, fillColor: color, fillOpacity: 1
                     }).addTo(map);
                 }
-                layers.push(marker);
-                bounds.extend(marker.getLatLng());
-                map.fitBounds(bounds.isValid() ? bounds.pad(0.18) : window.L.latLngBounds([[latitude, longitude], [latitude, longitude]]), { maxZoom: 17 });
+                if (marker) {
+                    layers.push(marker);
+                    bounds.extend(marker.getLatLng());
+                }
+                if (bounds.isValid()) {
+                    map.fitBounds(bounds.pad(0.18), { maxZoom: 17 });
+                } else {
+                    map.setView([latitude, longitude], 15);
+                }
                 map.on('click', function (event) {
                     if (areaDrawing) {
                         var points = getAreaPoints();
@@ -2398,6 +2400,9 @@
                         }
                         lastRenderedAddressKey = details.addressKey;
                         $status.text(previewData.message || 'Kartenvorschau aktualisiert.');
+                        if (previewData.preview_mode_label) {
+                            $previewMode.text(previewData.preview_mode_label);
+                        }
                         if (previewData.diagnostics) {
                             var diagnostics = previewData.diagnostics;
                             $diagnostics.text(
@@ -2412,10 +2417,12 @@
                         $status.text((response && response.data && response.data.message) || 'Kartenvorschau konnte nicht erstellt werden.');
                     }
                 }).fail(function (xhr, status) {
-                    if (status !== 'abort') {
-                        $canvas.empty();
-                        $status.text('Kartenvorschau ist momentan nicht verfügbar. Bitte Eingabe oder Kartenverbindung prüfen.');
+                    if (status === 'abort' || readRequiredDetails().addressKey !== details.addressKey) {
+                        return;
                     }
+                    var serverMessage = xhr && xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message;
+                    $canvas.empty();
+                    $status.text(serverMessage || 'Kartenvorschau ist momentan nicht verfügbar. Bitte Eingabe oder Kartenverbindung prüfen.');
                 }).always(function () {
                     if (request === activeRequest) {
                         $preview.removeClass('is-loading');

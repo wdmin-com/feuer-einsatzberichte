@@ -9584,6 +9584,7 @@ class FEU_Einsatz_Admin {
         set_transient($rate_key, $rate_count + 1, MINUTE_IN_SECONDS);
 
         $geocoded = false;
+        $street_only_preview = false;
         if ('coordinates' === $location_mode) {
             $latitude = isset($_POST['latitude']) ? $this->sanitize_coordinate_value(wp_unslash($_POST['latitude']), 'lat') : '';
             $longitude = isset($_POST['longitude']) ? $this->sanitize_coordinate_value(wp_unslash($_POST['longitude']), 'lng') : '';
@@ -9598,18 +9599,33 @@ class FEU_Einsatz_Admin {
 
             $geocoded = $this->request_geocoded_address_data($street, $postcode, $city, $house_number);
             if (!$geocoded || !isset($geocoded['lat'], $geocoded['lng'])) {
-                wp_send_json_error(['message' => __('Die Adresse konnte nicht gefunden werden. Bitte Eingabe prüfen.', 'feuer-einsatzberichte')], 404);
+                if ('' === $house_number) {
+                    wp_send_json_error(['message' => __('Die Adresse konnte nicht gefunden werden. Bitte Eingabe prüfen.', 'feuer-einsatzberichte')], 404);
+                }
+                $geocoded = $this->request_geocoded_address_data($street, $postcode, $city);
+                if (!$geocoded || !isset($geocoded['lat'], $geocoded['lng'])) {
+                    wp_send_json_error(['message' => __('Weder Hausnummer noch Straße konnten gefunden werden. Bitte Adresse prüfen.', 'feuer-einsatzberichte')], 404);
+                }
+                $street_only_preview = true;
             }
 
-            // A limited street segment or radius is useful only when the returned
-            // coordinate belongs to the entered house number. Do not draw a
-            // plausible-looking preview at a different address.
+            // Do not draw a radius or short segment around an unverified house.
+            // A street-only overview still helps the editor correct the address.
             $requested_house_number = strtolower((string) preg_replace('/\s+/', '', $house_number));
             $resolved_house_number = strtolower((string) preg_replace('/\s+/', '', (string) ($geocoded['house_number'] ?? '')));
-            if ('' !== $requested_house_number && $requested_house_number !== $resolved_house_number) {
-                wp_send_json_error([
-                    'message' => __('Die Hausnummer konnte für diese Adresse nicht eindeutig bestätigt werden. Bitte Straße, Hausnummer, PLZ und Ort prüfen.', 'feuer-einsatzberichte'),
-                ], 422);
+            if (!$street_only_preview && '' !== $requested_house_number && $requested_house_number !== $resolved_house_number) {
+                $street_geocoded = $this->request_geocoded_address_data($street, $postcode, $city);
+                if (!$street_geocoded || !isset($street_geocoded['lat'], $street_geocoded['lng'])) {
+                    wp_send_json_error([
+                        'message' => __('Die Hausnummer konnte nicht bestätigt werden. Bitte Adresse prüfen oder genaue Koordinaten verwenden.', 'feuer-einsatzberichte'),
+                    ], 422);
+                }
+                $geocoded = $street_geocoded;
+                $street_only_preview = true;
+            }
+            if ($street_only_preview) {
+                $highlight_settings['mode'] = 'full';
+                $highlight_settings['override_mode'] = 'full';
             }
         }
 
@@ -9683,7 +9699,22 @@ class FEU_Einsatz_Admin {
             'height' => 360,
             'highlight_mode' => $highlight['mode'],
             'highlight_radius_meters' => $highlight['radius_meters'],
+            'show_marker' => !$street_only_preview,
         ]);
+
+        if ($street_only_preview) {
+            $preview_message = empty($highlight['geometry'])
+                ? __('Die Hausnummer konnte nicht bestätigt werden. Die Grundkarte zeigt nur die ungefähre Straßenlage; für Abschnitt oder Radius bitte genaue Koordinaten eingeben.', 'feuer-einsatzberichte')
+                : __('Die Hausnummer konnte nicht bestätigt werden. Die Karte zeigt nur die Straße; für Abschnitt oder Radius bitte Hausnummer prüfen oder genaue Koordinaten eingeben.', 'feuer-einsatzberichte');
+        } elseif ('radius' === $highlight['mode']) {
+            $preview_message = 'coordinates' === $location_mode
+                ? __('Koordinaten übernommen. Der Radius wird auf der Karte angezeigt.', 'feuer-einsatzberichte')
+                : __('Einsatzort gefunden. Der Radius wird auf der Karte angezeigt.', 'feuer-einsatzberichte');
+        } elseif (empty($highlight['geometry'])) {
+            $preview_message = __('Einsatzort gefunden. Für diese Straße liegt noch keine Liniengeometrie vor.', 'feuer-einsatzberichte');
+        } else {
+            $preview_message = __('Kartenvorschau aktualisiert.', 'feuer-einsatzberichte');
+        }
 
         $response_data = [
             'markup' => $markup,
@@ -9694,17 +9725,17 @@ class FEU_Einsatz_Admin {
             'longitude' => (float) $geocoded['lng'],
             'highlight_radius_meters' => $highlight['radius_meters'],
             'mode' => $highlight['mode'],
+            'address_exact' => !$street_only_preview,
+            'preview_mode_label' => $street_only_preview
+                ? __('Straßenübersicht · Hausnummer ungeprüft', 'feuer-einsatzberichte')
+                : '',
             'diagnostics' => [
                 'segment_count' => count((array) $highlight['geometry']),
                 'extra_street_count' => count($extra_streets),
                 'area_point_count' => count($area_geometry),
                 'source' => $had_cached_geometry ? __('Lokaler Straßencache', 'feuer-einsatzberichte') : __('Aktuelle OSM-Abfrage', 'feuer-einsatzberichte'),
             ],
-            'message' => empty($highlight['geometry'])
-                ? ('radius' === $highlight['mode']
-                    ? __('Koordinaten übernommen. Der Radius wird auf der Karte angezeigt.', 'feuer-einsatzberichte')
-                    : __('Einsatzort gefunden. Für diese Straße liegt noch keine Liniengeometrie vor.', 'feuer-einsatzberichte'))
-                : __('Kartenvorschau aktualisiert.', 'feuer-einsatzberichte'),
+            'message' => $preview_message,
         ];
         set_transient($preview_cache_key, $response_data, 2 * MINUTE_IN_SECONDS);
 

@@ -3181,6 +3181,7 @@ class FEU_Einsatz_Template_Helpers {
             'preview_mode' => 'full',
             'highlight_mode' => 'full',
             'highlight_radius_meters' => 0,
+            'show_marker' => true,
         ]);
 
         $width = 1200;
@@ -3377,7 +3378,7 @@ class FEU_Einsatz_Template_Helpers {
 
         $coordinates_label = '';
 
-        if (null !== $marker) {
+        if (null !== $marker && !empty($args['show_marker'])) {
             $coordinates_label = number_format($marker['lat'], 6, '.', '') . ', ' . number_format($marker['lng'], 6, '.', '');
         }
 
@@ -3413,7 +3414,7 @@ class FEU_Einsatz_Template_Helpers {
                 '<text x="58" y="' . esc_attr($footer_y + 26) . '" fill="#0a4b78" font-size="18" font-weight="600">' . esc_html($coordinates_label) . '</text>';
         }
 
-        if (null !== $marker) {
+        if (null !== $marker && !empty($args['show_marker'])) {
             $projected_marker = $project_point($marker);
             $outer_radius = 'minimal' === $preview_mode ? 15 : 18;
             $inner_radius = 'minimal' === $preview_mode ? 7 : 8;

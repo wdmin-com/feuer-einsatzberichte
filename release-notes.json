@@ -1,6 +1,18 @@
 {
   "releases": [
     {
+      "version": "3.2.87",
+      "date": "2026-09-25",
+      "title": "Live-Karte und Koordinaten im Berichtseditor",
+      "summary": "Die Live-Karte zeigt bei nicht bestätigter Hausnummer eine klar gekennzeichnete Straßenübersicht; Koordinaten stehen vor Datum und Uhrzeit und haben ausreichend breite Eingabefelder.",
+      "changes": [
+        "Editor: Im Koordinatenmodus stehen Breitengrad und Längengrad vor Datum und Uhrzeit; die Felder nutzen die volle verfügbare Breite.",
+        "Live-Karte: Die Vorschau startet bereits bei vollständigem Ort oder gültigem Koordinatenpaar und wartet nicht mehr auf Datum und Uhrzeit.",
+        "Geokodierung: Bei nicht bestätigter Hausnummer wird nur die Straße ohne falschen Einsatzmarker oder Radius als Orientierung angezeigt; die Warnung nennt den erforderlichen nächsten Schritt.",
+        "Fehleranzeige: Der konkrete Serverhinweis bei ungültiger Adresse oder Anfragelimit wird im Editor angezeigt statt einer allgemeinen Kartenfehlermeldung."
+      ]
+    },
+    {
       "version": "3.2.86",
       "date": "2026-09-25",
       "title": "Korrigierte Admin-Komposition",
