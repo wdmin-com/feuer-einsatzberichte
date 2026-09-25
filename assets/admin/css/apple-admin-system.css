@@ -566,6 +566,7 @@ body.feu-apple-workspace .postbox.feu-einsatz-form-section .feu-einsatz-map-prof
     grid-template-columns: minmax(0, 1fr);
     gap: 14px;
     width: 100%;
+    box-sizing: border-box;
     min-width: 0;
 }
 
