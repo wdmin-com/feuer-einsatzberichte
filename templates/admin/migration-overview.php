@@ -60,11 +60,18 @@ $missing_authors = count(array_filter((array) ($post_preflight['warnings'] ?? []
                             $item_statuses = [
                                 'missing' => __('Fehlt in der bisherigen Struktur', 'feuer-einsatzberichte'),
                                 'unavailable' => __('Status konnte nicht gelesen werden', 'feuer-einsatzberichte'),
+                                'failed' => __('Fehler bei diesem Stichwort', 'feuer-einsatzberichte'),
                                 'pending' => __('Ausstehend', 'feuer-einsatzberichte'),
                                 'mapped' => __('Zugeordnet, noch nicht aktiviert', 'feuer-einsatzberichte'),
                                 'active' => __('Aktiv', 'feuer-einsatzberichte'),
                             ];
                             echo esc_html($item_statuses[$item['status']] ?? $item['status']);
+                            if ($item['attempts'] > 0) {
+                                echo '<br><small>' . esc_html(sprintf(__('Versuche: %d', 'feuer-einsatzberichte'), $item['attempts'])) . '</small>';
+                            }
+                            if ('failed' === $item['developer_report']) {
+                                echo '<br><small>' . esc_html__('Diagnose-E-Mail wurde nicht angenommen.', 'feuer-einsatzberichte') . '</small>';
+                            }
                         ?></td>
                     </tr>
                 <?php endforeach; ?>

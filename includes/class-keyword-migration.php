@@ -59,6 +59,22 @@ final class FEU_Einsatz_Keyword_Migration {
         return is_array($run) ? $run : [];
     }
 
+    public static function get_failures(string $run_id): array {
+        $stored = get_option(self::FAILURES_OPTION, []);
+        if (!is_array($stored) || '' === $run_id) {
+            return [];
+        }
+        $failures = [];
+        foreach ($stored as $record) {
+            if (is_array($record) && $run_id === (string) ($record['run_id'] ?? '')) {
+                $domain = (string) ($record['domain'] ?? '');
+                $id = (int) ($record['id'] ?? 0);
+                $failures[$domain . ':' . $id] = $record;
+            }
+        }
+        return $failures;
+    }
+
     public static function is_write_locked(): bool {
         return false !== get_option(self::LOCK_OPTION, false)
             || self::needs_manual_recovery();

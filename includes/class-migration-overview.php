@@ -29,6 +29,11 @@ final class FEU_Einsatz_Migration_Overview {
             return [];
         }
 
+        $keyword_run = (array) ($state['keyword_run'] ?? []);
+        $show_failures = in_array((string) ($keyword_run['status'] ?? ''), ['failed_rolled_back', 'rollback_failed', 'partial_error'], true);
+        $failures = $show_failures
+            ? FEU_Einsatz_Keyword_Migration::get_failures((string) ($keyword_run['run_id'] ?? '')) : [];
+
         $mapped = [];
         $active_ids = !empty($state['keywords_enabled']) ? FEU_Einsatz_Report_Taxonomy::get_selected_ids() : [];
         $terms = get_terms([
@@ -48,15 +53,18 @@ final class FEU_Einsatz_Migration_Overview {
         $items = [];
         foreach ($legacy_ids as $id) {
             $term = get_term($id, 'category');
+            $failure = (array) ($failures['categories:' . $id] ?? []);
             $items[] = [
                 'id' => $id,
                 'name' => $term instanceof WP_Term ? (string) $term->name : '',
                 'target_id' => $mapped[$id] ?? 0,
-                'status' => $terms_unavailable ? 'unavailable'
+                'status' => $failure ? 'failed' : ($terms_unavailable ? 'unavailable'
                     : (!($term instanceof WP_Term) ? 'missing'
                         : (isset($mapped[$id])
                             ? (in_array($mapped[$id], $active_ids, true) ? 'active' : 'mapped')
-                            : 'pending')),
+                            : 'pending'))),
+                'attempts' => (int) ($failure['attempts'] ?? 0),
+                'developer_report' => (string) ($failure['developer_report'] ?? ''),
             ];
         }
         return $items;

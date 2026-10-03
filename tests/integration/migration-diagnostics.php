@@ -22,6 +22,11 @@ try {
         || 1 !== count($messages) || 'dev@wdmin.com' !== ($messages[0]['to'] ?? '')) {
         throw new RuntimeException('Repeated keyword failure did not send exactly one diagnostic email.');
     }
+    $failures = FEU_Einsatz_Keyword_Migration::get_failures('test-run');
+    if (3 !== (int) ($failures['categories:424242']['attempts'] ?? 0)
+        || 'accepted' !== ($failures['categories:424242']['developer_report'] ?? '')) {
+        throw new RuntimeException('Keyword failure status is not available per category.');
+    }
     $body = (string) ($messages[0]['message'] ?? '');
     if (false === strpos($body, 'categories; ID: 424242') || false !== strpos($body, 'Personal name fixture')) {
         throw new RuntimeException('Diagnostic email is missing technical context or leaks report data.');
