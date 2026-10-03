@@ -13,6 +13,7 @@ $status_labels = [
     'not_started' => __('Noch nicht gestartet', 'feuer-einsatzberichte'),
     'running' => __('Läuft', 'feuer-einsatzberichte'),
     'failed' => __('Fehler', 'feuer-einsatzberichte'),
+    'partial_error' => __('Teilweise übertragen – einzelne Berichte benötigen einen erneuten Versuch', 'feuer-einsatzberichte'),
     'failed_rolled_back' => __('Fehler, Änderungen zurückgesetzt', 'feuer-einsatzberichte'),
     'rollback_failed' => __('Rücksetzung fehlgeschlagen – Bearbeitung gesperrt', 'feuer-einsatzberichte'),
     'complete' => __('Abgeschlossen', 'feuer-einsatzberichte'),
@@ -39,7 +40,7 @@ $missing_authors = count(array_filter((array) ($post_preflight['warnings'] ?? []
     <table class="widefat striped feu-einsatz-migration-table">
         <thead><tr><th><?php esc_html_e('Bereich', 'feuer-einsatzberichte'); ?></th><th><?php esc_html_e('Bisherige Struktur', 'feuer-einsatzberichte'); ?></th><th><?php esc_html_e('Neue Struktur / Status', 'feuer-einsatzberichte'); ?></th></tr></thead>
         <tbody>
-            <tr><th scope="row"><?php esc_html_e('Einsatzberichte', 'feuer-einsatzberichte'); ?></th><td><?php echo esc_html(number_format_i18n($migration_state['old_reports'])); ?></td><td><?php echo esc_html(number_format_i18n($migration_state['new_reports'])); ?> · <?php echo esc_html($status_labels[$post_status] ?? $post_status); ?><?php if ($post_total > 0) : ?><br><small><?php echo esc_html(sprintf(__('%1$d von %2$d im Journal bestätigt', 'feuer-einsatzberichte'), (int) ($post_counts['migrated'] ?? 0), $post_total)); ?></small><?php endif; ?></td></tr>
+            <tr><th scope="row"><?php esc_html_e('Einsatzberichte', 'feuer-einsatzberichte'); ?></th><td><?php echo esc_html(number_format_i18n($migration_state['old_reports'])); ?></td><td><?php echo esc_html(number_format_i18n($migration_state['new_reports'])); ?> · <?php echo esc_html($status_labels[$post_status] ?? $post_status); ?><?php if ($post_total > 0) : ?><br><small><?php echo esc_html(sprintf(__('%1$d von %2$d im Journal bestätigt, %3$d Fehler', 'feuer-einsatzberichte'), (int) ($post_counts['migrated'] ?? 0), $post_total, (int) ($post_counts['failed'] ?? 0))); ?></small><?php endif; ?></td></tr>
             <tr><th scope="row"><?php esc_html_e('Einsatzstichworte', 'feuer-einsatzberichte'); ?></th><td><?php echo esc_html(number_format_i18n($migration_state['legacy_keywords'])); ?></td><td><?php echo esc_html($migration_state['keywords_enabled'] ? __('Aktiv', 'feuer-einsatzberichte') : __('Noch nicht aktiv', 'feuer-einsatzberichte')); ?> · <?php echo esc_html($status_labels[$keyword_status] ?? $keyword_status); ?><?php if ($keyword_total > 0) : ?><br><small><?php echo esc_html(sprintf(__('%1$d von %2$d Berichten im Journal bearbeitet', 'feuer-einsatzberichte'), $keyword_processed, $keyword_total)); ?></small><?php endif; ?></td></tr>
             <tr><th scope="row"><?php esc_html_e('WordPress-Benutzer', 'feuer-einsatzberichte'); ?></th><td colspan="2"><?php esc_html_e('Konten bleiben in WordPress; sie werden nicht kopiert.', 'feuer-einsatzberichte'); ?> <?php echo esc_html(sprintf(__('Fehlende Autoren in der Vorprüfung: %d.', 'feuer-einsatzberichte'), $missing_authors)); ?></td></tr>
             <tr><th scope="row"><?php esc_html_e('Teilnehmer, Organisationen, Medien und Kommentare', 'feuer-einsatzberichte'); ?></th><td colspan="2"><?php esc_html_e('Keine Kopie erforderlich. Prüfung der Verknüpfungen bei der Abnahme noch ausstehend.', 'feuer-einsatzberichte'); ?></td></tr>
@@ -76,6 +77,16 @@ $missing_authors = count(array_filter((array) ($post_preflight['warnings'] ?? []
         <div class="notice notice-error inline"><p><?php esc_html_e('Fehler bei den Berichten:', 'feuer-einsatzberichte'); ?> <?php echo esc_html(wp_json_encode($migration_state['post_run']['error'])); ?></p></div>
         <?php if (2 <= (int) ($migration_state['post_run']['error']['attempts'] ?? 0)) : ?><p><?php esc_html_e('Dieser Fehler trat erneut auf. Bitte senden Sie den Diagnosebericht an den Entwickler, falls der automatische Versand nicht bestätigt wurde.', 'feuer-einsatzberichte'); ?></p><?php endif; ?>
         <?php if ('failed' === (string) ($migration_state['post_run']['error']['developer_report'] ?? '')) : ?><p><?php esc_html_e('Der Diagnosebericht konnte nicht per E-Mail angenommen werden. Bitte wenden Sie sich an den Entwickler.', 'feuer-einsatzberichte'); ?></p><?php endif; ?>
+    <?php endif; ?>
+    <?php if (!empty($migration_state['post_run']['failures'])) : ?>
+        <h2><?php esc_html_e('Fehlgeschlagene Berichte', 'feuer-einsatzberichte'); ?></h2>
+        <table class="widefat striped feu-einsatz-migration-table">
+            <thead><tr><th>ID</th><th><?php esc_html_e('Speicherort', 'feuer-einsatzberichte'); ?></th><th><?php esc_html_e('Fehlercode', 'feuer-einsatzberichte'); ?></th><th><?php esc_html_e('Versuche', 'feuer-einsatzberichte'); ?></th></tr></thead>
+            <tbody><?php foreach (array_slice($migration_state['post_run']['failures'], 0, 200) as $failure) : ?>
+                <tr><td><?php echo esc_html((string) $failure['id']); ?></td><td><?php echo esc_html($failure['storage'] === FEU_Einsatz_Report_Post_Type::POST_TYPE ? __('Neue Struktur', 'feuer-einsatzberichte') : __('Bisherige Struktur', 'feuer-einsatzberichte')); ?></td><td><code><?php echo esc_html($failure['code']); ?></code></td><td><?php echo esc_html((string) $failure['attempts']); ?></td></tr>
+            <?php endforeach; ?></tbody>
+        </table>
+        <p class="description"><?php esc_html_e('Nach der Ursachenprüfung kann ein einzelner Bericht mit „wp feu-einsatz migration-retry --run=… --id=… --user=<Administrator>“ erneut geprüft werden.', 'feuer-einsatzberichte'); ?></p>
     <?php endif; ?>
     <?php if (!empty($migration_state['keyword_run']['error'])) : ?>
         <div class="notice notice-error inline"><p><?php esc_html_e('Fehler bei den Einsatzstichworten:', 'feuer-einsatzberichte'); ?> <?php echo esc_html((string) $migration_state['keyword_run']['error']); ?></p></div>
