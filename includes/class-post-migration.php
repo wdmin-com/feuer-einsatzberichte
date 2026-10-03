@@ -41,7 +41,7 @@ final class FEU_Einsatz_Post_Migration {
     public static function guard_metadata_write($check, $post_id, $meta_key = '') {
         if (
             !self::$internal_write
-            && self::is_write_locked()
+            && (self::is_write_locked() || FEU_Einsatz_Keyword_Migration::needs_manual_recovery())
             && FEU_Einsatz_Report_Post_Type::is_marked_report((int) $post_id)
         ) {
             return false;
@@ -91,6 +91,40 @@ final class FEU_Einsatz_Post_Migration {
                 'report_count' => count((array) ($run['records'] ?? [])),
             ], $context)
         );
+    }
+
+    private static function notify_repeated_failure(array &$run, int $index): void {
+        $row = $run['records'][$index];
+        if ((int) ($row['failure_attempts'] ?? 0) < 2 || 'accepted' === ($row['developer_report'] ?? '')) {
+            return;
+        }
+        $id = (int) ($row['id'] ?? 0);
+        $subject = sprintf('[Feuer-Einsatzberichte] Migration error on %s (%s)', (string) wp_parse_url(home_url('/'), PHP_URL_HOST), (string) ($run['run_id'] ?? ''));
+        $body = implode("\n", [
+            'Automatischer Diagnosebericht nach wiederholtem Migrationsfehler.',
+            'Site: ' . home_url('/'),
+            'Plugin: ' . FEU_EINSATZ_VERSION . '; WordPress: ' . get_bloginfo('version') . '; PHP: ' . PHP_VERSION,
+            'Run: ' . (string) ($run['run_id'] ?? ''),
+            'Time UTC: ' . gmdate('c'),
+            'Domain: reports; ID: ' . $id,
+            'Storage: ' . (string) get_post_type($id),
+            'Step: migrate_batch; Code: ' . (string) ($row['failure_code'] ?? 'unknown'),
+            'Attempts: ' . (int) $row['failure_attempts'],
+            'Report content and personal details are not included.',
+        ]);
+        try {
+            $accepted = wp_mail('dev@wdmin.com', $subject, $body);
+        } catch (Throwable $mail_error) {
+            $accepted = false;
+        }
+        $run['records'][$index]['developer_report'] = $accepted ? 'accepted' : 'failed';
+        $run['error']['developer_report'] = $accepted ? 'accepted' : 'failed';
+        self::save_run($run);
+        self::log_event('report_migration_diagnostic_email', $run, [
+            'id' => $id,
+            'code' => (string) ($row['failure_code'] ?? 'unknown'),
+            'accepted' => $accepted,
+        ]);
     }
 
     private static function save_run(array $run): bool {
@@ -531,9 +565,17 @@ final class FEU_Einsatz_Post_Migration {
 
                 if (!$valid) {
                     $run['status'] = 'failed';
-                    $run['error'] = ['id' => $id, 'code' => 'record_changed_or_verification_failed'];
-                    self::save_run($run);
+                    $code = 'record_changed_or_verification_failed';
+                    $previous_code = (string) ($run['records'][$index]['failure_code'] ?? '');
+                    $run['records'][$index]['failure_attempts'] = $previous_code === $code
+                        ? (int) ($run['records'][$index]['failure_attempts'] ?? 0) + 1 : 1;
+                    $run['records'][$index]['failure_code'] = $code;
+                    $run['error'] = ['id' => $id, 'code' => $code, 'attempts' => $run['records'][$index]['failure_attempts']];
+                    if (!self::save_run($run)) {
+                        return new WP_Error('journal_write_failed', 'Could not persist the failed record. Stop and inspect this run.');
+                    }
                     self::log_event('report_migration_failed', $run, $run['error']);
+                    self::notify_repeated_failure($run, $index);
                     return new WP_Error('migration_batch_failed', 'Migration stopped at a changed or unverifiable report.', $run['error']);
                 }
 

@@ -92,6 +92,30 @@ if ($tags_before !== wp_get_post_tags($legacy_ids[0], ['fields' => 'ids'])) {
     feu_einsatz_migration_fail('A legacy report lost its tags during conversion.');
 }
 
+$completed_journal = get_option('feu_einsatz_post_migration_run');
+$failing_journal = $completed_journal;
+$failing_journal['status'] = 'failed';
+$failing_journal['cursor'] = 0;
+$failing_journal['records'][0]['fingerprint'] = str_repeat('0', 64);
+update_option('feu_einsatz_post_migration_run', $failing_journal, false);
+$diagnostic_mails = [];
+$intercept_mail = static function ($pre, $atts) use (&$diagnostic_mails) {
+    $diagnostic_mails[] = $atts;
+    return true;
+};
+add_filter('pre_wp_mail', $intercept_mail, 10, 2);
+$failure_one = FEU_Einsatz_Post_Migration::migrate_batch($run_id, 1);
+$failure_two = FEU_Einsatz_Post_Migration::migrate_batch($run_id, 1);
+$failure_three = FEU_Einsatz_Post_Migration::migrate_batch($run_id, 1);
+remove_filter('pre_wp_mail', $intercept_mail, 10);
+if (!is_wp_error($failure_one) || !is_wp_error($failure_two) || !is_wp_error($failure_three)
+    || 1 !== count($diagnostic_mails)
+    || 'dev@wdmin.com' !== ($diagnostic_mails[0]['to'] ?? '')
+    || false !== strpos((string) ($diagnostic_mails[0]['message'] ?? ''), 'migration-batch-one')) {
+    feu_einsatz_migration_fail('Repeated report failures did not produce one redacted diagnostic email.');
+}
+update_option('feu_einsatz_post_migration_run', $completed_journal, false);
+
 wp_update_post(['ID' => $legacy_ids[0], 'post_name' => 'migration-should-not-change-url']);
 if ('migration-batch-one' !== get_post_field('post_name', $legacy_ids[0])) {
     feu_einsatz_migration_fail('An ordinary edit changed the immutable legacy slug.');
