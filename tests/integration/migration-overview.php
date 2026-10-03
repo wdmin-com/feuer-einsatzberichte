@@ -3,6 +3,7 @@
 if (!defined('ABSPATH')) {
     exit(1);
 }
+wp_set_current_user(1);
 
 $previous_complete = get_option(FEU_Einsatz_Migration_Overview::COMPLETE_OPTION, null);
 $previous_post_run = get_option('feu_einsatz_post_migration_run', null);
@@ -11,6 +12,7 @@ $previous_taxonomy_enabled = get_option(FEU_Einsatz_Report_Taxonomy::ENABLED_OPT
 $previous_selected = get_option(FEU_Einsatz_Report_Taxonomy::SELECTED_OPTION, null);
 $legacy_term_id = 0;
 $new_term_id = 0;
+$previous_page = $_GET['page'] ?? null;
 delete_option(FEU_Einsatz_Migration_Overview::COMPLETE_OPTION);
 delete_option('feu_einsatz_post_migration_run');
 delete_option('feu_einsatz_keyword_migration_run');
@@ -18,13 +20,23 @@ $id = wp_insert_post([
     'post_type' => 'post',
     'post_status' => 'draft',
     'post_title' => 'migration-overview-fixture',
+    'post_author' => 999999999,
 ], true);
 if (is_wp_error($id)) {
     throw new RuntimeException('Could not create migration overview fixture.');
 }
 
 try {
+    $_GET['page'] = 'feu-einsatz-datenmigration';
+    $admin = (new ReflectionClass(FEU_Einsatz_Admin::class))->newInstanceWithoutConstructor();
+    $modern_shell = new ReflectionMethod($admin, 'should_use_modern_shell');
+    if (!$modern_shell->invoke($admin, '', null)) {
+        throw new RuntimeException('Migration screen is missing the modern admin layout class.');
+    }
     update_post_meta($id, FEU_Einsatz_Report_Post_Type::MARKER_META, '1');
+    if (FEU_Einsatz_Migration_Overview::missing_author_count() < 1) {
+        throw new RuntimeException('Missing authors are not counted from current report data.');
+    }
     $old = FEU_Einsatz_Migration_Overview::status();
     if (false !== get_option(FEU_Einsatz_Migration_Overview::COMPLETE_OPTION, false)) {
         throw new RuntimeException('Reading migration status wrote a completion marker.');
@@ -62,11 +74,6 @@ try {
         update_post_meta($id, FEU_Einsatz_Report_Taxonomy::PRIMARY_META, $new_term_id);
         update_post_meta($id, FEU_Einsatz_Report_Post_Type::URL_SCHEME_META, 'legacy');
         $url = get_permalink($id);
-        update_option('feu_einsatz_post_migration_run', [
-            'run_id' => wp_generate_uuid4(),
-            'status' => 'complete',
-            'records' => [['id' => $id, 'state' => 'migrated', 'status' => 'draft', 'url' => $url]],
-        ], false);
         $keyword_run = [
             'status' => 'complete',
             'old_selected' => [$legacy_term_id],
@@ -76,6 +83,24 @@ try {
             'cutover_terms' => [$id => ['ids' => [$new_term_id], 'primary' => $new_term_id]],
         ];
         update_option('feu_einsatz_keyword_migration_run', $keyword_run, false);
+        if (FEU_Einsatz_Migration_Overview::status()['ready_for_acceptance']
+            || FEU_Einsatz_Migration_Overview::verify_for_acceptance()) {
+            throw new RuntimeException('A missing WordPress author passed final migration verification.');
+        }
+        $author_fixed = wp_update_post(['ID' => $id, 'post_author' => 1], true);
+        if (is_wp_error($author_fixed) || 0 !== FEU_Einsatz_Migration_Overview::missing_author_count()) {
+            throw new RuntimeException('Could not repair the migration author fixture.');
+        }
+        $ready_without_post_run = FEU_Einsatz_Migration_Overview::status();
+        if (!$ready_without_post_run['ready_for_acceptance']
+            || !FEU_Einsatz_Migration_Overview::verify_for_acceptance()) {
+            throw new RuntimeException('A site without legacy reports still requires a report migration journal.');
+        }
+        update_option('feu_einsatz_post_migration_run', [
+            'run_id' => wp_generate_uuid4(),
+            'status' => 'complete',
+            'records' => [['id' => $id, 'state' => 'migrated', 'status' => 'draft', 'url' => $url]],
+        ], false);
         $ready = FEU_Einsatz_Migration_Overview::status();
         if (!$ready['ready_for_acceptance'] || !$ready['needs_attention']
             || !FEU_Einsatz_Migration_Overview::verify_for_acceptance()) {
@@ -99,6 +124,11 @@ try {
         throw new RuntimeException('Completed migration still shows the initial notice.');
     }
 } finally {
+    if (null === $previous_page) {
+        unset($_GET['page']);
+    } else {
+        $_GET['page'] = $previous_page;
+    }
     wp_delete_post($id, true);
     if ($new_term_id) {
         wp_delete_term($new_term_id, FEU_Einsatz_Report_Taxonomy::TAXONOMY);

@@ -797,18 +797,43 @@ body.feu-admin-ui--modern-shell .feu-einsatz-migration-page > .notice {
     margin: 20px 0;
     border-radius: 12px;
 }
-body.feu-admin-ui--modern-shell .feu-einsatz-migration-table {
-    width: 100%;
+body.feu-admin-ui--modern-shell .feu-einsatz-migration-page > .feu-einsatz-migration-preflight-error {
+    margin: 8px 0;
+    border-radius: 8px;
+}
+body.feu-admin-ui--modern-shell .feu-einsatz-migration-table-wrap {
     margin: 22px 0 28px;
     border: 1px solid var(--feu-ui-line);
     border-radius: 14px;
-    overflow: hidden;
+    overflow-x: auto;
+    background: #fff;
+}
+body.feu-admin-ui--modern-shell .feu-einsatz-migration-table-wrap:focus-visible {
+    outline: 2px solid #2271b1;
+    outline-offset: 3px;
+}
+body.feu-admin-ui--modern-shell .feu-einsatz-migration-table {
+    width: 100%;
+    min-width: 640px;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
     box-shadow: none;
 }
 body.feu-admin-ui--modern-shell .feu-einsatz-migration-table th,
 body.feu-admin-ui--modern-shell .feu-einsatz-migration-table td {
     padding: 14px 16px;
     overflow-wrap: anywhere;
+}
+body.feu-admin-ui--modern-shell .feu-einsatz-migration-pages {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: -12px 0 28px;
+}
+body.feu-admin-ui--modern-shell .feu-einsatz-migration-pages span {
+    margin-right: auto;
 }
 body.feu-admin-ui--modern-shell .feu-einsatz-migration-acceptance {
     margin: 28px 0;
@@ -826,5 +851,5 @@ body.feu-admin-ui--modern-shell .feu-einsatz-migration-acceptance label {
 body.feu-admin-ui--modern-shell .feu-einsatz-migration-acceptance input[type="checkbox"] { margin-top: 3px; }
 @media (max-width: 782px) {
     body.feu-admin-ui--modern-shell .feu-einsatz-migration-page { margin-top: 18px; padding: 0 14px; }
-    body.feu-admin-ui--modern-shell .feu-einsatz-migration-table { display: block; overflow-x: auto; }
+    body.feu-admin-ui--modern-shell .feu-einsatz-migration-acceptance { padding: 18px; }
 }

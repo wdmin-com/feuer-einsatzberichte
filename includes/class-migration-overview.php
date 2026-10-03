@@ -19,6 +19,22 @@ final class FEU_Einsatz_Migration_Overview {
         ));
     }
 
+    public static function missing_author_count(): ?int {
+        global $wpdb;
+        $count = $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(DISTINCT p.ID) FROM {$wpdb->posts} p
+             INNER JOIN {$wpdb->postmeta} m ON m.post_id = p.ID
+             LEFT JOIN {$wpdb->users} u ON u.ID = p.post_author
+             WHERE p.post_type IN (%s, %s) AND p.post_status NOT IN ('auto-draft', 'inherit')
+               AND m.meta_key = %s AND m.meta_value = '1'
+               AND (p.post_author = 0 OR u.ID IS NULL)",
+            'post',
+            FEU_Einsatz_Report_Post_Type::POST_TYPE,
+            FEU_Einsatz_Report_Post_Type::MARKER_META
+        ));
+        return '' !== $wpdb->last_error ? null : (int) $count;
+    }
+
     public static function keyword_items(array $state): array {
         $legacy_ids = (array) ($state['keyword_run']['old_selected'] ?? []);
         if (!$legacy_ids && !$state['keywords_enabled']) {
@@ -76,8 +92,11 @@ final class FEU_Einsatz_Migration_Overview {
         $post_run = FEU_Einsatz_Post_Migration::get_status();
         $keyword_run = FEU_Einsatz_Keyword_Migration::get_run();
         $keywords_enabled = FEU_Einsatz_Report_Taxonomy::enabled();
-        $legacy_keywords = $keywords_enabled ? [] : FEU_Einsatz_Report_Taxonomy::get_selected_ids();
+        $legacy_keywords = $keywords_enabled
+            ? (array) ($keyword_run['old_selected'] ?? [])
+            : FEU_Einsatz_Report_Taxonomy::get_selected_ids();
         $accepted = 1 === (int) get_option(self::COMPLETE_OPTION, 0);
+        $missing_authors = self::missing_author_count();
         $counts = (array) ($post_run['counts'] ?? []);
         $keyword_items = self::keyword_items([
             'keyword_run' => $keyword_run,
@@ -86,15 +105,21 @@ final class FEU_Einsatz_Migration_Overview {
         $keywords_verified = !in_array(false, array_map(static function (array $item): bool {
             return 'active' === $item['status'];
         }, $keyword_items), true);
-        $ready_for_acceptance = 0 === $old_reports && $keywords_enabled && $keywords_verified
-            && 'complete' === ($post_run['status'] ?? '')
-            && 'complete' === ($keyword_run['status'] ?? '')
-            && (int) ($counts['migrated'] ?? -1) === (int) ($post_run['total'] ?? -2);
+        $post_status = (string) ($post_run['status'] ?? 'not_started');
+        $posts_verified = ('not_started' === $post_status && 0 === $old_reports)
+            || ('complete' === $post_status
+                && (int) ($counts['migrated'] ?? -1) === (int) ($post_run['total'] ?? -2));
+        $ready_for_acceptance = 0 === $old_reports && 0 === $missing_authors
+            && $keywords_enabled && $keywords_verified
+            && $posts_verified
+            && 'complete' === ($keyword_run['status'] ?? '');
 
         $completed = $accepted && $ready_for_acceptance;
         $needs_attention = !$accepted
             && ($ready_for_acceptance || $old_reports > 0 || !$keywords_verified
-                || (!$keywords_enabled && count($legacy_keywords) > 0));
+                || (!$keywords_enabled && count($legacy_keywords) > 0)
+                || in_array($post_status, ['running', 'failed', 'partial_error', 'rolling_back'], true)
+                || in_array((string) ($keyword_run['status'] ?? ''), ['running', 'failed_rolled_back', 'rollback_failed', 'partial_error', 'complete'], true));
         $has_legacy = $old_reports > 0 || !$keywords_verified
             || (!$keywords_enabled && count($legacy_keywords) > 0);
         $storage = $has_legacy && $new_reports > 0 ? 'mixed' : ($has_legacy ? 'old' : 'new');
@@ -107,6 +132,7 @@ final class FEU_Einsatz_Migration_Overview {
             'storage' => $storage,
             'old_reports' => $old_reports,
             'new_reports' => $new_reports,
+            'missing_authors' => $missing_authors,
             'legacy_keywords' => count($legacy_keywords),
             'keywords_enabled' => $keywords_enabled,
             'post_run' => $post_run,

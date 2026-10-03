@@ -1567,6 +1567,7 @@ class FEU_Einsatz_Admin {
             'feu-einsatz-neuer-bericht',
             'feu-einsatz-bericht-bearbeiten',
             'feu-einsatz-schnelleingabe',
+            'feu-einsatz-datenmigration',
         ];
 
         return in_array($page, $modern_pages, true);
@@ -9250,6 +9251,7 @@ class FEU_Einsatz_Admin {
         }
         $migration_state = FEU_Einsatz_Migration_Overview::status();
         $keyword_items = $migration_state['keyword_items'];
+        $missing_authors = $migration_state['missing_authors'];
         $post_preflight = $migration_state['old_reports'] > 0 ? FEU_Einsatz_Post_Migration::preflight() : [];
         $keyword_preflight = !$migration_state['keywords_enabled'] && $migration_state['legacy_keywords'] > 0
             ? FEU_Einsatz_Keyword_Migration::preflight() : [];
