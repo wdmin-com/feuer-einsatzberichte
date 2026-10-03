@@ -9271,6 +9271,9 @@ class FEU_Einsatz_Admin {
         if (!$confirmed) {
             wp_die(esc_html__('Die Abschlussprüfung ist unvollständig. Bitte Daten und URLs prüfen.', 'feuer-einsatzberichte'), '', ['response' => 400]);
         }
+        if (!FEU_Einsatz_Migration_Overview::verify_for_acceptance()) {
+            wp_die(esc_html__('Die gespeicherten Migrationsdaten stimmen nicht mehr mit den Berichten, Stichworten oder URLs überein.', 'feuer-einsatzberichte'), '', ['response' => 409]);
+        }
         $acceptance = [
             'at_utc' => gmdate('c'),
             'actor_id' => get_current_user_id(),

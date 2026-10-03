@@ -114,4 +114,68 @@ final class FEU_Einsatz_Migration_Overview {
             'keyword_items' => $keyword_items,
         ];
     }
+
+    /** Verify the persisted journals against WordPress immediately before final acceptance. */
+    public static function verify_for_acceptance(): bool {
+        $state = self::status();
+        if (!$state['ready_for_acceptance']) {
+            return false;
+        }
+
+        $post_run = get_option('feu_einsatz_post_migration_run', []);
+        $keyword_run = $state['keyword_run'];
+        if (!is_array($post_run) || !is_array($keyword_run)) {
+            return false;
+        }
+        foreach ((array) ($post_run['records'] ?? []) as $record) {
+            if (!is_array($record)) {
+                return false;
+            }
+            $id = (int) ($record['id'] ?? 0);
+            if ($id < 1 || 'migrated' !== ($record['state'] ?? '')
+                || FEU_Einsatz_Report_Post_Type::POST_TYPE !== get_post_type($id)
+                || !FEU_Einsatz_Report_Post_Type::is_marked_report($id)
+                || 'legacy' !== get_post_meta($id, FEU_Einsatz_Report_Post_Type::URL_SCHEME_META, true)
+                || ('publish' === ($record['status'] ?? '') && get_permalink($id) !== ($record['url'] ?? ''))) {
+                return false;
+            }
+        }
+
+        $reports = (array) ($keyword_run['reports'] ?? []);
+        $processed = array_values(array_unique(array_map('intval', (array) ($keyword_run['processed'] ?? []))));
+        if (count($reports) !== count($processed)) {
+            return false;
+        }
+        $selected = FEU_Einsatz_Report_Taxonomy::get_selected_ids();
+        $cutover_selected = array_map('intval', (array) ($keyword_run['cutover_selected'] ?? []));
+        sort($selected);
+        sort($cutover_selected);
+        if ($selected !== $cutover_selected) {
+            return false;
+        }
+        foreach ($reports as $post_id => $before) {
+            if (!is_array($before)) {
+                return false;
+            }
+            $id = (int) $post_id;
+            if (!in_array($id, $processed, true) || !get_post($id)
+                || get_permalink($id) !== ($before['url'] ?? '')) {
+                return false;
+            }
+            $current = wp_get_object_terms($id, FEU_Einsatz_Report_Taxonomy::TAXONOMY, ['fields' => 'ids']);
+            if (is_wp_error($current)) {
+                return false;
+            }
+            $current = array_map('intval', $current);
+            $expected = array_map('intval', (array) ($keyword_run['cutover_terms'][$id]['ids'] ?? []));
+            sort($current);
+            sort($expected);
+            if ($current !== $expected
+                || (int) get_post_meta($id, FEU_Einsatz_Report_Taxonomy::PRIMARY_META, true)
+                    !== (int) ($keyword_run['cutover_terms'][$id]['primary'] ?? 0)) {
+                return false;
+            }
+        }
+        return true;
+    }
 }
