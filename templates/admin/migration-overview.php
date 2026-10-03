@@ -31,6 +31,15 @@ $post_counts = (array) ($migration_state['post_run']['counts'] ?? []);
 $post_total = (int) ($migration_state['post_run']['total'] ?? 0);
 $keyword_total = count((array) ($migration_state['keyword_run']['reports'] ?? []));
 $keyword_processed = count((array) ($migration_state['keyword_run']['processed'] ?? []));
+$page_size = 50;
+$keyword_pages = max(1, (int) ceil(count($keyword_items) / $page_size));
+$keyword_page_param = $_GET['keyword_page'] ?? 1;
+$keyword_page = min($keyword_pages, max(1, absint(is_scalar($keyword_page_param) ? wp_unslash($keyword_page_param) : 1)));
+$post_failures = (array) ($migration_state['post_run']['failures'] ?? []);
+$failure_pages = max(1, (int) ceil(count($post_failures) / $page_size));
+$failure_page_param = $_GET['failure_page'] ?? 1;
+$failure_page = min($failure_pages, max(1, absint(is_scalar($failure_page_param) ? wp_unslash($failure_page_param) : 1)));
+$overview_url = admin_url('admin.php?page=feu-einsatz-datenmigration');
 ?>
 <div class="wrap feu-einsatz-migration-page">
     <h1><?php esc_html_e('Datenmigration', 'feuer-einsatzberichte'); ?></h1>
@@ -59,7 +68,7 @@ $keyword_processed = count((array) ($migration_state['keyword_run']['processed']
         <table class="widefat striped feu-einsatz-migration-table">
             <thead><tr><th><?php esc_html_e('Bisheriges Stichwort', 'feuer-einsatzberichte'); ?></th><th><?php esc_html_e('Neuer Eintrag', 'feuer-einsatzberichte'); ?></th><th><?php esc_html_e('Status', 'feuer-einsatzberichte'); ?></th></tr></thead>
             <tbody>
-                <?php foreach (array_slice($keyword_items, 0, 200) as $item) : ?>
+                <?php foreach (array_slice($keyword_items, ($keyword_page - 1) * $page_size, $page_size) as $item) : ?>
                     <tr>
                         <th scope="row"><?php echo esc_html($item['name'] ?: sprintf(__('Kategorie-ID %d', 'feuer-einsatzberichte'), $item['id'])); ?> <small>#<?php echo esc_html($item['id']); ?></small></th>
                         <td><?php echo $item['target_id'] ? esc_html('#' . $item['target_id']) : '—'; ?></td>
@@ -85,7 +94,13 @@ $keyword_processed = count((array) ($migration_state['keyword_run']['processed']
             </tbody>
         </table>
         </div>
-        <?php if (count($keyword_items) > 200) : ?><p><?php echo esc_html(sprintf(__('Weitere %d Einsatzstichworte werden hier nicht angezeigt.', 'feuer-einsatzberichte'), count($keyword_items) - 200)); ?></p><?php endif; ?>
+        <?php if ($keyword_pages > 1) : ?>
+            <nav class="feu-einsatz-migration-pages" aria-label="<?php esc_attr_e('Seiten der Einsatzstichworte', 'feuer-einsatzberichte'); ?>">
+                <span><?php echo esc_html(sprintf(__('Seite %1$d von %2$d · %3$d Stichworte', 'feuer-einsatzberichte'), $keyword_page, $keyword_pages, count($keyword_items))); ?></span>
+                <?php if ($keyword_page > 1) : ?><a class="button" href="<?php echo esc_url(add_query_arg('keyword_page', $keyword_page - 1, $overview_url)); ?>"><?php esc_html_e('Zurück', 'feuer-einsatzberichte'); ?></a><?php endif; ?>
+                <?php if ($keyword_page < $keyword_pages) : ?><a class="button" href="<?php echo esc_url(add_query_arg('keyword_page', $keyword_page + 1, $overview_url)); ?>"><?php esc_html_e('Weiter', 'feuer-einsatzberichte'); ?></a><?php endif; ?>
+            </nav>
+        <?php endif; ?>
     <?php endif; ?>
 
     <?php if (!empty($migration_state['post_run']['error'])) : ?>
@@ -93,16 +108,23 @@ $keyword_processed = count((array) ($migration_state['keyword_run']['processed']
         <?php if (2 <= (int) ($migration_state['post_run']['error']['attempts'] ?? 0)) : ?><p><?php esc_html_e('Dieser Fehler trat erneut auf. Bitte senden Sie den Diagnosebericht an den Entwickler, falls der automatische Versand nicht bestätigt wurde.', 'feuer-einsatzberichte'); ?></p><?php endif; ?>
         <?php if ('failed' === (string) ($migration_state['post_run']['error']['developer_report'] ?? '')) : ?><p><?php esc_html_e('Der Diagnosebericht konnte nicht per E-Mail angenommen werden. Bitte wenden Sie sich an den Entwickler.', 'feuer-einsatzberichte'); ?></p><?php endif; ?>
     <?php endif; ?>
-    <?php if (!empty($migration_state['post_run']['failures'])) : ?>
+    <?php if ($post_failures) : ?>
         <h2><?php esc_html_e('Fehlgeschlagene Berichte', 'feuer-einsatzberichte'); ?></h2>
         <div class="feu-einsatz-migration-table-wrap" role="region" aria-label="<?php esc_attr_e('Fehlgeschlagene Berichte', 'feuer-einsatzberichte'); ?>" tabindex="0">
         <table class="widefat striped feu-einsatz-migration-table">
             <thead><tr><th>ID</th><th><?php esc_html_e('Speicherort', 'feuer-einsatzberichte'); ?></th><th><?php esc_html_e('Fehlercode', 'feuer-einsatzberichte'); ?></th><th><?php esc_html_e('Versuche', 'feuer-einsatzberichte'); ?></th></tr></thead>
-            <tbody><?php foreach (array_slice($migration_state['post_run']['failures'], 0, 200) as $failure) : ?>
+            <tbody><?php foreach (array_slice($post_failures, ($failure_page - 1) * $page_size, $page_size) as $failure) : ?>
                 <tr><td><?php echo esc_html((string) $failure['id']); ?></td><td><?php echo esc_html($failure['storage'] === FEU_Einsatz_Report_Post_Type::POST_TYPE ? __('Neue Struktur', 'feuer-einsatzberichte') : __('Bisherige Struktur', 'feuer-einsatzberichte')); ?></td><td><code><?php echo esc_html($failure['code']); ?></code></td><td><?php echo esc_html((string) $failure['attempts']); ?></td></tr>
             <?php endforeach; ?></tbody>
         </table>
         </div>
+        <?php if ($failure_pages > 1) : ?>
+            <nav class="feu-einsatz-migration-pages" aria-label="<?php esc_attr_e('Seiten der fehlgeschlagenen Berichte', 'feuer-einsatzberichte'); ?>">
+                <span><?php echo esc_html(sprintf(__('Seite %1$d von %2$d · %3$d Fehler', 'feuer-einsatzberichte'), $failure_page, $failure_pages, count($post_failures))); ?></span>
+                <?php if ($failure_page > 1) : ?><a class="button" href="<?php echo esc_url(add_query_arg('failure_page', $failure_page - 1, $overview_url)); ?>"><?php esc_html_e('Zurück', 'feuer-einsatzberichte'); ?></a><?php endif; ?>
+                <?php if ($failure_page < $failure_pages) : ?><a class="button" href="<?php echo esc_url(add_query_arg('failure_page', $failure_page + 1, $overview_url)); ?>"><?php esc_html_e('Weiter', 'feuer-einsatzberichte'); ?></a><?php endif; ?>
+            </nav>
+        <?php endif; ?>
         <p class="description"><?php esc_html_e('Nach der Ursachenprüfung kann ein einzelner Bericht mit „wp feu-einsatz migration-retry --run=… --id=… --user=<Administrator>“ erneut geprüft werden.', 'feuer-einsatzberichte'); ?></p>
     <?php endif; ?>
     <?php if (!empty($migration_state['keyword_run']['error'])) : ?>

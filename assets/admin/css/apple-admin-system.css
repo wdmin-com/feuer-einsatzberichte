@@ -825,6 +825,16 @@ body.feu-admin-ui--modern-shell .feu-einsatz-migration-table td {
     padding: 14px 16px;
     overflow-wrap: anywhere;
 }
+body.feu-admin-ui--modern-shell .feu-einsatz-migration-pages {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: -12px 0 28px;
+}
+body.feu-admin-ui--modern-shell .feu-einsatz-migration-pages span {
+    margin-right: auto;
+}
 body.feu-admin-ui--modern-shell .feu-einsatz-migration-acceptance {
     margin: 28px 0;
     padding: 24px;
