@@ -26,6 +26,7 @@ if (!isset($active_tab) || 'kategorien' !== (string) $active_tab) {
         <div class="notice notice-info inline">
             <p><strong><?php esc_html_e('Eigene Einsatzstichwort-Struktur', 'feuer-einsatzberichte'); ?></strong></p>
             <p><?php echo esc_html(sprintf(__('Vor der Umstellung werden ein Archiv erstellt und %d Berichte geprüft. Alte Kategorien und URLs bleiben erhalten.', 'feuer-einsatzberichte'), (int) ($keyword_migration_preflight['report_count'] ?? 0))); ?></p>
+            <p><?php esc_html_e('Bei einem zweiten Fehler desselben Elements wird ein technischer Diagnosebericht ohne Berichtsinhalt und personenbezogene Daten an dev@wdmin.com gesendet.', 'feuer-einsatzberichte'); ?></p>
             <?php if (!empty($keyword_migration_preflight['errors'])) : ?>
                 <p><?php echo esc_html(implode(' ', (array) $keyword_migration_preflight['errors'])); ?></p>
             <?php elseif (current_user_can('manage_options')) : ?>

@@ -1,6 +1,19 @@
 {
   "releases": [
     {
+      "version": "3.2.92",
+      "date": "2026-10-04",
+      "title": "Status und sichere Prüfung der Datenmigration",
+      "summary": "Ältere Berichte und Einsatzstichworte erhalten eine lesbare Statusübersicht, eine geprüfte Abschlussbestätigung und gezielte Fehlerdiagnosen.",
+      "changes": [
+        "Migration: Eine Statusseite zeigt bisherige und neue Berichtsstruktur, Einsatzstichworte, Benutzerprüfung und verknüpfte Daten; ein Hinweis erscheint nur bei erforderlicher Prüfung.",
+        "Abschluss: Die Bestätigung prüft Berichte, Stichwort-Zuordnungen und öffentliche URLs erneut. Danach bleibt der ursprüngliche Migrationshinweis dauerhaft ausgeblendet.",
+        "Berichte: Der WP-CLI-Umzug verarbeitet unabhängige Berichte nach einem lokalen Fehler weiter; fehlgeschlagene IDs können einzeln erneut versucht werden.",
+        "Diagnose: Wiederholte Fehler werden je Element protokolliert und als bereinigter technischer Bericht an den Entwickler gesendet.",
+        "Einsatzstichworte: Der bisherige bestätigte Umzug mit Sicherung und Rücksetzung bleibt bestehen; eine unabhängige Verarbeitung einzelner Kategorien ist noch nicht enthalten."
+      ]
+    },
+    {
       "version": "3.2.91",
       "date": "2026-10-03",
       "title": "Sicherer Berichtseditor und verlässliche Veröffentlichung",

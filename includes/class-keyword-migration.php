@@ -7,14 +7,81 @@ if (!defined('ABSPATH')) {
 final class FEU_Einsatz_Keyword_Migration {
     private const RUN_OPTION = 'feu_einsatz_keyword_migration_run';
     private const LOCK_OPTION = 'feu_einsatz_keyword_migration_lock';
+    private const FAILURES_OPTION = 'feu_einsatz_keyword_migration_failures';
+
+    private static function record_failure(string $run_id, string $domain, int $id): string {
+        $failures = get_option(self::FAILURES_OPTION, []);
+        $failures = is_array($failures) ? $failures : [];
+        $key = hash('sha256', $run_id . ':' . $domain . ':' . $id . ':verification_failed');
+        $record = (array) ($failures[$key] ?? []);
+        $record['attempts'] = (int) ($record['attempts'] ?? 0) + 1;
+        $record['domain'] = $domain;
+        $record['id'] = $id;
+        $record['run_id'] = $run_id;
+        $record['at_utc'] = gmdate('c');
+        $failures[$key] = $record;
+        update_option(self::FAILURES_OPTION, $failures, false);
+        if ($record['attempts'] < 2 || 'accepted' === ($record['developer_report'] ?? '')) {
+            return (string) ($record['developer_report'] ?? 'not_required');
+        }
+        $body = implode("\n", [
+            'Automatischer Diagnosebericht nach wiederholtem Migrationsfehler.',
+            'Site: ' . home_url('/'),
+            'Plugin: ' . FEU_EINSATZ_VERSION . '; WordPress: ' . get_bloginfo('version') . '; PHP: ' . PHP_VERSION,
+            'Time UTC: ' . gmdate('c'),
+            'Run: ' . $run_id,
+            'Domain: ' . $domain . '; ID: ' . $id,
+            'Step: keyword_migration; Code: verification_failed',
+            'Attempts: ' . (int) $record['attempts'],
+            'Report content and personal details are not included.',
+        ]);
+        try {
+            $accepted = wp_mail(
+                'dev@wdmin.com',
+                sprintf('[Feuer-Einsatzberichte] Keyword migration error on %s', (string) wp_parse_url(home_url('/'), PHP_URL_HOST)),
+                $body
+            );
+        } catch (Throwable $mail_error) {
+            $accepted = false;
+        }
+        $failures[$key]['developer_report'] = $accepted ? 'accepted' : 'failed';
+        update_option(self::FAILURES_OPTION, $failures, false);
+        FEU_Einsatz_Logger::log('keyword_migration_diagnostic_email', 'system', 0, __('Diagnosebericht zur Datenmigration', 'feuer-einsatzberichte'), [
+            'domain' => $domain,
+            'id' => $id,
+            'accepted' => $accepted,
+        ]);
+        return $accepted ? 'accepted' : 'failed';
+    }
 
     public static function get_run(): array {
         $run = get_option(self::RUN_OPTION, []);
         return is_array($run) ? $run : [];
     }
 
+    public static function get_failures(string $run_id): array {
+        $stored = get_option(self::FAILURES_OPTION, []);
+        if (!is_array($stored) || '' === $run_id) {
+            return [];
+        }
+        $failures = [];
+        foreach ($stored as $record) {
+            if (is_array($record) && $run_id === (string) ($record['run_id'] ?? '')) {
+                $domain = (string) ($record['domain'] ?? '');
+                $id = (int) ($record['id'] ?? 0);
+                $failures[$domain . ':' . $id] = $record;
+            }
+        }
+        return $failures;
+    }
+
     public static function is_write_locked(): bool {
-        return false !== get_option(self::LOCK_OPTION, false);
+        return false !== get_option(self::LOCK_OPTION, false)
+            || self::needs_manual_recovery();
+    }
+
+    public static function needs_manual_recovery(): bool {
+        return 'rollback_failed' === (string) (self::get_run()['status'] ?? '');
     }
 
     private static function report_ids(): array {
@@ -108,6 +175,9 @@ final class FEU_Einsatz_Keyword_Migration {
         if (FEU_Einsatz_Post_Migration::is_write_locked()) {
             return new WP_Error('post_migration_active', __('Die Beitragsmigration ist noch aktiv.', 'feuer-einsatzberichte'));
         }
+        if (self::needs_manual_recovery()) {
+            return new WP_Error('rollback_failed', __('Die fehlgeschlagene Rücksetzung muss zuerst manuell geprüft werden.', 'feuer-einsatzberichte'));
+        }
         if (!add_option(self::LOCK_OPTION, (string) time(), '', false)) {
             return new WP_Error('migration_locked', __('Eine Übertragung läuft bereits.', 'feuer-einsatzberichte'));
         }
@@ -139,20 +209,29 @@ final class FEU_Einsatz_Keyword_Migration {
                     return $previous[$post_id]['term_ids'];
                 }
             }
+            $old_selected = FEU_Einsatz_Report_Taxonomy::get_selected_ids();
+            $previous_run = self::get_run();
+            $retry_run_id = 'failed_rolled_back' === ($previous_run['status'] ?? '')
+                && (array) ($previous_run['old_selected'] ?? []) === $old_selected
+                ? (string) ($previous_run['run_id'] ?? '') : '';
             $run = [
+                'run_id' => '' !== $retry_run_id ? $retry_run_id : wp_generate_uuid4(),
                 'status' => 'running',
                 'started_at' => current_time('mysql', true),
                 'actor_id' => get_current_user_id(),
                 'archive_key' => is_array($archive) ? (string) ($archive['archive_key'] ?? '') : '',
-                'old_selected' => FEU_Einsatz_Report_Taxonomy::get_selected_ids(),
+                'old_selected' => $old_selected,
                 'new_selected_before' => get_option(FEU_Einsatz_Report_Taxonomy::SELECTED_OPTION, null),
                 'reports' => $previous,
                 'processed' => [],
             ];
             update_option(self::RUN_OPTION, $run, false);
             $new_selected = [];
+            $failure_domain = 'categories';
+            $failure_id = 0;
             try {
                 foreach ($run['old_selected'] as $legacy_id) {
+                    $failure_id = (int) $legacy_id;
                     $term_id = FEU_Einsatz_Report_Taxonomy::copy_legacy_term((int) $legacy_id);
                     if (is_wp_error($term_id)) {
                         throw new RuntimeException($term_id->get_error_message());
@@ -160,6 +239,8 @@ final class FEU_Einsatz_Keyword_Migration {
                     $new_selected[] = (int) $term_id;
                 }
                 foreach ($ids as $post_id) {
+                    $failure_domain = 'reports';
+                    $failure_id = (int) $post_id;
                     $copied = FEU_Einsatz_Report_Taxonomy::copy_report_terms($post_id);
                     if (is_wp_error($copied)) {
                         throw new RuntimeException($copied->get_error_message());
@@ -170,6 +251,8 @@ final class FEU_Einsatz_Keyword_Migration {
                     $run['processed'][] = $post_id;
                     update_option(self::RUN_OPTION, $run, false);
                 }
+                $failure_domain = 'global';
+                $failure_id = 0;
                 $current_ids = self::report_ids();
                 sort($current_ids);
                 $expected_ids = $ids;
@@ -178,6 +261,8 @@ final class FEU_Einsatz_Keyword_Migration {
                     throw new RuntimeException(__('Während der Übertragung wurden Berichte hinzugefügt oder entfernt.', 'feuer-einsatzberichte'));
                 }
                 foreach ($ids as $post_id) {
+                    $failure_domain = 'reports';
+                    $failure_id = (int) $post_id;
                     $current_legacy = array_map('intval', wp_get_post_categories($post_id));
                     $old_legacy = (array) $previous[$post_id]['legacy_terms'];
                     sort($current_legacy);
@@ -188,6 +273,8 @@ final class FEU_Einsatz_Keyword_Migration {
                         throw new RuntimeException(sprintf(__('Bericht %d wurde während der Übertragung geändert.', 'feuer-einsatzberichte'), $post_id));
                     }
                 }
+                $failure_domain = 'global';
+                $failure_id = 0;
                 update_option(FEU_Einsatz_Report_Taxonomy::SELECTED_OPTION, array_values(array_unique($new_selected)), false);
                 update_option(FEU_Einsatz_Report_Taxonomy::ENABLED_OPTION, 1, false);
                 $run['cutover_terms'] = [];
@@ -221,10 +308,21 @@ final class FEU_Einsatz_Keyword_Migration {
                 ]);
                 return ['report_count' => count($ids), 'archive_key' => $run['archive_key']];
             } catch (Throwable $error) {
-                self::restore_previous($run);
-                $run['status'] = 'failed_rolled_back';
+                try {
+                    self::restore_previous($run);
+                    $run['status'] = 'failed_rolled_back';
+                } catch (Throwable $rollback_error) {
+                    $run['status'] = 'rollback_failed';
+                    $run['rollback_error'] = $rollback_error->getMessage();
+                }
                 $run['error'] = $error->getMessage();
                 update_option(self::RUN_OPTION, $run, false);
+                try {
+                    $run['developer_report'] = self::record_failure((string) $run['run_id'], $failure_domain, $failure_id);
+                    update_option(self::RUN_OPTION, $run, false);
+                } catch (Throwable $diagnostic_error) {
+                    // The failed migration journal must survive a separate logging/mail failure.
+                }
                 return new WP_Error('keyword_migration_failed', $error->getMessage());
             }
         } catch (Throwable $error) {
