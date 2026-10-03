@@ -955,7 +955,7 @@ class FEU_Einsatz_Database {
             FROM {$this->wpdb->posts} p
             INNER JOIN {$this->wpdb->postmeta} pm ON p.ID = pm.post_id
             LEFT JOIN {$this->wpdb->postmeta} event_date ON p.ID = event_date.post_id AND event_date.meta_key = '_feu_einsatz_datum'
-            WHERE p.post_type = 'post'
+            WHERE p.post_type IN ('post', 'einsatzbericht')
             AND p.post_status = 'publish'
             AND {$event_year_sql} = %d
             AND pm.meta_key = '_feu_einsatz_einsatzbericht'
@@ -1166,7 +1166,7 @@ class FEU_Einsatz_Database {
                     FROM {$this->table_stats} s
                     INNER JOIN {$this->wpdb->posts} p ON p.ID = s.post_id
                     WHERE p.post_status = 'publish'
-                    AND p.post_type = 'post'
+                    AND p.post_type IN ('post', 'einsatzbericht')
                     GROUP BY s.teilnehmer_id
                 ) usage_stats ON usage_stats.teilnehmer_id = t.id
             ";
@@ -1615,7 +1615,7 @@ class FEU_Einsatz_Database {
             LEFT JOIN {$this->wpdb->postmeta} street
                 ON p.ID = street.post_id
                 AND street.meta_key = '_feu_einsatz_strasse'
-            WHERE p.post_type = 'post'
+            WHERE p.post_type IN ('post', 'einsatzbericht')
               AND p.post_status = 'publish'
               AND report.meta_key = '_feu_einsatz_einsatzbericht'
               AND report.meta_value = '1'
@@ -1635,7 +1635,7 @@ class FEU_Einsatz_Database {
         $period = sanitize_key((string) $period);
         $event_date_sql = $this->get_statistics_event_date_sql('event_date', 'p');
         $where_clauses = [
-            "p.post_type = 'post'",
+            "p.post_type IN ('post', 'einsatzbericht')",
             "p.post_status = 'publish'",
             "report.meta_key = '_feu_einsatz_einsatzbericht'",
             "report.meta_value = '1'",
@@ -1788,29 +1788,80 @@ class FEU_Einsatz_Database {
     public function get_category_statistics($jahr = null) {
         if (!$jahr) $jahr = date('Y');
         $event_year_sql = $this->get_statistics_event_year_sql('event_date', 'p');
-        
-        $sql = $this->wpdb->prepare("
-            SELECT 
-                t.term_id,
-                t.name as kategorie_name,
-                COUNT(DISTINCT p.ID) as anzahl
-            FROM {$this->wpdb->terms} t
-            INNER JOIN {$this->wpdb->term_taxonomy} tt ON tt.term_id = t.term_id
-            INNER JOIN {$this->wpdb->term_relationships} tr ON tr.term_taxonomy_id = tt.term_taxonomy_id
-            INNER JOIN {$this->wpdb->posts} p ON p.ID = tr.object_id
+
+        // The donut is a partition of reports, not a count of term
+        // relationships. A report with several keywords must appear once.
+        $post_ids = array_map('intval', (array) $this->wpdb->get_col($this->wpdb->prepare("
+            SELECT DISTINCT p.ID
+            FROM {$this->wpdb->posts} p
             INNER JOIN {$this->wpdb->postmeta} pm ON p.ID = pm.post_id
             LEFT JOIN {$this->wpdb->postmeta} event_date ON p.ID = event_date.post_id AND event_date.meta_key = '_feu_einsatz_datum'
-            WHERE p.post_type = 'post'
-            AND p.post_status = 'publish'
-            AND {$event_year_sql} = %d
-            AND pm.meta_key = '_feu_einsatz_einsatzbericht'
-            AND pm.meta_value = '1'
-            AND tt.taxonomy = 'category'
-            GROUP BY t.term_id
-            ORDER BY anzahl DESC
-        ", $jahr);
-        
-        return $this->wpdb->get_results($sql);
+            WHERE p.post_type IN ('post', 'einsatzbericht')
+              AND p.post_status = 'publish'
+              AND {$event_year_sql} = %d
+              AND pm.meta_key = '_feu_einsatz_einsatzbericht'
+              AND pm.meta_value = '1'
+        ", $jahr)));
+        if (!$post_ids) {
+            return [];
+        }
+
+        update_meta_cache('post', $post_ids);
+        $taxonomies = ['category'];
+        if (FEU_Einsatz_Report_Taxonomy::enabled() && taxonomy_exists('feu_einsatzstichwort')) {
+            $taxonomies[] = 'feu_einsatzstichwort';
+        }
+        $terms = wp_get_object_terms($post_ids, $taxonomies, ['fields' => 'all_with_object_id']);
+        $terms_by_post = [];
+        foreach (is_wp_error($terms) ? [] : $terms as $term) {
+            $terms_by_post[(int) $term->object_id][] = $term;
+        }
+        $legacy_root = FEU_Einsatz_Template_Helpers::find_root_category();
+        $legacy_root_id = $legacy_root instanceof WP_Term ? (int) $legacy_root->term_id : 0;
+        $counts = [];
+
+        foreach ($post_ids as $post_id) {
+            $candidates = array_values(array_filter($terms_by_post[$post_id] ?? [], static function ($term) use ($legacy_root_id) {
+                if (FEU_Einsatz_Report_Taxonomy::enabled() && 'feu_einsatzstichwort' === $term->taxonomy) {
+                    return !in_array($term->slug, ['einsaetze', 'einsatze'], true);
+                }
+                return 'category' === $term->taxonomy
+                    && (int) $term->term_id !== $legacy_root_id
+                    && (!$legacy_root_id || term_is_ancestor_of($legacy_root_id, (int) $term->term_id, 'category'));
+            }));
+            usort($candidates, static function ($a, $b) {
+                if ($a->taxonomy !== $b->taxonomy) {
+                    return 'feu_einsatzstichwort' === $a->taxonomy ? -1 : 1;
+                }
+                $depth_a = count(get_ancestors((int) $a->term_id, $a->taxonomy));
+                $depth_b = count(get_ancestors((int) $b->term_id, $b->taxonomy));
+                return $depth_b <=> $depth_a ?: (int) $a->term_id <=> (int) $b->term_id;
+            });
+            $preferred_new = (int) get_post_meta($post_id, '_feu_einsatz_primary_stichwort_id', true);
+            $preferred_old = (int) get_post_meta($post_id, '_feu_einsatz_primary_category_id', true);
+            $chosen = null;
+            foreach ($candidates as $candidate) {
+                if (('feu_einsatzstichwort' === $candidate->taxonomy && $preferred_new === (int) $candidate->term_id)
+                    || ('category' === $candidate->taxonomy && $preferred_old === (int) $candidate->term_id && !$preferred_new)) {
+                    $chosen = $candidate;
+                    break;
+                }
+            }
+            $chosen = $chosen ?: ($candidates[0] ?? null);
+            $key = $chosen ? $chosen->taxonomy . ':' . $chosen->term_id : 'none';
+            if (!isset($counts[$key])) {
+                $counts[$key] = (object) [
+                    'term_id' => $chosen ? (int) $chosen->term_id : 0,
+                    'kategorie_name' => $chosen ? (string) $chosen->name : __('Ohne Einsatzstichwort', 'feuer-einsatzberichte'),
+                    'anzahl' => 0,
+                ];
+            }
+            $counts[$key]->anzahl++;
+        }
+        usort($counts, static function ($a, $b) {
+            return (int) $b->anzahl <=> (int) $a->anzahl ?: strnatcasecmp($a->kategorie_name, $b->kategorie_name);
+        });
+        return $counts;
     }
 
     /**
@@ -1842,7 +1893,7 @@ class FEU_Einsatz_Database {
             LEFT JOIN {$this->wpdb->postmeta} street ON p.ID = street.post_id AND street.meta_key = '_feu_einsatz_strasse'
             LEFT JOIN {$this->wpdb->postmeta} house_number ON p.ID = house_number.post_id AND house_number.meta_key = '_feu_einsatz_hausnummer'
             LEFT JOIN {$this->wpdb->postmeta} city ON p.ID = city.post_id AND city.meta_key = '_feu_einsatz_stadt'
-            WHERE p.post_type = 'post'
+            WHERE p.post_type IN ('post', 'einsatzbericht')
             AND p.post_status = 'publish'
             AND {$event_year_sql} = %d
             AND report.meta_key = '_feu_einsatz_einsatzbericht'
@@ -1894,7 +1945,7 @@ class FEU_Einsatz_Database {
             LEFT JOIN {$this->wpdb->postmeta} house_number ON p.ID = house_number.post_id AND house_number.meta_key = '_feu_einsatz_hausnummer'
             LEFT JOIN {$this->wpdb->postmeta} city ON p.ID = city.post_id AND city.meta_key = '_feu_einsatz_stadt'
             LEFT JOIN {$this->wpdb->postmeta} plz ON p.ID = plz.post_id AND plz.meta_key = '_feu_einsatz_plz'
-            WHERE p.post_type = 'post'
+            WHERE p.post_type IN ('post', 'einsatzbericht')
             AND p.post_status = 'publish'
             AND report.meta_key = '_feu_einsatz_einsatzbericht'
             AND report.meta_value = '1'
@@ -1938,7 +1989,7 @@ class FEU_Einsatz_Database {
             FROM {$this->wpdb->posts} p
             INNER JOIN {$this->wpdb->postmeta} pm ON p.ID = pm.post_id
             LEFT JOIN {$this->wpdb->postmeta} event_date ON p.ID = event_date.post_id AND event_date.meta_key = '_feu_einsatz_datum'
-            WHERE p.post_type = 'post'
+            WHERE p.post_type IN ('post', 'einsatzbericht')
             AND p.post_status = 'publish'
             AND {$event_year_sql} = %d
             AND pm.meta_key = '_feu_einsatz_einsatzbericht'
@@ -1969,7 +2020,7 @@ class FEU_Einsatz_Database {
             FROM {$this->wpdb->posts} p
             INNER JOIN {$this->wpdb->postmeta} pm ON p.ID = pm.post_id
             LEFT JOIN {$this->wpdb->postmeta} event_date ON p.ID = event_date.post_id AND event_date.meta_key = '_feu_einsatz_datum'
-            WHERE p.post_type = 'post'
+            WHERE p.post_type IN ('post', 'einsatzbericht')
             AND p.post_status IN ('publish', 'future', 'draft', 'pending', 'private')
             AND pm.meta_key = '_feu_einsatz_einsatzbericht'
             AND pm.meta_value = '1'
@@ -2002,7 +2053,7 @@ class FEU_Einsatz_Database {
             INNER JOIN {$this->wpdb->postmeta} pm ON p.ID = pm.post_id
             LEFT JOIN {$this->wpdb->postmeta} event_date ON p.ID = event_date.post_id AND event_date.meta_key = '_feu_einsatz_datum'
             LEFT JOIN {$this->wpdb->postmeta} street ON p.ID = street.post_id AND street.meta_key = '_feu_einsatz_strasse'
-            WHERE p.post_type = 'post'
+            WHERE p.post_type IN ('post', 'einsatzbericht')
             AND p.post_status IN ('publish', 'future', 'draft', 'pending', 'private')
             AND pm.meta_key = '_feu_einsatz_einsatzbericht'
             AND pm.meta_value = '1'
@@ -2028,7 +2079,7 @@ class FEU_Einsatz_Database {
             FROM {$this->wpdb->posts} p
             INNER JOIN {$this->wpdb->postmeta} pm ON p.ID = pm.post_id
             LEFT JOIN {$this->wpdb->postmeta} event_date ON p.ID = event_date.post_id AND event_date.meta_key = '_feu_einsatz_datum'
-            WHERE p.post_type = 'post'
+            WHERE p.post_type IN ('post', 'einsatzbericht')
             AND p.post_status = 'publish'
             AND {$event_year_sql} = %d
             AND pm.meta_key = '_feu_einsatz_einsatzbericht'
@@ -2066,7 +2117,7 @@ class FEU_Einsatz_Database {
             'total_einsaetze' => intval($total_einsaetze),
             'total_teilnehmer_aktiv' => intval($total_teilnehmer_aktiv),
             'total_teilnehmer_alle' => intval($total_teilnehmer_alle),
-            'avg_teilnehmer' => round($avg_teilnehmer, 1)
+            'avg_teilnehmer' => round((float) $avg_teilnehmer, 1)
         ];
     }
     
@@ -2105,7 +2156,7 @@ class FEU_Einsatz_Database {
             FROM {$this->wpdb->posts} p
             INNER JOIN {$this->wpdb->postmeta} pm ON p.ID = pm.post_id
             LEFT JOIN {$this->wpdb->postmeta} event_date ON p.ID = event_date.post_id AND event_date.meta_key = '_feu_einsatz_datum'
-            WHERE p.post_type = 'post'
+            WHERE p.post_type IN ('post', 'einsatzbericht')
             AND p.post_status = 'publish'
             AND pm.meta_key = '_feu_einsatz_einsatzbericht'
             AND pm.meta_value = '1'
@@ -2348,7 +2399,7 @@ class FEU_Einsatz_Database {
                     ON posts.ID = street.post_id
                 WHERE street.meta_key = %s
                   AND street.meta_value <> ''
-                  AND posts.post_type = 'post'
+                  AND posts.post_type IN ('post', 'einsatzbericht')
                   AND posts.post_status NOT IN ('trash', 'auto-draft')
                 GROUP BY street.meta_value, plz.meta_value, city.meta_value
                 ORDER BY street.meta_value ASC, plz.meta_value ASC, city.meta_value ASC
@@ -2411,7 +2462,7 @@ class FEU_Einsatz_Database {
         }
 
         $where = [
-            "posts.post_type = 'post'",
+            "posts.post_type IN ('post', 'einsatzbericht')",
             "posts.post_status IN ('publish', 'future', 'draft', 'pending', 'private')",
             "street.meta_key = '_feu_einsatz_strasse'",
             'street.meta_value = %s',

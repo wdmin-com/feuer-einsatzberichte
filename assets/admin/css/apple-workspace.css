@@ -210,6 +210,37 @@ body.feu-apple-workspace .feu-einsatz-report-create-side {
     gap: 22px;
 }
 
+body.feu-apple-workspace .feu-einsatz-report-create-page .feu-einsatz-draft-recovery-warning,
+body.feu-apple-workspace .feu-einsatz-report-create-page .feu-einsatz-report-validation-notice {
+    margin: 18px 0;
+    border-radius: 12px;
+    overflow-wrap: anywhere;
+}
+
+body.feu-apple-workspace .feu-einsatz-prepublish-review {
+    min-width: 0;
+    border-color: rgba(0, 113, 227, .18);
+    background: var(--feu-apple-blue-soft);
+}
+
+body.feu-apple-workspace .feu-einsatz-prepublish-review dt {
+    color: var(--feu-apple-secondary);
+}
+
+body.feu-apple-workspace .feu-einsatz-prepublish-review dd {
+    color: var(--feu-apple-text);
+}
+
+body.feu-apple-workspace .feu-einsatz-prepublish-review [data-feu-review-confirm] {
+    max-width: 100%;
+    height: auto;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    white-space: normal;
+    line-height: 1.35;
+    text-align: center;
+}
+
 body.feu-apple-workspace .postbox.feu-einsatz-form-section {
     position: relative;
     margin: 0;

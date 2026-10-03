@@ -190,13 +190,38 @@ if ('radius' !== ($manual_radius_highlight['mode'] ?? '') || 360 !== (int) ($man
 $radius_preview_markup = FEU_Einsatz_Template_Helpers::build_local_map_preview_markup([
     'latitude' => $manual_coordinates['lat'],
     'longitude' => $manual_coordinates['lng'],
-    'geometry' => [],
+    'geometry' => $street_geometry['geometry'], // The circle must still suppress a stale road line.
     'address' => 'Koordinatenbasierter Einsatzbereich',
     'highlight_mode' => 'radius',
     'highlight_radius_meters' => 360,
 ]);
-if (false === strpos($radius_preview_markup, '<ellipse')) {
-    feu_einsatz_ci_fail('A coordinate-only radius did not produce an SVG fallback circle.');
+if (
+    false === strpos($radius_preview_markup, '<ellipse')
+    || false === strpos($radius_preview_markup, 'Feuerwehr-Einsatzbereich')
+    || false !== strpos($radius_preview_markup, 'vector-effect="non-scaling-stroke"')
+) {
+    feu_einsatz_ci_fail('A coordinate-only radius did not produce a labelled SVG fallback circle.');
+}
+
+$map_label_method = new ReflectionMethod(FEU_Einsatz_Admin::class, 'build_map_preview_street_label');
+$radius_map_label = $map_label_method->invoke($admin, $report_id, 'Bredowstraße, 22113 Hamburg', 'radius');
+$street_map_label = $map_label_method->invoke($admin, $report_id, 'Bredowstraße, 22113 Hamburg', 'full');
+if ('Feuerwehr-Einsatzbereich' !== $radius_map_label || false === strpos($street_map_label, 'Bredowstraße')) {
+    feu_einsatz_ci_fail('Map labels did not distinguish a radius from a street highlight.');
+}
+
+$svg_map_method = new ReflectionMethod(FEU_Einsatz_Admin::class, 'build_svg_map_preview');
+$radius_svg = $svg_map_method->invoke($admin, $report_id, 'Bredowstraße, 22113 Hamburg', $manual_coordinates, [
+    'geometry' => $street_geometry['geometry'], // Historic cached lines must be ignored in radius mode.
+    'highlight_mode' => 'radius',
+    'highlight_radius_meters' => 360,
+]);
+if (
+    false === strpos($radius_svg, '<ellipse')
+    || false === strpos($radius_svg, 'Feuerwehr-Einsatzbereich')
+    || false !== strpos($radius_svg, '<polyline')
+) {
+    feu_einsatz_ci_fail('Generated radius SVG must contain a labelled circle and no highlighted street.');
 }
 
 $unverified_house_preview_markup = FEU_Einsatz_Template_Helpers::build_local_map_preview_markup([
@@ -395,6 +420,149 @@ $saved_after_purge = $database->save_participant(0, [
 update_option('feu_einsatz_map_zoom', 14, false);
 if (!$saved_after_purge || 14 !== (int) get_option('feu_einsatz_map_zoom')) {
     feu_einsatz_ci_fail('New data could not be saved after selective purge.');
+}
+
+// The editor and public renderer must share a precise address result even if
+// Nominatim ranks a different building ahead of the requested house.
+$geocoder_calls = 0;
+$geocoder_fixture = static function ($preempt, $args, $url) use (&$geocoder_calls) {
+    if (false === strpos((string) $url, 'nominatim.openstreetmap.org/search')) {
+        return $preempt;
+    }
+    $geocoder_calls++;
+    $body = wp_json_encode([
+        [
+            'lat' => '53.520000', 'lon' => '10.020000', 'display_name' => 'CI Testweg 13, Hamburg',
+            'address' => ['road' => 'CI Testweg', 'house_number' => '13', 'postcode' => '22113', 'city' => 'Hamburg'],
+        ],
+        [
+            'lat' => '53.530000', 'lon' => '10.030000', 'display_name' => 'CI Testweg 12, Hamburg',
+            'address' => ['road' => 'CI Testweg', 'house_number' => '12', 'postcode' => '22113', 'city' => 'Hamburg'],
+        ],
+    ]);
+    return ['headers' => [], 'body' => $body, 'response' => ['code' => 200, 'message' => 'OK'], 'cookies' => []];
+};
+add_filter('pre_http_request', $geocoder_fixture, 10, 3);
+$precise_address = FEU_Einsatz_Template_Helpers::request_geocoded_address_data('CI Testweg', '22113', 'Hamburg', '12');
+remove_filter('pre_http_request', $geocoder_fixture, 10);
+if (!is_array($precise_address) || '12' !== ($precise_address['house_number'] ?? '') || 53.53 !== (float) ($precise_address['lat'] ?? 0) || 1 !== $geocoder_calls) {
+    feu_einsatz_ci_fail('Precise geocoder accepted a wrong first result or queried twice despite an exact candidate.');
+}
+
+$parent = wp_insert_term('CI Einsätze', 'category');
+if (is_wp_error($parent) && 'term_exists' === $parent->get_error_code()) {
+    $parent = ['term_id' => (int) $parent->get_error_data('term_exists')];
+}
+$child = !is_wp_error($parent) ? wp_insert_term('CI FEUMANV', 'category', [
+    'parent' => (int) $parent['term_id'],
+    'description' => 'Feuer mit einem Massenanfall von Verletzten (Großschadenlage) (ab fünf Verletzten)',
+]) : $parent;
+if (is_wp_error($child) && 'term_exists' === $child->get_error_code()) {
+    $child = ['term_id' => (int) $child->get_error_data('term_exists')];
+}
+if (is_wp_error($parent) || is_wp_error($child)) {
+    feu_einsatz_ci_fail('Could not prepare report text categories.');
+}
+$_POST = [
+    'feu_einsatz_strasse' => 'CI Testweg',
+    'feu_einsatz_stadt' => 'Hamburg',
+    'feu_einsatz_stadtteil' => 'Lurup',
+    'feu_einsatz_datum' => '12.06.2026',
+];
+$title_builder = new ReflectionMethod($admin, 'build_default_report_title_from_request');
+$description_builder = new ReflectionMethod($admin, 'build_default_report_description_from_request');
+$selected = [(int) $parent['term_id'], (int) $child['term_id']];
+$generated_title = $title_builder->invoke($admin, $selected);
+$generated_description = $description_builder->invoke($admin, $selected);
+if ('CI FEUMANV - CI Testweg' !== $generated_title || false === strpos($generated_description, 'CI FEUMANV - Feuer mit einem Massenanfall') || false === strpos($generated_description, 'auf der CI Testweg in Hamburg Lurup am 12.06.2026.')) {
+    feu_einsatz_ci_fail('Auto-generated title or report description does not match the selected incident data.');
+}
+update_option('feu_einsatz_categories', [(int) $parent['term_id'], (int) $child['term_id']], false);
+$submission_validator = new ReflectionMethod($admin, 'validate_report_submission_request');
+$_POST['feu_einsatz_map_location_mode'] = 'address';
+$_POST['feu_einsatz_map_highlight_override'] = 'radius';
+$_POST['feu_einsatz_plz'] = '22113';
+$_POST['feu_einsatz_uhrzeit'] = '12:30';
+$_POST['post_category'] = [(int) $child['term_id']];
+$missing_house = $submission_validator->invoke($admin);
+if (empty($missing_house['errors']) || false === strpos(implode(' ', $missing_house['errors']), 'Hausnummer')) {
+    feu_einsatz_ci_fail('A radius without a precise address was accepted.');
+}
+$_POST['feu_einsatz_hausnummer'] = '12';
+$confirmed_house = $submission_validator->invoke($admin);
+if (!empty($confirmed_house['errors']) || '12' !== ($confirmed_house['geocoded_data']['house_number'] ?? '')) {
+    feu_einsatz_ci_fail('A confirmed house number could not be saved in radius mode.');
+}
+$_POST['feu_einsatz_hausnummer'] = '99';
+add_filter('pre_http_request', $geocoder_fixture, 10, 3);
+$unconfirmed_house = $submission_validator->invoke($admin);
+remove_filter('pre_http_request', $geocoder_fixture, 10);
+if (empty($unconfirmed_house['errors']) || false === strpos(implode(' ', $unconfirmed_house['errors']), 'Hausnummer')) {
+    feu_einsatz_ci_fail('An unconfirmed house number was accepted in radius mode.');
+}
+$_POST['feu_einsatz_map_location_mode'] = 'coordinates';
+$_POST['feu_einsatz_latitude'] = '53,530000';
+$_POST['feu_einsatz_longitude'] = '10,030000';
+$coordinate_report = $submission_validator->invoke($admin);
+if (!empty($coordinate_report['errors'])) {
+    feu_einsatz_ci_fail('A valid coordinate-based report was rejected: ' . implode(' ', $coordinate_report['errors']));
+}
+$_POST = [];
+
+// A pre-existing road-centre coordinate must not become the centre of a new
+// short segment or radius when the requested house cannot be confirmed.
+$anchor_report_id = wp_insert_post([
+    'post_title' => 'CI map anchor report',
+    'post_status' => 'draft',
+    'post_type' => 'post',
+]);
+if (is_wp_error($anchor_report_id) || !$anchor_report_id) {
+    feu_einsatz_ci_fail('Could not prepare precise map-anchor report.');
+}
+update_post_meta($anchor_report_id, FEU_Einsatz_Template_Helpers::MAP_LOCATION_MODE_META, 'address');
+update_post_meta($anchor_report_id, FEU_Einsatz_Template_Helpers::MAP_HIGHLIGHT_OVERRIDE_META, 'radius');
+update_post_meta($anchor_report_id, '_feu_einsatz_hausnummer', '99');
+update_post_meta($anchor_report_id, '_feu_einsatz_latitude', '53.520000');
+update_post_meta($anchor_report_id, '_feu_einsatz_longitude', '10.020000');
+$wrong_house_fixture = static function ($preempt, $args, $url) {
+    if (false === strpos((string) $url, 'nominatim.openstreetmap.org/search')) {
+        return $preempt;
+    }
+    return [
+        'headers' => [],
+        'body' => wp_json_encode([[
+            'lat' => '53.525000', 'lon' => '10.025000', 'display_name' => 'CI Anchorweg, Hamburg',
+            'address' => ['road' => 'CI Anchorweg', 'postcode' => '22113', 'city' => 'Hamburg'],
+        ]]),
+        'response' => ['code' => 200, 'message' => 'OK'],
+        'cookies' => [],
+    ];
+};
+add_filter('pre_http_request', $wrong_house_fixture, 10, 3);
+$unverified_anchor = FEU_Einsatz_Template_Helpers::get_report_incident_coordinates($anchor_report_id, 'CI Anchorweg', '22113', 'Hamburg');
+$coordinate_writer = new ReflectionMethod($admin, 'get_and_save_coordinates');
+$unverified_write = $coordinate_writer->invoke($admin, $anchor_report_id, 'CI Anchorweg', '22113', 'Hamburg', '99');
+remove_filter('pre_http_request', $wrong_house_fixture, 10);
+if (false !== $unverified_anchor || false !== $unverified_write || '53.520000' !== (string) get_post_meta($anchor_report_id, '_feu_einsatz_latitude', true)) {
+    feu_einsatz_ci_fail('An unverified house reused or overwrote the old road-centre coordinate.');
+}
+update_post_meta($anchor_report_id, '_feu_einsatz_hausnummer', '');
+if (false !== FEU_Einsatz_Template_Helpers::get_report_incident_coordinates($anchor_report_id, 'CI Anchorweg', '22113', 'Hamburg')) {
+    feu_einsatz_ci_fail('A radius without a house number reused old coordinates.');
+}
+update_post_meta($anchor_report_id, '_feu_einsatz_strasse', 'CI Anchorweg');
+update_post_meta($anchor_report_id, '_feu_einsatz_plz', '22113');
+update_post_meta($anchor_report_id, '_feu_einsatz_stadt', 'Hamburg');
+set_transient('feu_einsatz_single_geometry_prime_v4_' . $anchor_report_id, 1, 600);
+$unverified_public_context = FEU_Einsatz_Template_Helpers::get_single_context(get_post($anchor_report_id));
+delete_transient('feu_einsatz_single_geometry_prime_v4_' . $anchor_report_id);
+if (empty($unverified_public_context['map']['anchor_unverified']) || empty($unverified_public_context['map']['publicly_hidden']) || null !== ($unverified_public_context['map']['config']['latitude'] ?? null) || !empty($unverified_public_context['map']['fallback_image_url'])) {
+    feu_einsatz_ci_fail('Public map exposed an unverified radius anchor or an old generated map.');
+}
+$map_image_generator = new ReflectionMethod($admin, 'generate_map_image');
+$invalid_map_image = $map_image_generator->invoke($admin, $anchor_report_id, 'CI Anchorweg, 22113 Hamburg');
+if (!is_wp_error($invalid_map_image) || 'feu_einsatz_unverified_map_anchor' !== $invalid_map_image->get_error_code()) {
+    feu_einsatz_ci_fail('Image generation accepted an unverified radius anchor.');
 }
 
 WP_CLI::success('Plugin loaded; recovery, selective purge, audit logging and post-purge saving succeeded.');

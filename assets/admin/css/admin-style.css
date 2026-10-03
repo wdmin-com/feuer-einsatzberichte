@@ -1384,6 +1384,18 @@
     margin-top: 16px;
 }
 
+.feu-einsatz-draft-recovery-warning {
+    margin-top: 16px;
+    padding: 12px 16px;
+    border-left: 4px solid #dba617 !important;
+    background: #fff9e8 !important;
+}
+
+.feu-einsatz-draft-recovery-warning ul {
+    margin: 8px 0 10px 20px;
+    list-style: disc;
+}
+
 .feu-einsatz-report-validation-notice {
     margin-top: 16px;
     padding: 12px 16px;
@@ -1502,6 +1514,26 @@
     flex-wrap: wrap;
     margin-top: 16px;
 }
+
+.feu-einsatz-report-duplicate-form { margin: 0 0 18px; }
+.feu-einsatz-prepublish-review {
+    margin: 18px 0;
+    padding: 16px;
+    border: 1px solid #9dc4ef;
+    border-radius: 12px;
+    background: #f2f8ff;
+}
+.feu-einsatz-prepublish-review h3 { margin: 0 0 12px; font-size: 16px; }
+.feu-einsatz-prepublish-review dl { display: grid; gap: 10px; margin: 0 0 14px; }
+.feu-einsatz-prepublish-review dl > div { min-width: 0; }
+.feu-einsatz-prepublish-review dt { color: #526579; font-size: 12px; font-weight: 700; }
+.feu-einsatz-prepublish-review dd { margin: 3px 0 0; color: #17324f; overflow-wrap: anywhere; }
+.feu-einsatz-prepublish-review .description { margin-bottom: 12px; }
+.feu-einsatz-review-url-status { margin: -2px 0 12px; font-weight: 600; }
+.feu-einsatz-review-url-status[data-state="available"] { color: #157347; }
+.feu-einsatz-review-url-status[data-state="conflict"],
+.feu-einsatz-review-url-status[data-state="missing_category"] { color: #b42318; }
+.feu-einsatz-review-url-status[data-state="unavailable"] { color: #795800; }
 
 .feu-einsatz-inline-form {
     display: inline-flex;

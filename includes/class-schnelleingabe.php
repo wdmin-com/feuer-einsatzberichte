@@ -137,6 +137,10 @@ class FEU_Einsatz_Schnelleingabe {
         ]);
 
         $errors = $this->validate_form_values($form_values);
+        $primary_category = FEU_Einsatz_Report_Post_Type::resolve_primary_category((array) $form_values['categories']);
+        if (!($primary_category instanceof WP_Term)) {
+            $errors[] = __('Bitte ein Einsatzstichwort unter der Hauptkategorie Einsätze auswählen.', 'feuer-einsatzberichte');
+        }
 
         if (!empty($errors)) {
             $this->set_flash($origin, [
@@ -150,6 +154,14 @@ class FEU_Einsatz_Schnelleingabe {
         if ('' === $post_title) {
             $post_title = $this->build_default_title($form_values['categories'], $form_values['street'], $form_values['date']);
         }
+        if ('publish' === $status && FEU_Einsatz_Report_Post_Type::slug_conflicts(sanitize_title($post_title))) {
+            $this->set_flash($origin, [
+                'errors' => [__('Ein Einsatzbericht mit dieser URL existiert bereits.', 'feuer-einsatzberichte')],
+                'form_values' => $form_values,
+            ]);
+            wp_safe_redirect($this->get_return_url($origin));
+            exit;
+        }
 
         $event_dt = DateTimeImmutable::createFromFormat(
             'd.m.Y H:i',
@@ -158,14 +170,16 @@ class FEU_Einsatz_Schnelleingabe {
         );
 
         $postarr = [
-            'post_type' => 'post',
+            'post_type' => FEU_Einsatz_Report_Post_Type::POST_TYPE,
             'post_status' => $status,
             'post_title' => $post_title,
             'post_content' => '',
             'post_author' => get_current_user_id(),
-            'post_category' => $form_values['categories'],
             'comment_status' => $comments_enabled ? 'open' : 'closed',
         ];
+        if (!FEU_Einsatz_Report_Taxonomy::enabled()) {
+            $postarr['post_category'] = $form_values['categories'];
+        }
 
         if ($event_dt instanceof DateTimeImmutable) {
             $event_post_date = $event_dt->format('Y-m-d H:i:s');
@@ -185,6 +199,21 @@ class FEU_Einsatz_Schnelleingabe {
         }
 
         update_post_meta($post_id, '_feu_einsatz_einsatzbericht', '1');
+        FEU_Einsatz_Report_Post_Type::set_category_permalink_meta((int) $post_id, $primary_category);
+        if (FEU_Einsatz_Report_Taxonomy::enabled()) {
+            $assigned = FEU_Einsatz_Report_Taxonomy::set_report_terms((int) $post_id, $form_values['categories']);
+            if (is_wp_error($assigned)) {
+                wp_delete_post($post_id, true);
+                $this->set_flash($origin, [
+                    'errors' => [$assigned->get_error_message()],
+                    'form_values' => $form_values,
+                ]);
+                wp_safe_redirect($this->get_return_url($origin));
+                exit;
+            }
+        } else {
+            wp_set_post_categories($post_id, $form_values['categories'], false);
+        }
         update_post_meta($post_id, '_feu_einsatz_strasse', $form_values['street']);
         update_post_meta($post_id, '_feu_einsatz_hausnummer', $form_values['house_number']);
         update_post_meta($post_id, '_feu_einsatz_plz', $form_values['postal_code']);
@@ -207,6 +236,7 @@ class FEU_Einsatz_Schnelleingabe {
 
         $this->save_participants($post_id, $form_values['participant_ids'], $form_values['participant_functions']);
         $this->save_organizations($post_id, $form_values['organization_ids']);
+        $this->db->invalidate_statistics_dashboard_cache();
 
         wp_schedule_single_event(time() + 5, 'feu_einsatz_background_geocode', [$post_id]);
 
@@ -367,9 +397,7 @@ class FEU_Einsatz_Schnelleingabe {
         }
 
         $allowed_category_ids = wp_list_pluck($this->get_available_categories(), 'term_id');
-        $form_values['categories'] = empty($allowed_category_ids)
-            ? $form_values['categories']
-            : array_values(array_intersect($form_values['categories'], array_map('absint', $allowed_category_ids)));
+        $form_values['categories'] = array_values(array_intersect($form_values['categories'], array_map('absint', $allowed_category_ids)));
 
         if (empty($form_values['categories'])) {
             $errors[] = __('Mindestens eine Einsatzart muss gewaehlt werden.', 'feuer-einsatzberichte');
@@ -383,7 +411,7 @@ class FEU_Einsatz_Schnelleingabe {
         $street = trim($street);
 
         if (!empty($category_ids)) {
-            $first_category = get_term((int) $category_ids[0], 'category');
+            $first_category = get_term((int) $category_ids[0], FEU_Einsatz_Report_Taxonomy::enabled() ? FEU_Einsatz_Report_Taxonomy::TAXONOMY : 'category');
 
             if ($first_category && !is_wp_error($first_category)) {
                 $title_parts[] = $first_category->name;
@@ -513,20 +541,14 @@ class FEU_Einsatz_Schnelleingabe {
     }
 
     private function get_available_categories(): array {
-        $configured_ids = array_values(
-            array_unique(
-                array_filter(
-                    array_map('absint', (array) get_option('feu_einsatz_categories', []))
-                )
-            )
-        );
+        $configured_ids = FEU_Einsatz_Report_Taxonomy::get_selected_ids();
 
         if (empty($configured_ids)) {
             return [];
         }
 
         $terms = get_terms([
-            'taxonomy' => 'category',
+            'taxonomy' => FEU_Einsatz_Report_Taxonomy::enabled() ? FEU_Einsatz_Report_Taxonomy::TAXONOMY : 'category',
             'include' => $configured_ids,
             'hide_empty' => false,
             'orderby' => 'include',

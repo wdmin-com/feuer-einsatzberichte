@@ -353,6 +353,7 @@ class FEU_Einsatz_Backup_Manager {
         $manifest['reports'] = isset($manifest['reports']) && is_array($manifest['reports']) ? $manifest['reports'] : [];
         $manifest['comments'] = isset($manifest['comments']) && is_array($manifest['comments']) ? $manifest['comments'] : [];
         $manifest['terms'] = isset($manifest['terms']) && is_array($manifest['terms']) ? $manifest['terms'] : [];
+        $manifest['keyword_terms'] = isset($manifest['keyword_terms']) && is_array($manifest['keyword_terms']) ? $manifest['keyword_terms'] : [];
         $manifest['attachments'] = isset($manifest['attachments']) && is_array($manifest['attachments']) ? $manifest['attachments'] : [];
 
         $tables = isset($manifest['tables']) && is_array($manifest['tables']) ? $manifest['tables'] : [];
@@ -614,9 +615,13 @@ class FEU_Einsatz_Backup_Manager {
     private function get_plugin_option_names() {
         global $wpdb;
 
-        return $wpdb->get_col(
-            "SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE 'feu_einsatz\_%' ESCAPE '\\'"
+        $names = $wpdb->get_col(
+            "SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE 'feu_einsatz_%'"
         );
+
+        return array_values(array_filter((array) $names, static function ($name) {
+            return str_starts_with((string) $name, 'feu_einsatz_');
+        }));
     }
 
     private function collect_plugin_options() {
@@ -634,13 +639,19 @@ class FEU_Einsatz_Backup_Manager {
 
         $rows = $wpdb->get_results(
             "SELECT option_name, option_value FROM {$wpdb->options}
-             WHERE option_name LIKE '_transient_feu_einsatz\_%' ESCAPE '\\'
-             OR option_name LIKE '_transient_timeout_feu_einsatz\_%' ESCAPE '\\'"
+             WHERE option_name LIKE '_transient_feu_einsatz_%'
+             OR option_name LIKE '_transient_timeout_feu_einsatz_%'"
         );
 
         $transients = [];
 
         foreach ((array) $rows as $row) {
+            if (
+                !str_starts_with($row->option_name, '_transient_feu_einsatz_')
+                && !str_starts_with($row->option_name, '_transient_timeout_feu_einsatz_')
+            ) {
+                continue;
+            }
             $transients[$row->option_name] = maybe_unserialize($row->option_value);
         }
 
@@ -652,7 +663,10 @@ class FEU_Einsatz_Backup_Manager {
 
         return array_map('absint', (array) $wpdb->get_col(
             $wpdb->prepare(
-                "SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = %s AND meta_value = %s",
+                "SELECT DISTINCT pm.post_id FROM {$wpdb->postmeta} pm
+                 INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
+                 WHERE p.post_type IN ('post', 'einsatzbericht')
+                   AND pm.meta_key = %s AND pm.meta_value = %s",
                 '_feu_einsatz_einsatzbericht',
                 '1'
             )
@@ -699,9 +713,17 @@ class FEU_Einsatz_Backup_Manager {
 
             $author = get_userdata((int) $post->post_author);
 
+            $report_keyword_ids = taxonomy_exists(FEU_Einsatz_Report_Taxonomy::TAXONOMY)
+                ? wp_get_object_terms($post_id, FEU_Einsatz_Report_Taxonomy::TAXONOMY, ['fields' => 'ids'])
+                : [];
+            if (is_wp_error($report_keyword_ids)) {
+                $report_keyword_ids = [];
+            }
+
             $reports[] = [
                 'id' => (int) $post_id,
                 'post' => [
+                    'post_type' => (string) $post->post_type,
                     'post_title' => (string) $post->post_title,
                     'post_content' => (string) $post->post_content,
                     'post_excerpt' => (string) $post->post_excerpt,
@@ -714,6 +736,7 @@ class FEU_Einsatz_Backup_Manager {
                     'author_login' => $author instanceof WP_User ? (string) $author->user_login : '',
                 ],
                 'categories' => array_map('absint', wp_get_post_categories($post_id)),
+                'stichworte' => array_map('absint', (array) $report_keyword_ids),
                 'meta' => $meta,
             ];
         }
@@ -809,6 +832,36 @@ class FEU_Einsatz_Backup_Manager {
         }
 
         return array_values($terms);
+    }
+
+    private function collect_keyword_term_records($report_records) {
+        if (!taxonomy_exists(FEU_Einsatz_Report_Taxonomy::TAXONOMY)) {
+            return [];
+        }
+        $ids = FEU_Einsatz_Report_Taxonomy::enabled()
+            ? FEU_Einsatz_Report_Taxonomy::get_selected_ids()
+            : [];
+        foreach ((array) $report_records as $report) {
+            $ids = array_merge($ids, array_map('absint', (array) ($report['stichworte'] ?? [])));
+        }
+        $records = [];
+        foreach (array_values(array_unique(array_filter($ids))) as $id) {
+            foreach (array_merge(array_reverse(get_ancestors($id, FEU_Einsatz_Report_Taxonomy::TAXONOMY)), [$id]) as $candidate_id) {
+                $term = get_term((int) $candidate_id, FEU_Einsatz_Report_Taxonomy::TAXONOMY);
+                if (!($term instanceof WP_Term)) {
+                    continue;
+                }
+                $records[(int) $term->term_id] = [
+                    'term_id' => (int) $term->term_id,
+                    'name' => (string) $term->name,
+                    'slug' => (string) $term->slug,
+                    'description' => (string) $term->description,
+                    'parent' => (int) $term->parent,
+                    'legacy_category_id' => (int) get_term_meta((int) $term->term_id, FEU_Einsatz_Report_Taxonomy::LEGACY_TERM_META, true),
+                ];
+            }
+        }
+        return array_values($records);
     }
 
     private function get_table_rows($table_name) {
@@ -990,6 +1043,7 @@ class FEU_Einsatz_Backup_Manager {
             'reports' => $report_records,
             'comments' => $this->collect_comment_records($report_records),
             'terms' => $this->collect_term_records($report_records),
+            'keyword_terms' => $this->collect_keyword_term_records($report_records),
             'attachments' => $this->collect_attachment_records($attachment_ids),
             'tables' => [
                 'participants' => $this->get_table_rows($this->db->get_participant_table_name()),
@@ -1417,6 +1471,56 @@ class FEU_Einsatz_Backup_Manager {
         return $term_map;
     }
 
+    private function restore_keyword_terms($manifest, $term_map) {
+        FEU_Einsatz_Report_Taxonomy::register();
+        $keyword_map = [];
+        foreach ((array) ($manifest['keyword_terms'] ?? []) as $term_data) {
+            $old_id = absint($term_data['term_id'] ?? 0);
+            $slug = sanitize_title((string) ($term_data['slug'] ?? ''));
+            if (!$old_id || '' === $slug) {
+                continue;
+            }
+            $old_parent = absint($term_data['parent'] ?? 0);
+            if ($old_parent && !isset($keyword_map[$old_parent])) {
+                throw new RuntimeException(__('Übergeordnetes Einsatzstichwort fehlt im Archiv.', 'feuer-einsatzberichte'));
+            }
+            $parent = $old_parent ? (int) $keyword_map[$old_parent] : 0;
+            $existing = get_term_by('slug', $slug, FEU_Einsatz_Report_Taxonomy::TAXONOMY);
+            if ($existing instanceof WP_Term) {
+                if ((int) $existing->parent !== $parent) {
+                    throw new RuntimeException(__('Einsatzstichwort-Slug-Konflikt beim Wiederherstellen.', 'feuer-einsatzberichte'));
+                }
+                $new_id = (int) $existing->term_id;
+                $updated = wp_update_term($new_id, FEU_Einsatz_Report_Taxonomy::TAXONOMY, [
+                    'name' => sanitize_text_field((string) ($term_data['name'] ?? $slug)),
+                    'description' => wp_kses_post((string) ($term_data['description'] ?? '')),
+                ]);
+                if (is_wp_error($updated)) {
+                    throw new RuntimeException($updated->get_error_message());
+                }
+            } else {
+                $created = wp_insert_term(sanitize_text_field((string) ($term_data['name'] ?? $slug)), FEU_Einsatz_Report_Taxonomy::TAXONOMY, [
+                    'slug' => $slug,
+                    'description' => wp_kses_post((string) ($term_data['description'] ?? '')),
+                    'parent' => $parent,
+                ]);
+                if (is_wp_error($created)) {
+                    throw new RuntimeException($created->get_error_message());
+                }
+                $new_id = (int) $created['term_id'];
+            }
+            $keyword_map[$old_id] = $new_id;
+            $legacy_old = absint($term_data['legacy_category_id'] ?? 0);
+            if ($legacy_old) {
+                if (!isset($term_map[$legacy_old])) {
+                    throw new RuntimeException(__('Zugehörige alte Kategorie fehlt im Archiv.', 'feuer-einsatzberichte'));
+                }
+                update_term_meta($new_id, FEU_Einsatz_Report_Taxonomy::LEGACY_TERM_META, (int) $term_map[$legacy_old]);
+            }
+        }
+        return $keyword_map;
+    }
+
     private function map_user_by_login($user_login) {
         $user_login = trim((string) $user_login);
 
@@ -1536,9 +1640,9 @@ class FEU_Einsatz_Backup_Manager {
         $wpdb->query("DELETE FROM {$table_name}");
     }
 
-    private function restore_reports($manifest, $term_map, $attachment_map) {
+    private function restore_reports($manifest, $term_map, $attachment_map, $keyword_map = []) {
         $post_map = [];
-        $allowed_statuses = ['draft', 'pending', 'private', 'publish', 'future'];
+        $allowed_statuses = ['draft', 'pending', 'private', 'publish', 'future', 'trash'];
 
         foreach ((array) $manifest['reports'] as $report_data) {
             $post_data = isset($report_data['post']) && is_array($report_data['post']) ? $report_data['post'] : [];
@@ -1549,7 +1653,7 @@ class FEU_Einsatz_Backup_Manager {
             }
 
             $post_id = wp_insert_post([
-                'post_type' => 'post',
+                'post_type' => FEU_Einsatz_Report_Post_Type::POST_TYPE,
                 'post_title' => isset($post_data['post_title']) ? sanitize_text_field($post_data['post_title']) : '',
                 'post_content' => isset($post_data['post_content']) ? wp_kses_post($post_data['post_content']) : '',
                 'post_excerpt' => isset($post_data['post_excerpt']) ? wp_kses_post($post_data['post_excerpt']) : '',
@@ -1563,7 +1667,12 @@ class FEU_Einsatz_Backup_Manager {
             ], true);
 
             if (is_wp_error($post_id) || !$post_id) {
-                continue;
+                throw new RuntimeException(__('Einsatzbericht konnte nicht wiederhergestellt werden.', 'feuer-einsatzberichte'));
+            }
+
+            $expected_slug = isset($post_data['post_name']) ? sanitize_title((string) $post_data['post_name']) : '';
+            if ('' !== $expected_slug && $expected_slug !== (string) get_post_field('post_name', $post_id)) {
+                throw new RuntimeException(__('URL-Konflikt beim Wiederherstellen eines Einsatzberichts.', 'feuer-einsatzberichte'));
             }
 
             $post_map[(int) $report_data['id']] = (int) $post_id;
@@ -1578,6 +1687,16 @@ class FEU_Einsatz_Backup_Manager {
                 wp_set_post_categories($post_id, $categories, false);
             }
 
+            $keywords = array_values(array_filter(array_map(static function ($term_id) use ($keyword_map) {
+                return (int) ($keyword_map[absint($term_id)] ?? 0);
+            }, (array) ($report_data['stichworte'] ?? []))));
+            if ($keywords) {
+                $assigned = wp_set_object_terms($post_id, $keywords, FEU_Einsatz_Report_Taxonomy::TAXONOMY, false);
+                if (is_wp_error($assigned)) {
+                    throw new RuntimeException($assigned->get_error_message());
+                }
+            }
+
             foreach ((array) $report_data['meta'] as $meta_row) {
                 $key = isset($meta_row['key']) ? (string) $meta_row['key'] : '';
                 $value = isset($meta_row['value']) ? $meta_row['value'] : null;
@@ -1588,7 +1707,31 @@ class FEU_Einsatz_Backup_Manager {
 
                 $value = $this->remap_attachment_references($key, $value, $attachment_map);
                 $value = $this->replace_upload_paths($value, $manifest);
+                if (FEU_Einsatz_Report_Taxonomy::PRIMARY_META === $key) {
+                    $value = (int) ($keyword_map[absint($value)] ?? 0);
+                }
                 update_post_meta($post_id, $key, $value);
+            }
+
+            update_post_meta($post_id, FEU_Einsatz_Report_Post_Type::MARKER_META, '1');
+            $scheme = (string) get_post_meta($post_id, FEU_Einsatz_Report_Post_Type::URL_SCHEME_META, true);
+            if ('category' === $scheme) {
+                $category_slug = (string) get_post_meta($post_id, FEU_Einsatz_Report_Post_Type::CATEGORY_SLUG_META, true);
+                $category_valid = false;
+                foreach ($categories as $category_id) {
+                    $category = get_term($category_id, 'category');
+                    if ($category instanceof WP_Term && $category->slug === $category_slug) {
+                        $category_valid = true;
+                        update_post_meta($post_id, FEU_Einsatz_Report_Post_Type::PRIMARY_CATEGORY_META, (string) $category_id);
+                        break;
+                    }
+                }
+                if (!$category_valid) {
+                    throw new RuntimeException(__('Die URL-Kategorie eines Einsatzberichts fehlt im Archiv.', 'feuer-einsatzberichte'));
+                }
+            } else {
+                update_post_meta($post_id, FEU_Einsatz_Report_Post_Type::URL_SCHEME_META, 'legacy');
+                update_post_meta($post_id, FEU_Einsatz_Report_Post_Type::LEGACY_PATH_META, 'einsaetze/' . get_post_field('post_name', $post_id) . '/');
             }
         }
 
@@ -1776,7 +1919,7 @@ class FEU_Einsatz_Backup_Manager {
         }
     }
 
-    private function remap_restored_options($term_map, $attachment_map) {
+    private function remap_restored_options($term_map, $attachment_map, $keyword_map = []) {
         $mapped_categories = array_values(array_filter(array_map(static function($term_id) use ($term_map) {
             $term_id = absint($term_id);
 
@@ -1784,6 +1927,18 @@ class FEU_Einsatz_Backup_Manager {
         }, (array) get_option('feu_einsatz_categories', []))));
 
         update_option('feu_einsatz_categories', $mapped_categories);
+
+        $archived_keyword_ids = (array) get_option(FEU_Einsatz_Report_Taxonomy::SELECTED_OPTION, []);
+        $mapped_keywords = array_values(array_filter(array_map(static function ($term_id) use ($keyword_map) {
+            return (int) ($keyword_map[absint($term_id)] ?? 0);
+        }, $archived_keyword_ids)));
+        update_option(FEU_Einsatz_Report_Taxonomy::SELECTED_OPTION, $mapped_keywords);
+        if (FEU_Einsatz_Report_Taxonomy::enabled() && $archived_keyword_ids && !$mapped_keywords) {
+            throw new RuntimeException(__('Aktive Einsatzstichworte fehlen im Archiv.', 'feuer-einsatzberichte'));
+        }
+        // A restored archive has new post IDs; the old cutover rollback snapshot is unsafe.
+        delete_option('feu_einsatz_keyword_migration_run');
+        delete_option('feu_einsatz_keyword_migration_lock');
 
         $watermark_image_id = absint(get_option('feu_einsatz_photo_watermark_image_id', 0));
         update_option(
@@ -1799,8 +1954,9 @@ class FEU_Einsatz_Backup_Manager {
             delete_option($option_name);
         }
 
-        $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_feu_einsatz\_%' ESCAPE '\\'");
-        $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_timeout_feu_einsatz\_%' ESCAPE '\\'");
+        foreach (array_keys($this->collect_plugin_transients()) as $option_name) {
+            delete_option($option_name);
+        }
     }
 
     private function collect_current_plugin_attachment_ids() {
@@ -1922,17 +2078,18 @@ class FEU_Einsatz_Backup_Manager {
                 $this->restore_options($manifest);
 
                 $term_map = $this->restore_terms($manifest);
+                $keyword_map = $this->restore_keyword_terms($manifest, $term_map);
                 $attachment_map = $this->restore_attachments($manifest);
                 $this->restore_organizations($manifest);
                 $this->restore_participants($manifest, $attachment_map, $term_map);
-                $post_map = $this->restore_reports($manifest, $term_map, $attachment_map);
+                $post_map = $this->restore_reports($manifest, $term_map, $attachment_map, $keyword_map);
                 $this->restore_comments($manifest, $post_map);
                 $this->restore_stats($manifest, $post_map);
                 if (!method_exists($database, 'rebuild_all_statistics') || false === $database->rebuild_all_statistics()) {
                     $this->restore_statistics_cache($manifest);
                 }
                 $this->restore_logs($manifest);
-                $this->remap_restored_options($term_map, $attachment_map);
+                $this->remap_restored_options($term_map, $attachment_map, $keyword_map);
 
                 if ('' !== (string) $wpdb->last_error) {
                     throw new RuntimeException((string) $wpdb->last_error);

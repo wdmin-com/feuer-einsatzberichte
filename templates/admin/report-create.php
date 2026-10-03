@@ -18,10 +18,16 @@ $submit_primary_label = $is_edit_mode ? __('Aenderungen veroeffentlichen', 'feue
 $post_title_value = isset($post->post_title) ? (string) $post->post_title : '';
 $post_content_value = isset($post->post_content) ? (string) $post->post_content : '';
 $comments_feature_enabled = 1 === (int) get_option('feu_einsatz_default_comments_enabled', 0);
-$selected_category_ids = $is_edit_mode && !empty($post->ID) ? array_map('absint', wp_get_post_categories($post->ID)) : [];
+$selected_category_ids = $is_edit_mode && !empty($post->ID) ? FEU_Einsatz_Report_Taxonomy::get_report_term_ids((int) $post->ID) : [];
+$active_report_category_ids = isset($active_report_category_ids) ? array_map('absint', (array) $active_report_category_ids) : [];
+$inactive_selected_category_ids = array_values(array_diff($selected_category_ids, $active_report_category_ids));
+$primary_category_id = $is_edit_mode && !empty($post->ID)
+    ? (int) get_post_meta($post->ID, FEU_Einsatz_Report_Taxonomy::enabled() ? FEU_Einsatz_Report_Taxonomy::PRIMARY_META : FEU_Einsatz_Report_Post_Type::PRIMARY_CATEGORY_META, true)
+    : 0;
 $report_categories = array_values(array_filter($report_categories, static function ($category) {
     return $category instanceof WP_Term;
 }));
+$report_category_taxonomy = FEU_Einsatz_Report_Taxonomy::enabled() ? FEU_Einsatz_Report_Taxonomy::TAXONOMY : 'category';
 $sorted_report_categories = $report_categories;
 usort($sorted_report_categories, static function ($left, $right) use ($selected_category_ids) {
     $left_selected = in_array((int) $left->term_id, $selected_category_ids, true) ? 1 : 0;
@@ -59,6 +65,7 @@ if (empty($popular_report_categories)) {
 }
 
 $current_post_status = isset($post->post_status) ? (string) $post->post_status : 'draft';
+$has_fixed_public_url = $is_edit_mode && !empty($post->post_name);
 $status_badge_class = 'is-archived';
 $status_label = __('Entwurf', 'feuer-einsatzberichte');
 $status_hint = __('Der Bericht ist aktuell als Entwurf gespeichert.', 'feuer-einsatzberichte');
@@ -113,6 +120,18 @@ if ('publish' === $current_post_status) {
         </div>
     <?php endif; ?>
 
+    <?php if ($is_edit_mode) : ?>
+        <?php if (isset($_GET['duplicated_from']) && absint(wp_unslash($_GET['duplicated_from'])) > 0) : ?>
+            <div class="notice notice-success"><p><?php esc_html_e('Kopie als neuer Entwurf erstellt. Bitte Einsatzdaten und Veröffentlichungszeitpunkt vor dem Speichern prüfen.', 'feuer-einsatzberichte'); ?></p></div>
+        <?php endif; ?>
+        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="feu-einsatz-report-duplicate-form">
+            <input type="hidden" name="action" value="feu_einsatz_duplicate_report" />
+            <input type="hidden" name="source_id" value="<?php echo esc_attr((int) $post->ID); ?>" />
+            <?php wp_nonce_field('feu_einsatz_duplicate_report_' . (int) $post->ID, 'feu_einsatz_duplicate_report_nonce'); ?>
+            <button type="submit" class="button button-secondary"><?php esc_html_e('Gespeicherten Bericht als neuen Entwurf kopieren', 'feuer-einsatzberichte'); ?></button>
+        </form>
+    <?php endif; ?>
+
     <nav class="feu-einsatz-report-section-nav" aria-label="<?php echo esc_attr__('Abschnitte im Formular', 'feuer-einsatzberichte'); ?>">
         <a class="feu-einsatz-report-section-link" href="#feu-einsatz-report-box-details"><?php esc_html_e('Einsatzdetails', 'feuer-einsatzberichte'); ?></a>
         <a class="feu-einsatz-report-section-link" href="#feu-einsatz-report-section-basics"><?php esc_html_e('Grunddaten', 'feuer-einsatzberichte'); ?></a>
@@ -127,12 +146,23 @@ if ('publish' === $current_post_status) {
         <a class="feu-einsatz-report-section-link" href="#feu-einsatz-report-box-publish"><?php esc_html_e('Veroeffentlichung', 'feuer-einsatzberichte'); ?></a>
     </nav>
 
-    <div id="feu-einsatz-report-validation-notice" class="notice notice-error feu-einsatz-report-validation-notice" hidden>
+    <div id="feu-einsatz-report-validation-notice" class="notice notice-error feu-einsatz-report-validation-notice" role="alert" hidden>
         <p><strong><?php _e('Pflichtfelder pruefen', 'feuer-einsatzberichte'); ?></strong></p>
         <ul class="feu-einsatz-report-validation-list"></ul>
     </div>
 
-    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="feu-einsatz-report-create-form" novalidate>
+    <div class="notice notice-info feu-einsatz-draft-recovery" data-feu-draft-recovery hidden>
+        <p><?php esc_html_e('Nicht gespeicherte Formulareingaben aus dieser Browser-Sitzung gefunden. Wiederherstellen?', 'feuer-einsatzberichte'); ?></p>
+        <p><button type="button" class="button button-primary" data-feu-draft-restore><?php esc_html_e('Formular wiederherstellen', 'feuer-einsatzberichte'); ?></button> <button type="button" class="button" data-feu-draft-discard><?php esc_html_e('Verwerfen', 'feuer-einsatzberichte'); ?></button></p>
+    </div>
+
+    <div class="notice notice-warning feu-einsatz-draft-recovery-warning" data-feu-draft-recovery-warning role="alert" hidden>
+        <p><strong><?php esc_html_e('Wiederherstellung unvollständig', 'feuer-einsatzberichte'); ?></strong> <?php esc_html_e('Bitte diese Angaben vor dem Speichern prüfen:', 'feuer-einsatzberichte'); ?></p>
+        <ul data-feu-draft-recovery-warning-list></ul>
+        <p><button type="button" class="button" data-feu-draft-recovery-warning-dismiss><?php esc_html_e('Hinweis schließen', 'feuer-einsatzberichte'); ?></button></p>
+    </div>
+
+    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="feu-einsatz-report-create-form" data-feu-report-id="<?php echo esc_attr((int) $post->ID); ?>" data-feu-user-id="<?php echo esc_attr(get_current_user_id()); ?>" data-feu-current-status="<?php echo esc_attr($current_post_status); ?>" data-feu-saved="<?php echo !empty($success_notice['message']) ? '1' : '0'; ?>" novalidate>
         <input type="hidden" name="action" value="<?php echo esc_attr($form_action_name); ?>" />
         <?php wp_nonce_field($form_nonce_action, $form_nonce_name); ?>
         <?php if ($is_edit_mode) : ?>
@@ -180,9 +210,10 @@ if ('publish' === $current_post_status) {
                                        class="widefat"
                                        value="<?php echo esc_attr($post_title_value); ?>"
                                        placeholder="<?php esc_attr_e('z.B. ALARM - Ueckerstrasse', 'feuer-einsatzberichte'); ?>" />
-                                <p class="description feu-einsatz-field-hint">
-                                    <?php _e('Wenn leer, erzeugt das Plugin beim Speichern automatisch einen Titel aus dem ersten gewaehlten Einsatzstichwort und der Strasse, z.B. ALARM - Ueckerstrasse.', 'feuer-einsatzberichte'); ?>
-                                </p>
+                                <div class="feu-einsatz-autofill-help">
+                                    <p class="description feu-einsatz-field-hint"><?php esc_html_e('Der Titel wird aus Einsatzstichwort und Straße vorgeschlagen. Eigene Änderungen bleiben erhalten.', 'feuer-einsatzberichte'); ?></p>
+                                    <button type="button" class="button button-link" data-feu-autofill-title-reset><?php esc_html_e('Titelvorschlag übernehmen', 'feuer-einsatzberichte'); ?></button>
+                                </div>
                             </div>
 
                             <div class="feu-einsatz-field feu-einsatz-field--editor">
@@ -200,6 +231,10 @@ if ('publish' === $current_post_status) {
                                         ]
                                     );
                                     ?>
+                                </div>
+                                <div class="feu-einsatz-autofill-help">
+                                    <p class="description feu-einsatz-field-hint"><?php esc_html_e('Aus dem Einsatzstichwort, der Straße, Stadt, dem Stadtteil und Datum entsteht ein bearbeitbarer Textvorschlag.', 'feuer-einsatzberichte'); ?></p>
+                                    <button type="button" class="button button-link" data-feu-autofill-content-reset><?php esc_html_e('Textvorschlag übernehmen', 'feuer-einsatzberichte'); ?></button>
                                 </div>
                             </div>
                         </div>
@@ -343,18 +378,25 @@ if ('publish' === $current_post_status) {
                         <?php if (empty($report_categories)) : ?>
                             <p class="description"><?php _e('Keine Einsatzstichworte verfuegbar. Lege zuerst passende Kategorien in WordPress an oder waehle sie in den Plugin-Einstellungen aus.', 'feuer-einsatzberichte'); ?></p>
                         <?php else : ?>
+                            <?php if (!empty($inactive_selected_category_ids)) : ?>
+                                <p class="description"><?php esc_html_e('Einige bisherige Einsatzstichworte sind in den aktuellen Einstellungen deaktiviert. Sie bleiben für diesen Bericht erhalten, solange sie ausgewählt sind.', 'feuer-einsatzberichte'); ?></p>
+                            <?php endif; ?>
                             <div class="feu-einsatz-report-category-groups" data-feu-category-list role="group" aria-label="<?php esc_attr_e('Einsatzstichworte', 'feuer-einsatzberichte'); ?>" aria-describedby="feu-einsatz-category-validation-status">
                                 <div class="feu-einsatz-report-category-block">
                                     <h3><?php esc_html_e('Hauefig genutzt', 'feuer-einsatzberichte'); ?></h3>
                                     <div class="feu-einsatz-report-category-list feu-einsatz-report-category-list--popular">
                                         <?php foreach ($popular_report_categories as $category) : ?>
-                                            <?php $depth = count(get_ancestors($category->term_id, 'category')); ?>
+                                            <?php $depth = count(get_ancestors($category->term_id, $report_category_taxonomy)); ?>
                                             <label class="feu-einsatz-report-category-item" style="--feu-einsatz-category-indent: <?php echo esc_attr(12 + ($depth * 18)); ?>px;">
                                                 <input type="checkbox"
                                                        name="post_category[]"
                                                        value="<?php echo esc_attr($category->term_id); ?>"
+                                                       data-feu-category-name="<?php echo esc_attr($category->name); ?>"
+                                                       data-feu-category-slug="<?php echo esc_attr($category->slug); ?>"
+                                                       data-feu-category-description="<?php echo esc_attr(trim((string) preg_replace('/\s+/u', ' ', html_entity_decode(wp_strip_all_tags((string) $category->description), ENT_QUOTES | ENT_HTML5, 'UTF-8')))); ?>"
+                                                       data-feu-category-depth="<?php echo esc_attr($depth); ?>"
                                                        <?php checked(in_array((int) $category->term_id, $selected_category_ids, true)); ?> />
-                                                <span><?php echo esc_html($category->name); ?></span>
+                                                <span><?php echo esc_html($category->name); ?><?php if (in_array((int) $category->term_id, $inactive_selected_category_ids, true)) : ?> <small><?php esc_html_e('(deaktiviert)', 'feuer-einsatzberichte'); ?></small><?php endif; ?></span>
                                             </label>
                                         <?php endforeach; ?>
                                     </div>
@@ -365,13 +407,17 @@ if ('publish' === $current_post_status) {
                                         <h3><?php esc_html_e('Weitere Einsatzstichworte', 'feuer-einsatzberichte'); ?></h3>
                                         <div class="feu-einsatz-report-category-list feu-einsatz-report-category-list--scroll">
                                             <?php foreach ($other_report_categories as $category) : ?>
-                                                <?php $depth = count(get_ancestors($category->term_id, 'category')); ?>
+                                                <?php $depth = count(get_ancestors($category->term_id, $report_category_taxonomy)); ?>
                                                 <label class="feu-einsatz-report-category-item" style="--feu-einsatz-category-indent: <?php echo esc_attr(12 + ($depth * 18)); ?>px;">
                                                     <input type="checkbox"
                                                            name="post_category[]"
                                                            value="<?php echo esc_attr($category->term_id); ?>"
+                                                           data-feu-category-name="<?php echo esc_attr($category->name); ?>"
+                                                           data-feu-category-slug="<?php echo esc_attr($category->slug); ?>"
+                                                           data-feu-category-description="<?php echo esc_attr(trim((string) preg_replace('/\s+/u', ' ', html_entity_decode(wp_strip_all_tags((string) $category->description), ENT_QUOTES | ENT_HTML5, 'UTF-8')))); ?>"
+                                                           data-feu-category-depth="<?php echo esc_attr($depth); ?>"
                                                            <?php checked(in_array((int) $category->term_id, $selected_category_ids, true)); ?> />
-                                                    <span><?php echo esc_html($category->name); ?></span>
+                                                    <span><?php echo esc_html($category->name); ?><?php if (in_array((int) $category->term_id, $inactive_selected_category_ids, true)) : ?> <small><?php esc_html_e('(deaktiviert)', 'feuer-einsatzberichte'); ?></small><?php endif; ?></span>
                                                 </label>
                                             <?php endforeach; ?>
                                         </div>
@@ -381,6 +427,20 @@ if ('publish' === $current_post_status) {
                             <p id="feu-einsatz-category-validation-status" class="feu-einsatz-field-error feu-einsatz-category-error" data-feu-category-error aria-live="polite" hidden>
                                 <?php _e('Bitte waehle mindestens ein Einsatzstichwort aus.', 'feuer-einsatzberichte'); ?>
                             </p>
+                            <?php if (!$is_edit_mode || (FEU_Einsatz_Report_Post_Type::POST_TYPE === $post->post_type && !$has_fixed_public_url)) : ?>
+                                <p class="feu-einsatz-field">
+                                    <label for="feu-einsatz-primary-category"><?php esc_html_e('Hauptkategorie für die URL', 'feuer-einsatzberichte'); ?></label>
+                                    <select id="feu-einsatz-primary-category" name="feu_einsatz_primary_category" aria-describedby="feu-einsatz-primary-category-help feu-einsatz-primary-category-error">
+                                        <option value="0"><?php esc_html_e('Bei einem Stichwort automatisch', 'feuer-einsatzberichte'); ?></option>
+                                        <?php foreach ($sorted_report_categories as $category) : ?>
+                                            <?php if (!(FEU_Einsatz_Report_Post_Type::resolve_primary_category([(int) $category->term_id]) instanceof WP_Term)) { continue; } ?>
+                                            <option value="<?php echo esc_attr($category->term_id); ?>" <?php selected($primary_category_id, (int) $category->term_id); ?>><?php echo esc_html($category->name); ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <span id="feu-einsatz-primary-category-help" class="description"><?php esc_html_e('Bei mehreren Stichworten bitte eines auswählen. Der URL-Teil bleibt nach der Veröffentlichung fest.', 'feuer-einsatzberichte'); ?></span>
+                                    <span id="feu-einsatz-primary-category-error" class="feu-einsatz-field-error" data-feu-primary-category-error aria-live="polite" hidden></span>
+                                </p>
+                            <?php endif; ?>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -398,6 +458,9 @@ if ('publish' === $current_post_status) {
                         <p class="description">
                             <?php echo esc_html($status_hint); ?>
                         </p>
+                        <?php if ($has_fixed_public_url) : ?>
+                            <p class="description feu-einsatz-report-permalink"><?php esc_html_e('Die bestehende URL bleibt beim Bearbeiten erhalten:', 'feuer-einsatzberichte'); ?> <code><?php echo esc_html(get_permalink($post->ID)); ?></code></p>
+                        <?php endif; ?>
                         <?php
                         $feu_einsatz_show_basic_fields = false;
                         $feu_einsatz_show_availability_panel = true;
@@ -415,11 +478,22 @@ if ('publish' === $current_post_status) {
                             $feu_einsatz_suppress_section_titles
                         );
                         ?>
+                        <section class="feu-einsatz-prepublish-review" data-feu-prepublish-review data-feu-fixed-url="<?php echo esc_attr($has_fixed_public_url ? get_permalink($post->ID) : ''); ?>" hidden aria-labelledby="feu-einsatz-prepublish-heading">
+                            <h3 id="feu-einsatz-prepublish-heading" tabindex="-1"><?php esc_html_e('Vor Veröffentlichung prüfen', 'feuer-einsatzberichte'); ?></h3>
+                            <dl>
+                                <div><dt><?php esc_html_e('Einsatzort', 'feuer-einsatzberichte'); ?></dt><dd data-feu-review-address></dd></div>
+                                <div><dt><?php esc_html_e('Karte', 'feuer-einsatzberichte'); ?></dt><dd data-feu-review-map></dd></div>
+                                <div><dt><?php esc_html_e('Öffentliche URL', 'feuer-einsatzberichte'); ?></dt><dd data-feu-review-url></dd></div>
+                            </dl>
+                            <p class="feu-einsatz-review-url-status" data-feu-review-url-status role="status" aria-live="polite"></p>
+                            <?php if (!$has_fixed_public_url) : ?><p class="description"><?php esc_html_e('Die endgültige URL wird beim Speichern von WordPress festgelegt.', 'feuer-einsatzberichte'); ?></p><?php endif; ?>
+                            <button type="submit" name="feu_einsatz_report_status" value="publish" class="button button-primary" data-feu-review-confirm><?php esc_html_e('Veröffentlichung bestätigen', 'feuer-einsatzberichte'); ?></button>
+                        </section>
                         <p class="feu-einsatz-report-status-actions">
                             <button type="submit" name="feu_einsatz_report_status" value="draft" class="button button-secondary">
                                 <?php echo esc_html($submit_secondary_label); ?>
                             </button>
-                            <button type="submit" name="feu_einsatz_report_status" value="publish" class="button button-primary">
+                            <button type="button" value="publish" class="button button-primary" data-feu-review-open>
                                 <?php echo esc_html($submit_primary_label); ?>
                             </button>
                         </p>

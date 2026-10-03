@@ -25,13 +25,19 @@ $vollstaendige_adresse = trim($strasse . ', ' . $plz . ' ' . $stadt);
     <div class="col-md-5">
         <?php
     // Kategorien der aktuellen Beitrags abrufen
-    $categories = get_the_category($post->ID);
+    $categories = FEU_Einsatz_Report_Taxonomy::get_report_terms((int) $post->ID);
     if (!empty($categories)):
     ?>
-    <div class="small mb-1"><?php _e('Kategorie', 'feuer-einsatzberichte'); ?>
+    <div class="small mb-1"><?php _e('Einsatzstichworte', 'feuer-einsatzberichte'); ?>
         
             <?php foreach ($categories as $category): ?>
-                <a href="<?php echo get_category_link($category->term_id); ?>" class="feu-einsatz-kategorie-badge">
+                <?php
+                $legacy_id = FEU_Einsatz_Report_Taxonomy::TAXONOMY === $category->taxonomy
+                    ? (int) get_term_meta((int) $category->term_id, FEU_Einsatz_Report_Taxonomy::LEGACY_TERM_META, true)
+                    : (int) $category->term_id;
+                $category_url = $legacy_id ? get_category_link($legacy_id) : home_url('/einsaetze/');
+                ?>
+                <a href="<?php echo esc_url(is_wp_error($category_url) ? home_url('/einsaetze/') : $category_url); ?>" class="feu-einsatz-kategorie-badge">
                     <?php echo esc_html($category->name); ?>
                 </a>
             <?php endforeach; ?>

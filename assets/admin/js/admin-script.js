@@ -1237,7 +1237,7 @@
 
         $(document).on(
             'input change',
-            '#feu_einsatz_map_preview_heading_text, #feu_einsatz_map_preview_show_panel, #feu_einsatz_map_preview_show_panel_heading, #feu_einsatz_map_preview_show_panel_address, #feu_einsatz_map_preview_panel_position, #feu_einsatz_map_preview_street_label_prefix, #feu_einsatz_map_preview_street_label_position, #feu_einsatz_map_preview_show_attribution, #feu_einsatz_map_preview_attribution_text, #feu_einsatz_map_preview_attribution_position, #feu_einsatz_map_preview_highlight_color, #feu_einsatz_map_preview_stroke_width, #feu_einsatz_map_preview_font_family, #feu_einsatz_map_preview_show_street_label, #feu_einsatz_area_station_street, #feu_einsatz_area_station_postcode, #feu_einsatz_area_station_city, #feu_einsatz_area_station_logo_size, #feu_einsatz_photo_watermark_text, #feu_einsatz_map_zoom, #feu_einsatz_map_height, #feu_einsatz_street_highlight_mode, #feu_einsatz_street_highlight_length_meters, #feu_einsatz_street_highlight_radius_meters',
+            '#feu_einsatz_map_preview_heading_text, #feu_einsatz_map_preview_show_panel, #feu_einsatz_map_preview_show_panel_heading, #feu_einsatz_map_preview_show_panel_address, #feu_einsatz_map_preview_panel_position, #feu_einsatz_map_preview_street_label_prefix, #feu_einsatz_map_preview_street_label_position, #feu_einsatz_map_preview_show_attribution, #feu_einsatz_map_preview_attribution_text, #feu_einsatz_map_preview_attribution_position, #feu_einsatz_map_preview_highlight_color, #feu_einsatz_map_preview_stroke_width, #feu_einsatz_map_preview_font_family, #feu_einsatz_map_preview_show_street_label, #feu_einsatz_area_station_name, #feu_einsatz_area_station_street, #feu_einsatz_area_station_postcode, #feu_einsatz_area_station_city, #feu_einsatz_area_station_logo_size, #feu_einsatz_photo_watermark_text, #feu_einsatz_map_zoom, #feu_einsatz_map_height, #feu_einsatz_street_highlight_mode, #feu_einsatz_street_highlight_length_meters, #feu_einsatz_street_highlight_radius_meters',
             updateMapPreviewLivePreview
         );
 
@@ -1372,6 +1372,7 @@
             var contextPaths = [];
             var mainPath = [];
             var markerMarkup = '';
+            var radiusMarkup = '';
             var badgeMarkup = '';
             var panelWidth = clampNumber(Math.round(width * 0.34), 320, 420);
             var markerPoint = null;
@@ -1403,6 +1404,12 @@
 
             if (marker && marker.length >= 2 && Number.isFinite(marker[0]) && Number.isFinite(marker[1])) {
                 points.push({ lat: marker[0], lng: marker[1] });
+                if (options.highlightMode === 'radius') {
+                    var radiusDegrees = Math.max(20, Math.min(5000, parseInt(options.highlightRadius, 10) || 100)) / 111320;
+                    var radiusLngDegrees = radiusDegrees / Math.max(0.01, Math.cos(marker[0] * Math.PI / 180));
+                    points.push({ lat: marker[0] - radiusDegrees, lng: marker[1] - radiusLngDegrees });
+                    points.push({ lat: marker[0] + radiusDegrees, lng: marker[1] + radiusLngDegrees });
+                }
             }
 
             if (!points.length) {
@@ -1411,7 +1418,7 @@
 
             mainSegment = normalizedSegments.length ? normalizedSegments[0] : null;
 
-            if (!mainSegment) {
+            if (!mainSegment && options.highlightMode !== 'radius') {
                 return '';
             }
 
@@ -1463,19 +1470,26 @@
                 }
             });
 
-            mainSegment.points.forEach(function (point, index) {
-                var projected = projectPoint(point);
-                mainPath.push((index === 0 ? 'M' : 'L') + projected.x.toFixed(2) + ' ' + projected.y.toFixed(2));
-            });
+            if (mainSegment) {
+                mainSegment.points.forEach(function (point, index) {
+                    var projected = projectPoint(point);
+                    mainPath.push((index === 0 ? 'M' : 'L') + projected.x.toFixed(2) + ' ' + projected.y.toFixed(2));
+                });
+            }
 
             if (marker && marker.length >= 2) {
                 markerPoint = projectPoint({ lat: marker[0], lng: marker[1] });
                 markerMarkup =
                     '<circle cx="' + markerPoint.x.toFixed(2) + '" cy="' + markerPoint.y.toFixed(2) + '" r="15" fill="#ffffff" fill-opacity="0.94" stroke="#0f172a" stroke-opacity="0.16" stroke-width="2" />' +
                     '<circle cx="' + markerPoint.x.toFixed(2) + '" cy="' + markerPoint.y.toFixed(2) + '" r="7" fill="' + escapeHtml(lineColor) + '" />';
+                if (options.highlightMode === 'radius') {
+                    var radiusNorth = projectPoint({ lat: marker[0] + radiusDegrees, lng: marker[1] });
+                    var radiusEast = projectPoint({ lat: marker[0], lng: marker[1] + radiusLngDegrees });
+                    radiusMarkup = '<ellipse cx="' + markerPoint.x.toFixed(2) + '" cy="' + markerPoint.y.toFixed(2) + '" rx="' + Math.max(8, Math.abs(radiusEast.x - markerPoint.x)).toFixed(2) + '" ry="' + Math.max(8, Math.abs(radiusNorth.y - markerPoint.y)).toFixed(2) + '" fill="' + escapeHtml(lineColor) + '" fill-opacity="0.18" stroke="' + escapeHtml(lineColor) + '" stroke-width="3" />';
+                }
             }
 
-            labelPoint = mainSegment.points.length
+            labelPoint = mainSegment && mainSegment.points.length
                 ? projectPoint({
                     lat: mainSegment.points[Math.floor(mainSegment.points.length / 2)].lat,
                     lng: mainSegment.points[Math.floor(mainSegment.points.length / 2)].lng
@@ -1527,8 +1541,9 @@
                                 '<path d="' + escapeHtml(path.d) + '" fill="none" stroke="#ffffff" stroke-width="' + path.halo + '" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.86"' + dashAttr + ' />' +
                                 '<path d="' + escapeHtml(path.d) + '" fill="none" stroke="#d5e0ec" stroke-width="' + path.stroke + '" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.96"' + dashAttr + ' />';
                         }).join('') +
-                        '<path d="' + escapeHtml(mainPath.join(' ')) + '" fill="none" stroke="#ffffff" stroke-width="' + (lineWidth + 4) + '" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.72" />' +
-                        '<path d="' + escapeHtml(mainPath.join(' ')) + '" fill="none" stroke="' + escapeHtml(lineColor) + '" stroke-width="' + lineWidth + '" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.96" />' +
+                        radiusMarkup +
+                        (mainPath.length ? '<path d="' + escapeHtml(mainPath.join(' ')) + '" fill="none" stroke="#ffffff" stroke-width="' + (lineWidth + 4) + '" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.72" />' +
+                        '<path d="' + escapeHtml(mainPath.join(' ')) + '" fill="none" stroke="' + escapeHtml(lineColor) + '" stroke-width="' + lineWidth + '" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.96" />' : '') +
                         markerMarkup +
                     '</svg>' +
                     badgeMarkup +
@@ -1711,7 +1726,7 @@
         function renderMapPreviewLeaflet($root, options) {
             var $mapCanvas = $root.find('[data-feu-map-preview-map]').first();
             var $overlay = $root.find('[data-feu-map-preview-overlay]').first();
-            var geometry = Array.isArray(options.geometry) ? options.geometry : [];
+            var geometry = options.highlightMode === 'radius' ? [] : (Array.isArray(options.geometry) ? options.geometry : []);
             var mainSegment = geometry.length ? geometry[0] : null;
             var zoom = clampNumber(parseInt(options.zoom || 16, 10) || 16, 11, 20);
             var station = options.station && typeof options.station === 'object' ? options.station : {};
@@ -1802,7 +1817,7 @@
                 }));
             }
 
-            labelLatLng = getMapPreviewMiddleLatLng(mainSegment);
+            labelLatLng = options.highlightMode === 'radius' ? options.marker : getMapPreviewMiddleLatLng(mainSegment);
 
             if (options.showLabel && options.labelText && labelLatLng && (!options.streetLabelPosition || options.streetLabelPosition === 'auto')) {
                 addMapPreviewLeafletLayer(window.L.marker(labelLatLng, {
@@ -1872,7 +1887,8 @@
             var stationLogoUrl = $('#feu-einsatz-area-station-logo-preview img').first().attr('src')
                 || $stage.attr('data-feu-map-preview-station-logo')
                 || '';
-            var stationLabel = $.trim($('#feu_einsatz_photo_watermark_text').val() || '')
+            var stationLabel = $.trim($('#feu_einsatz_area_station_name').val() || '')
+                || $.trim($('#feu_einsatz_photo_watermark_text').val() || '')
                 || $.trim($stage.attr('data-feu-map-preview-station-label') || '')
                 || 'Feuerwehrhaus';
 
@@ -1932,7 +1948,7 @@
                 showPanelHeading: showPanelHeading,
                 showPanelAddress: showPanelAddress,
                 panelPosition: panelPosition,
-                labelText: prefix + ': ' + previewStreet,
+                labelText: highlightMode === 'radius' ? 'Feuerwehr-Einsatzbereich' : prefix + ': ' + previewStreet,
                 showLabel: showLabel,
                 streetLabelPosition: streetLabelPosition,
                 showAttribution: showAttribution,
@@ -2067,6 +2083,7 @@
             var $areaInput = $('#feu_einsatz_map_area_geojson');
             var $areaStatus = $('[data-feu-map-area-status]');
             var $areaClear = $('[data-feu-map-area-clear]');
+            var $inputGuidance = $('[data-feu-map-input-guidance]');
             var timer = null;
             var request = null;
             var map = null;
@@ -2124,7 +2141,7 @@
             var readRequiredDetails = function () {
                 var street = $.trim($('#feu_einsatz_strasse').val() || '');
                 var houseNumber = $.trim($('#feu_einsatz_hausnummer').val() || '');
-                var postcode = String($('#feu_einsatz_plz').val() || '').replace(/\D/g, '');
+                var postcode = $.trim(String($('#feu_einsatz_plz').val() || ''));
                 var city = $.trim($('#feu_einsatz_stadt').val() || '');
                 var locationMode = $('input[name="feu_einsatz_map_location_mode"]:checked').val() === 'coordinates' ? 'coordinates' : 'address';
                 var latitude = $.trim($('#feu_einsatz_latitude').val() || '');
@@ -2136,12 +2153,18 @@
                 var normalizedLongitude = longitude.replace(',', '.');
                 var numericLatitude = parseFloat(normalizedLatitude);
                 var numericLongitude = parseFloat(normalizedLongitude);
-                var validCoordinates = Number.isFinite(numericLatitude) && Number.isFinite(numericLongitude)
+                var validCoordinates = normalizedLatitude !== '' && normalizedLongitude !== ''
+                    && /^[-+]?\d+(?:\.\d+)?$/.test(normalizedLatitude)
+                    && /^[-+]?\d+(?:\.\d+)?$/.test(normalizedLongitude)
+                    && Number.isFinite(numericLatitude) && Number.isFinite(numericLongitude)
                     && numericLatitude >= -90 && numericLatitude <= 90 && numericLongitude >= -180 && numericLongitude <= 180;
-                var addressReady = !!street && postcode.length === 5 && !!city;
+                var addressReady = !!street && /^\d{5}$/.test(postcode) && !!city;
                 var locationReady = locationMode === 'coordinates' ? validCoordinates : addressReady;
                 var extraStreets = String($('#feu_einsatz_map_extra_streets').val() || '');
                 var areaGeojson = String($areaInput.val() || '');
+                var missing = locationMode === 'coordinates'
+                    ? [!normalizedLatitude && 'Breitengrad', !normalizedLongitude && 'Längengrad', normalizedLatitude && !validCoordinates && 'gültige Koordinaten'].filter(Boolean)
+                    : [!street && 'Straße', !/^\d{5}$/.test(postcode) && 'fünfstellige PLZ', !city && 'Stadt'].filter(Boolean);
 
                 return {
                     street: street,
@@ -2155,6 +2178,8 @@
                     highlightLength: highlightLength,
                     highlightRadius: highlightRadius,
                     ready: locationReady,
+                    touched: locationMode === 'coordinates' ? !!(normalizedLatitude || normalizedLongitude) : !!(street || houseNumber || postcode),
+                    missing: missing,
                     extraStreets: extraStreets,
                     areaGeojson: areaGeojson,
                     addressKey: [locationMode, street, houseNumber, postcode, city, normalizedLatitude, normalizedLongitude, highlightMode, highlightLength, highlightRadius, extraStreets, areaGeojson].join('|').toLowerCase()
@@ -2218,6 +2243,17 @@
                 $canvas.empty();
                 lastRenderedAddressKey = '';
                 $preview.prop('hidden', true).removeClass('is-loading');
+            };
+
+            var updateInputGuidance = function (details) {
+                if (!$inputGuidance.length) {
+                    return;
+                }
+                var visible = !details.ready && details.touched;
+                $inputGuidance.prop('hidden', !visible);
+                if (visible) {
+                    $inputGuidance.text('Für die Live-Karte bitte ergänzen: ' + details.missing.join(', ') + '.');
+                }
             };
 
             var showPreview = function () {
@@ -2287,6 +2323,12 @@
                         radius: Number(data.highlight_radius_meters), color: color, weight: 3,
                         opacity: 0.92, fillColor: color, fillOpacity: 0.18
                     }).addTo(map);
+                    circle.bindTooltip('<span class="feu-einsatz-map-label feu-einsatz-map-label--bubble" style="background:' + color + ';color:#ffffff">Feuerwehr-Einsatzbereich</span>', {
+                        permanent: true,
+                        direction: 'top',
+                        opacity: 1,
+                        className: 'feu-einsatz-map-label-tooltip'
+                    }).openTooltip();
                     layers.push(circle);
                     bounds.extend(circle.getBounds());
                 }
@@ -2347,6 +2389,7 @@
 
             var update = function (force) {
                 var details = readRequiredDetails();
+                updateInputGuidance(details);
 
                 if (!details.ready) {
                     hidePreview();
@@ -2368,7 +2411,7 @@
                 var activeRequest = $.ajax({
                     url: feu_einsatz_ajax.ajax_url,
                     type: 'POST',
-                    timeout: 30000,
+                    timeout: 55000,
                     data: {
                         action: 'feu_einsatz_preview_street_highlight',
                         nonce: feu_einsatz_ajax.nonce,
@@ -2434,6 +2477,7 @@
             $('#feu_einsatz_strasse, #feu_einsatz_hausnummer, #feu_einsatz_plz, #feu_einsatz_stadt, #feu_einsatz_datum, #feu_einsatz_uhrzeit, #feu_einsatz_latitude, #feu_einsatz_longitude, #feu_einsatz_map_highlight_override, #feu_einsatz_map_highlight_length_meters, #feu_einsatz_map_highlight_radius_meters, #feu_einsatz_map_extra_streets, input[name="feu_einsatz_map_location_mode"]').on('input change', function () {
                 syncMapProfileControls();
                 var details = readRequiredDetails();
+                updateInputGuidance(details);
                 window.clearTimeout(timer);
 
                 if (!details.ready) {

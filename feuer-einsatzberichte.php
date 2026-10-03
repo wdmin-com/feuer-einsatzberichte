@@ -3,7 +3,7 @@
  * Plugin Name: Feuer-Einsatzberichte
  * Plugin URI: https://wdmin.com/plugins/feuer-einsatzberichte/
  * Description: Feuer-Einsatzberichte mit Einsatzverwaltung, Karten, Statistik und Archivierung
- * Version: 3.2.87
+ * Version: 3.2.91
  * Update URI: https://wdmin.com/plugins/feuer-einsatzberichte/
  * Requires at least: 7.1
  * Requires PHP: 8.1
@@ -23,7 +23,7 @@ if (!defined('ABSPATH')) {
 // FEU_Einsatz_* remains available as a legacy alias layer.
 // -------------------------------------------------------------------------
 
-define('FEU_EINSATZ_VERSION', '3.2.87');
+define('FEU_EINSATZ_VERSION', '3.2.91');
 define('FEU_EINSATZ_PLUGIN_FILE', __FILE__);
 define('FEU_EINSATZ_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('FEU_EINSATZ_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -218,6 +218,11 @@ final class Feuer_Einsatzberichte_Core {
 
         require_once FEU_EINSATZ_PLUGIN_DIR . 'includes/class-public.php';
         $this->public = new FEU_Einsatz_Public($this->db);
+        FEU_Einsatz_Post_Migration::init_write_guard();
+
+        if ($is_cli_context) {
+            FEU_Einsatz_Post_Migration::register_cli();
+        }
 
         require_once FEU_EINSATZ_PLUGIN_DIR . 'includes/class-ajax-handler.php';
         $this->ajax = new FEU_Einsatz_Ajax_Handler($this->db);

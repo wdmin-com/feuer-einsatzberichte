@@ -9,7 +9,7 @@ class FEU_Einsatz_Template_Helpers {
      * Increment when the public report context gains data that must not be
      * served from an older, otherwise valid transient.
      */
-    const SINGLE_CONTEXT_CACHE_VERSION = '11';
+    const SINGLE_CONTEXT_CACHE_VERSION = '12';
 
     /**
      * Marks geometry that was resolved with the exact, local Overpass query.
@@ -480,8 +480,14 @@ class FEU_Einsatz_Template_Helpers {
                     ON posts.ID = street.post_id
                 WHERE street.meta_key = %s
                   AND street.meta_value <> ''
-                  AND posts.post_type = 'post'
+                  AND posts.post_type IN ('post', 'einsatzbericht')
                   AND posts.post_status NOT IN ('trash', 'auto-draft')
+                  AND EXISTS (
+                      SELECT 1 FROM {$wpdb->postmeta} marker
+                      WHERE marker.post_id = posts.ID
+                        AND marker.meta_key = '_feu_einsatz_einsatzbericht'
+                        AND marker.meta_value = '1'
+                  )
                 GROUP BY street.meta_value, plz.meta_value, city.meta_value
                 ORDER BY usage_count DESC, street.meta_value ASC
                 LIMIT %d
@@ -1749,7 +1755,10 @@ class FEU_Einsatz_Template_Helpers {
             }
         }
 
-        $station_label = trim((string) get_option('feu_einsatz_photo_watermark_text', get_bloginfo('name')));
+        $station_label = trim((string) get_option('feu_einsatz_area_station_name', ''));
+        if ('' === $station_label) {
+            $station_label = trim((string) get_option('feu_einsatz_photo_watermark_text', get_bloginfo('name')));
+        }
 
         if ('' === $station_label) {
             $station_label = __('Feuerwehrhaus', 'feuer-einsatzberichte');
@@ -1997,10 +2006,21 @@ class FEU_Einsatz_Template_Helpers {
 
         $post_id = absint($post_id);
         $root_category_id = absint($root_category_id);
-        $cache_key = $post_id . ':' . $root_category_id;
+        $cache_key = $post_id . ':' . $root_category_id . ':' . (FEU_Einsatz_Report_Taxonomy::enabled() ? 'keywords' : 'legacy');
 
         if (array_key_exists($cache_key, $cache)) {
             return $cache[$cache_key];
+        }
+
+        if (FEU_Einsatz_Report_Taxonomy::enabled()) {
+            $keywords = wp_get_object_terms($post_id, FEU_Einsatz_Report_Taxonomy::TAXONOMY);
+            if (is_array($keywords) && $keywords) {
+                $primary = FEU_Einsatz_Report_Taxonomy::get_primary_term($post_id);
+                if ($primary instanceof WP_Term && FEU_Einsatz_Report_Taxonomy::TAXONOMY === $primary->taxonomy) {
+                    $cache[$cache_key] = $primary;
+                    return $primary;
+                }
+            }
         }
 
         if (!$root_category_id) {
@@ -2113,6 +2133,9 @@ class FEU_Einsatz_Template_Helpers {
         if ($post_id < 1) {
             return '';
         }
+        if (self::report_has_unverified_map_anchor($post_id)) {
+            return '';
+        }
 
         $preview_url = trim((string) get_post_meta($post_id, '_feu_einsatz_generated_map_preview_url', true));
 
@@ -2216,7 +2239,7 @@ class FEU_Einsatz_Template_Helpers {
             }
         }
 
-        if ($thumbnail_id > 0) {
+        if ($thumbnail_id > 0 && !self::report_has_unverified_map_anchor($post_id)) {
             $image_url = self::get_versioned_attachment_image_url($thumbnail_id, $size);
 
             if ($image_url) {
@@ -2798,6 +2821,24 @@ class FEU_Einsatz_Template_Helpers {
         return $expected_key !== $saved_key || !is_numeric($latitude) || !is_numeric($longitude);
     }
 
+    public static function report_has_unverified_map_anchor($post_id) {
+        $post_id = absint($post_id);
+        if (!$post_id || !self::uses_precise_incident_anchor($post_id)) {
+            return false;
+        }
+        $street = trim((string) get_post_meta($post_id, '_feu_einsatz_strasse', true));
+        $house_number = trim((string) get_post_meta($post_id, '_feu_einsatz_hausnummer', true));
+        if ('' === $street || '' === $house_number) {
+            return true;
+        }
+        return self::report_needs_precise_incident_anchor(
+            $post_id,
+            $street,
+            (string) get_post_meta($post_id, '_feu_einsatz_plz', true),
+            (string) get_post_meta($post_id, '_feu_einsatz_stadt', true)
+        );
+    }
+
     private static function normalize_house_number_for_match($value) {
         return strtolower((string) preg_replace('/\s+/', '', trim((string) $value)));
     }
@@ -2819,6 +2860,15 @@ class FEU_Einsatz_Template_Helpers {
         if ('coordinates' === self::get_report_map_location_mode($post_id)) {
             return $stored_coordinates;
         }
+        if (self::uses_precise_incident_anchor($post_id) && '' === $house_number) {
+            return false;
+        }
+        if (self::uses_precise_incident_anchor($post_id) && '' === trim((string) $street)) {
+            return false;
+        }
+        // Limited modes must never reuse an old road-centre coordinate, even
+        // when a caller forgets to request a precise anchor explicitly.
+        $require_precise_anchor = $require_precise_anchor || self::uses_precise_incident_anchor($post_id);
         $needs_exact_lookup = !$stored_coordinates
             || ($require_precise_anchor && self::report_needs_precise_incident_anchor($post_id, $street, $plz, $city));
 
@@ -2829,7 +2879,7 @@ class FEU_Einsatz_Template_Helpers {
         $geocoded_data = self::request_geocoded_address_data($street, $plz, $city, $house_number);
 
         if (!$geocoded_data) {
-            return $stored_coordinates;
+            return $require_precise_anchor ? false : $stored_coordinates;
         }
 
         $requested_house_number = self::normalize_house_number_for_match($house_number);
@@ -2837,7 +2887,7 @@ class FEU_Einsatz_Template_Helpers {
         $is_verified_house = '' === $requested_house_number || $requested_house_number === $resolved_house_number;
 
         if (!$is_verified_house) {
-            return $stored_coordinates;
+            return $require_precise_anchor ? false : $stored_coordinates;
         }
 
         update_post_meta($post_id, '_feu_einsatz_latitude', (string) $geocoded_data['lat']);
@@ -3186,7 +3236,7 @@ class FEU_Einsatz_Template_Helpers {
 
         $width = 1200;
         $height = max(320, min(680, absint($args['height']) ?: 500));
-        $geometry_lines = self::normalize_map_geometry($args['geometry']);
+        $geometry_lines = 'radius' === $args['highlight_mode'] ? [] : self::normalize_map_geometry($args['geometry']);
         $area_points = [];
         foreach ((array) $args['area_geometry'] as $area_point) {
             $area_lat = is_array($area_point) && isset($area_point['lat']) ? $area_point['lat'] : (is_array($area_point) ? ($area_point[0] ?? null) : null);
@@ -3340,6 +3390,7 @@ class FEU_Einsatz_Template_Helpers {
         $street_line_markup = [];
         $area_markup = '';
         $radius_markup = '';
+        $radius_label_markup = '';
 
         if (count($area_points) >= 3) {
             $polygon_points = [];
@@ -3358,6 +3409,14 @@ class FEU_Einsatz_Template_Helpers {
             $radius_px_y = max(8, abs($edge_screen_y['y'] - $marker_screen['y']));
             $radius_px_x = max(8, abs($edge_screen_x['x'] - $marker_screen['x']));
             $radius_markup = '<ellipse cx="' . esc_attr($marker_screen['x']) . '" cy="' . esc_attr($marker_screen['y']) . '" rx="' . esc_attr($radius_px_x) . '" ry="' . esc_attr($radius_px_y) . '" fill="' . esc_attr($line_color) . '" fill-opacity="0.18" stroke="' . esc_attr($line_color) . '" stroke-width="3" stroke-opacity="0.92" />';
+            if (1 === (int) get_option('feu_einsatz_map_preview_show_street_label', 1)) {
+                $label_text = __('Feuerwehr-Einsatzbereich', 'feuer-einsatzberichte');
+                $label_width = 282;
+                $label_left = max(24, min($width - $label_width - 24, (int) round($marker_screen['x'] - ($label_width / 2))));
+                $label_top = max(24, min($height - 80, (int) round($marker_screen['y'] - $radius_px_y - 54)));
+                $radius_label_markup = '<rect x="' . esc_attr($label_left) . '" y="' . esc_attr($label_top) . '" width="' . esc_attr($label_width) . '" height="38" rx="19" fill="' . esc_attr($line_color) . '" fill-opacity="0.94" />'
+                    . '<text x="' . esc_attr($label_left + ($label_width / 2)) . '" y="' . esc_attr($label_top + 25) . '" fill="#ffffff" font-size="17" font-weight="700" text-anchor="middle">' . esc_html($label_text) . '</text>';
+            }
         }
 
         foreach ($geometry_lines as $segment) {
@@ -3435,7 +3494,7 @@ class FEU_Einsatz_Template_Helpers {
                 $label_left = max(24, min($width - 324, (int) round($projected_marker['x'] + 20)));
                 $label_top = max(24, min($height - 124, (int) round($projected_marker['y'] - 68)));
 
-                if ($label_enabled && '' !== $street_label) {
+                if ($label_enabled && '' !== $street_label && 'radius' !== $args['highlight_mode']) {
                     $minimal_badge_markup =
                         '<div class="feu-einsatz-map-inline-preview-badge" style="left:' . esc_attr((string) $label_left) . 'px;top:' . esc_attr((string) $label_top) . 'px;">' .
                             esc_html($label_prefix . ': ' . $street_label) .
@@ -3513,6 +3572,7 @@ class FEU_Einsatz_Template_Helpers {
                     implode('', $context_markup) .
                     $area_markup .
                     $radius_markup .
+                    $radius_label_markup .
                     ('full' === $preview_mode
                         ? '<rect x="30" y="30" width="480" height="' . esc_attr($card_height) . '" rx="20" fill="#ffffff" fill-opacity="0.92" stroke="#0f172a" stroke-opacity="0.10" />' .
                             '<text x="56" y="62" fill="#0f172a" font-size="26" font-weight="700">' . esc_html($title) . '</text>' .
@@ -4814,69 +4874,110 @@ class FEU_Einsatz_Template_Helpers {
         return implode(', ', $parts) . ', Deutschland';
     }
 
-    private static function request_geocoded_address_data($street, $plz = '', $city = 'Hamburg', $house_number = '') {
+    public static function request_geocoded_address_data($street, $plz = '', $city = 'Hamburg', $house_number = '') {
         $address = self::build_full_address($street, $plz, $city, $house_number);
 
-        if ('' === trim($address)) {
+        if ('' === trim((string) $street)) {
             return false;
         }
 
-        $request_url = add_query_arg(
-            [
-                'q' => $address,
+        $cache_key = 'feu_einsatz_geocode_v2_' . md5(wp_json_encode([$street, $plz, $city, $house_number]));
+        $cached = get_transient($cache_key);
+        if (is_array($cached) && array_key_exists('value', $cached)) {
+            return $cached['value'];
+        }
+
+        $query_sets = [[
+            'q' => $address,
+        ]];
+        if ('' !== trim((string) $house_number)) {
+            // Nominatim can rank a road ahead of its building for a free-text
+            // query. A structured second attempt must not silently substitute
+            // that road centre for the requested house.
+            array_unshift($query_sets, [
+                'street' => trim(self::strip_house_number_from_street($street) . ' ' . $house_number),
+                'postalcode' => trim((string) $plz),
+                'city' => trim((string) $city),
+                'country' => 'Deutschland',
+            ]);
+        }
+
+        $fallback = false;
+        $had_valid_response = false;
+        foreach ($query_sets as $query) {
+            $request_url = add_query_arg(array_merge($query, [
                 'format' => 'jsonv2',
-                // This lookup finds the incident coordinate. Complete street
-                // geometry is resolved separately without a PLZ restriction.
-                'limit' => 1,
+                'limit' => 5,
                 'addressdetails' => 1,
                 'polygon_geojson' => 1,
                 'countrycodes' => 'de',
-            ],
-            self::NOMINATIM_SEARCH_URL
-        );
-        $response = wp_safe_remote_get($request_url, self::get_map_remote_request_args(15));
-        $results = self::decode_map_json_response($response);
+            ]), self::NOMINATIM_SEARCH_URL);
+            $response = wp_safe_remote_get($request_url, self::get_map_remote_request_args(10));
+            $results = self::decode_map_json_response($response);
+            $had_valid_response = $had_valid_response || is_array($results);
+            $street_geojson_items = [];
 
-        if (empty($results[0]) || !is_array($results[0])) {
-            return false;
-        }
-
-        $result = $results[0];
-
-        if (!isset($result['lat'], $result['lon']) || !is_numeric($result['lat']) || !is_numeric($result['lon'])) {
-            return false;
-        }
-
-        $street_geojson_items = [];
-
-        foreach ($results as $road_result) {
-            if (!is_array($road_result) || empty($road_result['geojson']) || !is_array($road_result['geojson'])) {
-                continue;
+            foreach ((array) $results as $road_result) {
+                if (!is_array($road_result) || empty($road_result['geojson']) || !is_array($road_result['geojson'])) {
+                    continue;
+                }
+                $osm_type = isset($road_result['osm_type']) ? sanitize_key((string) $road_result['osm_type']) : '';
+                $geojson_type = isset($road_result['geojson']['type']) ? (string) $road_result['geojson']['type'] : '';
+                if (in_array($osm_type, ['way', 'relation'], true) && in_array($geojson_type, ['LineString', 'MultiLineString'], true)) {
+                    $street_geojson_items[] = $road_result['geojson'];
+                }
             }
 
-            $osm_type = isset($road_result['osm_type']) ? sanitize_key((string) $road_result['osm_type']) : '';
-            $geojson_type = isset($road_result['geojson']['type']) ? (string) $road_result['geojson']['type'] : '';
+            foreach ((array) $results as $result) {
+                if (!is_array($result) || !isset($result['lat'], $result['lon']) || !is_numeric($result['lat']) || !is_numeric($result['lon'])) {
+                    continue;
+                }
 
-            if (
-                !in_array($osm_type, ['way', 'relation'], true)
-                || !in_array($geojson_type, ['LineString', 'MultiLineString'], true)
-            ) {
-                continue;
+                $found_address = isset($result['address']) && is_array($result['address']) ? $result['address'] : [];
+                $found_postcode = trim((string) ($found_address['postcode'] ?? ''));
+                if ('' !== trim((string) $plz) && '' !== $found_postcode && trim((string) $plz) !== $found_postcode) {
+                    continue;
+                }
+                $found_city = trim((string) ($found_address['city'] ?? $found_address['town'] ?? $found_address['village'] ?? $found_address['municipality'] ?? ''));
+                if ('' === $found_postcode && '' !== trim((string) $city) && '' !== $found_city && strtolower(remove_accents($found_city)) !== strtolower(remove_accents(trim((string) $city)))) {
+                    continue;
+                }
+
+                $found_street = trim((string) ($found_address['road'] ?? $found_address['pedestrian'] ?? $found_address['footway'] ?? $found_address['residential'] ?? ''));
+                $wanted_street = self::strip_house_number_from_street($street);
+                if ('' !== $found_street && strtolower(remove_accents($found_street)) !== strtolower(remove_accents($wanted_street))) {
+                    continue;
+                }
+                if ('' === $found_street && false === stripos(remove_accents((string) ($result['display_name'] ?? '')), remove_accents($wanted_street))) {
+                    continue;
+                }
+
+                $found_house = sanitize_text_field((string) ($found_address['house_number'] ?? ''));
+                if ('' === trim((string) $house_number) && '' !== $found_house) {
+                    continue;
+                }
+                $candidate = [
+                    'lat' => round((float) $result['lat'], 6),
+                    'lng' => round((float) $result['lon'], 6),
+                    'display_name' => sanitize_text_field((string) ($result['display_name'] ?? '')),
+                    'house_number' => $found_house,
+                    'geojson' => isset($result['geojson']) && is_array($result['geojson']) ? $result['geojson'] : [],
+                    'street_geojson_items' => $street_geojson_items,
+                ];
+                if ('' === trim((string) $house_number) || self::normalize_house_number_for_match($house_number) === self::normalize_house_number_for_match($found_house)) {
+                    set_transient($cache_key, ['value' => $candidate], 6 * HOUR_IN_SECONDS);
+                    return $candidate;
+                }
+                if (!$fallback && '' === $found_house) {
+                    $fallback = $candidate;
+                }
             }
-
-            $street_geojson_items[] = $road_result['geojson'];
         }
 
-        return [
-            'lat' => round((float) $result['lat'], 6),
-            'lng' => round((float) $result['lon'], 6),
-            'display_name' => isset($result['display_name']) ? sanitize_text_field((string) $result['display_name']) : '',
-            'house_number' => isset($result['address']['house_number'])
-                ? sanitize_text_field((string) $result['address']['house_number'])
-                : '',
-            'geojson' => (isset($result['geojson']) && is_array($result['geojson'])) ? $result['geojson'] : [],
-            'street_geojson_items' => $street_geojson_items,
-        ];
+        if ($fallback || $had_valid_response) {
+            set_transient($cache_key, ['value' => $fallback], $fallback ? HOUR_IN_SECONDS : 10 * MINUTE_IN_SECONDS);
+        }
+        return $fallback;
     }
 
     private static function request_street_geometry_data($street, $coordinates) {
@@ -5048,6 +5149,8 @@ class FEU_Einsatz_Template_Helpers {
         }
 
         $location_mode = self::get_report_map_location_mode($post_id);
+        $needs_verified_house = 'address' === $location_mode
+            && in_array(self::get_report_street_highlight_settings($post_id)['mode'], ['length', 'radius'], true);
 
         if ('' === $street && 'coordinates' === $location_mode) {
             $coordinates = self::get_report_incident_coordinates($post_id, '', $plz, $city);
@@ -5097,7 +5200,9 @@ class FEU_Einsatz_Template_Helpers {
             $geocoded_data = self::request_geocoded_address_data($street, $plz, $city, $house_number);
 
             if ($geocoded_data) {
-                if (!$coordinates) {
+                $house_verified = '' !== $house_number
+                    && self::normalize_house_number_for_match($house_number) === self::normalize_house_number_for_match($geocoded_data['house_number'] ?? '');
+                if (!$coordinates && (!$needs_verified_house || $house_verified)) {
                     $coordinates = [
                         'lat' => (float) $geocoded_data['lat'],
                         'lng' => (float) $geocoded_data['lng'],
@@ -5106,15 +5211,12 @@ class FEU_Einsatz_Template_Helpers {
                     update_post_meta($post_id, '_feu_einsatz_latitude', (string) $geocoded_data['lat']);
                     update_post_meta($post_id, '_feu_einsatz_longitude', (string) $geocoded_data['lng']);
 
-                    if (
-                        '' === $house_number
-                        || self::normalize_house_number_for_match($house_number) === self::normalize_house_number_for_match($geocoded_data['house_number'] ?? '')
-                    ) {
+                    if ('' === $house_number || $house_verified) {
                         self::mark_report_address_coordinates($post_id, $street, $house_number, $plz, $city);
                     }
                 }
 
-                if (!empty($geocoded_data['display_name'])) {
+                if ((!$needs_verified_house || $house_verified) && !empty($geocoded_data['display_name'])) {
                     update_post_meta($post_id, '_feu_einsatz_display_address', $geocoded_data['display_name']);
                 }
             }
@@ -5427,7 +5529,12 @@ class FEU_Einsatz_Template_Helpers {
         }
 
         if ($deepest_category instanceof WP_Term) {
-            $category_link = get_category_link($deepest_category);
+            $link_term = $deepest_category;
+            if (FEU_Einsatz_Report_Taxonomy::TAXONOMY === $deepest_category->taxonomy) {
+                $legacy_id = (int) get_term_meta((int) $deepest_category->term_id, FEU_Einsatz_Report_Taxonomy::LEGACY_TERM_META, true);
+                $link_term = $legacy_id ? get_term($legacy_id, 'category') : null;
+            }
+            $category_link = $link_term instanceof WP_Term ? get_category_link($link_term) : '';
 
             if (!($root_category instanceof WP_Term) || (int) $root_category->term_id !== (int) $deepest_category->term_id) {
                 $items[] = [
@@ -5452,7 +5559,7 @@ class FEU_Einsatz_Template_Helpers {
         $root_category_id = $root_category instanceof WP_Term ? (int) $root_category->term_id : 0;
 
         $query_args = [
-            'post_type' => 'post',
+            'post_type' => FEU_Einsatz_Report_Post_Type::readable_post_types(),
             'post_status' => 'publish',
             'posts_per_page' => max(12, $limit * 4),
             'post__not_in' => [$current_post_id],
@@ -5628,6 +5735,15 @@ class FEU_Einsatz_Template_Helpers {
             }
         }
 
+        $anchor_unverified = self::report_has_unverified_map_anchor($post_id);
+        if ($anchor_unverified) {
+            // A cached street midpoint is not an incident location. Clear it
+            // from the response even if the address lookup failed or is still
+            // behind a retry lock from an earlier public request.
+            $latitude = null;
+            $longitude = null;
+        }
+
         if (
             is_admin()
             && '' !== $street
@@ -5738,6 +5854,9 @@ class FEU_Einsatz_Template_Helpers {
         $photo_watermark_text = trim((string) get_option('feu_einsatz_photo_watermark_text', get_bloginfo('name')));
         $can_generate_runtime_assets = current_user_can('edit_post', $post_id);
         $map_fallback_image_url = self::get_generated_map_preview_public_url($post_id);
+        if ($anchor_unverified) {
+            $map_fallback_image_url = '';
+        }
         $station_feature = self::get_station_feature_from_settings();
         $single_live_map_station_feature = $single_live_map_show_station && is_array($station_feature)
             ? $station_feature
@@ -5922,6 +6041,7 @@ class FEU_Einsatz_Template_Helpers {
                 'latitude' => is_numeric($latitude) ? (float) $latitude : null,
                 'longitude' => is_numeric($longitude) ? (float) $longitude : null,
                 'publicly_hidden' => $public_map_hidden,
+                'anchor_unverified' => $anchor_unverified,
             ],
             'gallery' => [
                 'items' => $gallery_items,
@@ -6145,8 +6265,15 @@ class FEU_Einsatz_Template_Helpers {
         }
 
         $index_query_args = [
-            'post_type' => 'post',
+            'post_type' => FEU_Einsatz_Report_Post_Type::readable_post_types(),
             'post_status' => 'publish',
+            'meta_query' => [
+                [
+                    'key' => FEU_Einsatz_Report_Post_Type::MARKER_META,
+                    'value' => '1',
+                    'compare' => '=',
+                ],
+            ],
             'orderby' => 'date',
             'order' => 'DESC',
             'tax_query' => [
@@ -6289,7 +6416,7 @@ class FEU_Einsatz_Template_Helpers {
 
         if (!empty($page_post_ids)) {
             $page_posts = get_posts([
-                'post_type' => 'post',
+                'post_type' => FEU_Einsatz_Report_Post_Type::readable_post_types(),
                 'post_status' => 'publish',
                 'post__in' => $page_post_ids,
                 'orderby' => 'post__in',

@@ -650,6 +650,110 @@ body.feu-apple-workspace .postbox.feu-einsatz-form-section .feu-einsatz-inline-c
     margin-top: 18px;
 }
 
+/* One control language across settings. The checkbox remains a native input
+ * for keyboard users; only its visual track and thumb are customized. */
+body.feu-apple-settings label.feu-admin-settings-check-card > input[type="checkbox"] {
+    flex: 0 0 42px;
+    width: 42px;
+    height: 24px;
+    margin: 0 13px 0 0;
+    border: 0;
+    border-radius: 999px;
+    background: #d1d1d6;
+    box-shadow: none;
+    appearance: none;
+    cursor: pointer;
+    transition: background-color .18s ease;
+}
+
+body.feu-apple-settings label.feu-admin-settings-check-card > input[type="checkbox"]::before {
+    display: block;
+    float: none;
+    width: 20px;
+    height: 20px;
+    margin: 2px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .18);
+    content: '';
+    transform: translateX(0);
+    transition: transform .18s ease;
+}
+
+body.feu-apple-settings label.feu-admin-settings-check-card > input[type="checkbox"]:checked { background: var(--feu-ui-blue); }
+body.feu-apple-settings label.feu-admin-settings-check-card > input[type="checkbox"]:checked::before { transform: translateX(18px); }
+body.feu-apple-settings label.feu-admin-settings-check-card > input[type="checkbox"]:focus-visible { outline: 3px solid rgba(0, 113, 227, .28); outline-offset: 2px; }
+
+/* The setup indicator must never cover the primary save action. */
+body.feu-apple-settings .feu-plugin-status-widget { bottom: 96px; }
+
+body.feu-apple-workspace .feu-einsatz-report-create-side { position: static; }
+body.feu-apple-workspace .feu-einsatz-meta-box .feu-einsatz-form-grid--postcode { grid-template-columns: minmax(150px, 220px); }
+body.feu-apple-workspace .feu-einsatz-meta-box .feu-einsatz-form-grid--municipality { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+body.feu-apple-workspace .feu-einsatz-meta-section--participants #feu-einsatz-participant-picker {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 218px), 1fr));
+    gap: 10px;
+}
+
+body.feu-apple-workspace .feu-einsatz-report-category-list { gap: 0; }
+body.feu-apple-workspace .feu-einsatz-report-category-item {
+    min-height: 38px;
+    margin: 0;
+    border: 0 !important;
+    border-bottom: 1px solid var(--feu-ui-line) !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: transparent;
+    transform: none !important;
+}
+body.feu-apple-workspace .feu-einsatz-report-category-item:last-child { border-bottom: 0 !important; }
+body.feu-apple-workspace .feu-einsatz-report-category-item:hover { background: #f5f8fd; }
+
+body.feu-apple-workspace .feu-einsatz-autofill-help {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px 18px;
+    margin-top: 8px;
+}
+body.feu-apple-workspace .feu-einsatz-autofill-help .button.button-link {
+    min-height: 28px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    line-height: 28px;
+}
+body.feu-apple-workspace .feu-einsatz-autofill-help .button.button-link:disabled { color: var(--feu-ui-muted); opacity: .55; }
+body.feu-apple-workspace .feu-einsatz-map-input-guidance {
+    margin: 2px 0 0;
+    padding: 12px 14px;
+    border-left: 3px solid var(--feu-ui-blue);
+    border-radius: 8px;
+    background: #f0f7ff;
+    color: #214569;
+}
+body.feu-apple-workspace .feu-einsatz-report-validation-list a { color: #9f1c18; text-decoration: underline; text-underline-offset: 2px; }
+
+body.feu-admin-ui--modern-shell .feu-einsatz-archive-file-picker {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 14px;
+    margin-top: 8px;
+    color: var(--feu-ui-muted);
+}
+body.feu-admin-ui--modern-shell .feu-einsatz-archive-file-picker input:focus-visible + label {
+    outline: 3px solid rgba(0, 113, 227, .28);
+    outline-offset: 3px;
+}
+
+@media (max-width: 782px) {
+    body.feu-apple-settings .feu-plugin-status-widget { bottom: 90px; }
+    body.feu-apple-workspace .feu-einsatz-meta-box .feu-einsatz-form-grid--municipality { grid-template-columns: minmax(0, 1fr); }
+}
+
 @media (max-width: 782px) {
     body.feu-admin-ui--modern-shell .feu-admin-page,
     body.feu-admin-ui--modern-shell .wrap.feu-einsatz-settings,
@@ -671,4 +775,12 @@ body.feu-apple-workspace .postbox.feu-einsatz-form-section .feu-einsatz-inline-c
     body.feu-admin-ui--modern-shell *,
     body.feu-admin-ui--modern-shell *::before,
     body.feu-admin-ui--modern-shell *::after { scroll-behavior: auto !important; transition-duration: 1ms !important; }
+}
+
+body.feu-admin-ui--modern-shell .feu-einsatz-report-permalink {
+    overflow-wrap: anywhere;
+}
+body.feu-admin-ui--modern-shell .feu-einsatz-report-permalink code {
+    white-space: normal;
+    overflow-wrap: anywhere;
 }

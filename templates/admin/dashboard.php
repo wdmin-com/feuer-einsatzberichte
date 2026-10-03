@@ -10,7 +10,7 @@ $total_teilnehmer = count($this->db->get_participants([
 ]));
 $current_year = (int) current_time('Y');
 $einsaetze_dieses_jahr_count = (int) $this->db->count_report_posts($current_year);
-$selected_categories = get_option('feu_einsatz_categories', []);
+$selected_categories = FEU_Einsatz_Report_Taxonomy::get_selected_ids();
 $kategorien_count = count((array) $selected_categories);
 $letzte_einsaetze = (array) $this->db->get_recent_reports(5);
 $quick_links = [
@@ -49,7 +49,7 @@ $quick_links = [
             <p><?php esc_html_e('Schneller Zugriff auf Redaktionsablauf, Kennzahlen und die letzten Einsatzberichte.', 'feuer-einsatzberichte'); ?></p>
         </div>
         <div class="feu-admin-page-actions">
-            <a href="<?php echo esc_url(admin_url('edit.php?post_type=post&feu_einsatz_filter=1')); ?>" class="button button-secondary">
+            <a href="<?php echo esc_url(admin_url('edit.php?post_type=einsatzbericht&feu_einsatz_filter=1')); ?>" class="button button-secondary">
                 <span class="ti ti-list-details"></span>
                 <?php esc_html_e('Alle Berichte', 'feuer-einsatzberichte'); ?>
             </a>

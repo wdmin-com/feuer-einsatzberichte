@@ -32,7 +32,7 @@ if (true !== $restore_result) {
 }
 
 $report_ids = get_posts([
-    'post_type' => 'post',
+    'post_type' => FEU_Einsatz_Report_Post_Type::readable_post_types(),
     'post_status' => 'publish',
     'numberposts' => -1,
     'fields' => 'ids',
@@ -40,16 +40,27 @@ $report_ids = get_posts([
     'meta_value' => '1',
 ]);
 
-if (25 !== count($report_ids)) {
-    feu_einsatz_demo_ci_fail('Demo backup must restore exactly 25 published reports.');
+if (30 !== count($report_ids)) {
+    feu_einsatz_demo_ci_fail('Demo backup must restore exactly 30 published reports, including 5 QA scenarios.');
 }
 
 $year_counts = [2026 => 0, 2025 => 0];
+$qa_scenarios = [];
 foreach ($report_ids as $report_id) {
+    if (FEU_Einsatz_Report_Post_Type::POST_TYPE !== get_post_type($report_id)) {
+        feu_einsatz_demo_ci_fail("Report {$report_id} was not restored as a separate report post type.");
+    }
+    if ('legacy' !== get_post_meta($report_id, FEU_Einsatz_Report_Post_Type::URL_SCHEME_META, true)) {
+        feu_einsatz_demo_ci_fail("Report {$report_id} lost its legacy permalink scheme.");
+    }
     $date = (string) get_post_meta($report_id, '_feu_einsatz_datum', true);
     $year = (int) substr($date, 0, 4);
     if (isset($year_counts[$year])) {
         $year_counts[$year]++;
+    }
+    $scenario = (string) get_post_meta($report_id, '_feu_einsatz_demo_scenario', true);
+    if ('' !== $scenario) {
+        $qa_scenarios[$scenario] = $report_id;
     }
 
     $latitude = get_post_meta($report_id, '_feu_einsatz_latitude', true);
@@ -59,8 +70,25 @@ foreach ($report_ids as $report_id) {
     }
 }
 
-if (10 !== $year_counts[2026] || 15 !== $year_counts[2025]) {
-    feu_einsatz_demo_ci_fail('Demo report distribution must be 10 reports for 2026 and 15 for 2025.');
+if (15 !== $year_counts[2026] || 15 !== $year_counts[2025]) {
+    feu_einsatz_demo_ci_fail('Demo report distribution must be 15 reports for 2026 and 15 for 2025.');
+}
+foreach (['length', 'radius', 'full', 'coordinate_only', 'district'] as $required_scenario) {
+    if (empty($qa_scenarios[$required_scenario])) {
+        feu_einsatz_demo_ci_fail("QA report scenario {$required_scenario} is missing.");
+    }
+}
+$coordinate_only_context = FEU_Einsatz_Template_Helpers::get_single_context(get_post($qa_scenarios['coordinate_only']));
+if (
+    'radius' !== ($coordinate_only_context['map']['config']['highlight_mode'] ?? '')
+    || empty($coordinate_only_context['map']['has_live_data'])
+    || empty($coordinate_only_context['map']['preview_markup'])
+    || !empty($coordinate_only_context['map']['config']['geometry'])
+) {
+    feu_einsatz_demo_ci_fail('Coordinate-only QA report did not render a circle-only live map.');
+}
+if ('Hamburg-Altstadt' !== (string) get_post_meta($qa_scenarios['district'], '_feu_einsatz_stadtteil', true)) {
+    feu_einsatz_demo_ci_fail('QA district was lost during demo restore.');
 }
 
 global $wpdb;
@@ -90,10 +118,10 @@ if (!is_array($station) || empty($station['latitude']) || empty($station['longit
 $dashboard_current = $database->get_statistics_dashboard_data(2026);
 $dashboard_previous = $database->get_statistics_dashboard_data(2025);
 if (
-    10 !== (int) ($dashboard_current['total']['total_einsaetze'] ?? 0)
+    15 !== (int) ($dashboard_current['total']['total_einsaetze'] ?? 0)
     || 15 !== (int) ($dashboard_previous['total']['total_einsaetze'] ?? 0)
 ) {
     feu_einsatz_demo_ci_fail('Statistics dashboard did not reflect restored demo years.');
 }
 
-WP_CLI::success('Hamburg demo backup restored: 25 reports, 25 participants, map source data and yearly statistics verified.');
+WP_CLI::success('Hamburg demo backup restored: 30 reports, 25 participants, five QA map scenarios and yearly statistics verified.');

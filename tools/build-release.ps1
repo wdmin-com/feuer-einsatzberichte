@@ -253,8 +253,8 @@ WICHTIG: Die Wiederherstellung ersetzt die vorhandenen Plugin-Daten. Das Plugin 
 
 Demoinhalt:
 - Feuerwehrhaus: Feuerwehrakademie Hamburg, Bredowstraße 4, 22113 Hamburg
-- 25 veröffentlichte, vollständig erfundene Einsatzberichte
-- 10 Einsatzberichte aus 2026 und 15 aus 2025
+- 30 veröffentlichte, vollständig erfundene Einsatzberichte, darunter 5 QA-Szenarien
+- 15 Einsatzberichte aus 2026 und 15 aus 2025
 - 25 vollständig erfundene Teilnehmer
 - 6 Organisationen, Kategorien, Teilnehmerzuordnungen und Kartenlinien
 

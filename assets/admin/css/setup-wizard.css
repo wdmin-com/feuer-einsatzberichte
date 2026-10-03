@@ -1,0 +1,47 @@
+body.feu-admin-ui .feu-einsatz-setup-wizard { padding: 20px; background: rgba(20, 28, 42, .58); backdrop-filter: blur(12px); }
+body.feu-admin-ui .feu-einsatz-setup-wizard-card { width: min(760px, 100%); max-height: calc(100dvh - 40px); overflow-y: auto; border: 1px solid rgba(255,255,255,.65); border-radius: 20px; background: #f8f9fb; box-shadow: 0 28px 90px rgba(15,23,42,.28); }
+body.feu-admin-ui .feu-einsatz-setup-wizard-head { padding: 30px 34px 22px; border: 0; background: #fff; }
+body.feu-admin-ui .feu-einsatz-setup-wizard-head h2 { color: #17212f; font-size: 27px; letter-spacing: -.025em; }
+body.feu-admin-ui .feu-einsatz-setup-wizard-head p { max-width: 520px; line-height: 1.5; }
+body.feu-admin-ui .feu-einsatz-setup-wizard-progress { padding: 14px 34px; border-color: #e5e9ef; background: #fff; }
+body.feu-admin-ui .feu-einsatz-setup-wizard-progress li { gap: 8px; font-size: 12px; }
+body.feu-admin-ui .feu-einsatz-setup-wizard-progress li span { background: #e8ebf0; color: #566273; }
+body.feu-admin-ui .feu-einsatz-setup-wizard-progress li.is-active { color: #0066cc; }
+body.feu-admin-ui .feu-einsatz-setup-wizard-progress li.is-active span { background: #0071e3; color: #fff; }
+body.feu-admin-ui .feu-einsatz-setup-wizard-section { margin: 0; padding: 27px 34px 20px; border: 0; border-radius: 0; background: transparent; }
+body.feu-admin-ui .feu-einsatz-setup-wizard[data-enhanced="1"] [data-feu-setup-step]:not(.is-active) { display: none; }
+body.feu-admin-ui .feu-einsatz-setup-wizard-section h3,
+body.feu-admin-ui .feu-einsatz-setup-wizard-section legend { padding: 0; color: #17212f; font-size: 18px; font-weight: 700; }
+body.feu-admin-ui .feu-einsatz-setup-wizard-section input[type="text"] { min-height: 42px; max-width: none; border: 1px solid #d5dbe3; border-radius: 10px; background: #fff; box-shadow: none; }
+body.feu-admin-ui .feu-einsatz-setup-wizard-section input[type="text"]:focus { border-color: #0071e3; box-shadow: 0 0 0 3px rgba(0,113,227,.14); }
+body.feu-admin-ui .feu-einsatz-setup-wizard-grid { grid-template-columns: minmax(145px, .55fr) minmax(0, 1.45fr); }
+body.feu-admin-ui .feu-einsatz-setup-wizard-logo { display: flex; align-items: center; gap: 18px; margin-top: 22px; padding: 16px; border: 1px solid #e2e7ee; border-radius: 14px; background: #fff; }
+body.feu-admin-ui .feu-einsatz-setup-wizard-logo img { width: 70px; height: 70px; flex: 0 0 auto; object-fit: contain; }
+body.feu-admin-ui .feu-einsatz-setup-wizard-logo p { margin: 4px 0 9px; color: #657184; }
+body.feu-admin-ui .feu-einsatz-setup-wizard-category-actions { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; }
+body.feu-admin-ui .feu-einsatz-setup-wizard-category-actions span { margin-left: auto; color: #657184; font-weight: 600; }
+body.feu-admin-ui .feu-einsatz-setup-wizard-category-actions span.is-error { color: #b42318; }
+body.feu-admin-ui .feu-einsatz-setup-wizard-categories { max-height: min(48vh, 370px); gap: 7px; padding: 2px 5px 2px 2px; }
+body.feu-admin-ui .feu-einsatz-setup-wizard-categories .feu-einsatz-setup-wizard-check { min-width: 0; padding: 10px; border: 1px solid #e2e7ee; border-radius: 10px; background: #fff; cursor: pointer; }
+body.feu-admin-ui .feu-einsatz-setup-wizard-categories .feu-einsatz-setup-wizard-check:has(input:checked) { border-color: #9cc7f2; background: #f0f7ff; }
+body.feu-admin-ui .feu-einsatz-setup-wizard-check span { min-width: 0; }
+body.feu-admin-ui .feu-einsatz-setup-wizard-check small { display: block; color: #657184; font-size: 11px; line-height: 1.35; }
+body.feu-admin-ui .feu-einsatz-setup-wizard-error { margin: 16px 34px 0; padding: 11px 13px; border-radius: 10px; color: #912018; background: #fff0ee; }
+body.feu-admin-ui .feu-einsatz-setup-wizard-actions { position: sticky; bottom: 0; margin: 0; padding: 17px 34px; border-color: #e5e9ef; background: rgba(255,255,255,.96); backdrop-filter: blur(16px); }
+body.feu-admin-ui .feu-einsatz-setup-wizard-actions .button { min-height: 38px; border-radius: 9px; }
+body.feu-admin-ui .feu-einsatz-setup-wizard-actions [hidden] { display: none !important; }
+@media (max-width: 650px) {
+  body.feu-admin-ui .feu-einsatz-setup-wizard { padding: 8px; }
+  body.feu-admin-ui .feu-einsatz-setup-wizard-card { max-height: calc(100dvh - 16px); }
+  body.feu-admin-ui .feu-einsatz-setup-wizard-head,
+  body.feu-admin-ui .feu-einsatz-setup-wizard-section,
+  body.feu-admin-ui .feu-einsatz-setup-wizard-actions { padding-left: 18px; padding-right: 18px; }
+  body.feu-admin-ui .feu-einsatz-setup-wizard-progress { padding-left: 18px; padding-right: 18px; }
+  body.feu-admin-ui .feu-einsatz-setup-wizard-progress { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  body.feu-admin-ui .feu-einsatz-setup-wizard-progress li { min-width: 0; flex-direction: column; justify-content: flex-start; gap: 5px; font-size: 11px; line-height: 1.2; text-align: center; overflow-wrap: anywhere; }
+  body.feu-admin-ui .feu-einsatz-setup-wizard-progress li span { flex: 0 0 24px; font-size: 12px; }
+  body.feu-admin-ui .feu-einsatz-setup-wizard-grid,
+  body.feu-admin-ui .feu-einsatz-setup-wizard-categories { grid-template-columns: 1fr; }
+  body.feu-admin-ui .feu-einsatz-setup-wizard-logo { align-items: flex-start; }
+}
+@media (prefers-reduced-motion: reduce) { body.feu-admin-ui .feu-einsatz-setup-wizard-card { animation: none; } }

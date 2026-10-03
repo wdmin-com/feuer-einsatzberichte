@@ -40,6 +40,13 @@ const calls = [
   [currentYear, "2026-08-02", "23:19", "FEU", "Billhorner Röhrendamm", "94", "20539", 53.54192, 10.03928, "Gemeldete Rauchentwicklung"],
   [currentYear, "2026-08-29", "15:43", "DRZF", "Bergedorfer Straße", "112", "21029", 53.48747, 10.21491, "Ast drohte auf Fahrbahn zu fallen"],
   [currentYear, "2026-09-12", "04:26", "ALARM", "Steindamm", "58", "20099", 53.55411, 10.01772, "Erkundung nach Alarmmeldung"],
+  // Five deterministic QA reports exercise each map mode without changing a
+  // live site. Their DEMO QA prefix makes them distinguishable after restore.
+  [currentYear, "2026-09-15", "11:27", "THY", "Elbchaussee", "215", "22605", 53.55231, 9.87562, "Verkehrsunfall am Elbufer", { qa: "length", mapMode: "coordinates", highlightMode: "length", lengthMeters: 140, district: "Othmarschen" }],
+  [currentYear, "2026-09-17", "20:14", "FEUK", "Reeperbahn", "91", "20359", 53.54962, 9.96314, "Kleinbrand im Außenbereich", { qa: "radius", mapMode: "coordinates", highlightMode: "radius", radiusMeters: 180, district: "St. Pauli" }],
+  [currentYear, "2026-09-19", "08:06", "FEUBMA", "Bredowstraße", "4", "22113", 53.52832, 10.08321, "Brandmeldeanlage in einer Halle", { qa: "full", highlightMode: "full", district: "Billbrook" }],
+  [currentYear, "2026-09-22", "15:52", "FEU", "", "", "", 53.59124, 9.87311, "Rauchentwicklung im Grünbereich", { qa: "coordinate_only", mapMode: "coordinates", highlightMode: "radius", radiusMeters: 250, district: "Lurup" }],
+  [currentYear, "2026-09-24", "06:38", "WASSER", "Mönckebergstraße", "7", "20095", 53.55118, 10.00111, "Wasserschaden in einem Geschäft", { qa: "district", highlightMode: "full", district: "Hamburg-Altstadt" }],
   [previousYear, "2025-01-08", "07:15", "TH", "Langenhorner Chaussee", "321", "22419", 53.66552, 10.01181, "Sturmschaden beseitigt"],
   [previousYear, "2025-01-26", "19:48", "FEUK", "Fuhlsbüttler Straße", "401", "22309", 53.60957, 10.04281, "Brennender Papierkorb"],
   [previousYear, "2025-02-17", "10:32", "FEUBMA", "Überseering", "17", "22297", 53.60321, 10.02221, "Brandmeldeanlage ausgelöst"],
@@ -95,7 +102,7 @@ const participants = participantNames.map(([vorname, nachname], index) => ({
 let statId = 1;
 const stats = [];
 const reports = calls.map((call, index) => {
-  const [year, date, time, code, street, houseNumber, postcode, lat, lng, title] = call;
+  const [year, date, time, code, street, houseNumber, postcode, lat, lng, title, scenario = {}] = call;
   const postId = 1001 + index;
   const assignments = Array.from({ length: 8 }, (_, offset) => {
     const participantId = ((index * 3 + offset) % participants.length) + 1;
@@ -109,7 +116,7 @@ const reports = calls.map((call, index) => {
     });
     return { id: participantId, funktion: participantFunction };
   });
-  const fullTitle = `${code} – ${title}`;
+  const fullTitle = `${scenario.qa ? "DEMO QA · " : ""}${code} – ${title}`;
 
   return {
     id: postId,
@@ -133,10 +140,16 @@ const reports = calls.map((call, index) => {
       meta("_feu_einsatz_hausnummer", houseNumber),
       meta("_feu_einsatz_plz", postcode),
       meta("_feu_einsatz_stadt", "Hamburg"),
+      ...(scenario.district ? [meta("_feu_einsatz_stadtteil", scenario.district)] : []),
       meta("_feu_einsatz_datum", date),
       meta("_feu_einsatz_uhrzeit", time),
       meta("_feu_einsatz_latitude", String(lat)),
       meta("_feu_einsatz_longitude", String(lng)),
+      ...(scenario.qa ? [meta("_feu_einsatz_demo_scenario", scenario.qa)] : []),
+      ...(scenario.mapMode ? [meta("_feu_einsatz_map_location_mode", scenario.mapMode)] : []),
+      ...(scenario.highlightMode ? [meta("_feu_einsatz_map_highlight_override", scenario.highlightMode)] : []),
+      ...(scenario.lengthMeters ? [meta("_feu_einsatz_map_highlight_length_meters", scenario.lengthMeters)] : []),
+      ...(scenario.radiusMeters ? [meta("_feu_einsatz_map_highlight_radius_meters", scenario.radiusMeters)] : []),
       meta("_feu_einsatz_teilnehmer", assignments),
       meta("_feu_einsatz_organisationen", [1, 2, index % 3 === 0 ? 4 : 3]),
       meta("_feu_einsatz_comments_enabled", "0"),

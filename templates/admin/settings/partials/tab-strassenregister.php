@@ -139,7 +139,7 @@ if (!isset($active_tab) || 'strassenregister' !== (string) $active_tab) {
                                 $street_report_url = add_query_arg(
                                     array_filter(
                                         [
-                                            'post_type' => 'post',
+                                            'post_type' => FEU_Einsatz_Report_Post_Type::readable_post_types(),
                                             'feu_einsatz_filter' => '1',
                                             'feu_einsatz_street' => $street_registry_street,
                                             'feu_einsatz_postcode' => $street_registry_postcode,
@@ -222,7 +222,7 @@ if (!isset($active_tab) || 'strassenregister' !== (string) $active_tab) {
                                 $known_report_url = add_query_arg(
                                     array_filter(
                                         [
-                                            'post_type' => 'post',
+                                            'post_type' => FEU_Einsatz_Report_Post_Type::readable_post_types(),
                                             'feu_einsatz_filter' => '1',
                                             'feu_einsatz_street' => $known_street,
                                             'feu_einsatz_postcode' => $known_postcode,

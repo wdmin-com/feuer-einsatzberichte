@@ -91,13 +91,9 @@ class FEU_Einsatz_Ajax_Handler {
 
     private function sanitize_category_ids($values) {
         $category_ids = $this->normalize_id_list($values);
-        $allowed_categories = array_values(
-            array_unique(
-                array_filter(
-                    array_map('absint', (array) get_option('feu_einsatz_categories', []))
-                )
-            )
-        );
+        // Participant.category_ids is a legacy database field with WordPress
+        // category IDs. Do not mix it with the new report-taxonomy term IDs.
+        $allowed_categories = array_values(array_filter(array_map('absint', (array) get_option('feu_einsatz_categories', []))));
 
         if (empty($allowed_categories)) {
             return $category_ids;
@@ -480,7 +476,7 @@ class FEU_Einsatz_Ajax_Handler {
             $known_entry['report_url'] = add_query_arg(
                 array_filter(
                     [
-                        'post_type' => 'post',
+                        'post_type' => 'einsatzbericht',
                         'feu_einsatz_filter' => '1',
                         'feu_einsatz_street' => $known_street,
                         'feu_einsatz_postcode' => $known_postcode,
@@ -572,7 +568,7 @@ class FEU_Einsatz_Ajax_Handler {
         $report_url = add_query_arg(
             array_filter(
                 [
-                    'post_type' => 'post',
+                    'post_type' => 'einsatzbericht',
                     'feu_einsatz_filter' => '1',
                     'feu_einsatz_street' => $street,
                     'feu_einsatz_postcode' => $postcode,

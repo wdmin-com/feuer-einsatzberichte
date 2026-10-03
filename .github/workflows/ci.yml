@@ -27,6 +27,11 @@ jobs:
       - name: Check JavaScript syntax
         run: |
           find assets -name '*.js' -print0 | xargs -0 -n1 node --check
+          node tests/report-autofill.test.cjs
+          node tests/report-draft-recovery.test.cjs
+          node tests/report-create-validation.test.cjs
+          node tests/report-prepublish-review.test.cjs
+          node tests/setup-wizard-client.test.cjs
 
   wordpress-integration:
     name: WordPress activation smoke test
@@ -70,17 +75,50 @@ jobs:
       - name: Install isolated WordPress
         run: |
           wp config create --path="$RUNNER_TEMP/wordpress" --dbname=wordpress_test --dbuser=wordpress --dbpass=wordpress --dbhost=127.0.0.1 --skip-check --force
-          wp core install --path="$RUNNER_TEMP/wordpress" --url=http://localhost --title='Plugin CI' --admin_user=admin --admin_password=password --admin_email=ci@example.test --skip-email
+          wp core install --path="$RUNNER_TEMP/wordpress" --url=http://127.0.0.1:8089 --title='Plugin CI' --admin_user=admin --admin_password=password --admin_email=ci@example.test --skip-email
+          wp rewrite structure '/%postname%/' --path="$RUNNER_TEMP/wordpress"
           unzip -q "$FEU_PLUGIN_ARCHIVE" -d "$RUNNER_TEMP/wordpress/wp-content/plugins"
       - name: Activate plugin and verify core services
         run: |
           wp plugin activate feuer-einsatzberichte --path="$RUNNER_TEMP/wordpress"
+          test "$(wp eval 'echo !FEU_Einsatz_Report_Taxonomy::enabled() && !FEU_Einsatz_Template_Helpers::find_root_category() && 1 === (int) get_option("feu_einsatz_setup_fresh_install", 0) ? "1" : "0";' --path="$RUNNER_TEMP/wordpress")" = "1"
+          wp eval-file "$GITHUB_WORKSPACE/tests/integration/setup-wizard-invalid.php" --path="$RUNNER_TEMP/wordpress"
+          test "$(wp eval 'echo !FEU_Einsatz_Template_Helpers::find_root_category() && 1 === (int) get_option("feu_einsatz_setup_wizard_pending", 0) ? "1" : "0";' --path="$RUNNER_TEMP/wordpress")" = "1"
+          wp eval-file "$GITHUB_WORKSPACE/tests/integration/setup-wizard.php" --path="$RUNNER_TEMP/wordpress"
+          test "$(wp eval 'echo FEU_Einsatz_Report_Taxonomy::enabled() && count(FEU_Einsatz_Report_Taxonomy::get_selected_ids()) === 2 && count(get_terms(["taxonomy" => "category", "hide_empty" => false, "parent" => FEU_Einsatz_Template_Helpers::find_root_category()->term_id])) === 2 && 0 === (int) get_option("feu_einsatz_setup_wizard_pending", 1) ? "1" : "0";' --path="$RUNNER_TEMP/wordpress")" = "1"
           wp eval-file "$GITHUB_WORKSPACE/tests/integration/settings-save.php" --path="$RUNNER_TEMP/wordpress"
+          test "$(wp option get feu_einsatz_area_station_name --path="$RUNNER_TEMP/wordpress")" = "Feuerwehr Akademie Hamburg"
+          test "$(wp option get feu_einsatz_area_station_postcode --path="$RUNNER_TEMP/wordpress")" = "22113"
+          test "$(wp eval 'echo count(FEU_Einsatz_Report_Taxonomy::get_selected_ids()) > 0 ? "1" : "0";' --path="$RUNNER_TEMP/wordpress")" = "1"
+          wp option update feu_einsatz_stichwort_taxonomy_enabled 0 --path="$RUNNER_TEMP/wordpress"
           test "$(wp option get feu_einsatz_map_zoom --path="$RUNNER_TEMP/wordpress")" = "17"
           test "$(wp option get feu_einsatz_map_height --path="$RUNNER_TEMP/wordpress")" = "420"
           test "$(wp eval 'echo FEU_Einsatz_Admin::is_settings_tab_visible("sozial") ? "1" : "0";' --path="$RUNNER_TEMP/wordpress")" = "0"
           test "$(wp eval 'echo FEU_Einsatz_Admin::is_settings_tab_visible("module") ? "1" : "0";' --path="$RUNNER_TEMP/wordpress")" = "1"
+          wp eval-file "$GITHUB_WORKSPACE/tests/integration/report-post-type.php" --path="$RUNNER_TEMP/wordpress"
+          wp eval-file "$GITHUB_WORKSPACE/tests/integration/report-migration.php" --path="$RUNNER_TEMP/wordpress"
+          wp eval-file "$GITHUB_WORKSPACE/tests/integration/report-edit.php" --path="$RUNNER_TEMP/wordpress"
+          wp eval-file "$GITHUB_WORKSPACE/tests/integration/report-keywords.php" --path="$RUNNER_TEMP/wordpress"
+          wp eval-file "$GITHUB_WORKSPACE/tests/integration/report-duplicate.php" --path="$RUNNER_TEMP/wordpress"
           wp eval-file "$GITHUB_WORKSPACE/tests/integration/plugin-load.php" --path="$RUNNER_TEMP/wordpress"
+      - name: Verify public report routes over HTTP
+        run: |
+          wp eval-file "$GITHUB_WORKSPACE/tests/integration/report-http-fixtures.php" --path="$RUNNER_TEMP/wordpress"
+          wp rewrite flush --path="$RUNNER_TEMP/wordpress"
+          php -S 127.0.0.1:8089 -t "$RUNNER_TEMP/wordpress" > "$RUNNER_TEMP/report-http.log" 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          sleep 2
+          legacy_url='http://127.0.0.1:8089/einsaetze/http-route-ci-legacy/'
+          category_url='http://127.0.0.1:8089/einsaetze/route-ci/http-route-ci-category/'
+          for url in "$legacy_url" "$category_url"; do
+            status="$(curl -sS -o "$RUNNER_TEMP/report-page.html" -w '%{http_code}' "$url")"
+            test "$status" = '200'
+            grep -q "<link rel=.[Cc]anonical.*$url" "$RUNNER_TEMP/report-page.html"
+          done
+          test "$(curl -sS -o /dev/null -w '%{http_code}' 'http://127.0.0.1:8089/einsaetze/wrong/http-route-ci-category/')" = '404'
+          test "$(curl -sS -o /dev/null -w '%{http_code}' 'http://127.0.0.1:8089/einsaetze/http-route-ci-category/')" = '404'
+          wp eval 'foreach (["http-route-ci-legacy", "http-route-ci-category"] as $slug) { $post = get_page_by_path($slug, OBJECT, "einsatzbericht"); if ($post) { wp_delete_post($post->ID, true); } }' --path="$RUNNER_TEMP/wordpress"
       - name: Build and restore Hamburg demo backup
         run: |
           node "$GITHUB_WORKSPACE/tools/build-demo-backup.mjs" "$RUNNER_TEMP/demo-backup/manifest.json"

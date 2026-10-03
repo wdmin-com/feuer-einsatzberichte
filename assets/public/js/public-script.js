@@ -11,6 +11,7 @@
             mapUnavailableHint: 'Für diesen Einsatz sind noch keine ausreichenden Kartendaten gespeichert.',
             pedestrianPartLabel: 'Fußgängerbereich',
             streetFallback: 'Straße',
+            radiusLabel: 'Feuerwehr-Einsatzbereich',
             mapConsentTitle: 'Datenschutz-Hinweis',
             mapConsentText: 'Beim Laden der Live-Karte werden externe Kartendaten von OpenStreetMap nachgeladen.',
             mapConsentAllow: 'Live-Karte laden',
@@ -292,6 +293,13 @@
                 fillOpacity: 0.18,
                 interactive: false
             }).addTo(map);
+            var radiusLabel = escapeHtml(strings.radiusLabel || 'Feuerwehr-Einsatzbereich');
+            circle.bindTooltip('<span class="feu-einsatz-map-label feu-einsatz-map-label--bubble" style="background:' + escapeHtml(highlightColor) + ';color:#ffffff">' + radiusLabel + '</span>', {
+                permanent: true,
+                direction: 'top',
+                opacity: 1,
+                className: 'feu-einsatz-map-label-tooltip'
+            }).openTooltip();
             bounds.extend(circle.getBounds());
         }
 

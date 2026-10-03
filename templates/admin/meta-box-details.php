@@ -217,7 +217,7 @@ $street_highlight_mode_label = 'full' === $street_highlight_mode
             </div>
         </div>
 
-        <div class="feu-einsatz-form-row feu-einsatz-form-grid feu-einsatz-form-grid--location" data-feu-location-panel="address">
+        <div class="feu-einsatz-form-row feu-einsatz-form-grid feu-einsatz-form-grid--postcode" data-feu-location-panel="address">
             <div class="feu-einsatz-field feu-einsatz-field--compact">
                 <label class="feu-einsatz-field-label" for="feu_einsatz_plz">
                     <?php esc_html_e('PLZ', 'feuer-einsatzberichte'); ?>
@@ -236,38 +236,6 @@ $street_highlight_mode_label = 'full' === $street_highlight_mode
                 />
             </div>
 
-            <div class="feu-einsatz-field">
-                <label class="feu-einsatz-field-label" for="feu_einsatz_stadt">
-                    <?php esc_html_e('Stadt', 'feuer-einsatzberichte'); ?>
-                </label>
-                <input
-                    type="text"
-                    id="feu_einsatz_stadt"
-                    name="feu_einsatz_stadt"
-                    value="<?php echo esc_attr($stadt); ?>"
-                    class="widefat"
-                    placeholder="Hamburg"
-                    <?php echo 'address' === $map_location_mode ? 'required' : ''; ?>
-                />
-            </div>
-
-            <div class="feu-einsatz-field">
-                <label class="feu-einsatz-field-label" for="feu_einsatz_stadtteil">
-                    <?php esc_html_e('Stadtteil', 'feuer-einsatzberichte'); ?>
-                </label>
-                <input
-                    type="text"
-                    id="feu_einsatz_stadtteil"
-                    name="feu_einsatz_stadtteil"
-                    value="<?php echo esc_attr($stadtteil); ?>"
-                    class="widefat"
-                    placeholder="z.B. Lurup"
-                    autocomplete="address-level3"
-                />
-                <p class="description feu-einsatz-field-hint">
-                    <?php esc_html_e('Optional. Wird für Ortsangaben und zukünftige SEO-Texte verwendet, aber nicht für die Karten-Geokodierung.', 'feuer-einsatzberichte'); ?>
-                </p>
-            </div>
         </div>
 
         <div class="feu-einsatz-form-row feu-einsatz-map-profile-fields" data-feu-location-panel="coordinates" hidden>
@@ -291,6 +259,18 @@ $street_highlight_mode_label = 'full' === $street_highlight_mode
             <p class="description feu-einsatz-field-hint">
                 <?php esc_html_e('Komma und Punkt werden akzeptiert. Du kannst die Position auch unten direkt mit einem Klick in der Live-Karte setzen.', 'feuer-einsatzberichte'); ?>
             </p>
+        </div>
+
+        <div class="feu-einsatz-form-row feu-einsatz-form-grid feu-einsatz-form-grid--municipality">
+            <div class="feu-einsatz-field">
+                <label class="feu-einsatz-field-label" for="feu_einsatz_stadt"><?php esc_html_e('Stadt', 'feuer-einsatzberichte'); ?></label>
+                <input type="text" id="feu_einsatz_stadt" name="feu_einsatz_stadt" value="<?php echo esc_attr($stadt); ?>" class="widefat" placeholder="Hamburg" <?php echo 'address' === $map_location_mode ? 'required' : ''; ?> />
+            </div>
+            <div class="feu-einsatz-field">
+                <label class="feu-einsatz-field-label" for="feu_einsatz_stadtteil"><?php esc_html_e('Stadtteil', 'feuer-einsatzberichte'); ?></label>
+                <input type="text" id="feu_einsatz_stadtteil" name="feu_einsatz_stadtteil" value="<?php echo esc_attr($stadtteil); ?>" class="widefat" placeholder="z.B. Lurup" autocomplete="address-level3" />
+                <p class="description feu-einsatz-field-hint"><?php esc_html_e('Optional. Für Ortsangaben im Bericht; beeinflusst die Geokodierung nicht.', 'feuer-einsatzberichte'); ?></p>
+            </div>
         </div>
 
         <div class="feu-einsatz-form-row feu-einsatz-form-grid feu-einsatz-form-grid--timing">
@@ -351,6 +331,8 @@ $street_highlight_mode_label = 'full' === $street_highlight_mode
                 <span class="description" data-feu-map-area-status><?php esc_html_e('Optional: mindestens drei Punkte in der Live-Karte setzen und anschließend abschließen.', 'feuer-einsatzberichte'); ?></span>
             </div>
         </details>
+
+        <p class="feu-einsatz-map-input-guidance" data-feu-map-input-guidance hidden aria-live="polite"></p>
 
         <div
             class="feu-einsatz-form-row feu-einsatz-inline-card feu-einsatz-inline-card--map-preview"

@@ -1,6 +1,60 @@
 {
   "releases": [
     {
+      "version": "3.2.91",
+      "date": "2026-10-03",
+      "title": "Sicherer Berichtseditor und verlässliche Veröffentlichung",
+      "summary": "Unfertige Berichte lassen sich vollständig wiederherstellen; Adresse, Karte und URL werden vor der Veröffentlichung geprüft.",
+      "changes": [
+        "Editor: Unfertige Formulareingaben einschließlich Teilnehmern, Organisationen, Einsatzstichworten und Fotos bleiben während der Browser-Sitzung wiederherstellbar.",
+        "Wiederherstellung: Fehlende Auswahleinträge und Fotos werden sichtbar gemeldet; Warnungen zu verworfenen Entwürfen werden entfernt.",
+        "Veröffentlichung: Eine Zusammenfassung zeigt Einsatzort, Kartenstatus und öffentliche URL; URL-Konflikte werden vor dem Speichern geprüft.",
+        "Berichte: Ein vorhandener Einsatzbericht kann als neuer Entwurf kopiert werden; die Hauptkategorie der URL bleibt nach der Veröffentlichung stabil.",
+        "Oberfläche und Qualität: Hinweise und Bestätigung sind auf schmalen Bildschirmen besser lesbar; Browser- und WordPress-Integrationstests wurden erweitert."
+      ]
+    },
+    {
+      "version": "3.2.90",
+      "date": "2026-09-28",
+      "title": "Eigene Einsatzstichworte und sichere Migration",
+      "summary": "Einsatzberichte erhalten eine eigene Stichwort-Struktur mit gesicherter Umstellung, eindeutiger Statistik und unveränderten URLs.",
+      "changes": [
+        "Einsatzstichworte: Eigene hierarchische Taxonomie trennt Einsatzberichte von gewöhnlichen Blog-Kategorien; bestehende Kategorien bleiben als Kompatibilitäts-Spiegel erhalten.",
+        "Migration: Vorprüfung, automatische Sicherung, URL-Abgleich und sicherer Rückweg für vorhandene Berichte.",
+        "Statistik: Jeder Einsatz wird genau einem Haupt-Stichwort zugeordnet und nicht mehrfach gezählt.",
+        "Archive: Neue Stichworte, Zuordnungen und Primär-Stichwort werden gesichert und wiederhergestellt.",
+        "Qualität: URL-, Bearbeitungs-, Sicherungs- und WordPress-Integrationstests für alte und neue Berichte erweitert."
+      ]
+    },
+    {
+      "version": "3.2.89",
+      "date": "2026-09-27",
+      "title": "Klare Beschriftung des Einsatzradius",
+      "summary": "Ein Einsatzradius wird ohne Straßenlinie als Feuerwehr-Einsatzbereich beschriftet.",
+      "changes": [
+        "Live-Karte und Editor: Der Radius erhält die Beschriftung Feuerwehr-Einsatzbereich statt eines Straßennamens.",
+        "Kartenbild: PNG- und SVG-Ausgabe zeigen dieselbe neutrale Beschriftung am Kreis, ohne eine zusätzliche Straßenlinie zu zeichnen.",
+        "Einstellungen: Die Karten-Vorschau zeigt im Radiusmodus einen echten Kreis und bleibt auch ohne Straßenlinie sichtbar.",
+        "Integrationstest: Die Kreis-Beschriftung und die unveränderte Straßen-Beschriftung werden getrennt geprüft."
+      ]
+    },
+    {
+      "version": "3.2.88",
+      "date": "2026-09-25",
+      "title": "Präzise Live-Karte und Berichtsvorschläge",
+      "summary": "Adresse und Kartenmodus werden eindeutig geprüft; Berichtstitel und Beschreibung entstehen bereits während der Eingabe.",
+      "changes": [
+        "Geokodierung: Editor und öffentliche Karte verwenden dieselbe Adressauflösung mit strukturiertem Nachschlagen und exakter Hausnummernprüfung.",
+        "Kartenbild: Alte Straßenmittelpunkt-Koordinaten werden bei Abschnitt und Radius nicht mehr als Einsatzort übernommen; ohne bestätigten Anker wird die Bildgenerierung mit einem klaren Hinweis angehalten.",
+        "Validierung: Fehlende Pflichtfelder werden einzeln markiert; für Abschnitt oder Radius muss die Hausnummer im Adressmodus vor dem Speichern tatsächlich bestätigt werden.",
+        "Editor: Titel und Berichtstext werden aus Einsatzstichwort, Kategoriebeschreibung, Straße, Stadt, Stadtteil und Datum vorgeschlagen, ohne eigene Änderungen zu überschreiben.",
+        "Editor: Stadt und Stadtteil bleiben auch beim Wechsel auf genaue Koordinaten sichtbar und bearbeitbar.",
+        "Oberfläche: Ruhigere Einsatzstichwort-Liste, breitere Teilnehmerauswahl und ein nicht verdeckter Speichern-Button in den Einstellungen.",
+        "Archive: Verständliche Dateiauswahl und übersetzte Herkunftsangaben.",
+        "Demo-Backup: Fünf klar markierte QA-Einsätze ergänzen die Hamburger Daten und prüfen ganze Straße, Abschnitt, Radius, reine Koordinaten und Stadtteil."
+      ]
+    },
+    {
       "version": "3.2.87",
       "date": "2026-09-25",
       "title": "Live-Karte und Koordinaten im Berichtseditor",

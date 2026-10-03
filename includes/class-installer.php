@@ -146,7 +146,29 @@ class FEU_Einsatz_Installer {
         ];
     }
 
-    public static function install_default_categories() {
+    public static function install_default_categories(?array $selected_slugs = null) {
+        $defaults = self::get_default_categories();
+        if (null !== $selected_slugs) {
+            $selected_slugs = array_values(array_unique(array_map('sanitize_title', $selected_slugs)));
+            $defaults = array_filter($defaults, static function ($slug) use ($selected_slugs) {
+                return in_array(sanitize_title($slug), $selected_slugs, true);
+            }, ARRAY_FILTER_USE_KEY);
+            if (!$defaults) {
+                return new WP_Error('no_default_keywords', __('Mindestens ein Einsatzstichwort auswählen.', 'feuer-einsatzberichte'));
+            }
+            // Never take ownership of an unrelated blog category with the same slug.
+            $existing_root = get_term_by('slug', 'einsatze', 'category');
+            if (!$existing_root) {
+                $existing_root = get_term_by('name', 'Einsätze', 'category');
+            }
+            $existing_root_id = $existing_root instanceof WP_Term ? (int) $existing_root->term_id : 0;
+            foreach (array_keys($defaults) as $slug) {
+                $existing = get_term_by('slug', sanitize_title($slug), 'category');
+                if ($existing instanceof WP_Term && (int) $existing->parent !== $existing_root_id) {
+                    return new WP_Error('keyword_slug_conflict', sprintf(__('Kategorie „%s“ ist bereits außerhalb von Einsätze vorhanden.', 'feuer-einsatzberichte'), $slug));
+                }
+            }
+        }
         $root = get_term_by('slug', 'einsatze', 'category');
         if (!$root) {
             $root = get_term_by('name', 'Einsätze', 'category');
@@ -165,7 +187,8 @@ class FEU_Einsatz_Installer {
         }
 
         $created = [];
-        foreach (self::get_default_categories() as $slug => $description) {
+        $selected_ids = [];
+        foreach ($defaults as $slug => $description) {
             $term_slug = sanitize_title($slug);
             $term = get_term_by('slug', $term_slug, 'category');
             if (!$term) {
@@ -175,30 +198,46 @@ class FEU_Einsatz_Installer {
                     'parent' => $root_id,
                 ]);
                 if (is_wp_error($result)) {
+                    if (null !== $selected_slugs) {
+                        return $result;
+                    }
                     continue;
                 }
                 $created[] = (int) $result['term_id'];
+                $selected_ids[] = (int) $result['term_id'];
                 continue;
             }
 
             if ((int) $term->parent !== $root_id) {
-                wp_update_term((int) $term->term_id, 'category', ['parent' => $root_id]);
+                $updated = wp_update_term((int) $term->term_id, 'category', ['parent' => $root_id]);
+                if (is_wp_error($updated) && null !== $selected_slugs) {
+                    return $updated;
+                }
             }
+            $selected_ids[] = (int) $term->term_id;
         }
 
         update_option('feu_einsatz_default_categories_prompt', 0, false);
-        return ['root_id' => $root_id, 'created' => $created];
+        return ['root_id' => $root_id, 'created' => $created, 'selected_ids' => $selected_ids];
     }
     
     public static function activate() {
         self::check_requirements();
+        $fresh_install = null === get_option('feu_einsatz_schema_version', null)
+            && null === get_option('feu_einsatz_categories', null)
+            && !(FEU_Einsatz_Template_Helpers::find_root_category() instanceof WP_Term)
+            && !self::has_existing_reports();
         self::create_tables();
         self::set_default_options();
         self::maybe_prepare_default_categories_prompt();
         if (null === get_option('feu_einsatz_setup_wizard_pending', null)) {
             update_option('feu_einsatz_setup_wizard_pending', 1, false);
         }
-        $default_categories = self::install_default_categories();
+        if ($fresh_install) {
+            update_option('feu_einsatz_setup_fresh_install', 1, false);
+            update_option('feu_einsatz_setup_redirect_pending', 1, false);
+        }
+        $default_categories = $fresh_install ? null : self::install_default_categories();
         if (is_array($default_categories) && !empty($default_categories['root_id'])) {
             $default_category_ids = get_terms([
                 'taxonomy' => 'category',
@@ -218,6 +257,31 @@ class FEU_Einsatz_Installer {
         self::migrate_existing_data();
         update_option('feu_einsatz_schema_version', self::SCHEMA_VERSION);
         flush_rewrite_rules();
+    }
+
+    private static function has_existing_reports(): bool {
+        global $wpdb;
+        return (bool) $wpdb->get_var($wpdb->prepare(
+            "SELECT p.ID FROM {$wpdb->posts} p INNER JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID WHERE pm.meta_key = %s AND pm.meta_value = '1' LIMIT 1",
+            FEU_Einsatz_Report_Post_Type::MARKER_META
+        ));
+    }
+
+    public static function activate_fresh_keyword_taxonomy(array $legacy_ids) {
+        FEU_Einsatz_Report_Taxonomy::register();
+        $keyword_ids = [];
+        foreach ($legacy_ids as $legacy_id) {
+            $keyword_id = FEU_Einsatz_Report_Taxonomy::copy_legacy_term((int) $legacy_id);
+            if (is_wp_error($keyword_id)) {
+                return $keyword_id; // Keep the usable legacy structure if a slug conflicts.
+            }
+            $keyword_ids[] = (int) $keyword_id;
+        }
+        if ($keyword_ids) {
+            update_option(FEU_Einsatz_Report_Taxonomy::SELECTED_OPTION, array_values(array_unique($keyword_ids)), false);
+            update_option(FEU_Einsatz_Report_Taxonomy::ENABLED_OPTION, 1, false);
+        }
+        return $keyword_ids;
     }
     
     public static function deactivate() {
@@ -427,6 +491,7 @@ class FEU_Einsatz_Installer {
             'feu_einsatz_area_show_calls' => 1,
             'feu_einsatz_area_postcodes' => [],
             'feu_einsatz_area_station_street' => '',
+            'feu_einsatz_area_station_name' => '',
             'feu_einsatz_area_station_postcode' => '',
             'feu_einsatz_area_station_city' => 'Hamburg',
             'feu_einsatz_area_station_logo_id' => 0,
@@ -498,6 +563,7 @@ class FEU_Einsatz_Installer {
     }
 
     public static function reset_settings_to_defaults(): array {
+        $was_keyword_mode = FEU_Einsatz_Report_Taxonomy::enabled();
         $default_options = self::get_default_options();
 
         foreach ($default_options as $key => $value) {
@@ -513,7 +579,11 @@ class FEU_Einsatz_Installer {
                 'fields' => 'ids',
             ]);
             if (!is_wp_error($category_ids)) {
-                update_option('feu_einsatz_categories', array_values(array_filter(array_map('absint', (array) $category_ids))), false);
+                $category_ids = array_values(array_filter(array_map('absint', (array) $category_ids)));
+                update_option('feu_einsatz_categories', $category_ids, false);
+                if ($was_keyword_mode) {
+                    self::activate_fresh_keyword_taxonomy($category_ids);
+                }
             }
         }
 
@@ -531,6 +601,7 @@ class FEU_Einsatz_Installer {
      */
     public static function purge_settings_for_fresh_start(): array {
         global $wpdb;
+        $was_keyword_mode = FEU_Einsatz_Report_Taxonomy::enabled();
 
         $option_patterns = [
             $wpdb->esc_like('feu_einsatz_') . '%',
@@ -562,7 +633,11 @@ class FEU_Einsatz_Installer {
                 'fields' => 'ids',
             ]);
             if (!is_wp_error($category_ids)) {
-                update_option('feu_einsatz_categories', array_values(array_filter(array_map('absint', (array) $category_ids))), false);
+                $category_ids = array_values(array_filter(array_map('absint', (array) $category_ids)));
+                update_option('feu_einsatz_categories', $category_ids, false);
+                if ($was_keyword_mode) {
+                    self::activate_fresh_keyword_taxonomy($category_ids);
+                }
             }
         }
 
@@ -873,7 +948,7 @@ class FEU_Einsatz_Installer {
 
     private static function prepare_legacy_demo_map_repair(): void {
         $demo_report_ids = get_posts([
-            'post_type' => 'post',
+            'post_type' => FEU_Einsatz_Report_Post_Type::readable_post_types(),
             'post_status' => ['draft', 'future', 'publish', 'pending', 'private'],
             'posts_per_page' => -1,
             'fields' => 'ids',
@@ -902,7 +977,7 @@ class FEU_Einsatz_Installer {
 
     private static function prepare_missing_map_geometry_repair(): void {
         $report_ids = get_posts([
-            'post_type' => 'post',
+            'post_type' => FEU_Einsatz_Report_Post_Type::readable_post_types(),
             'post_status' => ['draft', 'future', 'publish', 'pending', 'private'],
             'posts_per_page' => -1,
             'fields' => 'ids',

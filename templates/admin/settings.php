@@ -209,6 +209,7 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
             'feu_einsatz_area_show_calls' => (int) get_option('feu_einsatz_area_show_calls', 1),
             'feu_einsatz_area_postcodes' => FEU_Einsatz_Template_Helpers::sanitize_area_entry_list(get_option('feu_einsatz_area_postcodes', [])),
             'feu_einsatz_area_station_street' => (string) get_option('feu_einsatz_area_station_street', ''),
+            'feu_einsatz_area_station_name' => (string) get_option('feu_einsatz_area_station_name', ''),
             'feu_einsatz_area_station_postcode' => preg_replace('/\D+/', '', (string) get_option('feu_einsatz_area_station_postcode', '')),
             'feu_einsatz_area_station_city' => (string) get_option('feu_einsatz_area_station_city', 'Hamburg'),
             'feu_einsatz_area_station_logo_id' => absint(get_option('feu_einsatz_area_station_logo_id', 0)),
@@ -328,8 +329,18 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
             );
         }
 
-        $categories = isset($_POST['feu_einsatz_categories']) ? array_map('intval', (array) wp_unslash($_POST['feu_einsatz_categories'])) : [];
-        update_option('feu_einsatz_categories', $categories);
+        if (isset($_POST['feu_einsatz_categories_present'])) {
+            $categories = isset($_POST['feu_einsatz_categories']) ? array_map('absint', (array) wp_unslash($_POST['feu_einsatz_categories'])) : [];
+            $taxonomy = FEU_Einsatz_Report_Taxonomy::enabled() ? FEU_Einsatz_Report_Taxonomy::TAXONOMY : 'category';
+            $root = FEU_Einsatz_Report_Taxonomy::find_root_term($taxonomy);
+            $categories = array_values(array_filter(array_unique($categories), static function ($term_id) use ($taxonomy, $root) {
+                return get_term($term_id, $taxonomy) instanceof WP_Term
+                    && $root instanceof WP_Term
+                    && (int) $root->term_id !== $term_id
+                    && term_is_ancestor_of((int) $root->term_id, $term_id, $taxonomy);
+            }));
+            update_option(FEU_Einsatz_Report_Taxonomy::enabled() ? FEU_Einsatz_Report_Taxonomy::SELECTED_OPTION : 'feu_einsatz_categories', $categories);
+        }
 
         if (isset($_POST['feu_einsatz_map_zoom'])) {
             update_option('feu_einsatz_map_zoom', intval(wp_unslash($_POST['feu_einsatz_map_zoom'])));
@@ -451,22 +462,21 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
                 ? FEU_Einsatz_Template_Helpers::sanitize_area_entry_list(wp_unslash($_POST['feu_einsatz_area_postcodes']))
                 : []
         );
-        update_option(
-            'feu_einsatz_area_station_street',
-            isset($_POST['feu_einsatz_area_station_street']) ? sanitize_text_field(wp_unslash($_POST['feu_einsatz_area_station_street'])) : ''
-        );
-        update_option(
-            'feu_einsatz_area_station_postcode',
-            isset($_POST['feu_einsatz_area_station_postcode']) ? preg_replace('/\D+/', '', (string) wp_unslash($_POST['feu_einsatz_area_station_postcode'])) : ''
-        );
-        update_option(
-            'feu_einsatz_area_station_city',
-            isset($_POST['feu_einsatz_area_station_city']) ? sanitize_text_field(wp_unslash($_POST['feu_einsatz_area_station_city'])) : 'Hamburg'
-        );
-        update_option(
-            'feu_einsatz_area_station_logo_id',
-            isset($_POST['feu_einsatz_area_station_logo_id']) ? absint(wp_unslash($_POST['feu_einsatz_area_station_logo_id'])) : 0
-        );
+        if (isset($_POST['feu_einsatz_area_station_street'])) {
+            update_option('feu_einsatz_area_station_street', sanitize_text_field(wp_unslash($_POST['feu_einsatz_area_station_street'])));
+        }
+        if (isset($_POST['feu_einsatz_area_station_name'])) {
+            update_option('feu_einsatz_area_station_name', sanitize_text_field(wp_unslash($_POST['feu_einsatz_area_station_name'])));
+        }
+        if (isset($_POST['feu_einsatz_area_station_postcode'])) {
+            update_option('feu_einsatz_area_station_postcode', preg_replace('/\D+/', '', (string) wp_unslash($_POST['feu_einsatz_area_station_postcode'])));
+        }
+        if (isset($_POST['feu_einsatz_area_station_city'])) {
+            update_option('feu_einsatz_area_station_city', sanitize_text_field(wp_unslash($_POST['feu_einsatz_area_station_city'])));
+        }
+        if (isset($_POST['feu_einsatz_area_station_logo_id'])) {
+            update_option('feu_einsatz_area_station_logo_id', absint(wp_unslash($_POST['feu_einsatz_area_station_logo_id'])));
+        }
         update_option(
             'feu_einsatz_area_station_logo_size',
             isset($_POST['feu_einsatz_area_station_logo_size']) ? max(20, min(96, absint(wp_unslash($_POST['feu_einsatz_area_station_logo_size'])))) : 40
@@ -766,6 +776,7 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
             'feu_einsatz_area_show_calls' => (int) get_option('feu_einsatz_area_show_calls', 1),
             'feu_einsatz_area_postcodes' => FEU_Einsatz_Template_Helpers::sanitize_area_entry_list(get_option('feu_einsatz_area_postcodes', [])),
             'feu_einsatz_area_station_street' => (string) get_option('feu_einsatz_area_station_street', ''),
+            'feu_einsatz_area_station_name' => (string) get_option('feu_einsatz_area_station_name', ''),
             'feu_einsatz_area_station_postcode' => preg_replace('/\D+/', '', (string) get_option('feu_einsatz_area_station_postcode', '')),
             'feu_einsatz_area_station_city' => (string) get_option('feu_einsatz_area_station_city', 'Hamburg'),
             'feu_einsatz_area_station_logo_id' => absint(get_option('feu_einsatz_area_station_logo_id', 0)),
@@ -874,6 +885,7 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
             'feu_einsatz_area_show_calls' => __('Einsatz-Zonen auf Einsatzgebiet', 'feuer-einsatzberichte'),
             'feu_einsatz_area_postcodes' => __('PLZ/Gebiete Einsatzgebiet', 'feuer-einsatzberichte'),
             'feu_einsatz_area_station_street' => __('Feuerwehrhaus Straße', 'feuer-einsatzberichte'),
+            'feu_einsatz_area_station_name' => __('Name der Feuerwehr', 'feuer-einsatzberichte'),
             'feu_einsatz_area_station_postcode' => __('Feuerwehrhaus PLZ', 'feuer-einsatzberichte'),
             'feu_einsatz_area_station_city' => __('Feuerwehrhaus Stadt', 'feuer-einsatzberichte'),
             'feu_einsatz_area_station_logo_id' => __('Feuerwehrhaus Logo', 'feuer-einsatzberichte'),
@@ -985,6 +997,7 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
             'feu_einsatz_street_highlight_radius_meters',
             'feu_einsatz_street_highlight_include_pedestrian',
             'feu_einsatz_area_station_street',
+            'feu_einsatz_area_station_name',
             'feu_einsatz_area_station_postcode',
             'feu_einsatz_area_station_city',
             'feu_einsatz_area_station_logo_id',
@@ -1002,7 +1015,7 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
                 'changed_settings' => $changed_settings,
                 'default_comments_enabled' => 1 === (int) get_option('feu_einsatz_default_comments_enabled', 0),
                 'backup_retention_limit' => (int) get_option('feu_einsatz_backup_retention_limit', 5),
-                'selected_categories' => $categories,
+                'selected_categories' => FEU_Einsatz_Report_Taxonomy::get_selected_ids(),
             ]
         );
 
@@ -1100,7 +1113,7 @@ $is_manifest_tab = 'manifest' === $active_tab;
 $functions = get_option('feu_einsatz_functions', FEU_Einsatz_Installer::get_default_functions());
 $participant_fallback_function = FEU_Einsatz_Installer::get_default_participant_function();
 
-$selected_categories = get_option('feu_einsatz_categories', []);
+$selected_categories = FEU_Einsatz_Report_Taxonomy::get_selected_ids();
 $map_zoom = get_option('feu_einsatz_map_zoom', 16);
 $map_height = get_option('feu_einsatz_map_height', 400);
 $auto_map_image = get_option('feu_einsatz_auto_map_image', 1);
@@ -1134,6 +1147,7 @@ $area_page_enabled = (int) get_option('feu_einsatz_area_page_enabled', 0);
 $area_show_calls = (int) get_option('feu_einsatz_area_show_calls', 1);
 $area_entries = FEU_Einsatz_Template_Helpers::sanitize_area_entry_list(get_option('feu_einsatz_area_postcodes', []));
 $area_station_street = (string) get_option('feu_einsatz_area_station_street', '');
+$area_station_name = (string) get_option('feu_einsatz_area_station_name', '');
 $area_station_postcode = preg_replace('/\D+/', '', (string) get_option('feu_einsatz_area_station_postcode', ''));
 $area_station_city = (string) get_option('feu_einsatz_area_station_city', 'Hamburg');
 $area_station_logo_id = absint(get_option('feu_einsatz_area_station_logo_id', 0));
@@ -1347,7 +1361,21 @@ $functions_reference_path = FEU_EINSATZ_PLUGIN_DIR . 'docs/PLUGIN_FUNCTIONS_AND_
 $update_guide_path = FEU_EINSATZ_PLUGIN_DIR . 'docs/UPDATE_HOSTING_AND_GITHUB.md';
 $docs_directory = FEU_EINSATZ_PLUGIN_DIR . 'docs';
 $templates_directory = FEU_EINSATZ_PLUGIN_DIR . 'templates';
-$all_categories = get_categories(['hide_empty' => false]);
+$all_categories = FEU_Einsatz_Report_Taxonomy::enabled()
+    ? get_terms(['taxonomy' => FEU_Einsatz_Report_Taxonomy::TAXONOMY, 'hide_empty' => false])
+    : get_categories(['hide_empty' => false]);
+$all_categories = is_wp_error($all_categories) ? [] : $all_categories;
+$keyword_list_taxonomy = FEU_Einsatz_Report_Taxonomy::enabled() ? FEU_Einsatz_Report_Taxonomy::TAXONOMY : 'category';
+$keyword_list_root = FEU_Einsatz_Report_Taxonomy::find_root_term($keyword_list_taxonomy);
+$all_categories = array_values(array_filter($all_categories, static function ($term) use ($keyword_list_root, $keyword_list_taxonomy) {
+    return $term instanceof WP_Term && $keyword_list_root instanceof WP_Term
+        && (int) $term->term_id !== (int) $keyword_list_root->term_id
+        && term_is_ancestor_of((int) $keyword_list_root->term_id, (int) $term->term_id, $keyword_list_taxonomy);
+}));
+$keyword_migration_preflight = FEU_Einsatz_Report_Taxonomy::enabled() ? [] : FEU_Einsatz_Keyword_Migration::preflight();
+$keyword_migration_run = FEU_Einsatz_Keyword_Migration::get_run();
+$keyword_migration_notice = get_transient('feu_einsatz_keyword_notice_' . get_current_user_id());
+delete_transient('feu_einsatz_keyword_notice_' . get_current_user_id());
 $default_categories_root = get_term_by('slug', 'einsatze', 'category');
 $default_categories_prompt = 1 === (int) get_option('feu_einsatz_default_categories_prompt', 0);
 $organizations = $this->db->get_organizations([
@@ -1534,6 +1562,9 @@ $settings_summary_cards = [
             'selected_categories' => $selected_categories,
             'default_categories_root' => $default_categories_root,
             'default_categories_prompt' => $default_categories_prompt,
+            'keyword_migration_preflight' => $keyword_migration_preflight,
+            'keyword_migration_run' => $keyword_migration_run,
+            'keyword_migration_notice' => $keyword_migration_notice,
         ], 'Einstellungen: Einsatzstichworte');
 
         echo FEU_Einsatz_Template_Helpers::render_guarded('templates/admin/settings/partials/tab-karten.php', [
@@ -1635,6 +1666,14 @@ $settings_summary_cards = [
                        value="<?php echo esc_attr__('Einstellungen speichern', 'feuer-einsatzberichte'); ?>" />
             </p>
         </div>
+        </form>
+        <form id="feu-einsatz-keyword-migrate-form" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" hidden>
+            <input type="hidden" name="action" value="feu_einsatz_keywords_migrate" />
+            <?php wp_nonce_field('feu_einsatz_keyword_migration', 'feu_einsatz_keyword_migration_nonce'); ?>
+        </form>
+        <form id="feu-einsatz-keyword-rollback-form" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" hidden>
+            <input type="hidden" name="action" value="feu_einsatz_keywords_rollback" />
+            <?php wp_nonce_field('feu_einsatz_keyword_migration', 'feu_einsatz_keyword_migration_nonce'); ?>
         </form>
     </div>
 </div>
@@ -2004,7 +2043,7 @@ jQuery(document).ready(function($) {
         var meta = getStreetRegistryMeta({ postcode: postcode, city: city });
 
         if (!reportUrl) {
-            reportUrl = 'edit.php?post_type=post&feu_einsatz_filter=1'
+            reportUrl = 'edit.php?post_type=einsatzbericht&feu_einsatz_filter=1'
                 + '&feu_einsatz_street=' + encodeURIComponent(street)
                 + (postcode ? '&feu_einsatz_postcode=' + encodeURIComponent(postcode) : '')
                 + (city ? '&feu_einsatz_city=' + encodeURIComponent(city) : '');

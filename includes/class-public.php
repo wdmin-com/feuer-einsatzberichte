@@ -5,7 +5,7 @@ if (!defined('ABSPATH')) {
 
 class FEU_Einsatz_Public {
 
-    const REPORT_PERMALINK_REWRITE_VERSION = '1';
+    const REPORT_PERMALINK_REWRITE_VERSION = '2';
 
     private $db;
     private $overview_context_cache = [];
@@ -65,10 +65,16 @@ class FEU_Einsatz_Public {
     }
 
     private function init_hooks() {
+        FEU_Einsatz_Report_Post_Type::init_access_guard();
+        add_action('init', ['FEU_Einsatz_Report_Post_Type', 'register'], 10);
+        add_action('init', ['FEU_Einsatz_Report_Taxonomy', 'register'], 11);
         add_action('init', [$this, 'register_report_permalink_rewrite'], 20);
         add_filter('query_vars', [$this, 'register_report_permalink_query_var']);
         add_action('pre_get_posts', [$this, 'restrict_report_permalink_query']);
         add_filter('post_link', [$this, 'filter_report_permalink'], 20, 3);
+        add_filter('post_type_link', [$this, 'filter_custom_report_permalink'], 20, 2);
+        add_action('template_redirect', [$this, 'validate_report_permalink'], 1);
+        add_filter('redirect_canonical', [$this, 'prevent_invalid_report_route_redirect']);
         add_action('template_redirect', [$this, 'redirect_legacy_report_permalink']);
         add_filter('theme_page_templates', [$this, 'register_page_templates']);
         add_filter('template_include', [$this, 'load_einsatzbericht_template']);
@@ -90,11 +96,13 @@ class FEU_Einsatz_Public {
         $this->register_shortcode_aliases('area_page', [$this, 'render_area_page_shortcode']);
     }
 
-    /**
-     * Report posts are normal WordPress posts for compatibility, but their
-     * public URLs must remain separated from editorial blog posts.
-     */
+    /** Keep existing report URLs while routing new CPT reports by category. */
     public function register_report_permalink_rewrite() {
+        add_rewrite_rule(
+            '^einsaetze/([^/]+)/([^/]+)/?$',
+            'index.php?post_type=einsatzbericht&name=$matches[2]&feu_einsatz_category_slug=$matches[1]',
+            'top'
+        );
         add_rewrite_rule(
             '^einsaetze/([^/]+)/?$',
             'index.php?name=$matches[1]&feu_einsatz_permalink=1',
@@ -109,6 +117,7 @@ class FEU_Einsatz_Public {
 
     public function register_report_permalink_query_var($query_vars) {
         $query_vars[] = 'feu_einsatz_permalink';
+        $query_vars[] = 'feu_einsatz_category_slug';
 
         return $query_vars;
     }
@@ -129,15 +138,108 @@ class FEU_Einsatz_Public {
             'value' => '1',
             'compare' => '=',
         ];
+        $meta_query[] = [
+            'relation' => 'OR',
+            [
+                'key' => FEU_Einsatz_Report_Post_Type::URL_SCHEME_META,
+                'value' => 'legacy',
+                'compare' => '=',
+            ],
+            [
+                'key' => FEU_Einsatz_Report_Post_Type::URL_SCHEME_META,
+                'compare' => 'NOT EXISTS',
+            ],
+        ];
+        $meta_query['relation'] = 'AND';
 
-        $query->set('post_type', 'post');
+        $query->set('post_type', FEU_Einsatz_Report_Post_Type::readable_post_types());
         $query->set('meta_query', $meta_query);
+    }
+
+    public function filter_custom_report_permalink($permalink, $post) {
+        if (!FEU_Einsatz_Report_Post_Type::is_marked_report($post)) {
+            return $permalink;
+        }
+
+        $post = get_post($post);
+        if (!($post instanceof WP_Post) || FEU_Einsatz_Report_Post_Type::POST_TYPE !== $post->post_type) {
+            return $permalink;
+        }
+
+        $scheme = (string) get_post_meta($post->ID, FEU_Einsatz_Report_Post_Type::URL_SCHEME_META, true);
+        if ('legacy' === $scheme && '' !== (string) $post->post_name) {
+            return home_url(user_trailingslashit(FEU_Einsatz_Report_Post_Type::normalized_legacy_path((int) $post->ID)));
+        }
+
+        if ('category' !== $scheme || '' === (string) $post->post_name) {
+            return $permalink;
+        }
+
+        $category_slug = sanitize_title((string) get_post_meta($post->ID, FEU_Einsatz_Report_Post_Type::CATEGORY_SLUG_META, true));
+        if ('' === $category_slug) {
+            return $permalink;
+        }
+
+        return home_url(user_trailingslashit('einsaetze/' . $category_slug . '/' . $post->post_name));
+    }
+
+    public function validate_report_permalink() {
+        if (is_admin() || is_preview()) {
+            return;
+        }
+
+        $legacy_route = '1' === (string) get_query_var('feu_einsatz_permalink');
+        $category_route = (string) get_query_var('feu_einsatz_category_slug');
+        if (!$legacy_route && '' === $category_route) {
+            return;
+        }
+
+        $post = get_queried_object();
+        $valid = FEU_Einsatz_Report_Post_Type::is_marked_report($post);
+        if ($valid && $post instanceof WP_Post) {
+            if ('publish' !== $post->post_status && !current_user_can('read_post', (int) $post->ID)) {
+                $valid = false;
+            }
+            $scheme = (string) get_post_meta($post->ID, FEU_Einsatz_Report_Post_Type::URL_SCHEME_META, true);
+            if ($legacy_route) {
+                $valid = '' === $scheme || 'legacy' === $scheme;
+                if ($valid && 'legacy' === $scheme) {
+                    $requested_path = 'einsaetze/' . (string) get_query_var('name');
+                    $valid = FEU_Einsatz_Report_Post_Type::normalized_legacy_path((int) $post->ID) === $requested_path;
+                }
+            } else {
+                $valid = FEU_Einsatz_Report_Post_Type::POST_TYPE === $post->post_type
+                    && 'category' === $scheme
+                    && (string) get_post_meta($post->ID, FEU_Einsatz_Report_Post_Type::CATEGORY_SLUG_META, true) === $category_route;
+            }
+        }
+
+        if (!$valid) {
+            global $wp_query;
+            $wp_query->set_404();
+            status_header(404);
+            nocache_headers();
+        }
+    }
+
+    public function prevent_invalid_report_route_redirect($redirect_url) {
+        if (
+            is_404()
+            && (
+                '1' === (string) get_query_var('feu_einsatz_permalink')
+                || '' !== (string) get_query_var('feu_einsatz_category_slug')
+            )
+        ) {
+            return false;
+        }
+
+        return $redirect_url;
     }
 
     public function filter_report_permalink($permalink, $post, $leavename = false) {
         $post = $post instanceof WP_Post ? $post : get_post($post);
 
-        if (!($post instanceof WP_Post) || !$this->is_einsatzbericht_post((int) $post->ID)) {
+        if (!($post instanceof WP_Post) || 'post' !== $post->post_type || !$this->is_einsatzbericht_post((int) $post->ID)) {
             return $permalink;
         }
 
@@ -184,7 +286,7 @@ class FEU_Einsatz_Public {
     private function is_einsatzbericht_post($post_id) {
         $post_id = absint($post_id);
 
-        if (!$post_id || 'post' !== get_post_type($post_id)) {
+        if (!$post_id || !in_array(get_post_type($post_id), FEU_Einsatz_Report_Post_Type::readable_post_types(), true)) {
             return false;
         }
 
@@ -1010,7 +1112,7 @@ class FEU_Einsatz_Public {
         return $items;
     }
     public function render_social_share_meta_tags() {
-        if (!is_singular('post')) {
+        if (!is_singular(FEU_Einsatz_Report_Post_Type::readable_post_types())) {
             return;
         }
 
@@ -1486,7 +1588,7 @@ class FEU_Einsatz_Public {
     }
 
     public function load_einsatzbericht_template($template) {
-        if (is_singular('post')) {
+        if (is_singular(FEU_Einsatz_Report_Post_Type::readable_post_types())) {
             $post_id = get_queried_object_id();
 
             if ($this->is_einsatzbericht_post($post_id)) {
@@ -1580,7 +1682,7 @@ class FEU_Einsatz_Public {
         $current_post = $current_post_id ? get_post($current_post_id) : null;
         $current_post_content = $current_post instanceof WP_Post ? (string) $current_post->post_content : '';
         $is_area_page_request = $this->is_area_page_request($current_post_id);
-        $is_single_report = is_singular('post') && $this->is_einsatzbericht_post($current_post_id);
+        $is_single_report = is_singular(FEU_Einsatz_Report_Post_Type::readable_post_types()) && $this->is_einsatzbericht_post($current_post_id);
         $is_overview_archive_request = $this->is_overview_archive_request();
         $is_overview_template_request = $current_post_id
             && is_page($current_post_id)
@@ -1598,6 +1700,7 @@ class FEU_Einsatz_Public {
             'mapUnavailableHint' => __('Fuer diesen Einsatz sind noch keine ausreichenden Kartendaten gespeichert.', 'feuer-einsatzberichte'),
             'pedestrianPartLabel' => __('Fussgaengerbereich', 'feuer-einsatzberichte'),
             'streetFallback' => __('Strasse', 'feuer-einsatzberichte'),
+            'radiusLabel' => __('Feuerwehr-Einsatzbereich', 'feuer-einsatzberichte'),
             'mapConsentTitle' => __('Datenschutz-Hinweis', 'feuer-einsatzberichte'),
             'mapConsentText' => __('Beim Laden der Live-Karte werden externe Kartendaten von OpenStreetMap nachgeladen.', 'feuer-einsatzberichte'),
             'mapConsentAllow' => __('Live-Karte laden', 'feuer-einsatzberichte'),

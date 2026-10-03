@@ -68,19 +68,17 @@ class FEU_Einsatz_Report_Logger {
 
         if (
             !($post instanceof WP_Post)
-            || 'post' !== $post->post_type
-            || '1' !== get_post_meta($post_id, '_feu_einsatz_einsatzbericht', true)
+            || !FEU_Einsatz_Report_Post_Type::is_marked_report($post)
         ) {
             return null;
         }
 
-        $category_ids    = array_map('absint', wp_get_post_categories($post_id));
+        $report_terms = FEU_Einsatz_Report_Taxonomy::get_report_terms($post_id);
+        $category_ids    = array_map('intval', wp_list_pluck($report_terms, 'term_id'));
         $category_labels = [];
 
-        foreach ($category_ids as $category_id) {
-            $term = get_term($category_id, 'category');
-
-            if ($term instanceof WP_Term && !is_wp_error($term)) {
+        foreach ($report_terms as $term) {
+            if ($term instanceof WP_Term) {
                 $category_labels[] = $term->name;
             }
         }

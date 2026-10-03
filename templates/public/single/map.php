@@ -14,6 +14,7 @@ $map_privacy_mode = isset($display['single_map_privacy_mode'])
     : 'always';
 $map_config = isset($map['config']) && is_array($map['config']) ? $map['config'] : [];
 $publicly_hidden = !empty($map['publicly_hidden']);
+$anchor_unverified = !empty($map['anchor_unverified']);
 $radius_has_coordinates = 'radius' === ($map_config['highlight_mode'] ?? '')
     && isset($map_config['latitude'], $map_config['longitude'])
     && is_numeric($map_config['latitude'])
@@ -38,8 +39,13 @@ if ($publicly_hidden) :
     <div class="col-12 col-lg-7 feu-einsatz-single-map-col d-flex">
         <div class="feu-einsatz-map-container h-100 feu-einsatz-map-runtime">
             <div class="feu-einsatz-map-placeholder">
-                <strong><?php echo esc_html__('Kartenansicht nicht veröffentlicht.', 'feuer-einsatzberichte'); ?></strong>
-                <p><?php echo esc_html__('Der Einsatzort wird für diesen Bericht bewusst nicht öffentlich auf einer Karte dargestellt.', 'feuer-einsatzberichte'); ?></p>
+                <?php if ($anchor_unverified && 'hidden' !== ($map_config['public_precision'] ?? 'exact')) : ?>
+                    <strong><?php echo esc_html__('Kartenansicht noch nicht verfügbar.', 'feuer-einsatzberichte'); ?></strong>
+                    <p><?php echo esc_html__('Die Hausnummer konnte nicht bestätigt werden. Bitte die Adresse prüfen oder genaue Koordinaten eintragen.', 'feuer-einsatzberichte'); ?></p>
+                <?php else : ?>
+                    <strong><?php echo esc_html__('Kartenansicht nicht veröffentlicht.', 'feuer-einsatzberichte'); ?></strong>
+                    <p><?php echo esc_html__('Der Einsatzort wird für diesen Bericht bewusst nicht öffentlich auf einer Karte dargestellt.', 'feuer-einsatzberichte'); ?></p>
+                <?php endif; ?>
             </div>
         </div>
     </div>

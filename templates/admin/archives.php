@@ -69,7 +69,11 @@ if (!empty($_GET['archive_deleted'])) {
                 <?php wp_nonce_field('feu_einsatz_upload_archive'); ?>
                 <p>
                     <label for="feu_einsatz_archive_file"><strong><?php esc_html_e('ZIP-Datei', 'feuer-einsatzberichte'); ?></strong></label><br />
-                    <input type="file" id="feu_einsatz_archive_file" name="feu_einsatz_archive_file" accept=".zip" required />
+                    <span class="feu-einsatz-archive-file-picker">
+                        <input type="file" id="feu_einsatz_archive_file" name="feu_einsatz_archive_file" accept=".zip" required class="screen-reader-text" />
+                        <label for="feu_einsatz_archive_file" class="button"><?php esc_html_e('ZIP-Datei auswählen', 'feuer-einsatzberichte'); ?></label>
+                        <span data-feu-archive-file-name data-empty-label="<?php echo esc_attr__('Noch keine Datei ausgewählt', 'feuer-einsatzberichte'); ?>"><?php esc_html_e('Noch keine Datei ausgewählt', 'feuer-einsatzberichte'); ?></span>
+                    </span>
                 </p>
                 <p class="description"><?php esc_html_e('Hochgeladene Archive erscheinen unten in der Liste und können danach wiederhergestellt oder heruntergeladen werden.', 'feuer-einsatzberichte'); ?></p>
                 <p><button type="submit" class="button"><?php esc_html_e('Archiv hochladen', 'feuer-einsatzberichte'); ?></button></p>
@@ -111,7 +115,11 @@ if (!empty($_GET['archive_deleted'])) {
                                 </td>
                                 <td data-label="<?php echo esc_attr__('Von', 'feuer-einsatzberichte'); ?>">
                                     <?php echo esc_html($archive->created_by_name ?: __('Unbekannt', 'feuer-einsatzberichte')); ?><br />
-                                    <span class="description"><?php echo esc_html($archive->source); ?></span>
+                                    <span class="description"><?php echo esc_html([
+                                        'created' => __('Erstellt', 'feuer-einsatzberichte'),
+                                        'uploaded' => __('Hochgeladen', 'feuer-einsatzberichte'),
+                                        'restored' => __('Wiederhergestellt', 'feuer-einsatzberichte'),
+                                    ][(string) $archive->source] ?? (string) $archive->source); ?></span>
                                 </td>
                                 <td data-label="<?php echo esc_attr__('Inhalt', 'feuer-einsatzberichte'); ?>">
                                     <div class="feu-einsatz-archive-summary">
@@ -126,7 +134,7 @@ if (!empty($_GET['archive_deleted'])) {
                                     <a class="button" href="<?php echo esc_url(wp_nonce_url(admin_url('admin-post.php?action=feu_einsatz_download_archive&archive_id=' . (int) $archive->id), 'feu_einsatz_download_archive')); ?>">
                                         <?php esc_html_e('Download', 'feuer-einsatzberichte'); ?>
                                     </a>
-                                    <a class="button button-primary" href="<?php echo esc_url(wp_nonce_url(admin_url('admin-post.php?action=feu_einsatz_restore_archive&archive_id=' . (int) $archive->id), 'feu_einsatz_restore_archive')); ?>" onclick="return confirm('<?php echo esc_js(__('Dieses Archiv ersetzt die aktuellen Plugin-Daten. Wirklich fortfahren?', 'feuer-einsatzberichte')); ?>');">
+                                    <a class="button" href="<?php echo esc_url(wp_nonce_url(admin_url('admin-post.php?action=feu_einsatz_restore_archive&archive_id=' . (int) $archive->id), 'feu_einsatz_restore_archive')); ?>" onclick="return confirm('<?php echo esc_js(__('Dieses Archiv ersetzt die aktuellen Plugin-Daten. Wirklich fortfahren?', 'feuer-einsatzberichte')); ?>');">
                                         <?php esc_html_e('Wiederherstellen', 'feuer-einsatzberichte'); ?>
                                     </a>
                                     <a class="button" href="<?php echo esc_url(wp_nonce_url(admin_url('admin-post.php?action=feu_einsatz_delete_archive&archive_id=' . (int) $archive->id), 'feu_einsatz_delete_archive')); ?>" onclick="return confirm('<?php echo esc_js(__('Archiv wirklich loeschen?', 'feuer-einsatzberichte')); ?>');">

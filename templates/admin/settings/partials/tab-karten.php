@@ -56,7 +56,7 @@ $single_live_map_show_station = (int) ($single_live_map_show_station ?? 0);
 $live_preview_station_street = trim((string) ($area_station_street ?? ''));
 $live_preview_station_city = trim((string) ($area_station_city ?? 'Hamburg'));
 $live_preview_station_postcode = trim((string) ($area_station_postcode ?? ''));
-$live_preview_station_label = trim((string) ($photo_watermark_text ?? ''));
+$live_preview_station_label = trim((string) ($area_station_name ?? '')) ?: trim((string) ($photo_watermark_text ?? ''));
 $live_preview_station_feature = isset($map_preview_live_station_feature) && is_array($map_preview_live_station_feature)
     ? $map_preview_live_station_feature
     : [];
@@ -553,6 +553,11 @@ $generated_map_rebuild_to = isset($generated_map_rebuild_to) ? (string) $generat
                     <div class="feu-admin-settings-fieldset-head">
                         <h4><?php esc_html_e('Adresse und Logo des Feuerwehrhauses', 'feuer-einsatzberichte'); ?></h4>
                     </div>
+
+                    <label class="feu-admin-settings-field">
+                        <span><?php esc_html_e('Name der Feuerwehr', 'feuer-einsatzberichte'); ?></span>
+                        <input type="text" id="feu_einsatz_area_station_name" name="feu_einsatz_area_station_name" value="<?php echo esc_attr($area_station_name); ?>" class="regular-text" placeholder="<?php esc_attr_e('Feuerwehrhaus', 'feuer-einsatzberichte'); ?>" />
+                    </label>
 
                     <label class="feu-admin-settings-field">
                         <span><?php esc_html_e('Strasse und Hausnummer', 'feuer-einsatzberichte'); ?></span>
