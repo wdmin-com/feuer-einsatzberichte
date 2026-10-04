@@ -87,7 +87,7 @@ final class FEU_Einsatz_Keyword_Migration {
     private static function report_ids(): array {
         return array_map('intval', (array) get_posts([
             'post_type' => FEU_Einsatz_Report_Post_Type::readable_post_types(),
-            'post_status' => ['publish', 'future', 'private', 'pending', 'draft'],
+            'post_status' => ['publish', 'future', 'private', 'pending', 'draft', 'trash'],
             'posts_per_page' => -1,
             'fields' => 'ids',
             'no_found_rows' => true,
@@ -202,6 +202,7 @@ final class FEU_Einsatz_Keyword_Migration {
                     'term_ids' => wp_get_object_terms($post_id, FEU_Einsatz_Report_Taxonomy::TAXONOMY, ['fields' => 'ids']),
                     'primary' => get_post_meta($post_id, FEU_Einsatz_Report_Taxonomy::PRIMARY_META, true),
                     'url' => get_permalink($post_id),
+                    'status' => (string) get_post_status($post_id),
                     'modified' => (string) get_post_field('post_modified_gmt', $post_id),
                     'legacy_terms' => array_map('intval', wp_get_post_categories($post_id)),
                 ];
@@ -245,7 +246,8 @@ final class FEU_Einsatz_Keyword_Migration {
                     if (is_wp_error($copied)) {
                         throw new RuntimeException($copied->get_error_message());
                     }
-                    if (get_permalink($post_id) !== $previous[$post_id]['url']) {
+                    if ('publish' === $previous[$post_id]['status']
+                        && get_permalink($post_id) !== $previous[$post_id]['url']) {
                         throw new RuntimeException(sprintf('URL changed for report %d.', $post_id));
                     }
                     $run['processed'][] = $post_id;
@@ -269,7 +271,8 @@ final class FEU_Einsatz_Keyword_Migration {
                     sort($old_legacy);
                     if ((string) get_post_field('post_modified_gmt', $post_id) !== $previous[$post_id]['modified']
                         || $current_legacy !== $old_legacy
-                        || get_permalink($post_id) !== $previous[$post_id]['url']) {
+                        || ('publish' === $previous[$post_id]['status']
+                            && get_permalink($post_id) !== $previous[$post_id]['url'])) {
                         throw new RuntimeException(sprintf(__('Bericht %d wurde während der Übertragung geändert.', 'feuer-einsatzberichte'), $post_id));
                     }
                 }

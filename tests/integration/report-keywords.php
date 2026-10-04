@@ -23,6 +23,7 @@ $term_ids = [];
 $new_term_ids = [];
 $temporary_post_id = 0;
 $editable_draft_id = 0;
+$trashed_post_id = 0;
 
 try {
     foreach (['A', 'B'] as $label) {
@@ -203,6 +204,26 @@ try {
     foreach ($post_ids as $index => $post_id) {
         feu_keyword_assert(get_permalink($post_id) === $urls[$index], 'Rollback changed report URL.');
     }
+
+    $trashed_post = wp_insert_post([
+        'post_type' => 'post',
+        'post_status' => 'publish',
+        'post_title' => 'Keyword CI trashed report ' . $suffix,
+        'post_name' => 'keyword-ci-trashed-' . $suffix,
+        'post_category' => $term_ids,
+    ], true);
+    feu_keyword_assert(!is_wp_error($trashed_post), 'Cannot create trashed report fixture.');
+    $trashed_post_id = (int) $trashed_post;
+    update_post_meta($trashed_post_id, FEU_Einsatz_Report_Post_Type::MARKER_META, '1');
+    feu_keyword_assert(wp_trash_post($trashed_post_id) instanceof WP_Post, 'Cannot trash report fixture.');
+    $trashed_migration = FEU_Einsatz_Keyword_Migration::migrate(false);
+    feu_keyword_assert(!is_wp_error($trashed_migration), 'Migration skipped or failed on a trashed report.');
+    $trashed_run = FEU_Einsatz_Keyword_Migration::get_run();
+    feu_keyword_assert(isset($trashed_run['reports'][$trashed_post_id]), 'Trashed report is missing from the migration journal.');
+    feu_keyword_assert('trash' === get_post_status($trashed_post_id), 'Migration changed the trashed report status.');
+    feu_keyword_assert(wp_untrash_post($trashed_post_id) instanceof WP_Post, 'Cannot restore migrated report fixture.');
+    $restored_terms = wp_get_object_terms($trashed_post_id, FEU_Einsatz_Report_Taxonomy::TAXONOMY, ['fields' => 'ids']);
+    feu_keyword_assert(!is_wp_error($restored_terms) && 2 === count($restored_terms), 'Restored report lost migrated keywords.');
 } finally {
     $_POST = [];
     $_REQUEST = [];
@@ -212,6 +233,9 @@ try {
     }
     if ($temporary_post_id) {
         wp_delete_post($temporary_post_id, true);
+    }
+    if ($trashed_post_id) {
+        wp_delete_post($trashed_post_id, true);
     }
     foreach ($post_ids as $post_id) {
         wp_delete_post($post_id, true);
