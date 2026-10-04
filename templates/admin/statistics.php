@@ -17,8 +17,8 @@ if (empty($jahre)) {
 
 $default_jahr = in_array($aktuelles_jahr, $jahre, true) ? $aktuelles_jahr : (int) $jahre[0];
 
-$allowed_tabs = ['categories', 'calendar', 'activity-map', 'participants', 'presentation-settings'];
-$active_tab = 'categories';
+$allowed_tabs = ['overview', 'categories', 'calendar', 'activity-map', 'participants', 'presentation-settings'];
+$active_tab = 'overview';
 if (isset($_POST['feu_einsatz_stats_tab'])) {
     $requested_tab = sanitize_key(wp_unslash($_POST['feu_einsatz_stats_tab']));
     if (in_array($requested_tab, $allowed_tabs, true)) {
@@ -888,6 +888,22 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
         <input type="submit" value="<?php esc_attr_e('Aktualisieren', 'feuer-einsatzberichte'); ?>" class="button button-primary">
     </form>
 
+    <div class="feu-einsatz-stats-tabs" role="tablist" aria-label="<?php esc_attr_e('Statistikbereiche', 'feuer-einsatzberichte'); ?>">
+        <button type="button" class="button feu-einsatz-stats-tab <?php echo 'overview' === $active_tab ? 'is-active' : ''; ?>" data-target="overview" id="feu-einsatz-stats-tab-overview" role="tab" aria-controls="feu-einsatz-stats-panel-overview" aria-selected="<?php echo 'overview' === $active_tab ? 'true' : 'false'; ?>"><?php esc_html_e('Übersicht', 'feuer-einsatzberichte'); ?></button>
+        <button type="button" class="button feu-einsatz-stats-tab <?php echo 'categories' === $active_tab ? 'is-active' : ''; ?>" data-target="categories" id="feu-einsatz-stats-tab-categories" role="tab" aria-controls="feu-einsatz-stats-panel-categories" aria-selected="<?php echo 'categories' === $active_tab ? 'true' : 'false'; ?>"><?php esc_html_e('Einsätze nach Einsatzstichwort', 'feuer-einsatzberichte'); ?></button>
+        <button type="button" class="button feu-einsatz-stats-tab <?php echo 'calendar' === $active_tab ? 'is-active' : ''; ?>" data-target="calendar" id="feu-einsatz-stats-tab-calendar" role="tab" aria-controls="feu-einsatz-stats-panel-calendar" aria-selected="<?php echo 'calendar' === $active_tab ? 'true' : 'false'; ?>"><?php esc_html_e('Kalender', 'feuer-einsatzberichte'); ?></button>
+        <button type="button" class="button feu-einsatz-stats-tab <?php echo 'activity-map' === $active_tab ? 'is-active' : ''; ?>" data-target="activity-map" id="feu-einsatz-stats-tab-activity-map" role="tab" aria-controls="feu-einsatz-stats-panel-activity-map" aria-selected="<?php echo 'activity-map' === $active_tab ? 'true' : 'false'; ?>"><?php esc_html_e('Aktivitätskarte', 'feuer-einsatzberichte'); ?></button>
+        <button type="button" class="button feu-einsatz-stats-tab <?php echo 'participants' === $active_tab ? 'is-active' : ''; ?>" data-target="participants" id="feu-einsatz-stats-tab-participants" role="tab" aria-controls="feu-einsatz-stats-panel-participants" aria-selected="<?php echo 'participants' === $active_tab ? 'true' : 'false'; ?>">
+            <?php esc_html_e('Teilnehmer-Ranking', 'feuer-einsatzberichte'); ?>
+            <?php if (!$participant_ranking_unlocked): ?><span class="feu-einsatz-tab-badge"><?php esc_html_e('PIN', 'feuer-einsatzberichte'); ?></span><?php endif; ?>
+        </button>
+        <button type="button" class="button feu-einsatz-stats-tab <?php echo 'presentation-settings' === $active_tab ? 'is-active' : ''; ?>" data-target="presentation-settings" id="feu-einsatz-stats-tab-presentation-settings" role="tab" aria-controls="feu-einsatz-stats-panel-presentation-settings" aria-selected="<?php echo 'presentation-settings' === $active_tab ? 'true' : 'false'; ?>">
+            <span class="ti ti-slideshow"></span>
+            <?php esc_html_e('Präsentation einstellen', 'feuer-einsatzberichte'); ?>
+        </button>
+    </div>
+
+    <section class="feu-einsatz-stats-panel <?php echo 'overview' === $active_tab ? 'is-active' : ''; ?>" data-panel="overview" id="feu-einsatz-stats-panel-overview" role="tabpanel" aria-labelledby="feu-einsatz-stats-tab-overview">
     <div class="stats-cards feu-einsatz-stat-visual-grid" id="feu-einsatz-statistics-summary-cards">
         <div class="stat-card feu-einsatz-stat-visual-card is-primary" style="--feu-stat-progress: <?php echo esc_attr((string) min(100, max(0, (int) ($total['total_einsaetze'] ?? 0)))); ?>%;">
             <div class="feu-einsatz-stat-card-top">
@@ -1024,21 +1040,9 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
         </div>
     </section>
 
-    <div class="feu-einsatz-stats-tabs" role="tablist" aria-label="<?php esc_attr_e('Statistikbereiche', 'feuer-einsatzberichte'); ?>">
-        <button type="button" class="button feu-einsatz-stats-tab <?php echo 'categories' === $active_tab ? 'is-active' : ''; ?>" data-target="categories"><?php esc_html_e('Einsätze nach Einsatzstichwort', 'feuer-einsatzberichte'); ?></button>
-        <button type="button" class="button feu-einsatz-stats-tab <?php echo 'calendar' === $active_tab ? 'is-active' : ''; ?>" data-target="calendar"><?php esc_html_e('Kalender', 'feuer-einsatzberichte'); ?></button>
-        <button type="button" class="button feu-einsatz-stats-tab <?php echo 'activity-map' === $active_tab ? 'is-active' : ''; ?>" data-target="activity-map"><?php esc_html_e('Aktivitätskarte', 'feuer-einsatzberichte'); ?></button>
-        <button type="button" class="button feu-einsatz-stats-tab <?php echo 'participants' === $active_tab ? 'is-active' : ''; ?>" data-target="participants">
-            <?php esc_html_e('Teilnehmer-Ranking', 'feuer-einsatzberichte'); ?>
-            <?php if (!$participant_ranking_unlocked): ?><span class="feu-einsatz-tab-badge"><?php esc_html_e('PIN', 'feuer-einsatzberichte'); ?></span><?php endif; ?>
-        </button>
-        <button type="button" class="button feu-einsatz-stats-tab <?php echo 'presentation-settings' === $active_tab ? 'is-active' : ''; ?>" data-target="presentation-settings">
-            <span class="ti ti-slideshow"></span>
-            <?php esc_html_e('Präsentation einstellen', 'feuer-einsatzberichte'); ?>
-        </button>
-    </div>
+    </section>
 
-    <section class="feu-einsatz-stats-panel <?php echo 'presentation-settings' === $active_tab ? 'is-active' : ''; ?>" data-panel="presentation-settings">
+    <section class="feu-einsatz-stats-panel <?php echo 'presentation-settings' === $active_tab ? 'is-active' : ''; ?>" data-panel="presentation-settings" id="feu-einsatz-stats-panel-presentation-settings" role="tabpanel" aria-labelledby="feu-einsatz-stats-tab-presentation-settings">
         <form method="post" action="" class="feu-einsatz-presentation-settings-panel">
             <?php wp_nonce_field('feu_einsatz_statistics_presentation_settings', 'feu_einsatz_statistics_presentation_settings_nonce'); ?>
             <input type="hidden" name="feu_einsatz_presentation_settings_action" value="save" data-feu-presentation-settings-action>
@@ -1182,7 +1186,7 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
         </form>
     </section>
 
-    <section class="feu-einsatz-stats-panel <?php echo 'categories' === $active_tab ? 'is-active' : ''; ?>" data-panel="categories">
+    <section class="feu-einsatz-stats-panel <?php echo 'categories' === $active_tab ? 'is-active' : ''; ?>" data-panel="categories" id="feu-einsatz-stats-panel-categories" role="tabpanel" aria-labelledby="feu-einsatz-stats-tab-categories">
         <div class="feu-einsatz-panel-card">
             <h2><?php esc_html_e('Einsätze nach Einsatzstichwort', 'feuer-einsatzberichte'); ?></h2>
             <div class="feu-einsatz-category-summary-head">
@@ -1254,7 +1258,7 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
         </div>
     </section>
 
-    <section class="feu-einsatz-stats-panel <?php echo 'calendar' === $active_tab ? 'is-active' : ''; ?>" data-panel="calendar">
+    <section class="feu-einsatz-stats-panel <?php echo 'calendar' === $active_tab ? 'is-active' : ''; ?>" data-panel="calendar" id="feu-einsatz-stats-panel-calendar" role="tabpanel" aria-labelledby="feu-einsatz-stats-tab-calendar">
         <div class="feu-einsatz-panel-card">
             <div class="feu-einsatz-panel-header">
                 <div>
@@ -1374,7 +1378,7 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
         </div>
     </section>
 
-    <section class="feu-einsatz-stats-panel <?php echo 'activity-map' === $active_tab ? 'is-active' : ''; ?>" data-panel="activity-map">
+    <section class="feu-einsatz-stats-panel <?php echo 'activity-map' === $active_tab ? 'is-active' : ''; ?>" data-panel="activity-map" id="feu-einsatz-stats-panel-activity-map" role="tabpanel" aria-labelledby="feu-einsatz-stats-tab-activity-map">
         <div class="feu-einsatz-panel-card">
             <div class="feu-einsatz-panel-header">
                 <div>
@@ -1397,7 +1401,7 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
         </div>
     </section>
 
-    <section class="feu-einsatz-stats-panel <?php echo 'participants' === $active_tab ? 'is-active' : ''; ?>" data-panel="participants">
+    <section class="feu-einsatz-stats-panel <?php echo 'participants' === $active_tab ? 'is-active' : ''; ?>" data-panel="participants" id="feu-einsatz-stats-panel-participants" role="tabpanel" aria-labelledby="feu-einsatz-stats-tab-participants">
         <div class="feu-einsatz-panel-card">
             <div class="feu-einsatz-panel-header">
                 <div>
@@ -1574,6 +1578,8 @@ document.addEventListener('DOMContentLoaded', function() {
     var participantRankingChart = null;
     var participantDistributionChart = null;
     var monthlyChart = null;
+    var overviewMonthlyChart = null;
+    var overviewCategoryChart = null;
     var dayPopover = document.getElementById('feu-einsatz-day-popover');
     var dayPopoverTitle = document.getElementById('feu-einsatz-day-popover-title');
     var dayPopoverContent = document.getElementById('feu-einsatz-day-popover-content');
@@ -1758,7 +1764,10 @@ document.addEventListener('DOMContentLoaded', function() {
         syncTabInputs(target);
 
         document.querySelectorAll('.feu-einsatz-stats-tab').forEach(function(tab) {
-            tab.classList.toggle('is-active', tab.getAttribute('data-target') === target);
+            var isActive = tab.getAttribute('data-target') === target;
+            tab.classList.toggle('is-active', isActive);
+            tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
+            tab.tabIndex = isActive ? 0 : -1;
         });
 
         document.querySelectorAll('.feu-einsatz-stats-panel').forEach(function(panel) {
@@ -1770,6 +1779,15 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         window.setTimeout(function() {
+            if (target === 'overview') {
+                if (overviewMonthlyChart) {
+                    overviewMonthlyChart.resize();
+                }
+                if (overviewCategoryChart) {
+                    overviewCategoryChart.resize();
+                }
+            }
+
             if (target === 'categories' && categoryChart) {
                 categoryChart.resize();
             }
@@ -1791,6 +1809,20 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.feu-einsatz-stats-tab').forEach(function(button) {
         button.addEventListener('click', function() {
             setActiveTab(button.getAttribute('data-target'));
+        });
+
+        button.addEventListener('keydown', function(event) {
+            if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
+                return;
+            }
+
+            var tabs = Array.from(document.querySelectorAll('.feu-einsatz-stats-tab'));
+            var currentIndex = tabs.indexOf(button);
+            var nextIndex = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : (currentIndex + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+
+            event.preventDefault();
+            tabs[nextIndex].focus();
+            setActiveTab(tabs[nextIndex].getAttribute('data-target'));
         });
     });
 
@@ -2534,12 +2566,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     var admindekMonthlyChartElement = document.getElementById('feu-einsatz-admindek-monthly-chart');
     if (window.Chart && admindekMonthlyChartElement) {
-        new Chart(admindekMonthlyChartElement.getContext('2d'), getAdmindekMonthlyChartConfig());
+        overviewMonthlyChart = new Chart(admindekMonthlyChartElement.getContext('2d'), getAdmindekMonthlyChartConfig());
     }
 
     var admindekCategoryChartElement = document.getElementById('feu-einsatz-admindek-category-chart');
     if (window.Chart && admindekCategoryChartElement && categories.length) {
-        new Chart(admindekCategoryChartElement.getContext('2d'), getAdmindekCategoryChartConfig());
+        overviewCategoryChart = new Chart(admindekCategoryChartElement.getContext('2d'), getAdmindekCategoryChartConfig());
     }
 
     var chartElement = document.getElementById('categoryDonutChart');
