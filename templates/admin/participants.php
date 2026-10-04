@@ -353,6 +353,54 @@ if (!function_exists('feu_einsatz_render_default_function_selects')) {
 
 <script>
 jQuery(document).ready(function($) {
+    function openParticipantDialog($dialog, trigger, focusSelector) {
+        $dialog.data('returnFocus', trigger);
+        $dialog.fadeIn(180, function() {
+            $dialog.find(focusSelector).trigger('focus');
+        });
+    }
+
+    function closeParticipantDialog($dialog) {
+        var trigger = $dialog.data('returnFocus');
+        $dialog.stop(true, true).fadeOut(180, function() {
+            if (trigger && document.contains(trigger)) {
+                $(trigger).trigger('focus');
+            }
+        });
+    }
+
+    $(document).on('keydown.feuParticipantDialog', function(event) {
+        var $dialog = $('#feu-einsatz-add-participant-modal:visible, #feu-einsatz-edit-participant-modal:visible').first();
+        if (!$dialog.length) {
+            return;
+        }
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            closeParticipantDialog($dialog);
+            return;
+        }
+        if (event.key !== 'Tab') {
+            return;
+        }
+        var $focusable = $dialog.find('a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])')
+            .filter(':visible:not(:disabled)');
+        if (!$focusable.length) {
+            event.preventDefault();
+            return;
+        }
+        var first = $focusable[0];
+        var last = $focusable[$focusable.length - 1];
+        if (!$.contains($dialog[0], document.activeElement)) {
+            event.preventDefault();
+            $(event.shiftKey ? last : first).trigger('focus');
+        } else if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault();
+            $(last).trigger('focus');
+        } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault();
+            $(first).trigger('focus');
+        }
+    });
     function parseJsonAttr(value, fallback) {
         if (!value) {
             return fallback;
@@ -491,12 +539,11 @@ jQuery(document).ready(function($) {
         function openModal() {
             $form[0].reset();
             goToStep(1);
-            $modal.fadeIn(180);
-            $modal.find('#add_vorname').focus();
+            openParticipantDialog($modal, this, '#add_vorname');
         }
 
         function closeModal() {
-            $modal.fadeOut(180);
+            closeParticipantDialog($modal);
         }
 
         $('#feu-einsatz-open-add-modal').on('click', openModal);
@@ -521,10 +568,6 @@ jQuery(document).ready(function($) {
 
         $(window).on('click', function(e) {
             if ($(e.target).is('#feu-einsatz-add-participant-modal')) { closeModal(); }
-        });
-
-        $(document).on('keyup', function(e) {
-            if (e.key === 'Escape' && $modal.is(':visible')) { closeModal(); }
         });
 
         bindParticipantForm(
@@ -570,7 +613,7 @@ jQuery(document).ready(function($) {
                 : '<?php echo esc_js(__('Aktiver Teilnehmer', 'feuer-einsatzberichte')); ?>'
         });
 
-        $('#feu-einsatz-edit-participant-modal').fadeIn(200);
+        openParticipantDialog($('#feu-einsatz-edit-participant-modal'), this, '#edit_vorname');
     });
 
     $('#feu-einsatz-remove-photo').on('click', function() {
@@ -687,18 +730,12 @@ jQuery(document).ready(function($) {
     });
 
     $('.feu-einsatz-modal-close').on('click', function() {
-        $('#feu-einsatz-edit-participant-modal').fadeOut(200);
+        closeParticipantDialog($('#feu-einsatz-edit-participant-modal'));
     });
 
     $(window).on('click', function(e) {
         if ($(e.target).is('#feu-einsatz-edit-participant-modal')) {
-            $('#feu-einsatz-edit-participant-modal').fadeOut(200);
-        }
-    });
-
-    $(document).on('keyup', function(e) {
-        if (e.key === 'Escape' && $('#feu-einsatz-edit-participant-modal').is(':visible')) {
-            $('#feu-einsatz-edit-participant-modal').fadeOut(200);
+            closeParticipantDialog($('#feu-einsatz-edit-participant-modal'));
         }
     });
 
@@ -713,11 +750,11 @@ jQuery(document).ready(function($) {
 });
 </script>
 
-<div id="feu-einsatz-add-participant-modal" style="display:none;">
+<div id="feu-einsatz-add-participant-modal" role="dialog" aria-modal="true" aria-labelledby="feu-einsatz-add-participant-title" style="display:none;">
     <div class="feu-einsatz-modal-content feu-einsatz-wizard-modal">
         <div class="feu-einsatz-modal-header">
             <div>
-                <h3><?php esc_html_e('Neue Mannschaftsakte anlegen', 'feuer-einsatzberichte'); ?></h3>
+                <h3 id="feu-einsatz-add-participant-title"><?php esc_html_e('Neue Mannschaftsakte anlegen', 'feuer-einsatzberichte'); ?></h3>
             </div>
             <button type="button" class="button-link feu-einsatz-add-modal-close" aria-label="<?php echo esc_attr__('Schliessen', 'feuer-einsatzberichte'); ?>">
                 <span class="feu-einsatz-close-icon" aria-hidden="true"></span>
@@ -786,14 +823,14 @@ jQuery(document).ready(function($) {
     </div>
 </div>
 
-<div id="feu-einsatz-edit-participant-modal">
+<div id="feu-einsatz-edit-participant-modal" role="dialog" aria-modal="true" aria-labelledby="feu-einsatz-edit-participant-title">
     <div class="feu-einsatz-modal-content">
         <div class="feu-einsatz-modal-header">
             <div>
-                <h3><?php esc_html_e('Teilnehmer bearbeiten', 'feuer-einsatzberichte'); ?></h3>
+                <h3 id="feu-einsatz-edit-participant-title"><?php esc_html_e('Teilnehmer bearbeiten', 'feuer-einsatzberichte'); ?></h3>
                 <p class="description" id="feu-einsatz-edit-status-text"><?php esc_html_e('Aktiver Teilnehmer', 'feuer-einsatzberichte'); ?></p>
             </div>
-            <button type="button" class="button-link feu-einsatz-modal-close" aria-label="<?php echo esc_attr__('Schliessen', 'feuer-einsatzberichte'); ?>">x</button>
+            <button type="button" class="button-link feu-einsatz-modal-close" aria-label="<?php echo esc_attr__('Schliessen', 'feuer-einsatzberichte'); ?>">&times;</button>
         </div>
 
         <form id="feu-einsatz-edit-participant-form" method="post" enctype="multipart/form-data" class="feu-einsatz-participant-modern-form">

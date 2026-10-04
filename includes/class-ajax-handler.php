@@ -607,6 +607,11 @@ class FEU_Einsatz_Ajax_Handler {
         $participant = $this->collect_participant_payload();
         $existing_participant = $id > 0 ? $this->db->get_participant($id) : null;
 
+        if ($id > 0 && (!$existing_participant || !empty($existing_participant->is_deleted))) {
+            wp_send_json_error(['message' => __('Teilnehmer nicht gefunden', 'feuer-einsatzberichte')], 404);
+            return;
+        }
+
         if ('' === $participant['vorname'] || '' === $participant['nachname']) {
             wp_send_json_error(['message' => __('Bitte alle Felder ausfuellen', 'feuer-einsatzberichte')], 400);
             return;

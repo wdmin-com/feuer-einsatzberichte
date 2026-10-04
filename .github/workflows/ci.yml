@@ -101,6 +101,7 @@ jobs:
           wp eval-file "$GITHUB_WORKSPACE/tests/integration/migration-diagnostics.php" --path="$RUNNER_TEMP/wordpress"
           wp eval-file "$GITHUB_WORKSPACE/tests/integration/report-edit.php" --path="$RUNNER_TEMP/wordpress"
           wp eval-file "$GITHUB_WORKSPACE/tests/integration/report-keywords.php" --path="$RUNNER_TEMP/wordpress"
+          wp eval-file "$GITHUB_WORKSPACE/tests/integration/workflow-integrity.php" --path="$RUNNER_TEMP/wordpress"
           wp eval-file "$GITHUB_WORKSPACE/tests/integration/report-duplicate.php" --path="$RUNNER_TEMP/wordpress"
           wp eval-file "$GITHUB_WORKSPACE/tests/integration/plugin-load.php" --path="$RUNNER_TEMP/wordpress"
       - name: Verify public report routes over HTTP
