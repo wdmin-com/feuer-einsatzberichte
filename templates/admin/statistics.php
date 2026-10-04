@@ -1443,47 +1443,63 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
                     </div>
                 </div>
 
-                <?php if (!empty($participants)): ?>
-                    <div class="feu-einsatz-chart-card feu-einsatz-ranking-chart-card">
-                        <div class="feu-einsatz-chart-card-header">
-                            <div>
-                                <h3><?php esc_html_e('Einsätze nach Teilnehmer', 'feuer-einsatzberichte'); ?></h3>
-                                <p class="description"><?php esc_html_e('Die Grafik zeigt die aktivsten Teilnehmer des ausgewählten Jahres als Vergleich nach Einsätzen.', 'feuer-einsatzberichte'); ?></p>
-                            </div>
-                        </div>
-                        <div class="feu-einsatz-chart-canvas-wrap feu-einsatz-chart-canvas-wrap-ranking">
-                            <canvas id="participantRankingChart" height="300"></canvas>
-                        </div>
-                    </div>
-                <?php endif; ?>
-
                 <?php if (empty($participants)): ?>
                     <p class="description" style="padding:12px 0;"><?php esc_html_e('Keine Teilnehmerdaten für dieses Jahr vorhanden.', 'feuer-einsatzberichte'); ?></p>
                 <?php else: ?>
+                    <div class="feu-einsatz-participant-overview-head">
+                        <div>
+                            <span class="feu-einsatz-participant-overview-kicker"><?php echo esc_html(sprintf(__('Rangliste %d', 'feuer-einsatzberichte'), $jahr)); ?></span>
+                            <h3><?php esc_html_e('Die aktivsten Teilnehmer', 'feuer-einsatzberichte'); ?></h3>
+                            <p class="description"><?php esc_html_e('Platzierung nach der Anzahl der Einsätze im ausgewählten Jahr.', 'feuer-einsatzberichte'); ?></p>
+                        </div>
+                        <span class="feu-einsatz-participant-overview-total"><?php echo esc_html(sprintf(_n('%d Teilnehmer', '%d Teilnehmer', count($participants), 'feuer-einsatzberichte'), count($participants))); ?></span>
+                    </div>
                     <?php $podium_slots = [1, 0, 2]; ?>
-                    <div class="feu-einsatz-ranking-podium">
+                    <div class="feu-einsatz-ranking-podium feu-einsatz-ranking-podium--count-<?php echo esc_attr((string) min(3, count($participants))); ?>" aria-label="<?php esc_attr_e('Aktivste Teilnehmer', 'feuer-einsatzberichte'); ?>">
                         <?php foreach ($podium_slots as $pos): ?>
                             <?php if (!isset($participants[$pos])) continue; ?>
                             <?php $p = $participants[$pos]; ?>
-                            <?php $trophy = $pos === 0 ? '&#x1F947;' : ($pos === 1 ? '&#x1F948;' : '&#x1F949;'); ?>
-                            <div class="feu-einsatz-podium-card feu-einsatz-podium-rank-<?php echo $pos + 1; ?>">
-                                <div class="feu-einsatz-podium-trophy"><?php echo $trophy; ?></div>
-                                <div class="feu-einsatz-podium-name"><?php echo esc_html(FEU_Einsatz_Template_Helpers::format_participant_name($p->vorname, $p->nachname)); ?></div>
-                                <div class="feu-einsatz-podium-count"><?php echo esc_html($p->gesamt_einsaetze); ?> <span><?php esc_html_e('Einsätze', 'feuer-einsatzberichte'); ?></span></div>
-                                <button type="button" class="button button-small feu-einsatz-open-participant-details" data-participant-id="<?php echo esc_attr($p->id); ?>" data-participant-name="<?php echo esc_attr(FEU_Einsatz_Template_Helpers::format_participant_name($p->vorname, $p->nachname)); ?>" <?php disabled(!$participant_ranking_unlocked); ?>><?php esc_html_e('Details', 'feuer-einsatzberichte'); ?></button>
-                            </div>
+                            <article class="feu-einsatz-podium-card feu-einsatz-podium-rank-<?php echo esc_attr((string) ($pos + 1)); ?>">
+                                <div class="feu-einsatz-podium-topline">
+                                    <span class="feu-einsatz-podium-place"><?php echo esc_html(sprintf(__('Platz %d', 'feuer-einsatzberichte'), $pos + 1)); ?></span>
+                                    <span class="feu-einsatz-podium-number"><?php echo esc_html(sprintf('%02d', $pos + 1)); ?></span>
+                                </div>
+                                <strong class="feu-einsatz-podium-name"><?php echo esc_html(FEU_Einsatz_Template_Helpers::format_participant_name($p->vorname, $p->nachname)); ?></strong>
+                                <div class="feu-einsatz-podium-bottomline">
+                                    <div class="feu-einsatz-podium-count">
+                                        <strong><?php echo esc_html((string) $p->gesamt_einsaetze); ?></strong>
+                                        <span><?php esc_html_e('Einsätze', 'feuer-einsatzberichte'); ?></span>
+                                    </div>
+                                    <button type="button" class="button button-secondary feu-einsatz-open-participant-details" data-participant-id="<?php echo esc_attr($p->id); ?>" data-participant-name="<?php echo esc_attr(FEU_Einsatz_Template_Helpers::format_participant_name($p->vorname, $p->nachname)); ?>" <?php disabled(!$participant_ranking_unlocked); ?>><?php esc_html_e('Details', 'feuer-einsatzberichte'); ?></button>
+                                </div>
+                            </article>
                         <?php endforeach; ?>
                     </div>
                     <?php if (count($participants) > 3): ?>
-                        <div class="feu-einsatz-ranking-compact-list">
-                            <?php foreach (array_slice($participants, 3) as $idx => $participant): ?>
-                                <div class="feu-einsatz-ranking-compact-item">
-                                    <span class="feu-einsatz-ranking-compact-rank">#<?php echo $idx + 4; ?></span>
-                                    <span class="feu-einsatz-ranking-compact-name"><?php echo esc_html(FEU_Einsatz_Template_Helpers::format_participant_name($participant->vorname, $participant->nachname)); ?></span>
-                                    <span class="feu-einsatz-ranking-compact-count"><?php echo esc_html($participant->gesamt_einsaetze); ?></span>
-                                    <button type="button" class="button button-small feu-einsatz-open-participant-details" data-participant-id="<?php echo esc_attr($participant->id); ?>" data-participant-name="<?php echo esc_attr(FEU_Einsatz_Template_Helpers::format_participant_name($participant->vorname, $participant->nachname)); ?>" <?php disabled(!$participant_ranking_unlocked); ?>><?php esc_html_e('Details', 'feuer-einsatzberichte'); ?></button>
+                        <div class="feu-einsatz-ranking-rest">
+                            <div class="feu-einsatz-ranking-rest-head">
+                                <div>
+                                    <h3><?php esc_html_e('Weitere Teilnehmer', 'feuer-einsatzberichte'); ?></h3>
+                                    <p class="description"><?php esc_html_e('Alle weiteren Platzierungen im Überblick.', 'feuer-einsatzberichte'); ?></p>
                                 </div>
-                            <?php endforeach; ?>
+                                <span><?php echo esc_html((string) (count($participants) - 3)); ?></span>
+                            </div>
+                            <div class="feu-einsatz-ranking-compact-list" role="table" aria-label="<?php esc_attr_e('Weitere Teilnehmer nach Platzierung', 'feuer-einsatzberichte'); ?>">
+                                <div class="feu-einsatz-ranking-compact-head" role="row">
+                                    <span role="columnheader"><?php esc_html_e('Platz', 'feuer-einsatzberichte'); ?></span>
+                                    <span role="columnheader"><?php esc_html_e('Teilnehmer', 'feuer-einsatzberichte'); ?></span>
+                                    <span role="columnheader"><?php esc_html_e('Einsätze', 'feuer-einsatzberichte'); ?></span>
+                                    <span role="columnheader"><?php esc_html_e('Details', 'feuer-einsatzberichte'); ?></span>
+                                </div>
+                                <?php foreach (array_slice($participants, 3) as $idx => $participant): ?>
+                                    <div class="feu-einsatz-ranking-compact-item" role="row">
+                                        <span class="feu-einsatz-ranking-compact-rank" role="cell"><?php echo esc_html(sprintf('%02d', $idx + 4)); ?></span>
+                                        <span class="feu-einsatz-ranking-compact-name" role="cell"><?php echo esc_html(FEU_Einsatz_Template_Helpers::format_participant_name($participant->vorname, $participant->nachname)); ?></span>
+                                        <strong class="feu-einsatz-ranking-compact-count" role="cell"><?php echo esc_html((string) $participant->gesamt_einsaetze); ?></strong>
+                                        <span role="cell"><button type="button" class="button button-secondary feu-einsatz-open-participant-details" data-participant-id="<?php echo esc_attr($participant->id); ?>" data-participant-name="<?php echo esc_attr(FEU_Einsatz_Template_Helpers::format_participant_name($participant->vorname, $participant->nachname)); ?>" <?php disabled(!$participant_ranking_unlocked); ?>><?php esc_html_e('Details', 'feuer-einsatzberichte'); ?></button></span>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
                         </div>
                     <?php endif; ?>
                 <?php endif; ?>
@@ -1584,7 +1600,6 @@ document.addEventListener('DOMContentLoaded', function() {
     var activityMapRendered = false;
     var activityClusters = [];
     var weekdayChart = null;
-    var participantRankingChart = null;
     var participantDistributionChart = null;
     var monthlyChart = null;
     var overviewMonthlyChart = null;
@@ -1762,9 +1777,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 monthlyChart.resize();
             }
 
-            if (target === 'participants' && participantRankingChart) {
-                participantRankingChart.resize();
-            }
         }, 80);
     }
 
@@ -1999,52 +2011,6 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     }
 
-    function getParticipantRankingChartConfig(limit) {
-        var chartLimit = limit || 10;
-
-        return {
-            type: 'bar',
-            data: {
-                labels: participantStats.slice(0, chartLimit).map(function(participant) { return participant.name; }),
-                datasets: [{
-                    label: 'Einsätze',
-                    data: participantStats.slice(0, chartLimit).map(function(participant) { return participant.count; }),
-                    backgroundColor: '#0a4b78',
-                    borderRadius: 8,
-                    borderSkipped: false,
-                    maxBarThickness: 48
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return context.raw + ' Einsätze';
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        ticks: {
-                            maxRotation: 35,
-                            minRotation: 20,
-                            color: '#334155'
-                        }
-                    },
-                    y: {
-                        beginAtZero: true,
-                        ticks: { precision: 0 }
-                    }
-                }
-            }
-        };
-    }
-
     function getDailyTimelineChartConfigForType(chartType) {
         var selectedType = chartType || 'bar';
         var timelineSeries = buildDailyTimelineSeries();
@@ -2201,71 +2167,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     y: {
                         beginAtZero: true,
                         ticks: { precision: 0, color: '#64748b' }
-                    }
-                }
-            }
-        };
-    }
-
-    function getParticipantRankingChartConfigForType(limit, chartMode) {
-        var chartLimit = limit || 10;
-        var selectedMode = chartMode || 'absolute';
-        var labels = participantStats.slice(0, chartLimit).map(function(participant) { return participant.name; });
-        var totalAssignments = participantStats.reduce(function(sum, participant) {
-            return sum + Number(participant.count || 0);
-        }, 0);
-        var values = participantStats.slice(0, chartLimit).map(function(participant) {
-            var count = Number(participant.count || 0);
-            return selectedMode === 'share'
-                ? Number((totalAssignments > 0 ? (count / totalAssignments) * 100 : 0).toFixed(1))
-                : count;
-        });
-
-        return {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: selectedMode === 'share' ? 'Anteil in %' : 'Einsätze',
-                    data: values,
-                    backgroundColor: '#0a4b78',
-                    borderRadius: 8,
-                    borderSkipped: false,
-                    maxBarThickness: 48
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return selectedMode === 'share'
-                                    ? context.raw + '%'
-                                    : context.raw + ' Einsätze';
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        ticks: {
-                            maxRotation: 35,
-                            minRotation: 20,
-                            color: '#334155',
-                            font: { size: 12 }
-                        }
-                    },
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            precision: selectedMode === 'share' ? 1 : 0,
-                            callback: function(value) {
-                                return selectedMode === 'share' ? value + '%' : value;
-                            }
-                        }
                     }
                 }
             }
@@ -2434,11 +2335,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 weekdayChart = new Chart(weekdayChartElement.getContext('2d'), getDailyTimelineChartConfigForType(mode));
             }
         });
-    }
-
-    var participantRankingChartElement = document.getElementById('participantRankingChart');
-    if (window.Chart && participantRankingChartElement && participantStats.length) {
-        participantRankingChart = new Chart(participantRankingChartElement.getContext('2d'), getParticipantRankingChartConfigForType(10, 'absolute'));
     }
 
     function getParticipantShareChartConfig(limit) {
@@ -2614,18 +2510,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     mountMonthlyChartCard();
-
-    if (participantRankingChart) {
-        participantRankingChart.destroy();
-        participantRankingChart = new Chart(participantRankingChartElement.getContext('2d'), getParticipantRankingChartConfigForType(10, 'absolute'));
-    }
-
-    var rankingToolbar = participantRankingChartElement && participantRankingChartElement.parentNode
-        ? participantRankingChartElement.parentNode.previousElementSibling
-        : null;
-    if (rankingToolbar && rankingToolbar.classList.contains('feu-admin-chart-switcher')) {
-        rankingToolbar.remove();
-    }
 
     mountParticipantDistributionCard();
 
