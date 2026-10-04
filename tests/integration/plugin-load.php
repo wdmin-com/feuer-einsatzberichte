@@ -347,11 +347,12 @@ ob_start();
 $admin->render_statistics();
 $statistics_markup = (string) ob_get_clean();
 if (
-    false === strpos($statistics_markup, 'id="categoryDonutChart"')
-    || false === strpos($statistics_markup, 'feuCategoryCenterLabel')
-    || false === strpos($statistics_markup, 'feu-einsatz-admindek-category-key')
+    false === strpos($statistics_markup, 'feu-einsatz-category-ranking')
+    || false === strpos($statistics_markup, 'feu-einsatz-category-history-table')
+    || false === strpos($statistics_markup, 'feu-einsatz-overview-category-list')
+    || false !== strpos($statistics_markup, 'id="categoryDonutChart"')
 ) {
-    feu_einsatz_ci_fail('Statistics category chart markup is incomplete.');
+    feu_einsatz_ci_fail('Statistics category ranking or yearly comparison markup is incomplete.');
 }
 unset($_GET['year'], $_GET['tab']);
 
