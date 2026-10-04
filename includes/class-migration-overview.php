@@ -159,7 +159,7 @@ final class FEU_Einsatz_Migration_Overview {
             }
             $id = (int) $post_id;
             if (!in_array($id, $processed, true) || !get_post($id)
-                || ('publish' === (string) ($before['status'] ?? get_post_status($id))
+                || ('publish' === (string) ($before['status'] ?? 'publish')
                     && get_permalink($id) !== ($before['url'] ?? ''))) {
                 return false;
             }
