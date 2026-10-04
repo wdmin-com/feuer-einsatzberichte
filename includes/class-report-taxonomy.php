@@ -196,7 +196,7 @@ final class FEU_Einsatz_Report_Taxonomy {
         $existing = get_term_by('slug', (string) $legacy->slug, self::TAXONOMY);
         if ($existing instanceof WP_Term) {
             $owner = (int) get_term_meta((int) $existing->term_id, self::LEGACY_TERM_META, true);
-            if (($owner && $owner !== $legacy_id) || (int) $existing->parent !== (int) $parent) {
+            if ($owner !== $legacy_id || (int) $existing->parent !== (int) $parent) {
                 return new WP_Error('keyword_slug_conflict', __('Slug-Konflikt beim Kopieren der Einsatzstichworte.', 'feuer-einsatzberichte'));
             }
             $term_id = (int) $existing->term_id;
@@ -212,6 +212,9 @@ final class FEU_Einsatz_Report_Taxonomy {
             $term_id = (int) $created['term_id'];
         }
         update_term_meta($term_id, self::LEGACY_TERM_META, $legacy_id);
+        if ((int) get_term_meta($term_id, self::LEGACY_TERM_META, true) !== $legacy_id) {
+            return new WP_Error('keyword_mapping_failed', __('Die Zuordnung des Einsatzstichworts konnte nicht gespeichert werden.', 'feuer-einsatzberichte'));
+        }
         return $term_id;
     }
 
