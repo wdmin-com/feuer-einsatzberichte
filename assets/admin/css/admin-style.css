@@ -3309,54 +3309,71 @@
     line-height: 1;
 }
 
-.feu-einsatz-admindek-chart-wrap,
-.feu-einsatz-admindek-donut-wrap {
+.feu-einsatz-admindek-chart-wrap {
     position: relative;
     z-index: 2;
     height: 230px;
 }
 
-.feu-einsatz-admindek-donut-wrap {
-    height: 190px;
-    padding: 4px;
-    border-radius: 18px;
-    background:
-        radial-gradient(circle at center, #ffffff 0 43%, transparent 43.5%),
-        linear-gradient(145deg, #f8fbff 0%, #edf5ff 100%);
-}
-
-.feu-einsatz-admindek-category-key {
+.feu-einsatz-overview-category-list {
     position: relative;
     z-index: 2;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 7px;
-    margin-top: 12px;
+    display: grid;
+    gap: 12px;
 }
 
-.feu-einsatz-admindek-category-key span {
-    display: inline-flex;
-    max-width: 100%;
-    align-items: center;
-    gap: 6px;
-    padding: 5px 8px;
-    overflow: hidden;
-    border: 1px solid #dce8f5;
-    border-radius: 999px;
-    background: #fff;
+.feu-einsatz-overview-category-row {
+    display: grid;
+    gap: 5px;
+}
+
+.feu-einsatz-overview-category-row > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
     color: #334155;
-    font-size: 11px;
-    font-weight: 700;
-    line-height: 1.2;
+    font-size: 13px;
+}
+
+.feu-einsatz-overview-category-row > div span {
+    overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-.feu-einsatz-admindek-category-key i {
-    flex: 0 0 auto;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
+.feu-einsatz-overview-category-row strong {
+    color: #0f172a;
+    font-variant-numeric: tabular-nums;
+}
+
+.feu-einsatz-overview-category-track,
+.feu-einsatz-category-ranking-track,
+.feu-einsatz-category-history-meter {
+    display: block;
+    overflow: hidden;
+    height: 7px;
+    border-radius: 999px;
+    background: #e7edf4;
+}
+
+.feu-einsatz-overview-category-track i,
+.feu-einsatz-category-ranking-track i,
+.feu-einsatz-category-history-meter i {
+    display: block;
+    width: var(--feu-category-percent, 0%);
+    height: 100%;
+    border-radius: inherit;
+    background: var(--feu-category-color, #206bc4);
+}
+
+.feu-einsatz-overview-category-foot {
+    position: relative;
+    z-index: 2;
+    margin: 16px 0 0;
+    padding-top: 12px;
+    border-top: 1px solid #e2e8f0;
+    color: #64748b;
+    font-size: 12px;
 }
 
 .feu-einsatz-admindek-progress-list {
@@ -4204,12 +4221,6 @@
     }
 }
 
-.category-stats {
-    display: flex;
-    gap: 28px;
-    align-items: flex-start;
-}
-
 .feu-einsatz-category-summary-head {
     display: flex;
     align-items: flex-start;
@@ -4229,174 +4240,183 @@
     color: #0f172a;
 }
 
-.feu-einsatz-category-bars {
-    display: grid;
-    gap: 12px;
-    margin-bottom: 24px;
-}
-
-.feu-einsatz-category-bar-row {
-    display: grid;
-    gap: 8px;
-}
-
-.feu-einsatz-category-bar-top {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 12px;
-    align-items: baseline;
-}
-
-.feu-einsatz-category-bar-top span {
-    overflow: hidden;
-    color: #0f172a;
-    font-weight: 700;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.feu-einsatz-category-bar-top strong {
-    color: #0a4b78;
-    font-size: 18px;
-}
-
-.feu-einsatz-category-bar-track {
-    overflow: hidden;
-    height: 14px;
-    border-radius: 4px;
-    background: #e8eef6;
-}
-
-.feu-einsatz-category-bar-track span {
-    display: block;
-    width: var(--feu-category-percent, 0%);
-    min-width: 6px;
-    height: 100%;
-    border-radius: inherit;
-    background: var(--feu-category-color, #0a4b78);
-}
-
-.feu-einsatz-category-donut-layout {
-    display: grid !important;
-    grid-template-columns: minmax(240px, 320px) minmax(260px, 1fr);
-    gap: 28px;
-    justify-items: stretch;
-    align-items: stretch;
-    width: min(100%, 980px);
-    margin: 0;
-    padding: 24px;
-    border: 1px solid #d8e4f2;
-    border-radius: 16px;
-    background: linear-gradient(135deg, #fbfdff 0%, #f2f7fd 100%);
-    box-shadow: 0 10px 28px rgba(15, 76, 129, .07);
-}
-
-.category-chart-container {
-    flex: 0 0 320px;
-    max-width: 320px;
-    width: 100%;
-    align-self: center;
-    padding: 10px;
-    border-radius: 50%;
-    background: radial-gradient(circle, #fff 0 47%, transparent 47.5%);
-}
-
-.category-chart-container .feu-admin-chart-switcher {
-    display: grid !important;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    width: 100%;
-    gap: 6px;
-    margin: 0 0 12px;
-}
-
-.category-chart-container .feu-admin-chart-switcher-btn {
-    width: 100%;
-    min-height: 32px;
-    padding: 0 6px;
-    font-size: 11px;
-    line-height: 1.15;
-}
-
-.category-list {
-    flex: 1;
-    min-width: 0;
-    display: grid;
-    align-content: center;
-}
-
-.category-list-item {
-    display: grid;
-    grid-template-columns: 16px minmax(0, 1fr) auto auto;
-    gap: 10px;
-    align-items: center;
-    padding: 10px 12px;
-    border: 1px solid transparent;
-    border-bottom-color: #e3ebf5;
-    border-radius: 9px;
-    transition: background-color .18s ease, border-color .18s ease, transform .18s ease;
-}
-
-.category-list-item:hover {
-    border-color: #c9dcf2;
-    background: #ffffff;
-    transform: translateX(2px);
-}
-
-.category-color {
-    width: 16px;
-    height: 16px;
-    border-radius: 999px;
-    box-shadow: 0 0 0 3px rgba(255, 255, 255, .8), 0 2px 5px rgba(15, 23, 42, .18);
-}
-
-.category-list-count,
-.category-list-prozent {
-    font-weight: 700;
-}
-
-.category-list-total {
-    margin-top: 14px;
-    padding: 12px;
-    border: 1px solid #cfe0f3;
-    border-radius: 10px;
-    background: #ffffff;
-    color: #0f4c81;
-}
-
-.category-list--percentages {
-    align-self: center;
-    width: 100%;
-    max-width: 720px;
-}
-
 .feu-einsatz-category-history {
     margin-top: 28px;
 }
 
-.feu-einsatz-category-history-grid {
+.feu-einsatz-category-ranking {
+    overflow: hidden;
+    border: 1px solid #dbe4ee;
+    border-radius: 8px;
+    background: #fff;
+}
+
+.feu-einsatz-category-ranking-head,
+.feu-einsatz-category-ranking-row {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 14px;
+    grid-template-columns: minmax(180px, 1.4fr) minmax(180px, 1fr) 90px;
+    gap: 20px;
+    align-items: center;
+    padding: 13px 18px;
 }
 
-.feu-einsatz-year-card {
-    border: 1px solid #e5e7eb;
-    border-radius: 4px;
-    padding: 14px;
-    background: #f8fafc;
+.feu-einsatz-category-ranking-head {
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
 }
 
-.feu-einsatz-year-card ul {
-    list-style: none;
-    margin: 10px 0 0;
-    padding: 0;
+.feu-einsatz-category-ranking-row + .feu-einsatz-category-ranking-row {
+    border-top: 1px solid #e8edf3;
 }
 
-.feu-einsatz-year-card li {
-    display: flex;
-    justify-content: space-between;
-    gap: 10px;
-    padding: 5px 0;
+.feu-einsatz-category-ranking-row strong {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    color: #0f172a;
+    font-size: 13px;
+}
+
+.feu-einsatz-category-ranking-share {
+    display: grid;
+    grid-template-columns: minmax(60px, 1fr) 52px;
+    gap: 12px;
+    align-items: center;
+    color: #475569;
+    font-variant-numeric: tabular-nums;
+}
+
+.feu-einsatz-category-ranking-share span:last-child,
+.feu-einsatz-category-ranking-row b {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.feu-einsatz-category-ranking-row b {
+    color: #0f172a;
+    font-size: 14px;
+}
+
+.feu-einsatz-category-empty {
+    padding: 24px;
+    border: 1px dashed #cbd5e1;
+    border-radius: 8px;
+    color: #64748b;
+}
+
+.feu-einsatz-category-history h3 {
+    margin-bottom: 4px;
+}
+
+.feu-einsatz-category-history .description {
+    margin: 0 0 14px;
+}
+
+.feu-einsatz-category-history-scroll {
+    max-width: 100%;
+    overflow-x: auto;
+    border: 1px solid #dbe4ee;
+    border-radius: 8px;
+}
+
+.feu-einsatz-category-history-table {
+    width: 100%;
+    min-width: 560px;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: #fff;
+    text-align: left;
+}
+
+.feu-einsatz-category-history-table th,
+.feu-einsatz-category-history-table td {
+    min-width: 108px;
+    padding: 11px 15px;
+    border-bottom: 1px solid #e8edf3;
+    border-right: 1px solid #e8edf3;
+    vertical-align: middle;
+}
+
+.feu-einsatz-category-history-table th:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    min-width: 190px;
+    background: #fff;
+}
+
+.feu-einsatz-category-history-table thead th {
+    background: #f1f5f9;
+    color: #0f172a;
+    font-weight: 700;
+}
+
+.feu-einsatz-category-history-table thead th:first-child {
+    z-index: 2;
+    background: #f1f5f9;
+}
+
+.feu-einsatz-category-history-table thead small {
+    display: block;
+    margin-top: 4px;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 400;
+}
+
+.feu-einsatz-category-history-table tbody th {
+    overflow-wrap: anywhere;
+    font-weight: 600;
+}
+
+.feu-einsatz-category-history-table td {
+    font-variant-numeric: tabular-nums;
+}
+
+.feu-einsatz-category-history-table td strong {
+    display: block;
+    margin-bottom: 6px;
+}
+
+.feu-einsatz-category-history-table .is-selected-year {
+    background: #f0f7ff;
+}
+
+.feu-einsatz-category-history-meter {
+    height: 5px;
+}
+
+.feu-einsatz-category-history-meter i {
+    background: #206bc4;
+}
+
+.feu-einsatz-category-history-table tbody tr:last-child th,
+.feu-einsatz-category-history-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+@media (max-width: 700px) {
+    .feu-einsatz-category-ranking-head,
+    .feu-einsatz-category-ranking-row {
+        grid-template-columns: minmax(0, 1fr) 76px;
+        gap: 8px;
+    }
+
+    .feu-einsatz-category-ranking-head span:nth-child(2),
+    .feu-einsatz-category-ranking-share {
+        grid-column: 1 / -1;
+        grid-row: 2;
+    }
+
+    .feu-einsatz-category-ranking-head span:nth-child(3),
+    .feu-einsatz-category-ranking-row b {
+        grid-column: 2;
+        grid-row: 1;
+        text-align: right;
+    }
 }
 
 .feu-einsatz-activity-map {
@@ -5199,7 +5219,6 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .category-stats,
     .feu-einsatz-panel-header,
     .feu-einsatz-detail-panel-header,
     .feu-einsatz-detail-section-head {
@@ -5207,9 +5226,6 @@
         grid-template-columns: 1fr;
     }
 
-    .category-chart-container {
-        max-width: none;
-    }
 }
 
 @media (max-width: 900px) {
@@ -5268,16 +5284,6 @@
     .feu-einsatz-active-days-list,
     .feu-einsatz-calendar-month-grid {
         grid-template-columns: 1fr;
-    }
-
-    .category-list-item {
-        grid-template-columns: 16px minmax(0, 1fr);
-        gap: 6px 10px;
-    }
-
-    .category-list-count,
-    .category-list-prozent {
-        justify-self: start;
     }
 
     .feu-einsatz-activity-map {

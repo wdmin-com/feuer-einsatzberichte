@@ -233,10 +233,26 @@ usort($presentation_participants, static function($a, $b) {
     return (int) $b->gesamt_einsaetze <=> (int) $a->gesamt_einsaetze;
 });
 
-$category_history = [];
+$category_history_totals = [];
+$category_history_rows = [];
 foreach ($jahre as $history_year) {
-    $category_history[$history_year] = $this->db->get_category_statistics((int) $history_year);
+    $history_categories = $this->db->get_category_statistics((int) $history_year);
+    $category_history_totals[$history_year] = 0;
+    foreach ($history_categories as $history_category) {
+        $category_name = (string) $history_category->kategorie_name;
+        $category_key = sanitize_title($category_name);
+        $category_count = (int) $history_category->anzahl;
+        if (!isset($category_history_rows[$category_key])) {
+            $category_history_rows[$category_key] = ['name' => $category_name, 'count' => 0, 'years' => []];
+        }
+        $category_history_rows[$category_key]['count'] += $category_count;
+        $category_history_rows[$category_key]['years'][$history_year] = ($category_history_rows[$category_key]['years'][$history_year] ?? 0) + $category_count;
+        $category_history_totals[$history_year] += $category_count;
+    }
 }
+uasort($category_history_rows, static function($a, $b) {
+    return $b['count'] <=> $a['count'] ?: strnatcasecmp($a['name'], $b['name']);
+});
 
 $count_by_date = [];
 foreach ($daily_stats as $stat) {
@@ -982,22 +998,22 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
         <div class="feu-einsatz-admindek-card feu-einsatz-admindek-card--categories">
             <div class="feu-einsatz-admindek-card-head">
                 <div>
-                    <span><i class="ti ti-chart-donut"></i><?php esc_html_e('Einsatzstichworte', 'feuer-einsatzberichte'); ?></span>
-                    <h2><?php esc_html_e('Verteilung', 'feuer-einsatzberichte'); ?></h2>
+                    <span><i class="ti ti-chart-bar"></i><?php esc_html_e('Einsatzstichworte', 'feuer-einsatzberichte'); ?></span>
+                    <h2><?php esc_html_e('Häufigste Stichworte', 'feuer-einsatzberichte'); ?></h2>
                 </div>
-            </div>
-            <div class="feu-einsatz-admindek-donut-wrap">
-                <canvas id="feu-einsatz-admindek-category-chart" height="180" role="img" aria-label="<?php esc_attr_e('Kreisdiagramm: Verteilung der Einsatzstichworte', 'feuer-einsatzberichte'); ?>"></canvas>
             </div>
             <?php if (!empty($category_visual_rows)): ?>
-                <div class="feu-einsatz-admindek-category-key" aria-label="<?php esc_attr_e('Wichtigste Einsatzstichworte', 'feuer-einsatzberichte'); ?>">
-                    <?php foreach (array_slice($category_visual_rows, 0, 3) as $category_row): ?>
-                        <span title="<?php echo esc_attr(sprintf('%s: %d Einsätze (%s%%)', $category_row['name'], (int) $category_row['count'], number_format_i18n((float) $category_row['percent'], 1))); ?>">
-                            <i style="background-color: <?php echo esc_attr($category_row['color']); ?>"></i>
-                            <?php echo esc_html($category_row['name']); ?>
-                        </span>
+                <div class="feu-einsatz-overview-category-list">
+                    <?php foreach (array_slice($category_visual_rows, 0, 5) as $category_row): ?>
+                        <div class="feu-einsatz-overview-category-row" style="--feu-category-color: <?php echo esc_attr($category_row['color']); ?>; --feu-category-percent: <?php echo esc_attr(number_format((float) $category_row['percent'], 2, '.', '')); ?>%;">
+                            <div><span><?php echo esc_html($category_row['name']); ?></span><strong><?php echo esc_html((string) $category_row['count']); ?></strong></div>
+                            <span class="feu-einsatz-overview-category-track" aria-hidden="true"><i></i></span>
+                        </div>
                     <?php endforeach; ?>
                 </div>
+                <p class="feu-einsatz-overview-category-foot"><?php echo esc_html(sprintf(__('Insgesamt %d Einsätze · %d Stichworte', 'feuer-einsatzberichte'), $category_total_count, count($category_visual_rows))); ?></p>
+            <?php else: ?>
+                <p class="description"><?php esc_html_e('Keine Einsatzstichworte für dieses Jahr vorhanden.', 'feuer-einsatzberichte'); ?></p>
             <?php endif; ?>
         </div>
 
@@ -1190,60 +1206,55 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
         <div class="feu-einsatz-panel-card">
             <h2><?php esc_html_e('Einsätze nach Einsatzstichwort', 'feuer-einsatzberichte'); ?></h2>
             <div class="feu-einsatz-category-summary-head">
-                <p class="description"><?php esc_html_e('Jedes Einsatzstichwort wird als eigene Linie mit Anzahl und Prozentanteil gezeigt.', 'feuer-einsatzberichte'); ?></p>
+                <p class="description"><?php esc_html_e('So verteilen sich die Einsätze im ausgewählten Jahr auf die Einsatzstichworte.', 'feuer-einsatzberichte'); ?></p>
                 <strong class="feu-einsatz-category-total"><?php echo esc_html((string) $category_total_count); ?> <?php esc_html_e('Einsätze', 'feuer-einsatzberichte'); ?></strong>
             </div>
             <?php if (!empty($category_visual_rows)): ?>
-                <div class="feu-einsatz-category-bars" aria-label="<?php esc_attr_e('Einsatzstichwort-Balken', 'feuer-einsatzberichte'); ?>">
+                <div class="feu-einsatz-category-ranking" role="table" aria-label="<?php esc_attr_e('Einsatzstichworte: Anzahl und Anteil', 'feuer-einsatzberichte'); ?>">
+                    <div class="feu-einsatz-category-ranking-head" role="row">
+                        <span role="columnheader"><?php esc_html_e('Einsatzstichwort', 'feuer-einsatzberichte'); ?></span>
+                        <span role="columnheader"><?php esc_html_e('Anteil', 'feuer-einsatzberichte'); ?></span>
+                        <span role="columnheader"><?php esc_html_e('Einsätze', 'feuer-einsatzberichte'); ?></span>
+                    </div>
                     <?php foreach ($category_visual_rows as $category_row): ?>
-                        <div class="feu-einsatz-category-bar-row" style="--feu-category-color: <?php echo esc_attr($category_row['color']); ?>; --feu-category-percent: <?php echo esc_attr(number_format((float) $category_row['percent'], 2, '.', '')); ?>%;">
-                            <div class="feu-einsatz-category-bar-top">
-                                <span><?php echo esc_html($category_row['name']); ?></span>
-                                <strong><?php echo esc_html((string) $category_row['count']); ?></strong>
+                        <div class="feu-einsatz-category-ranking-row" role="row" style="--feu-category-color: <?php echo esc_attr($category_row['color']); ?>; --feu-category-percent: <?php echo esc_attr(number_format((float) $category_row['percent'], 2, '.', '')); ?>%;">
+                            <strong role="cell"><?php echo esc_html($category_row['name']); ?></strong>
+                            <div class="feu-einsatz-category-ranking-share" role="cell">
+                                <span class="feu-einsatz-category-ranking-track" aria-hidden="true"><i></i></span>
+                                <span><?php echo esc_html(number_format_i18n((float) $category_row['percent'], 1)); ?>%</span>
                             </div>
-                            <div class="feu-einsatz-category-bar-track" aria-hidden="true"><span></span></div>
+                            <b role="cell"><?php echo esc_html((string) $category_row['count']); ?></b>
                         </div>
                     <?php endforeach; ?>
                 </div>
+            <?php else: ?>
+                <p class="feu-einsatz-category-empty"><?php esc_html_e('Für dieses Jahr liegen noch keine Einsätze vor.', 'feuer-einsatzberichte'); ?></p>
             <?php endif; ?>
-            <div class="category-stats feu-einsatz-category-donut-layout">
-                <div class="category-chart-container"><canvas id="categoryDonutChart" width="320" height="320" role="img" aria-label="<?php esc_attr_e('Kreisdiagramm: Einsatzstichworte mit Anzahl und Prozentanteil', 'feuer-einsatzberichte'); ?>"></canvas></div>
-                <div class="category-list">
-                    <?php $total_categories = 0; foreach ($categories as $cat) { $total_categories += (int) $cat->anzahl; } ?>
-                    <?php if (empty($categories)): ?>
-                        <p><?php esc_html_e('Keine Einsatzstichwort-Daten für dieses Jahr vorhanden.', 'feuer-einsatzberichte'); ?></p>
-                    <?php else: ?>
-                        <?php foreach ($categories as $category_index => $cat): ?>
-                            <?php $percent = $total_categories > 0 ? round(((int) $cat->anzahl / $total_categories) * 100, 1) : 0; ?>
-                            <div class="category-list-item">
-                                <span class="category-color" style="background: <?php echo esc_attr($category_visual_rows[$category_index]['color'] ?? '#0f6cbd'); ?>"></span>
-                                <span class="category-list-name"><?php echo esc_html($cat->kategorie_name); ?></span>
-                                <span class="category-list-count"><?php echo esc_html($cat->anzahl); ?></span>
-                                <span class="category-list-prozent"><?php echo esc_html($percent); ?>%</span>
-                            </div>
-                        <?php endforeach; ?>
-                        <div class="category-list-total"><strong><?php esc_html_e('Gesamt:', 'feuer-einsatzberichte'); ?></strong> <?php echo esc_html($total_categories); ?></div>
-                    <?php endif; ?>
-                </div>
-            </div>
-
             <div class="feu-einsatz-category-history">
                 <h3><?php esc_html_e('Einsatzstichworte nach Jahren', 'feuer-einsatzberichte'); ?></h3>
-                <div class="feu-einsatz-category-history-grid">
-                    <?php foreach ($category_history as $history_year => $history_categories): ?>
-                        <div class="feu-einsatz-year-card">
-                            <h4><?php echo esc_html($history_year); ?></h4>
-                            <?php if (empty($history_categories)): ?>
-                                <p class="description"><?php esc_html_e('Keine Daten', 'feuer-einsatzberichte'); ?></p>
-                            <?php else: ?>
-                                <ul>
-                                    <?php foreach ($history_categories as $history_category): ?>
-                                        <li><span><?php echo esc_html($history_category->kategorie_name); ?></span><strong><?php echo esc_html($history_category->anzahl); ?></strong></li>
+                <p class="description"><?php esc_html_e('Jede Zahl zeigt die Einsätze mit diesem Stichwort im jeweiligen Jahr. Die Linie darunter zeigt den Anteil am Jahreswert.', 'feuer-einsatzberichte'); ?></p>
+                <div class="feu-einsatz-category-history-scroll" role="region" tabindex="0" aria-label="<?php esc_attr_e('Vergleich der Einsatzstichworte nach Jahren', 'feuer-einsatzberichte'); ?>">
+                    <table class="feu-einsatz-category-history-table">
+                        <thead><tr><th scope="col"><?php esc_html_e('Einsatzstichwort', 'feuer-einsatzberichte'); ?></th>
+                            <?php foreach ($jahre as $history_year): ?>
+                                <th scope="col" <?php echo (int) $history_year === (int) $jahr ? 'class="is-selected-year"' : ''; ?>><?php echo esc_html((string) $history_year); ?><small><?php echo esc_html((string) $category_history_totals[$history_year]); ?> <?php esc_html_e('Einsätze', 'feuer-einsatzberichte'); ?></small></th>
+                            <?php endforeach; ?>
+                        </tr></thead>
+                        <tbody>
+                            <?php foreach ($category_history_rows as $history_row): ?>
+                                <tr><th scope="row"><?php echo esc_html($history_row['name']); ?></th>
+                                    <?php foreach ($jahre as $history_year): ?>
+                                        <?php $history_count = (int) ($history_row['years'][$history_year] ?? 0); $history_share = $category_history_totals[$history_year] > 0 ? ($history_count / $category_history_totals[$history_year]) * 100 : 0; ?>
+                                        <td <?php echo (int) $history_year === (int) $jahr ? 'class="is-selected-year"' : ''; ?>>
+                                            <strong><?php echo $history_count > 0 ? esc_html((string) $history_count) : '&ndash;'; ?></strong>
+                                            <span class="feu-einsatz-category-history-meter" aria-hidden="true"><i style="width: <?php echo esc_attr(number_format($history_share, 2, '.', '')); ?>%;"></i></span>
+                                        </td>
                                     <?php endforeach; ?>
-                                </ul>
-                            <?php endif; ?>
-                        </div>
-                    <?php endforeach; ?>
+                                </tr>
+                            <?php endforeach; ?>
+                            <?php if (empty($category_history_rows)): ?><tr><td colspan="<?php echo esc_attr((string) (count($jahre) + 1)); ?>"><?php esc_html_e('Noch keine Daten vorhanden.', 'feuer-einsatzberichte'); ?></td></tr><?php endif; ?>
+                        </tbody>
+                    </table>
                 </div>
             </div>
             <div class="feu-einsatz-day-popover" id="feu-einsatz-day-popover" hidden>
@@ -1542,7 +1553,6 @@ $jspdf_version = file_exists($jspdf_path) ? (string) filemtime($jspdf_path) : FE
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     var categories = <?php echo wp_json_encode($categories); ?>;
-    var categoryVisualRows = <?php echo wp_json_encode($category_visual_rows); ?>;
     var monthNames = <?php echo wp_json_encode($month_names); ?>;
     var monthlyTotals = <?php echo wp_json_encode(array_values($monthly_totals)); ?>;
     var selectedYear = <?php echo wp_json_encode($jahr); ?>;
@@ -1573,13 +1583,11 @@ document.addEventListener('DOMContentLoaded', function() {
     var presentationActivityMapInstance = null;
     var activityMapRendered = false;
     var activityClusters = [];
-    var categoryChart = null;
     var weekdayChart = null;
     var participantRankingChart = null;
     var participantDistributionChart = null;
     var monthlyChart = null;
     var overviewMonthlyChart = null;
-    var overviewCategoryChart = null;
     var dayPopover = document.getElementById('feu-einsatz-day-popover');
     var dayPopoverTitle = document.getElementById('feu-einsatz-day-popover-title');
     var dayPopoverContent = document.getElementById('feu-einsatz-day-popover-content');
@@ -1642,45 +1650,6 @@ document.addEventListener('DOMContentLoaded', function() {
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#039;');
     }
-
-    function getCategoryColor(category, index) {
-        var visualRow = categoryVisualRows[index] || {};
-        return visualRow.color || category.color || category.farbe || '#0f6cbd';
-    }
-
-    function getCategoryTotal() {
-        return categories.reduce(function(sum, category) {
-            return sum + Number(category.anzahl || 0);
-        }, 0);
-    }
-
-    var categoryCenterLabelPlugin = {
-        id: 'feuCategoryCenterLabel',
-        afterDraw: function(chart) {
-            if (!chart || !chart.chartArea || chart.config.type !== 'doughnut') {
-                return;
-            }
-
-            var totalValue = getCategoryTotal();
-            var chartArea = chart.chartArea;
-            var centerX = (chartArea.left + chartArea.right) / 2;
-            var centerY = (chartArea.top + chartArea.bottom) / 2;
-            var context = chart.ctx;
-            var compactTotal = new Intl.NumberFormat('de-DE').format(totalValue);
-            var isSmallChart = chart.canvas && chart.canvas.id === 'feu-einsatz-admindek-category-chart';
-
-            context.save();
-            context.textAlign = 'center';
-            context.textBaseline = 'middle';
-            context.fillStyle = '#0f172a';
-            context.font = '800 ' + (isSmallChart ? '24px' : '31px') + ' system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-            context.fillText(compactTotal, centerX, centerY - (isSmallChart ? 6 : 8));
-            context.fillStyle = '#64748b';
-            context.font = '700 ' + (isSmallChart ? '10px' : '11px') + ' system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-            context.fillText('EINSÄTZE', centerX, centerY + (isSmallChart ? 15 : 18));
-            context.restore();
-        }
-    };
 
     function getIsoDateFromCalendarCell(cell) {
         var monthCard = cell ? cell.closest('.feu-einsatz-month-card') : null;
@@ -1783,13 +1752,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (overviewMonthlyChart) {
                     overviewMonthlyChart.resize();
                 }
-                if (overviewCategoryChart) {
-                    overviewCategoryChart.resize();
-                }
-            }
-
-            if (target === 'categories' && categoryChart) {
-                categoryChart.resize();
             }
 
             if (target === 'calendar' && weekdayChart) {
@@ -1951,52 +1913,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function getCategoryChartConfig() {
-        return {
-            type: 'doughnut',
-            plugins: [categoryCenterLabelPlugin],
-            data: {
-                labels: categories.map(function(category) { return category.kategorie_name; }),
-                datasets: [{
-                    data: categories.map(function(category) { return parseInt(category.anzahl, 10); }),
-                    backgroundColor: categories.map(function(category, index) { return getCategoryColor(category, index); }),
-                    borderColor: '#ffffff',
-                    borderWidth: 4,
-                    borderRadius: 4,
-                    spacing: 3,
-                    hoverOffset: 12
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                cutout: '67%',
-                layout: { padding: 8 },
-                animation: {
-                    animateRotate: true,
-                    animateScale: true,
-                    duration: 760
-                },
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        displayColors: true,
-                        padding: 12,
-                        cornerRadius: 8,
-                        callbacks: {
-                            label: function(context) {
-                                var value = Number(context.raw || 0);
-                                var totalValue = getCategoryTotal();
-                                var percent = totalValue > 0 ? ((value / totalValue) * 100).toFixed(1) : '0.0';
-                                return context.label + ': ' + value + ' Einsätze (' + percent + '%)';
-                            }
-                        }
-                    }
-                }
-            }
-        };
-    }
-
     function buildDailyTimelineSeries() {
         var startDate = new Date(Number(selectedYear), 0, 1);
         var endDate = new Date(Number(selectedYear), 11, 31);
@@ -2127,31 +2043,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         };
-    }
-
-    function getCategoryChartConfigForType(chartType) {
-        var selectedType = chartType || 'doughnut';
-        var config = getCategoryChartConfig();
-        config.type = selectedType;
-
-        if (selectedType === 'bar') {
-            config.options.indexAxis = 'y';
-            config.options.scales = {
-                x: {
-                    beginAtZero: true,
-                    ticks: {
-                        precision: 0
-                    }
-                }
-            };
-            config.data.datasets[0].borderRadius = 10;
-            config.data.datasets[0].borderSkipped = false;
-        } else {
-            delete config.options.scales;
-            delete config.options.indexAxis;
-        }
-
-        return config;
     }
 
     function getDailyTimelineChartConfigForType(chartType) {
@@ -2310,49 +2201,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     y: {
                         beginAtZero: true,
                         ticks: { precision: 0, color: '#64748b' }
-                    }
-                }
-            }
-        };
-    }
-
-    function getAdmindekCategoryChartConfig() {
-        return {
-            type: 'doughnut',
-            plugins: [categoryCenterLabelPlugin],
-            data: {
-                labels: categories.map(function(category) { return category.kategorie_name; }),
-                datasets: [{
-                    data: categories.map(function(category) { return parseInt(category.anzahl, 10) || 0; }),
-                    backgroundColor: categories.map(function(category, index) { return getCategoryColor(category, index); }),
-                    borderColor: '#ffffff',
-                    borderWidth: 4,
-                    borderRadius: 4,
-                    spacing: 3,
-                    hoverOffset: 10
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '68%',
-                layout: { padding: 7 },
-                animation: {
-                    animateRotate: true,
-                    animateScale: true,
-                    duration: 760
-                },
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                var value = Number(context.raw || 0);
-                                var totalValue = getCategoryTotal();
-                                var percent = totalValue > 0 ? ((value / totalValue) * 100).toFixed(1) : '0.0';
-                                return context.label + ': ' + value + ' Einsätze (' + percent + '%)';
-                            }
-                        }
                     }
                 }
             }
@@ -2567,31 +2415,6 @@ document.addEventListener('DOMContentLoaded', function() {
     var admindekMonthlyChartElement = document.getElementById('feu-einsatz-admindek-monthly-chart');
     if (window.Chart && admindekMonthlyChartElement) {
         overviewMonthlyChart = new Chart(admindekMonthlyChartElement.getContext('2d'), getAdmindekMonthlyChartConfig());
-    }
-
-    var admindekCategoryChartElement = document.getElementById('feu-einsatz-admindek-category-chart');
-    if (window.Chart && admindekCategoryChartElement && categories.length) {
-        overviewCategoryChart = new Chart(admindekCategoryChartElement.getContext('2d'), getAdmindekCategoryChartConfig());
-    }
-
-    var chartElement = document.getElementById('categoryDonutChart');
-    if (window.Chart && chartElement && categories.length) {
-        categoryChart = new Chart(chartElement.getContext('2d'), getCategoryChartConfigForType('doughnut'));
-        createChartModeToggle({
-            canvas: chartElement,
-            defaultMode: 'doughnut',
-            modes: [
-                { key: 'doughnut', label: 'Donut' },
-                { key: 'bar', label: 'Balken' },
-                { key: 'polarArea', label: 'Polar' }
-            ],
-            onSelect: function(mode) {
-                if (categoryChart) {
-                    categoryChart.destroy();
-                }
-                categoryChart = new Chart(chartElement.getContext('2d'), getCategoryChartConfigForType(mode));
-            }
-        });
     }
 
     var weekdayChartElement = document.getElementById('dailyTimelineChart');
