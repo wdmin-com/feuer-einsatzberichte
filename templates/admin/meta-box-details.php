@@ -416,42 +416,48 @@ $street_highlight_mode_label = 'full' === $street_highlight_mode
         <div class="feu-einsatz-form-row feu-einsatz-inline-card feu-einsatz-inline-card--availability">
             <div class="feu-einsatz-inline-card-head">
                 <div>
-                    <h4 class="feu-einsatz-inline-card-title"><?php esc_html_e('Veroeffentlichung steuern', 'feuer-einsatzberichte'); ?></h4>
+                    <?php if (!$suppress_section_titles) : ?>
+                        <h4 class="feu-einsatz-inline-card-title"><?php esc_html_e('Veröffentlichung steuern', 'feuer-einsatzberichte'); ?></h4>
+                    <?php endif; ?>
                     <p class="description feu-einsatz-inline-card-copy">
-                        <?php esc_html_e('Lege fest, ob der Bericht sofort, zum Einsatzdatum oder automatisch versetzt freigegeben wird.', 'feuer-einsatzberichte'); ?>
+                        <?php esc_html_e('Wann soll der Bericht erscheinen?', 'feuer-einsatzberichte'); ?>
                     </p>
                 </div>
             </div>
 
-            <div class="feu-einsatz-choice-grid">
+            <fieldset class="feu-einsatz-choice-grid">
+                <legend class="screen-reader-text"><?php esc_html_e('Zeitpunkt der Veröffentlichung', 'feuer-einsatzberichte'); ?></legend>
                 <label class="feu-einsatz-choice-card">
                     <input type="radio" name="feu_einsatz_availability_mode" value="sofort" <?php checked($availability_mode, 'sofort'); ?> />
-                    <span class="feu-einsatz-choice-card-title"><?php esc_html_e('Sofort', 'feuer-einsatzberichte'); ?></span>
-                    <span class="feu-einsatz-choice-card-copy"><?php esc_html_e('Wird direkt veroeffentlicht.', 'feuer-einsatzberichte'); ?></span>
+                    <span class="feu-einsatz-choice-card-body">
+                        <span class="feu-einsatz-choice-card-title"><?php esc_html_e('Sofort', 'feuer-einsatzberichte'); ?></span>
+                        <span class="feu-einsatz-choice-card-copy"><?php esc_html_e('Direkt nach der Freigabe sichtbar.', 'feuer-einsatzberichte'); ?></span>
+                    </span>
                 </label>
 
                 <label class="feu-einsatz-choice-card">
                     <input type="radio" name="feu_einsatz_availability_mode" value="date" <?php checked($availability_mode, 'date'); ?> />
-                    <span class="feu-einsatz-choice-card-title"><?php esc_html_e('Zum Einsatzdatum', 'feuer-einsatzberichte'); ?></span>
-                    <span class="feu-einsatz-choice-card-copy"><?php esc_html_e('Nutzen von Datum und Uhrzeit aus den Einsatzdetails.', 'feuer-einsatzberichte'); ?></span>
+                    <span class="feu-einsatz-choice-card-body">
+                        <span class="feu-einsatz-choice-card-title"><?php esc_html_e('Zum Einsatzdatum', 'feuer-einsatzberichte'); ?></span>
+                        <span class="feu-einsatz-choice-card-copy"><?php esc_html_e('Datum und Uhrzeit des Einsatzes verwenden.', 'feuer-einsatzberichte'); ?></span>
+                    </span>
                 </label>
 
                 <label class="feu-einsatz-choice-card">
                     <input type="radio" name="feu_einsatz_availability_mode" value="plus2" <?php checked($availability_mode, 'plus2'); ?> />
-                    <span class="feu-einsatz-choice-card-title"><?php esc_html_e('Automatisch in 48 Stunden', 'feuer-einsatzberichte'); ?></span>
-                    <span class="feu-einsatz-choice-card-copy"><?php esc_html_e('Plant die Freigabe exakt zwei Tage nach Datum und Uhrzeit des Einsatzes.', 'feuer-einsatzberichte'); ?></span>
+                    <span class="feu-einsatz-choice-card-body">
+                        <span class="feu-einsatz-choice-card-title"><?php esc_html_e('48 Stunden nach Einsatz', 'feuer-einsatzberichte'); ?></span>
+                        <span class="feu-einsatz-choice-card-copy"><?php esc_html_e('Ist dieser Zeitpunkt vorbei, 48 Stunden ab Freigabe.', 'feuer-einsatzberichte'); ?></span>
+                    </span>
                 </label>
-            </div>
+            </fieldset>
 
-            <div class="feu-einsatz-availability-date-preview">
-                <div class="feu-einsatz-preview-stat">
-                    <span class="feu-einsatz-field-heading"><?php esc_html_e('Datum', 'feuer-einsatzberichte'); ?></span>
-                    <strong id="feu-einsatz-availability-preview-date"><?php echo esc_html($available_date ?: __('Nicht gesetzt', 'feuer-einsatzberichte')); ?></strong>
-                </div>
-                <div class="feu-einsatz-preview-stat">
-                    <span class="feu-einsatz-field-heading"><?php esc_html_e('Uhrzeit', 'feuer-einsatzberichte'); ?></span>
-                    <strong id="feu-einsatz-availability-preview-time"><?php echo esc_html($available_time ?: '08:00'); ?></strong>
-                </div>
+            <div class="feu-einsatz-availability-date-preview" role="status" aria-live="polite" data-feu-immediate="<?php echo esc_attr__('Sofort', 'feuer-einsatzberichte'); ?>" data-feu-missing-date="<?php echo esc_attr__('Einsatzdatum fehlt', 'feuer-einsatzberichte'); ?>">
+                <span class="feu-einsatz-availability-preview-label"><?php esc_html_e('Voraussichtliche Freigabe', 'feuer-einsatzberichte'); ?></span>
+                <strong class="feu-einsatz-availability-preview-value">
+                    <span id="feu-einsatz-availability-preview-date"><?php echo esc_html('sofort' === $availability_mode ? __('Sofort', 'feuer-einsatzberichte') : ($available_date ?: __('Einsatzdatum fehlt', 'feuer-einsatzberichte'))); ?></span>
+                    <span id="feu-einsatz-availability-preview-time"><?php echo esc_html('sofort' === $availability_mode || !$available_date ? '' : $available_time); ?></span>
+                </strong>
             </div>
         </div>
     <?php endif; ?>

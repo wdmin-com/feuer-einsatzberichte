@@ -1,6 +1,54 @@
 (function ($) {
     'use strict';
 
+    function calculateAvailabilityPreview(mode, dateValue, timeValue, now) {
+        if (mode === 'sofort') {
+            return { kind: 'immediate' };
+        }
+
+        var dateMatch = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(dateValue);
+        var timeMatch = /^(\d{2}):(\d{2})$/.exec(timeValue || '08:00');
+        if (!dateMatch || !timeMatch || Number(timeMatch[1]) > 23 || Number(timeMatch[2]) > 59) {
+            return { kind: 'missing' };
+        }
+
+        var eventDate = new Date(
+            Number(dateMatch[3]), Number(dateMatch[2]) - 1, Number(dateMatch[1]),
+            Number(timeMatch[1]), Number(timeMatch[2]), 0, 0
+        );
+        if (eventDate.getFullYear() !== Number(dateMatch[3])
+            || eventDate.getMonth() !== Number(dateMatch[2]) - 1
+            || eventDate.getDate() !== Number(dateMatch[1])) {
+            return { kind: 'missing' };
+        }
+
+        var currentDate = now instanceof Date ? now : new Date();
+        var releaseDate = eventDate;
+        if (mode === 'plus2') {
+            releaseDate = new Date(eventDate.getTime());
+            releaseDate.setHours(releaseDate.getHours() + 48);
+            if (releaseDate <= currentDate) {
+                releaseDate = new Date(currentDate.getTime());
+                releaseDate.setHours(releaseDate.getHours() + 48);
+            }
+        } else if (releaseDate <= currentDate) {
+            return { kind: 'immediate' };
+        }
+
+        return {
+            kind: 'scheduled',
+            date: String(releaseDate.getDate()).padStart(2, '0') + '.'
+                + String(releaseDate.getMonth() + 1).padStart(2, '0') + '.'
+                + String(releaseDate.getFullYear()),
+            time: String(releaseDate.getHours()).padStart(2, '0') + ':'
+                + String(releaseDate.getMinutes()).padStart(2, '0')
+        };
+    }
+
+    if (typeof module === 'object' && module.exports) {
+        module.exports.calculateAvailabilityPreview = calculateAvailabilityPreview;
+    }
+
     $(document).ready(function () {
         var galleryFrame = null;
         var watermarkFrame = null;
@@ -584,6 +632,10 @@
             var mode = $('input[name="feu_einsatz_availability_mode"]:checked').val();
             var $fields = $('.feu-einsatz-availability-date-fields');
 
+            $('input[name="feu_einsatz_availability_mode"]').each(function () {
+                $(this).closest('.feu-einsatz-choice-card').toggleClass('is-selected', this.checked);
+            });
+
             if (!$fields.length) {
                 return;
             }
@@ -592,66 +644,30 @@
         }
 
         function syncAvailabilityPreview() {
-            function parseGermanDateTime(dateValue, timeValue) {
-                var match = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(dateValue);
-                var timeMatch = /^(\d{2}):(\d{2})$/.exec(timeValue || '08:00');
-
-                if (!match || !timeMatch) {
-                    return null;
-                }
-
-                return new Date(
-                    Number(match[3]),
-                    Number(match[2]) - 1,
-                    Number(match[1]),
-                    Number(timeMatch[1]),
-                    Number(timeMatch[2]),
-                    0,
-                    0
-                );
-            }
-
-            function formatGermanDate(dateObject) {
-                return String(dateObject.getDate()).padStart(2, '0')
-                    + '.'
-                    + String(dateObject.getMonth() + 1).padStart(2, '0')
-                    + '.'
-                    + String(dateObject.getFullYear());
-            }
-
-            function formatGermanTime(dateObject) {
-                return String(dateObject.getHours()).padStart(2, '0')
-                    + ':'
-                    + String(dateObject.getMinutes()).padStart(2, '0');
-            }
-
             var $datePreview = $('#feu-einsatz-availability-preview-date');
             var $timePreview = $('#feu-einsatz-availability-preview-time');
-            var mode = $('input[name="feu_einsatz_availability_mode"]:checked').val() || 'date';
-
             if (!$datePreview.length || !$timePreview.length) {
                 return;
             }
-
-            var dateValue = $.trim($('#feu_einsatz_datum').val() || '');
-            var timeValue = $.trim($('#feu_einsatz_uhrzeit').val() || '');
-
-            if (mode === 'plus2') {
-                var eventDate = parseGermanDateTime(dateValue, timeValue);
-
-                if (eventDate instanceof Date && !isNaN(eventDate.getTime())) {
-                    eventDate.setHours(eventDate.getHours() + 48);
-                    $datePreview.text(formatGermanDate(eventDate));
-                    $timePreview.text(formatGermanTime(eventDate));
-                    return;
-                }
-            }
-
-            $datePreview.text(dateValue || 'Nicht gesetzt');
-            $timePreview.text(timeValue || '08:00');
+            var $preview = $datePreview.closest('.feu-einsatz-availability-date-preview');
+            var immediateText = $preview.attr('data-feu-immediate') || 'Sofort';
+            var missingDateText = $preview.attr('data-feu-missing-date') || 'Einsatzdatum fehlt';
+            var result = calculateAvailabilityPreview(
+                $('input[name="feu_einsatz_availability_mode"]:checked').val() || 'date',
+                $.trim($('#feu_einsatz_datum').val() || ''),
+                $.trim($('#feu_einsatz_uhrzeit').val() || ''),
+                new Date()
+            );
+            $datePreview.text(result.kind === 'scheduled'
+                ? result.date
+                : (result.kind === 'immediate' ? immediateText : missingDateText));
+            $timePreview.text(result.kind === 'scheduled' ? result.time : '');
         }
 
-        $(document).on('change', 'input[name="feu_einsatz_availability_mode"]', toggleAvailabilityDateFields);
+        $(document).on('change', 'input[name="feu_einsatz_availability_mode"]', function () {
+            toggleAvailabilityDateFields();
+            syncAvailabilityPreview();
+        });
         $(document).on('input change', '#feu_einsatz_datum, #feu_einsatz_uhrzeit', syncAvailabilityPreview);
         toggleAvailabilityDateFields();
         syncAvailabilityPreview();

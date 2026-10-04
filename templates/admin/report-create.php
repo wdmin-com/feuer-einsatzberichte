@@ -71,12 +71,12 @@ $status_label = __('Entwurf', 'feuer-einsatzberichte');
 $status_hint = __('Der Bericht ist aktuell als Entwurf gespeichert.', 'feuer-einsatzberichte');
 if ('publish' === $current_post_status) {
     $status_badge_class = 'is-active';
-    $status_label = __('Veroeffentlicht', 'feuer-einsatzberichte');
-    $status_hint = __('Der Bericht ist bereits oeffentlich sichtbar.', 'feuer-einsatzberichte');
+    $status_label = __('Veröffentlicht', 'feuer-einsatzberichte');
+    $status_hint = __('Der Bericht ist bereits öffentlich sichtbar.', 'feuer-einsatzberichte');
 } elseif ('future' === $current_post_status) {
     $status_badge_class = 'is-scheduled';
     $status_label = __('Geplant', 'feuer-einsatzberichte');
-    $status_hint = __('Fuer eine sofortige Veroeffentlichung im Block "Verfuegbarkeit" die Option "Sofort" waehlen und anschliessend speichern.', 'feuer-einsatzberichte');
+    $status_hint = __('Für eine sofortige Veröffentlichung „Sofort“ wählen und anschließend speichern.', 'feuer-einsatzberichte');
     $submit_primary_label = __('Status aktualisieren', 'feuer-einsatzberichte');
 }
 ?>
@@ -143,7 +143,7 @@ if ('publish' === $current_post_status) {
             <a class="feu-einsatz-report-section-link" href="#feu-einsatz-report-box-comments"><?php esc_html_e('Kommentare', 'feuer-einsatzberichte'); ?></a>
         <?php endif; ?>
         <a class="feu-einsatz-report-section-link" href="#feu-einsatz-report-box-categories"><?php esc_html_e('Einsatzstichworte', 'feuer-einsatzberichte'); ?></a>
-        <a class="feu-einsatz-report-section-link" href="#feu-einsatz-report-box-publish"><?php esc_html_e('Veroeffentlichung', 'feuer-einsatzberichte'); ?></a>
+        <a class="feu-einsatz-report-section-link" href="#feu-einsatz-report-box-publish"><?php esc_html_e('Veröffentlichung', 'feuer-einsatzberichte'); ?></a>
     </nav>
 
     <div id="feu-einsatz-report-validation-notice" class="notice notice-error feu-einsatz-report-validation-notice" role="alert" hidden>
@@ -447,7 +447,7 @@ if ('publish' === $current_post_status) {
 
                 <div class="postbox feu-einsatz-form-section feu-einsatz-form-section--side" id="feu-einsatz-report-box-publish">
                     <div class="postbox-header">
-                        <h2 class="hndle"><?php _e('Veroeffentlichung', 'feuer-einsatzberichte'); ?></h2>
+                        <h2 class="hndle"><?php esc_html_e('Veröffentlichung', 'feuer-einsatzberichte'); ?></h2>
                     </div>
                     <div class="inside">
                         <p class="feu-einsatz-report-current-status">

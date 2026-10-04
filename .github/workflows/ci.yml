@@ -31,6 +31,7 @@ jobs:
           node tests/report-draft-recovery.test.cjs
           node tests/report-create-validation.test.cjs
           node tests/report-prepublish-review.test.cjs
+          node tests/report-availability-preview.test.cjs
           node tests/setup-wizard-client.test.cjs
 
   wordpress-integration:
