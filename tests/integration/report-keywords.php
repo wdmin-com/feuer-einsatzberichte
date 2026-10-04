@@ -24,6 +24,7 @@ $new_term_ids = [];
 $temporary_post_id = 0;
 $editable_draft_id = 0;
 $trashed_post_id = 0;
+$legacy_extra_trash_id = 0;
 
 try {
     foreach (['A', 'B'] as $label) {
@@ -198,8 +199,25 @@ try {
     $restored_map = $restore_terms->invoke(Feuer_Einsatzberichte_Core::get_instance()->get_backup(), $manifest, $identity_map);
     feu_keyword_assert(isset($restored_map[$new_term_ids[0]]) && (int) $restored_map[$new_term_ids[0]] === $new_term_ids[0], 'Backup keyword term mapping failed.');
 
+    $extra_trash = wp_insert_post([
+        'post_type' => 'post',
+        'post_status' => 'publish',
+        'post_title' => 'Old journal extra trash ' . $suffix,
+        'post_category' => $term_ids,
+    ], true);
+    feu_keyword_assert(!is_wp_error($extra_trash), 'Cannot create old-journal trash fixture.');
+    $legacy_extra_trash_id = (int) $extra_trash;
+    update_post_meta($legacy_extra_trash_id, FEU_Einsatz_Report_Post_Type::MARKER_META, '1');
+    feu_keyword_assert(wp_trash_post($legacy_extra_trash_id) instanceof WP_Post, 'Cannot trash old-journal fixture.');
+    $old_format_run = FEU_Einsatz_Keyword_Migration::get_run();
+    unset($old_format_run['includes_trash']);
+    update_option('feu_einsatz_keyword_migration_run', $old_format_run, false);
+    wp_set_object_terms($legacy_extra_trash_id, [$new_term_ids[0]], FEU_Einsatz_Report_Taxonomy::TAXONOMY, false);
+    $unsafe_rollback = FEU_Einsatz_Keyword_Migration::rollback();
+    feu_keyword_assert(is_wp_error($unsafe_rollback) && 'untracked_trashed_keywords' === $unsafe_rollback->get_error_code(), 'Old journal rolled back a trashed report with new keywords.');
+    wp_set_object_terms($legacy_extra_trash_id, [], FEU_Einsatz_Report_Taxonomy::TAXONOMY, false);
     $rolled_back = FEU_Einsatz_Keyword_Migration::rollback();
-    feu_keyword_assert(!is_wp_error($rolled_back), 'Safe rollback failed.');
+    feu_keyword_assert(!is_wp_error($rolled_back), 'Safe rollback with an untracked, untouched trashed report failed.');
     feu_keyword_assert(!FEU_Einsatz_Report_Taxonomy::enabled(), 'Rollback left cutover flag active.');
     foreach ($post_ids as $index => $post_id) {
         feu_keyword_assert(get_permalink($post_id) === $urls[$index], 'Rollback changed report URL.');
@@ -236,6 +254,9 @@ try {
     }
     if ($trashed_post_id) {
         wp_delete_post($trashed_post_id, true);
+    }
+    if ($legacy_extra_trash_id) {
+        wp_delete_post($legacy_extra_trash_id, true);
     }
     foreach ($post_ids as $post_id) {
         wp_delete_post($post_id, true);

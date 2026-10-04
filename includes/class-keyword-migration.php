@@ -221,6 +221,7 @@ final class FEU_Einsatz_Keyword_Migration {
                 'started_at' => current_time('mysql', true),
                 'actor_id' => get_current_user_id(),
                 'archive_key' => is_array($archive) ? (string) ($archive['archive_key'] ?? '') : '',
+                'includes_trash' => true,
                 'old_selected' => $old_selected,
                 'new_selected_before' => get_option(FEU_Einsatz_Report_Taxonomy::SELECTED_OPTION, null),
                 'reports' => $previous,
@@ -382,6 +383,20 @@ final class FEU_Einsatz_Keyword_Migration {
     private static function rollback_locked(array $run): array|WP_Error {
         $current_ids = self::report_ids();
         $original_ids = array_map('intval', array_keys((array) ($run['reports'] ?? [])));
+        if (empty($run['includes_trash'])) {
+            // Older journals did not enumerate trashed reports. Ignore only ones untouched by the new taxonomy.
+            foreach (array_diff($current_ids, $original_ids) as $id) {
+                if ('trash' !== get_post_status($id)) {
+                    continue;
+                }
+                $terms = wp_get_object_terms($id, FEU_Einsatz_Report_Taxonomy::TAXONOMY, ['fields' => 'ids']);
+                if (is_wp_error($terms) || $terms
+                    || (int) get_post_meta($id, FEU_Einsatz_Report_Taxonomy::PRIMARY_META, true) > 0) {
+                    return new WP_Error('untracked_trashed_keywords', __('Ein Bericht im Papierkorb hat neue Einsatzstichworte, die im alten Migrationsjournal fehlen. Automatischer Rückweg ist nicht sicher.', 'feuer-einsatzberichte'));
+                }
+                $current_ids = array_values(array_diff($current_ids, [$id]));
+            }
+        }
         sort($current_ids);
         sort($original_ids);
         if ($current_ids !== $original_ids) {
