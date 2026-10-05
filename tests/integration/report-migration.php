@@ -170,6 +170,7 @@ $_POST = [
     'migration_confirmation' => 'START',
     'feu_einsatz_post_migration_nonce' => wp_create_nonce('feu_einsatz_post_migration'),
 ];
+$_REQUEST = $_POST;
 $admin_start = FEU_Einsatz_Post_Migration::handle_admin_action();
 if (is_wp_error($admin_start) || 'running' !== ($admin_start['status'] ?? '')) {
     feu_einsatz_migration_fail('The administrator start action is unavailable.');
@@ -179,6 +180,7 @@ $_POST = [
     'run_id' => (string) $admin_start['run_id'],
     'feu_einsatz_post_migration_nonce' => wp_create_nonce('feu_einsatz_post_migration'),
 ];
+$_REQUEST = $_POST;
 $admin_batch = FEU_Einsatz_Post_Migration::handle_admin_action();
 if (is_wp_error($admin_batch) || 'complete' !== ($admin_batch['status'] ?? '')) {
     feu_einsatz_migration_fail('The administrator batch action did not migrate the reports.');
@@ -189,6 +191,7 @@ $_POST = [
     'migration_confirmation' => 'ROLLBACK',
     'feu_einsatz_post_migration_nonce' => wp_create_nonce('feu_einsatz_post_migration'),
 ];
+$_REQUEST = $_POST;
 $admin_rollback = FEU_Einsatz_Post_Migration::handle_admin_action();
 if (is_wp_error($admin_rollback) || 'rolled_back' !== ($admin_rollback['status'] ?? '')) {
     feu_einsatz_migration_fail('The administrator rollback action did not restore the reports.');
