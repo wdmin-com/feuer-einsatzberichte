@@ -10,6 +10,7 @@ final class FEU_Einsatz_Post_Migration {
     private const LOCK_OPTION = 'feu_einsatz_post_migration_lock';
     private const LOCK_TTL = 900;
     private static bool $internal_write = false;
+    private static bool $admin_operation = false;
 
     public static function init_write_guard(): void {
         add_filter('wp_insert_post_data', [self::class, 'guard_post_write'], 1, 2);
@@ -344,9 +345,64 @@ final class FEU_Einsatz_Post_Migration {
     }
 
     private static function authorized(): bool {
-        return defined('WP_CLI') && WP_CLI
-            && defined('FEU_EINSATZ_ALLOW_POST_MIGRATION') && FEU_EINSATZ_ALLOW_POST_MIGRATION
-            && current_user_can('manage_options');
+        return current_user_can('manage_options') && (
+            self::$admin_operation
+            || (defined('WP_CLI') && WP_CLI
+                && defined('FEU_EINSATZ_ALLOW_POST_MIGRATION') && FEU_EINSATZ_ALLOW_POST_MIGRATION)
+        );
+    }
+
+    /** Admin-post entry point. Each browser action has a nonce and explicit confirmation. */
+    public static function handle_admin_action(): array|WP_Error {
+        if (!is_admin() || !current_user_can('manage_options')) {
+            return new WP_Error('migration_forbidden', __('Nur Administratoren dürfen die Berichtsmigration steuern.', 'feuer-einsatzberichte'));
+        }
+        check_admin_referer('feu_einsatz_post_migration', 'feu_einsatz_post_migration_nonce');
+        $operation = isset($_POST['migration_operation']) && is_string($_POST['migration_operation'])
+            ? sanitize_key(wp_unslash($_POST['migration_operation'])) : '';
+        $run_id = isset($_POST['run_id']) && is_string($_POST['run_id'])
+            ? sanitize_text_field(wp_unslash($_POST['run_id'])) : '';
+
+        self::$admin_operation = true;
+        try {
+            if ('start' === $operation) {
+                $database_backup = isset($_POST['database_backup']) && is_string($_POST['database_backup']) ? trim(wp_unslash($_POST['database_backup'])) : '';
+                $uploads_backup = isset($_POST['uploads_backup']) && is_string($_POST['uploads_backup']) ? trim(wp_unslash($_POST['uploads_backup'])) : '';
+                $database_sha256 = isset($_POST['database_sha256']) && is_string($_POST['database_sha256']) ? trim(wp_unslash($_POST['database_sha256'])) : '';
+                $uploads_sha256 = isset($_POST['uploads_sha256']) && is_string($_POST['uploads_sha256']) ? trim(wp_unslash($_POST['uploads_sha256'])) : '';
+                if ('START' !== (string) ($_POST['migration_confirmation'] ?? '')
+                    || strlen($database_backup) > 4096 || strlen($uploads_backup) > 4096
+                    || '' === $database_backup || '' === $uploads_backup) {
+                    return new WP_Error('migration_confirmation_missing', __('Bitte Sicherungen angeben und START zur Bestätigung eingeben.', 'feuer-einsatzberichte'));
+                }
+                return self::start(
+                    $database_backup,
+                    $uploads_backup,
+                    $database_sha256,
+                    $uploads_sha256,
+                    isset($_POST['staging_verified']) && '1' === (string) wp_unslash($_POST['staging_verified'])
+                );
+            }
+            if ('batch' === $operation && '' !== $run_id) {
+                return self::migrate_batch($run_id, 10);
+            }
+            if ('retry' === $operation && '' !== $run_id) {
+                $report_id = isset($_POST['report_id']) && is_scalar($_POST['report_id'])
+                    ? absint(wp_unslash($_POST['report_id'])) : 0;
+                return $report_id > 0 ? self::migrate_batch($run_id, 1, $report_id)
+                    : new WP_Error('migration_report_missing', __('Berichts-ID fehlt.', 'feuer-einsatzberichte'));
+            }
+            if ('rollback' === $operation && '' !== $run_id) {
+                if (!isset($_POST['migration_confirmation']) || !is_string($_POST['migration_confirmation'])
+                    || 'ROLLBACK' !== wp_unslash($_POST['migration_confirmation'])) {
+                    return new WP_Error('migration_confirmation_missing', __('Bitte ROLLBACK zur Bestätigung eingeben.', 'feuer-einsatzberichte'));
+                }
+                return self::rollback_batch($run_id, 10);
+            }
+            return new WP_Error('migration_action_invalid', __('Diese Migrationsaktion ist nicht verfügbar.', 'feuer-einsatzberichte'));
+        } finally {
+            self::$admin_operation = false;
+        }
     }
 
     public static function get_status(): array {
@@ -395,7 +451,7 @@ final class FEU_Einsatz_Post_Migration {
         bool $staging_verified
     ): array|WP_Error {
         if (!self::authorized()) {
-            return new WP_Error('migration_forbidden', 'Administrator, WP-CLI and FEU_EINSATZ_ALLOW_POST_MIGRATION are required.');
+            return new WP_Error('migration_forbidden', 'An authorized administrator migration request is required.');
         }
         if (FEU_Einsatz_Keyword_Migration::is_write_locked()) {
             return new WP_Error('keyword_migration_active', 'Keyword migration is active.');
@@ -514,7 +570,7 @@ final class FEU_Einsatz_Post_Migration {
 
     public static function migrate_batch(string $run_id, int $size = 50, ?int $retry_id = null): array|WP_Error {
         if (!self::authorized()) {
-            return new WP_Error('migration_forbidden', 'Administrator, WP-CLI and migration feature flag are required.');
+            return new WP_Error('migration_forbidden', 'An authorized administrator migration request is required.');
         }
         if (FEU_Einsatz_Keyword_Migration::is_write_locked()) {
             return new WP_Error('keyword_migration_active', 'Keyword migration is active.');
@@ -659,7 +715,7 @@ final class FEU_Einsatz_Post_Migration {
 
     public static function rollback_batch(string $run_id, int $size = 50): array|WP_Error {
         if (!self::authorized()) {
-            return new WP_Error('migration_forbidden', 'Administrator, WP-CLI and migration feature flag are required.');
+            return new WP_Error('migration_forbidden', 'An authorized administrator migration request is required.');
         }
         $lock = self::acquire_lock();
         if (is_wp_error($lock)) {

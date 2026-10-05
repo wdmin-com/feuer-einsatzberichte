@@ -810,12 +810,62 @@ body.feu-admin-ui--modern-shell .feu-einsatz-migration-table td {
     padding: 14px 16px;
     overflow-wrap: anywhere;
 }
+body.feu-admin-ui--modern-shell .feu-einsatz-migration-action,
 body.feu-admin-ui--modern-shell .feu-einsatz-migration-acceptance {
     margin: 28px 0;
     padding: 24px;
     border: 1px solid var(--feu-ui-line);
     border-radius: 14px;
     background: #fff;
+}
+body.feu-admin-ui--modern-shell .feu-einsatz-migration-action h2 {
+    margin-top: 0;
+}
+body.feu-admin-ui--modern-shell .feu-einsatz-migration-start-form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+}
+body.feu-admin-ui--modern-shell .feu-einsatz-migration-start-form > label {
+    display: grid;
+    gap: 7px;
+    min-width: 0;
+    font-weight: 600;
+}
+body.feu-admin-ui--modern-shell .feu-einsatz-migration-start-form input[type="text"] {
+    width: 100%;
+    max-width: none;
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    font-size: 12px;
+}
+body.feu-admin-ui--modern-shell .feu-einsatz-migration-start-form > .feu-einsatz-migration-check {
+    display: flex;
+    grid-column: 1 / -1;
+    align-items: flex-start;
+    gap: 10px;
+    font-weight: 400;
+}
+body.feu-admin-ui--modern-shell .feu-einsatz-migration-start-form > button {
+    justify-self: start;
+    align-self: end;
+}
+body.feu-admin-ui--modern-shell .feu-einsatz-migration-rollback-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: 12px;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid #e2e8f0;
+}
+body.feu-admin-ui--modern-shell .feu-einsatz-migration-rollback-form label {
+    display: grid;
+    gap: 7px;
+    font-weight: 600;
+}
+body.feu-admin-ui--modern-shell .feu-einsatz-migration-rollback-form input {
+    min-width: 230px;
 }
 body.feu-admin-ui--modern-shell .feu-einsatz-migration-acceptance label {
     display: flex;
@@ -827,4 +877,5 @@ body.feu-admin-ui--modern-shell .feu-einsatz-migration-acceptance input[type="ch
 @media (max-width: 782px) {
     body.feu-admin-ui--modern-shell .feu-einsatz-migration-page { margin-top: 18px; padding: 0 14px; }
     body.feu-admin-ui--modern-shell .feu-einsatz-migration-table { display: block; overflow-x: auto; }
+    body.feu-admin-ui--modern-shell .feu-einsatz-migration-start-form { grid-template-columns: 1fr; }
 }

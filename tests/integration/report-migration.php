@@ -157,6 +157,43 @@ foreach ($legacy_ids as $index => $id) {
     if ('post' !== get_post_type($id) || get_permalink($id) !== $urls_before[$index]) {
         feu_einsatz_migration_fail('Rollback did not restore the original type and URL.');
     }
+}
+
+set_current_screen('dashboard');
+$_POST = [
+    'migration_operation' => 'start',
+    'database_backup' => $db_backup,
+    'uploads_backup' => $uploads_backup,
+    'database_sha256' => hash_file('sha256', $db_backup),
+    'uploads_sha256' => hash_file('sha256', $uploads_backup),
+    'staging_verified' => '1',
+    'migration_confirmation' => 'START',
+    'feu_einsatz_post_migration_nonce' => wp_create_nonce('feu_einsatz_post_migration'),
+];
+$admin_start = FEU_Einsatz_Post_Migration::handle_admin_action();
+if (is_wp_error($admin_start) || 'running' !== ($admin_start['status'] ?? '')) {
+    feu_einsatz_migration_fail('The administrator start action is unavailable.');
+}
+$_POST = [
+    'migration_operation' => 'batch',
+    'run_id' => (string) $admin_start['run_id'],
+    'feu_einsatz_post_migration_nonce' => wp_create_nonce('feu_einsatz_post_migration'),
+];
+$admin_batch = FEU_Einsatz_Post_Migration::handle_admin_action();
+if (is_wp_error($admin_batch) || 'complete' !== ($admin_batch['status'] ?? '')) {
+    feu_einsatz_migration_fail('The administrator batch action did not migrate the reports.');
+}
+$_POST = [
+    'migration_operation' => 'rollback',
+    'run_id' => (string) $admin_start['run_id'],
+    'migration_confirmation' => 'ROLLBACK',
+    'feu_einsatz_post_migration_nonce' => wp_create_nonce('feu_einsatz_post_migration'),
+];
+$admin_rollback = FEU_Einsatz_Post_Migration::handle_admin_action();
+if (is_wp_error($admin_rollback) || 'rolled_back' !== ($admin_rollback['status'] ?? '')) {
+    feu_einsatz_migration_fail('The administrator rollback action did not restore the reports.');
+}
+foreach ($legacy_ids as $id) {
     wp_delete_post($id, true);
 }
 

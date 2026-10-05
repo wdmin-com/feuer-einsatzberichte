@@ -94,7 +94,8 @@ final class FEU_Einsatz_Migration_Overview {
         $completed = $accepted && $ready_for_acceptance;
         $needs_attention = !$accepted
             && ($ready_for_acceptance || $old_reports > 0 || !$keywords_verified
-                || (!$keywords_enabled && count($legacy_keywords) > 0));
+                || (!$keywords_enabled && count($legacy_keywords) > 0)
+                || in_array((string) ($post_run['status'] ?? ''), ['running', 'failed', 'partial_error', 'rolling_back'], true));
         $has_legacy = $old_reports > 0 || !$keywords_verified
             || (!$keywords_enabled && count($legacy_keywords) > 0);
         $storage = $has_legacy && $new_reports > 0 ? 'mixed' : ($has_legacy ? 'old' : 'new');

@@ -476,6 +476,7 @@ class FEU_Einsatz_Admin {
         add_action('admin_post_feu_einsatz_keywords_migrate', [$this, 'handle_keywords_migrate']);
         add_action('admin_post_feu_einsatz_keywords_rollback', [$this, 'handle_keywords_rollback']);
         add_action('admin_post_feu_einsatz_accept_migration', [$this, 'handle_accept_migration']);
+        add_action('admin_post_feu_einsatz_post_migration', [$this, 'handle_post_migration_action']);
         add_action('admin_post_feu_einsatz_generate_map_image_now', [$this, 'handle_generate_map_image_now']);
         add_action('admin_post_feu_einsatz_delete_map_image', [$this, 'handle_delete_map_image']);
         add_action('admin_post_feu_einsatz_save_mannschaft_source', [$this, 'handle_mannschaft_source_save']);
@@ -9234,13 +9235,17 @@ class FEU_Einsatz_Admin {
         echo '<div class="notice notice-warning"><p><strong>';
         if (!empty($state['ready_for_acceptance'])) {
             esc_html_e('Die Datenübertragung ist bereit für die abschließende Prüfung.', 'feuer-einsatzberichte');
+        } elseif ($state['old_reports'] > 0 && !empty($state['keywords_enabled'])) {
+            esc_html_e('Die Einsatzstichworte sind übertragen. Einsatzberichte warten noch auf den Umzug.', 'feuer-einsatzberichte');
         } else {
             esc_html_e('Einsatzberichte oder Einsatzstichworte benötigen noch eine Datenprüfung.', 'feuer-einsatzberichte');
         }
         echo '</strong> ';
         esc_html_e('Prüfen Sie den Status und bestätigen Sie die erforderlichen Übertragungen. Bestehende URLs bleiben erhalten.', 'feuer-einsatzberichte');
-        echo ' <a href="' . esc_url(admin_url('admin.php?page=feu-einsatz-datenmigration')) . '">';
-        esc_html_e('Migration prüfen', 'feuer-einsatzberichte');
+        echo '</p><p><a class="button button-primary" href="' . esc_url(admin_url('admin.php?page=feu-einsatz-datenmigration')) . '">';
+        echo esc_html($state['old_reports'] > 0 && !empty($state['keywords_enabled'])
+            ? __('Berichtsumzug öffnen', 'feuer-einsatzberichte')
+            : __('Migration prüfen', 'feuer-einsatzberichte'));
         echo '</a></p></div>';
     }
 
@@ -9253,7 +9258,30 @@ class FEU_Einsatz_Admin {
         $post_preflight = $migration_state['old_reports'] > 0 ? FEU_Einsatz_Post_Migration::preflight() : [];
         $keyword_preflight = !$migration_state['keywords_enabled'] && $migration_state['legacy_keywords'] > 0
             ? FEU_Einsatz_Keyword_Migration::preflight() : [];
+        $post_migration_notice = get_transient('feu_einsatz_post_migration_notice_' . get_current_user_id());
+        delete_transient('feu_einsatz_post_migration_notice_' . get_current_user_id());
         include FEU_EINSATZ_PLUGIN_DIR . 'templates/admin/migration-overview.php';
+    }
+
+    public function handle_post_migration_action(): void {
+        $result = FEU_Einsatz_Post_Migration::handle_admin_action();
+        if (is_wp_error($result)) {
+            $notice = ['type' => 'error', 'message' => $result->get_error_message()];
+        } else {
+            $status = (string) ($result['status'] ?? '');
+            $message = match ($status) {
+                'rolled_back' => __('Die Rücksetzung ist abgeschlossen. Prüfen Sie die Berichte und URLs.', 'feuer-einsatzberichte'),
+                'rolling_back' => __('Zehn weitere Berichte wurden zurückgesetzt. Setzen Sie die Rücksetzung fort.', 'feuer-einsatzberichte'),
+                'complete' => __('Alle Berichte wurden übertragen. Prüfen Sie nun die Daten und URLs.', 'feuer-einsatzberichte'),
+                'partial_error' => __('Der Durchlauf ist beendet. Einzelne Berichte benötigen einen erneuten Versuch.', 'feuer-einsatzberichte'),
+                default => sprintf(__('Bearbeitet: %1$d von %2$d Berichten. Setzen Sie den Umzug mit der nächsten Gruppe fort.', 'feuer-einsatzberichte'),
+                    (int) ($result['cursor'] ?? 0), (int) ($result['total'] ?? 0)),
+            };
+            $notice = ['type' => 'success', 'message' => $message];
+        }
+        set_transient('feu_einsatz_post_migration_notice_' . get_current_user_id(), $notice, 5 * MINUTE_IN_SECONDS);
+        wp_safe_redirect(admin_url('admin.php?page=feu-einsatz-datenmigration'));
+        exit;
     }
 
     public function handle_accept_migration(): void {

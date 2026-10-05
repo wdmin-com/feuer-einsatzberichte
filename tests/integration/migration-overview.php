@@ -32,6 +32,19 @@ try {
     if ($old['old_reports'] < 1 || !$old['needs_attention'] || 'old' !== $old['storage'] && 'mixed' !== $old['storage']) {
         throw new RuntimeException('Legacy report did not trigger the migration notice.');
     }
+    wp_set_current_user(1);
+    $migration_state = $old;
+    $keyword_items = $old['keyword_items'];
+    $post_preflight = FEU_Einsatz_Post_Migration::preflight();
+    $keyword_preflight = [];
+    $post_migration_notice = null;
+    ob_start();
+    include FEU_EINSATZ_PLUGIN_DIR . 'templates/admin/migration-overview.php';
+    $migration_html = ob_get_clean();
+    if (false === strpos($migration_html, 'name="migration_operation" value="start"')
+        || false === strpos($migration_html, 'Berichtsumzug starten')) {
+        throw new RuntimeException('The migration overview does not offer the report start action.');
+    }
 
     if (!set_post_type($id, FEU_Einsatz_Report_Post_Type::POST_TYPE)) {
         throw new RuntimeException('Could not move fixture to the new post type.');
