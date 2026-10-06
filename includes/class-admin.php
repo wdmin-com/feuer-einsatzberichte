@@ -9290,12 +9290,10 @@ class FEU_Einsatz_Admin {
         }
         check_admin_referer('feu_einsatz_accept_migration', 'feu_einsatz_migration_nonce');
         $state = FEU_Einsatz_Migration_Overview::status();
-        $checks = ['urls', 'related_data'];
-        $confirmed = !empty($state['ready_for_acceptance']) && empty($state['accepted_before']);
-        foreach ($checks as $check) {
-            $confirmed = $confirmed && isset($_POST['feu_einsatz_migration_' . $check])
-                && '1' === sanitize_text_field(wp_unslash($_POST['feu_einsatz_migration_' . $check]));
-        }
+        $confirmed = !empty($state['ready_for_acceptance']) && empty($state['accepted_before'])
+            && isset($_POST['feu_einsatz_migration_confirm'])
+            && is_scalar($_POST['feu_einsatz_migration_confirm'])
+            && '1' === (string) wp_unslash($_POST['feu_einsatz_migration_confirm']);
         if (!$confirmed) {
             wp_die(esc_html__('Die Abschlussprüfung ist unvollständig. Bitte Daten und URLs prüfen.', 'feuer-einsatzberichte'), '', ['response' => 400]);
         }

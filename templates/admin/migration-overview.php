@@ -195,13 +195,12 @@ $missing_authors = count(array_filter((array) ($post_preflight['warnings'] ?? []
     <?php if (!empty($migration_state['ready_for_acceptance']) && empty($migration_state['accepted_before'])) : ?>
         <section class="feu-einsatz-migration-acceptance" aria-labelledby="feu-einsatz-migration-acceptance-title">
             <h2 id="feu-einsatz-migration-acceptance-title"><?php esc_html_e('Abschlussprüfung', 'feuer-einsatzberichte'); ?></h2>
-            <p><?php esc_html_e('Die technische Übertragung ist abgeschlossen. Bestätigen Sie die folgenden Punkte erst nach der Prüfung auf Ihrer Website.', 'feuer-einsatzberichte'); ?></p>
+            <p><?php esc_html_e('Die technische Übertragung ist abgeschlossen. Das Plugin prüft vor dem Abschluss erneut Berichte, Verknüpfungen und gespeicherte URLs.', 'feuer-einsatzberichte'); ?></p>
             <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
                 <input type="hidden" name="action" value="feu_einsatz_accept_migration" />
                 <?php wp_nonce_field('feu_einsatz_accept_migration', 'feu_einsatz_migration_nonce'); ?>
                 <p><?php esc_html_e('Das vor dem Umzug erstellte Plugin-Archiv und das Migrationsjournal bleiben im System verfügbar.', 'feuer-einsatzberichte'); ?></p>
-                <p><label><input type="checkbox" name="feu_einsatz_migration_urls" value="1" required /> <?php esc_html_e('Alle bisherigen öffentlichen URLs und Canonical-Adressen wurden geprüft und bleiben unverändert erreichbar.', 'feuer-einsatzberichte'); ?></label></p>
-                <p><label><input type="checkbox" name="feu_einsatz_migration_related_data" value="1" required /> <?php esc_html_e('Autoren, Teilnehmer, Organisationen, Medien, Karten, Kommentare, Statistik und Archive wurden abgeglichen.', 'feuer-einsatzberichte'); ?></label></p>
+                <p><label><input type="checkbox" name="feu_einsatz_migration_confirm" value="1" required /> <?php esc_html_e('Ich möchte die abgeschlossene Übertragung bestätigen.', 'feuer-einsatzberichte'); ?></label></p>
                 <p><button type="submit" class="button button-primary"><?php esc_html_e('Migration endgültig bestätigen', 'feuer-einsatzberichte'); ?></button></p>
             </form>
         </section>
