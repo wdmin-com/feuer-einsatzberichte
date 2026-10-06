@@ -2276,6 +2276,14 @@
                 $preview.prop('hidden', false);
             };
 
+            var showPreviewError = function (message) {
+                destroyInteractiveMap();
+                $canvas.empty().append(
+                    $('<p class="feu-einsatz-address-map-preview-error" role="status"></p>').text(message)
+                );
+                $status.text(message);
+            };
+
             var renderInteractiveMap = function (data) {
                 var latitude = parseFloat(data.latitude);
                 var longitude = parseFloat(data.longitude);
@@ -2454,8 +2462,19 @@
 
                     if (response && response.success && response.data) {
                         var previewData = $.extend({ location_mode: details.locationMode }, response.data);
-                        if (!renderInteractiveMap(previewData)) {
-                            $canvas.html(previewData.markup || '');
+                        var rendered = false;
+                        try {
+                            rendered = renderInteractiveMap(previewData);
+                        } catch (mapError) {
+                            destroyInteractiveMap();
+                        }
+                        if (!rendered && previewData.markup) {
+                            $canvas.html(previewData.markup);
+                            rendered = true;
+                        }
+                        if (!rendered) {
+                            showPreviewError('Die Kartenansicht konnte nicht geladen werden. Bitte Karte aktualisieren oder die Kartenverbindung prüfen.');
+                            return;
                         }
                         lastRenderedAddressKey = details.addressKey;
                         $status.text(previewData.message || 'Kartenvorschau aktualisiert.');
@@ -2472,16 +2491,14 @@
                             ).prop('hidden', false);
                         }
                     } else {
-                        $canvas.empty();
-                        $status.text((response && response.data && response.data.message) || 'Kartenvorschau konnte nicht erstellt werden.');
+                        showPreviewError((response && response.data && response.data.message) || 'Kartenvorschau konnte nicht erstellt werden.');
                     }
                 }).fail(function (xhr, status) {
                     if (status === 'abort' || readRequiredDetails().addressKey !== details.addressKey) {
                         return;
                     }
                     var serverMessage = xhr && xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message;
-                    $canvas.empty();
-                    $status.text(serverMessage || 'Kartenvorschau ist momentan nicht verfügbar. Bitte Eingabe oder Kartenverbindung prüfen.');
+                    showPreviewError(serverMessage || 'Kartenvorschau ist momentan nicht verfügbar. Bitte Eingabe oder Kartenverbindung prüfen.');
                 }).always(function () {
                     if (request === activeRequest) {
                         $preview.removeClass('is-loading');
@@ -2638,13 +2655,10 @@
         }
 
         function appendGalleryItem(id, imageUrl) {
-            var html = '' +
-                '<div class="feu-einsatz-gallery-item" data-id="' + id + '">' +
-                '<img src="' + imageUrl + '" alt="" class="feu-einsatz-gallery-thumb" />' +
-                '<button type="button" class="button-link-delete feu-einsatz-remove-gallery-image feu-einsatz-gallery-remove-button">x</button>' +
-                '</div>';
-
-            $('#feu-einsatz-gallery-preview').append(html);
+            var $item = $('<div class="feu-einsatz-gallery-item"></div>').attr('data-id', String(id));
+            $('<img class="feu-einsatz-gallery-thumb" alt="" />').attr('src', String(imageUrl || '')).appendTo($item);
+            $('<button type="button" class="button-link-delete feu-einsatz-remove-gallery-image feu-einsatz-gallery-remove-button" aria-label="Foto entfernen">&times;</button>').appendTo($item);
+            $('#feu-einsatz-gallery-preview').append($item);
         }
 
         function showNotice(type, message) {

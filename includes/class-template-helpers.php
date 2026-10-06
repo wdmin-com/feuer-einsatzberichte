@@ -66,7 +66,7 @@ class FEU_Einsatz_Template_Helpers {
      * Increment when the public report context gains data that must not be
      * served from an older, otherwise valid transient.
      */
-    const SINGLE_CONTEXT_CACHE_VERSION = '13';
+    const SINGLE_CONTEXT_CACHE_VERSION = '14';
 
     /**
      * Marks geometry that was resolved with the exact, local Overpass query.
@@ -2270,7 +2270,7 @@ class FEU_Einsatz_Template_Helpers {
         $thumbnail_id = (int) get_post_thumbnail_id($post_id);
 
         if ($thumbnail_id > 0 && !self::is_generated_map_attachment($thumbnail_id, $post_id)) {
-            $image_url = self::get_versioned_attachment_image_url($thumbnail_id, $size);
+            $image_url = self::get_safe_report_image_url($thumbnail_id, $size);
 
             if ($image_url) {
                 return [
@@ -2290,7 +2290,7 @@ class FEU_Einsatz_Template_Helpers {
                 continue;
             }
 
-            $image_url = self::get_versioned_attachment_image_url($attachment_id, $size);
+            $image_url = self::get_safe_report_image_url($attachment_id, $size);
 
             if ($image_url) {
                 return [
@@ -2302,7 +2302,9 @@ class FEU_Einsatz_Template_Helpers {
         }
 
         if ($thumbnail_id > 0 && !self::report_has_unverified_map_anchor($post_id)) {
-            $image_url = self::get_versioned_attachment_image_url($thumbnail_id, $size);
+            $image_url = self::is_generated_map_attachment($thumbnail_id, $post_id)
+                ? self::get_versioned_attachment_image_url($thumbnail_id, $size)
+                : self::get_safe_report_image_url($thumbnail_id, $size);
 
             if ($image_url) {
                 return [
@@ -2335,7 +2337,7 @@ class FEU_Einsatz_Template_Helpers {
         $thumbnail_id = (int) get_post_thumbnail_id($post_id);
 
         if ($thumbnail_id > 0 && !self::is_generated_map_attachment($thumbnail_id, $post_id)) {
-            $image_url = self::get_versioned_attachment_image_url($thumbnail_id, $size);
+            $image_url = self::get_safe_report_image_url($thumbnail_id, $size);
 
             if ($image_url) {
                 $alt_text = trim((string) get_post_meta($thumbnail_id, '_wp_attachment_image_alt', true));
@@ -2365,7 +2367,7 @@ class FEU_Einsatz_Template_Helpers {
                 continue;
             }
 
-            $image_url = self::get_versioned_attachment_image_url($attachment_id, $size);
+            $image_url = self::get_safe_report_image_url($attachment_id, $size);
 
             if (!$image_url) {
                 continue;
@@ -2406,7 +2408,7 @@ class FEU_Einsatz_Template_Helpers {
                     continue;
                 }
 
-                $image_url = self::get_versioned_attachment_image_url($attachment_id, $size);
+                $image_url = self::get_safe_report_image_url($attachment_id, $size);
 
                 if (!$image_url) {
                     continue;
@@ -2431,6 +2433,15 @@ class FEU_Einsatz_Template_Helpers {
             'attachment_id' => 0,
             'alt' => '',
         ];
+    }
+
+    private static function get_safe_report_image_url($attachment_id, $size) {
+        if (class_exists('FEU_Einsatz_Image_Protection') && FEU_Einsatz_Image_Protection::is_image_watermark_enabled()) {
+            $urls = FEU_Einsatz_Image_Protection::get_protected_image_urls($attachment_id, is_admin());
+            return is_array($urls) ? (string) ($urls['thumb'] ?? '') : '';
+        }
+
+        return self::get_versioned_attachment_image_url($attachment_id, $size);
     }
 
     public static function get_report_photo_image_data($post_id, $gallery_ids = [], $size = 'large') {
@@ -2487,7 +2498,11 @@ class FEU_Einsatz_Template_Helpers {
 
         $attachment_id = isset($report['image_attachment_id']) ? absint($report['image_attachment_id']) : 0;
 
-        if ($attachment_id > 0) {
+        $watermarked_photo = class_exists('FEU_Einsatz_Image_Protection')
+            && FEU_Einsatz_Image_Protection::is_image_watermark_enabled()
+            && $attachment_id > 0
+            && !self::is_generated_map_attachment($attachment_id);
+        if ($attachment_id > 0 && !$watermarked_photo) {
             $image_markup = wp_get_attachment_image($attachment_id, $args['size'], false, $attributes);
 
             return self::normalize_overview_card_image_markup($image_markup, $sizes);
@@ -4789,6 +4804,7 @@ class FEU_Einsatz_Template_Helpers {
             'house_number' => (string) get_post_meta($post_id, '_feu_einsatz_hausnummer', true),
             'postcode' => (string) get_post_meta($post_id, '_feu_einsatz_plz', true),
             'city' => (string) get_post_meta($post_id, '_feu_einsatz_stadt', true),
+            'district' => (string) get_post_meta($post_id, '_feu_einsatz_stadtteil', true),
             'date' => (string) get_post_meta($post_id, '_feu_einsatz_datum', true),
             'time' => (string) get_post_meta($post_id, '_feu_einsatz_uhrzeit', true),
             'latitude' => (string) get_post_meta($post_id, '_feu_einsatz_latitude', true),
@@ -4829,6 +4845,9 @@ class FEU_Einsatz_Template_Helpers {
                 'desaturate_orgs' => (int) get_option('feu_einsatz_single_desaturate_organizations', 0),
                 'watermark_enabled' => (int) get_option('feu_einsatz_photo_watermark_enabled', 1),
                 'watermark_text' => (string) get_option('feu_einsatz_photo_watermark_text', get_bloginfo('name')),
+                'watermark_image_id' => (int) get_option('feu_einsatz_photo_watermark_image_id', 0),
+                'watermark_opacity' => (int) get_option('feu_einsatz_photo_watermark_opacity', 36),
+                'watermark_scale' => (int) get_option('feu_einsatz_photo_watermark_scale', 42),
             ],
         ]));
     }
@@ -5477,6 +5496,11 @@ class FEU_Einsatz_Template_Helpers {
             $protected_urls = $image_watermark_enabled
                 ? FEU_Einsatz_Image_Protection::get_protected_image_urls($attachment_id, $can_generate_runtime_assets)
                 : false;
+            // A missing generated copy must never expose the original through
+            // the public gallery while image watermarking is configured.
+            if ($image_watermark_enabled && !$protected_urls) {
+                continue;
+            }
             $thumb_data = wp_get_attachment_image_src($attachment_id, 'medium_large');
             $thumb_url = is_array($thumb_data) ? $thumb_data[0] : false;
             $full_url = wp_get_attachment_image_url($attachment_id, 'full');
@@ -5490,10 +5514,18 @@ class FEU_Einsatz_Template_Helpers {
                 continue;
             }
 
+            $alt = trim((string) get_post_meta($attachment_id, '_wp_attachment_image_alt', true));
+            if ('' === $alt) {
+                $alt = trim((string) get_the_title($attachment_id));
+            }
+            if ('' === $alt) {
+                $alt = __('Einsatzfoto', 'feuer-einsatzberichte');
+            }
+
             $gallery_items[] = [
                 'thumb' => $thumb_url,
                 'full' => $full_url,
-                'alt' => get_post_meta($attachment_id, '_wp_attachment_image_alt', true),
+                'alt' => $alt,
                 'embedded_watermark' => !empty($protected_urls['embedded']),
                 'width' => is_array($thumb_data) ? (int) $thumb_data[1] : 0,
                 'height' => is_array($thumb_data) ? (int) $thumb_data[2] : 0,
@@ -5723,6 +5755,7 @@ class FEU_Einsatz_Template_Helpers {
         $display_street = self::strip_house_number_from_street($street);
         $postcode = trim((string) get_post_meta($post_id, '_feu_einsatz_plz', true));
         $city = trim((string) get_post_meta($post_id, '_feu_einsatz_stadt', true));
+        $district = trim((string) get_post_meta($post_id, '_feu_einsatz_stadtteil', true));
         $event_date = trim((string) get_post_meta($post_id, '_feu_einsatz_datum', true));
         $event_time = trim((string) get_post_meta($post_id, '_feu_einsatz_uhrzeit', true));
         $latitude = get_post_meta($post_id, '_feu_einsatz_latitude', true);
@@ -6038,6 +6071,13 @@ class FEU_Einsatz_Template_Helpers {
             'label_text_color' => sanitize_hex_color((string) get_option('feu_einsatz_map_label_text_color', '#ffffff')) ?: '#ffffff',
         ];
         $gallery_items = self::build_gallery_items($gallery_ids, $can_generate_runtime_assets);
+        $pending_gallery_count = $photo_watermark_enabled && class_exists('FEU_Einsatz_Image_Protection')
+            && FEU_Einsatz_Image_Protection::is_image_watermark_enabled()
+            ? max(0, count($gallery_ids) - count($gallery_items))
+            : 0;
+        if ($is_public_request && $pending_gallery_count > 0) {
+            FEU_Einsatz_Image_Protection::prime_attachment_cache($gallery_ids);
+        }
         $comments_enabled = self::is_comments_enabled($post_id);
         $comment_count = $comments_enabled ? (int) get_comments_number($post_id) : 0;
         $report_comments = [];
@@ -6083,6 +6123,7 @@ class FEU_Einsatz_Template_Helpers {
                 'street' => $display_street,
                 'postcode' => $postcode,
                 'city' => $city,
+                'district' => $district,
                 'date_raw' => $event_date,
                 'date_display' => $formatted_event_date,
                 'time' => $event_time,
@@ -6118,6 +6159,7 @@ class FEU_Einsatz_Template_Helpers {
             ],
             'gallery' => [
                 'items' => $gallery_items,
+                'pending_count' => $pending_gallery_count,
                 'watermark_enabled' => $photo_watermark_enabled,
                 'watermark_text' => $photo_watermark_text,
             ],
@@ -6137,7 +6179,7 @@ class FEU_Einsatz_Template_Helpers {
             ],
         ];
 
-        if ($is_public_request && '' !== $transient_key) {
+        if ($is_public_request && '' !== $transient_key && 0 === $pending_gallery_count) {
             set_transient(
                 $transient_key,
                 $single_context_cache[$memory_cache_key],

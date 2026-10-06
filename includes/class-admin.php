@@ -2416,7 +2416,9 @@ class FEU_Einsatz_Admin {
         wp_enqueue_script(
             'feu-einsatz-admin-script',
             FEU_EINSATZ_PLUGIN_URL . 'assets/admin/js/admin-script.js',
-            ['jquery', 'jquery-ui-datepicker'],
+            $is_report_editor_screen || 'post.php' === $hook || 'post-new.php' === $hook
+                ? ['jquery', 'jquery-ui-datepicker', 'feu-einsatz-admin-leaflet']
+                : ['jquery', 'jquery-ui-datepicker'],
             $admin_script_version,
             true
         );

@@ -605,8 +605,9 @@ $street_highlight_mode_label = 'full' === $street_highlight_mode
                         <button
                             type="button"
                             class="button-link-delete feu-einsatz-remove-gallery-image feu-einsatz-gallery-remove-button"
+                            aria-label="<?php echo esc_attr__('Foto entfernen', 'feuer-einsatzberichte'); ?>"
                         >
-                            x
+                            &times;
                         </button>
                     </div>
                 <?php endforeach; ?>

@@ -9085,6 +9085,16 @@
     height: 260px;
 }
 
+.feu-einsatz-address-map-preview-error {
+    max-width: 36rem;
+    margin: 0;
+    padding: 20px;
+    color: #8a2424;
+    font-weight: 600;
+    line-height: 1.5;
+    text-align: center;
+}
+
 .feu-einsatz-inline-card--map-preview.is-loading .feu-einsatz-address-map-preview-canvas {
     border-color: #93c5fd;
     background: linear-gradient(110deg, #f8fafc 20%, #eff6ff 40%, #f8fafc 60%);
