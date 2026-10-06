@@ -98,6 +98,7 @@ jobs:
           test "$(wp eval 'echo FEU_Einsatz_Admin::is_settings_tab_visible("module") ? "1" : "0";' --path="$RUNNER_TEMP/wordpress")" = "1"
           wp eval-file "$GITHUB_WORKSPACE/tests/integration/report-post-type.php" --path="$RUNNER_TEMP/wordpress"
           wp eval-file "$GITHUB_WORKSPACE/tests/integration/overview-performance.php" --path="$RUNNER_TEMP/wordpress"
+          wp eval-file "$GITHUB_WORKSPACE/tests/integration/overview-pagination.php" --path="$RUNNER_TEMP/wordpress"
           wp eval-file "$GITHUB_WORKSPACE/tests/integration/report-migration.php" --path="$RUNNER_TEMP/wordpress"
           wp eval-file "$GITHUB_WORKSPACE/tests/integration/migration-overview.php" --path="$RUNNER_TEMP/wordpress"
           wp eval-file "$GITHUB_WORKSPACE/tests/integration/migration-diagnostics.php" --path="$RUNNER_TEMP/wordpress"

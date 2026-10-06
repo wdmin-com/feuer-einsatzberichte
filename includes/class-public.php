@@ -1893,7 +1893,11 @@ class FEU_Einsatz_Public {
             $selected_year = FEU_Einsatz_Template_Helpers::sanitize_overview_year($atts['jahr']);
         }
 
-        $paged = max(1, (int) get_query_var('paged'), (int) get_query_var('page'));
+        $requested_page = isset($_GET['feu_page']) && is_scalar($_GET['feu_page'])
+            ? absint(wp_unslash($_GET['feu_page'])) : 0;
+        $paged = $requested_page > 0
+            ? $requested_page
+            : max(1, (int) get_query_var('paged'), (int) get_query_var('page'));
         $posts_per_page = max(1, absint($atts['posts_per_page']));
         $cache_key = $selected_year . ':' . $paged . ':' . $posts_per_page;
 
