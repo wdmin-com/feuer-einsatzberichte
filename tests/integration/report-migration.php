@@ -162,18 +162,16 @@ foreach ($legacy_ids as $index => $id) {
 set_current_screen('dashboard');
 $_POST = [
     'migration_operation' => 'start',
-    'database_backup' => $db_backup,
-    'uploads_backup' => $uploads_backup,
-    'database_sha256' => hash_file('sha256', $db_backup),
-    'uploads_sha256' => hash_file('sha256', $uploads_backup),
-    'staging_verified' => '1',
-    'migration_confirmation' => 'START',
+    'migration_confirm' => '1',
     'feu_einsatz_post_migration_nonce' => wp_create_nonce('feu_einsatz_post_migration'),
 ];
 $_REQUEST = $_POST;
 $admin_start = FEU_Einsatz_Post_Migration::handle_admin_action();
-if (is_wp_error($admin_start) || 'running' !== ($admin_start['status'] ?? '')) {
-    feu_einsatz_migration_fail('The administrator start action is unavailable.');
+if (is_wp_error($admin_start) || 'running' !== ($admin_start['status'] ?? '')
+    || 'plugin_archive' !== ($admin_start['backup']['mode'] ?? '')
+    || empty($admin_start['backup']['filename'])
+    || !is_file(trailingslashit(Feuer_Einsatzberichte_Core::get_instance()->get_backup()->get_archive_storage_dir()) . $admin_start['backup']['filename'])) {
+    feu_einsatz_migration_fail('The administrator start action did not create an automatic plugin archive.');
 }
 $_POST = [
     'migration_operation' => 'batch',

@@ -9290,7 +9290,7 @@ class FEU_Einsatz_Admin {
         }
         check_admin_referer('feu_einsatz_accept_migration', 'feu_einsatz_migration_nonce');
         $state = FEU_Einsatz_Migration_Overview::status();
-        $checks = ['backup', 'urls', 'related_data'];
+        $checks = ['urls', 'related_data'];
         $confirmed = !empty($state['ready_for_acceptance']) && empty($state['accepted_before']);
         foreach ($checks as $check) {
             $confirmed = $confirmed && isset($_POST['feu_einsatz_migration_' . $check])

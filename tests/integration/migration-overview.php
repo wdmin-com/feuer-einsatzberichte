@@ -42,7 +42,8 @@ try {
     include FEU_EINSATZ_PLUGIN_DIR . 'templates/admin/migration-overview.php';
     $migration_html = ob_get_clean();
     if (false === strpos($migration_html, 'name="migration_operation" value="start"')
-        || false === strpos($migration_html, 'Berichtsumzug starten')) {
+        || false === strpos($migration_html, 'Archiv erstellen und Übertragung starten')
+        || false !== strpos($migration_html, 'name="database_backup"')) {
         throw new RuntimeException('The migration overview does not offer the report start action.');
     }
 

@@ -822,33 +822,37 @@ body.feu-admin-ui--modern-shell .feu-einsatz-migration-action h2 {
     margin-top: 0;
 }
 body.feu-admin-ui--modern-shell .feu-einsatz-migration-start-form {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
     margin-top: 20px;
-}
-body.feu-admin-ui--modern-shell .feu-einsatz-migration-start-form > label {
-    display: grid;
-    gap: 7px;
-    min-width: 0;
-    font-weight: 600;
-}
-body.feu-admin-ui--modern-shell .feu-einsatz-migration-start-form input[type="text"] {
-    width: 100%;
-    max-width: none;
-    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-    font-size: 12px;
 }
 body.feu-admin-ui--modern-shell .feu-einsatz-migration-start-form > .feu-einsatz-migration-check {
     display: flex;
-    grid-column: 1 / -1;
     align-items: flex-start;
     gap: 10px;
     font-weight: 400;
 }
 body.feu-admin-ui--modern-shell .feu-einsatz-migration-start-form > button {
-    justify-self: start;
-    align-self: end;
+    min-height: 40px;
+}
+body.feu-admin-ui--modern-shell .feu-einsatz-migration-progress {
+    display: grid;
+    gap: 10px;
+    max-width: 560px;
+    margin: 20px 0;
+}
+body.feu-admin-ui--modern-shell .feu-einsatz-migration-progress progress {
+    width: 100%;
+    height: 12px;
+    accent-color: #0a64a3;
+}
+body.feu-admin-ui--modern-shell .feu-einsatz-migration-progress [hidden] {
+    display: none;
+}
+body.feu-admin-ui--modern-shell #feu-einsatz-migration-progress-error {
+    color: #b42318;
 }
 body.feu-admin-ui--modern-shell .feu-einsatz-migration-rollback-form {
     display: flex;
@@ -877,5 +881,4 @@ body.feu-admin-ui--modern-shell .feu-einsatz-migration-acceptance input[type="ch
 @media (max-width: 782px) {
     body.feu-admin-ui--modern-shell .feu-einsatz-migration-page { margin-top: 18px; padding: 0 14px; }
     body.feu-admin-ui--modern-shell .feu-einsatz-migration-table { display: block; overflow-x: auto; }
-    body.feu-admin-ui--modern-shell .feu-einsatz-migration-start-form { grid-template-columns: 1fr; }
 }

@@ -50,6 +50,12 @@ $missing_authors = count(array_filter((array) ($post_preflight['warnings'] ?? []
             <tr><th scope="row"><?php esc_html_e('Teilnehmer, Organisationen, Medien und Kommentare', 'feuer-einsatzberichte'); ?></th><td colspan="2"><?php esc_html_e('Keine Kopie erforderlich. Prüfung der Verknüpfungen bei der Abnahme noch ausstehend.', 'feuer-einsatzberichte'); ?></td></tr>
         </tbody>
     </table>
+    <?php if (!empty($migration_state['post_run']['backup']['filename'])) : ?>
+        <p class="description"><?php esc_html_e('Automatisch erstelltes Plugin-Archiv:', 'feuer-einsatzberichte'); ?>
+            <strong><?php echo esc_html((string) $migration_state['post_run']['backup']['filename']); ?></strong>
+            · <a href="<?php echo esc_url(admin_url('admin.php?page=feu-einsatz-archive')); ?>"><?php esc_html_e('Archive öffnen', 'feuer-einsatzberichte'); ?></a>
+        </p>
+    <?php endif; ?>
 
     <?php if ($keyword_items) : ?>
         <h2><?php esc_html_e('Status der Einsatzstichworte', 'feuer-einsatzberichte'); ?></h2>
@@ -132,30 +138,30 @@ $missing_authors = count(array_filter((array) ($post_preflight['warnings'] ?? []
                 <?php if (!empty($post_preflight['errors'])) : ?>
                     <p><?php esc_html_e('Der Start ist gesperrt, bis die Fehler der Vorprüfung behoben sind. Öffnen Sie die betroffenen Berichte oben und laden Sie diese Seite danach erneut.', 'feuer-einsatzberichte'); ?></p>
                 <?php else : ?>
-                    <p><?php esc_html_e('Der Umzug behält Berichts-IDs und öffentliche URLs bei. Er beginnt erst nach Ihrer Bestätigung und wird in Gruppen von zehn Berichten ausgeführt.', 'feuer-einsatzberichte'); ?></p>
-                    <p><?php esc_html_e('Erforderlich sind vollständige, auf einer Staging-Seite wiederhergestellte Sicherungen von Datenbank und Uploads. Beide Dateien müssen für PHP lesbar außerhalb des WordPress-Webverzeichnisses liegen.', 'feuer-einsatzberichte'); ?></p>
+                    <p><?php esc_html_e('Der Umzug behält Berichts-IDs und öffentliche URLs bei. Vor dem Start erstellt das Plugin automatisch ein Archiv seiner Berichte, Verknüpfungen und Medien. Danach überträgt es die Berichte in kleinen Gruppen und zeigt den Fortschritt an.', 'feuer-einsatzberichte'); ?></p>
+                    <p class="description"><?php esc_html_e('Das Plugin-Archiv ersetzt keine vollständige Sicherung Ihrer Website. Wenn das Archiv nicht erstellt werden kann, beginnt die Übertragung nicht.', 'feuer-einsatzberichte'); ?></p>
                     <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="feu-einsatz-migration-start-form">
                         <input type="hidden" name="action" value="feu_einsatz_post_migration">
                         <input type="hidden" name="migration_operation" value="start">
                         <?php wp_nonce_field('feu_einsatz_post_migration', 'feu_einsatz_post_migration_nonce'); ?>
-                        <label><?php esc_html_e('Pfad zur Datenbanksicherung', 'feuer-einsatzberichte'); ?><input type="text" name="database_backup" required autocomplete="off" placeholder="/private/backups/database.sql.gz"></label>
-                        <label><?php esc_html_e('SHA-256 der Datenbanksicherung', 'feuer-einsatzberichte'); ?><input type="text" name="database_sha256" required pattern="[a-fA-F0-9]{64}" maxlength="64" autocomplete="off"></label>
-                        <label><?php esc_html_e('Pfad zur Uploads-Sicherung', 'feuer-einsatzberichte'); ?><input type="text" name="uploads_backup" required autocomplete="off" placeholder="/private/backups/uploads.zip"></label>
-                        <label><?php esc_html_e('SHA-256 der Uploads-Sicherung', 'feuer-einsatzberichte'); ?><input type="text" name="uploads_sha256" required pattern="[a-fA-F0-9]{64}" maxlength="64" autocomplete="off"></label>
-                        <label class="feu-einsatz-migration-check"><input type="checkbox" name="staging_verified" value="1" required> <?php esc_html_e('Beide Sicherungen wurden auf Staging wiederhergestellt und geprüft.', 'feuer-einsatzberichte'); ?></label>
-                        <label class="feu-einsatz-migration-confirm"><?php esc_html_e('Zur Bestätigung START eingeben', 'feuer-einsatzberichte'); ?><input type="text" name="migration_confirmation" required pattern="START" autocomplete="off" placeholder="START"></label>
-                        <button type="submit" class="button button-primary"><?php esc_html_e('Berichtsumzug starten', 'feuer-einsatzberichte'); ?></button>
+                        <label class="feu-einsatz-migration-check"><input type="checkbox" name="migration_confirm" value="1" required> <?php esc_html_e('Ich möchte die Berichte in die neue Speicherstruktur übertragen.', 'feuer-einsatzberichte'); ?></label>
+                        <button type="submit" class="button button-primary"><?php esc_html_e('Archiv erstellen und Übertragung starten', 'feuer-einsatzberichte'); ?></button>
                     </form>
                 <?php endif; ?>
             <?php elseif ('rollback' === $post_direction && in_array($post_status, ['rolling_back', 'failed'], true)) : ?>
                 <p><?php esc_html_e('Die Rücksetzung wurde unterbrochen. Setzen Sie sie mit der nächsten Gruppe fort. Bei einem erneuten Fehler prüfen Sie zuerst den betroffenen Bericht und das Journal.', 'feuer-einsatzberichte'); ?></p>
             <?php elseif (in_array($post_status, ['running', 'failed'], true)) : ?>
-                <p><?php echo esc_html(sprintf(__('%1$d von %2$d Berichten bearbeitet. Jeder Klick überträgt höchstens zehn weitere Berichte.', 'feuer-einsatzberichte'), (int) ($migration_state['post_run']['cursor'] ?? 0), $post_total)); ?></p>
+                <p><?php esc_html_e('Die Übertragung läuft automatisch, solange diese Seite geöffnet ist. Bei einer Unterbrechung können Sie später hier fortfahren.', 'feuer-einsatzberichte'); ?></p>
+                <div id="feu-einsatz-migration-progress" class="feu-einsatz-migration-progress" role="status" aria-live="polite">
+                    <strong id="feu-einsatz-migration-progress-text"><?php echo esc_html(sprintf(__('%1$d von %2$d Berichten bearbeitet', 'feuer-einsatzberichte'), (int) ($migration_state['post_run']['cursor'] ?? 0), $post_total)); ?></strong>
+                    <progress id="feu-einsatz-migration-progress-bar" max="<?php echo esc_attr((string) max(1, $post_total)); ?>" value="<?php echo esc_attr((string) ($migration_state['post_run']['cursor'] ?? 0)); ?>"></progress>
+                    <span id="feu-einsatz-migration-progress-error" hidden></span>
+                </div>
                 <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
                     <input type="hidden" name="action" value="feu_einsatz_post_migration"><input type="hidden" name="migration_operation" value="batch">
                     <input type="hidden" name="run_id" value="<?php echo esc_attr((string) ($migration_state['post_run']['run_id'] ?? '')); ?>">
                     <?php wp_nonce_field('feu_einsatz_post_migration', 'feu_einsatz_post_migration_nonce'); ?>
-                    <button type="submit" class="button button-primary"><?php esc_html_e('Nächste 10 Berichte übertragen', 'feuer-einsatzberichte'); ?></button>
+                    <button type="submit" class="button"><?php esc_html_e('Manuell fortsetzen', 'feuer-einsatzberichte'); ?></button>
                 </form>
             <?php elseif ('partial_error' === $post_status) : ?>
                 <p><?php esc_html_e('Alle unabhängigen Berichte wurden bearbeitet. Prüfen Sie die Fehler oben und verwenden Sie dort „Erneut versuchen“ nur für den betroffenen Bericht.', 'feuer-einsatzberichte'); ?></p>
@@ -193,11 +199,61 @@ $missing_authors = count(array_filter((array) ($post_preflight['warnings'] ?? []
             <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
                 <input type="hidden" name="action" value="feu_einsatz_accept_migration" />
                 <?php wp_nonce_field('feu_einsatz_accept_migration', 'feu_einsatz_migration_nonce'); ?>
-                <p><label><input type="checkbox" name="feu_einsatz_migration_backup" value="1" required /> <?php esc_html_e('Vollständige Sicherungen von Datenbank und Uploads wurden geprüft und auf Staging wiederhergestellt.', 'feuer-einsatzberichte'); ?></label></p>
+                <p><?php esc_html_e('Das vor dem Umzug erstellte Plugin-Archiv und das Migrationsjournal bleiben im System verfügbar.', 'feuer-einsatzberichte'); ?></p>
                 <p><label><input type="checkbox" name="feu_einsatz_migration_urls" value="1" required /> <?php esc_html_e('Alle bisherigen öffentlichen URLs und Canonical-Adressen wurden geprüft und bleiben unverändert erreichbar.', 'feuer-einsatzberichte'); ?></label></p>
                 <p><label><input type="checkbox" name="feu_einsatz_migration_related_data" value="1" required /> <?php esc_html_e('Autoren, Teilnehmer, Organisationen, Medien, Karten, Kommentare, Statistik und Archive wurden abgeglichen.', 'feuer-einsatzberichte'); ?></label></p>
                 <p><button type="submit" class="button button-primary"><?php esc_html_e('Migration endgültig bestätigen', 'feuer-einsatzberichte'); ?></button></p>
             </form>
         </section>
+    <?php endif; ?>
+    <?php if ('forward' === $post_direction && in_array($post_status, ['running', 'failed'], true)) : ?>
+        <script>
+        (() => {
+            const progress = document.getElementById('feu-einsatz-migration-progress');
+            if (!progress) return;
+            const label = document.getElementById('feu-einsatz-migration-progress-text');
+            const bar = document.getElementById('feu-einsatz-migration-progress-bar');
+            const error = document.getElementById('feu-einsatz-migration-progress-error');
+            const endpoint = <?php echo wp_json_encode(admin_url('admin-ajax.php')); ?>;
+            const runId = <?php echo wp_json_encode((string) ($migration_state['post_run']['run_id'] ?? '')); ?>;
+            const nonce = <?php echo wp_json_encode(wp_create_nonce('feu_einsatz_post_migration')); ?>;
+            const progressFormat = <?php echo wp_json_encode(__('%1$d von %2$d Berichten bearbeitet', 'feuer-einsatzberichte')); ?>;
+            let active = true;
+            window.addEventListener('pagehide', () => { active = false; });
+            const request = async (retryId = 0) => {
+                const body = new URLSearchParams({action: 'feu_einsatz_post_migration_batch', nonce, run_id: runId});
+                if (retryId) body.set('retry_id', String(retryId));
+                const response = await fetch(endpoint, {method: 'POST', credentials: 'same-origin', body});
+                const payload = await response.json();
+                if (!response.ok || !payload.success) throw new Error(payload.data?.message || 'Die Übertragung wurde unterbrochen.');
+                return payload.data;
+            };
+            const render = (state) => {
+                label.textContent = progressFormat.replace('%1$d', String(state.cursor)).replace('%2$d', String(state.total));
+                bar.max = Math.max(1, Number(state.total));
+                bar.value = Number(state.cursor);
+            };
+            (async () => {
+                try {
+                    let state;
+                    do {
+                        state = await request();
+                        if (!active) return;
+                        render(state);
+                    } while (state.status === 'running' && Number(state.cursor) < Number(state.total));
+                    if (state.status === 'partial_error') {
+                        for (const failure of state.failures || []) {
+                            if (!active || Number(failure.attempts) !== 1) continue;
+                            state = await request(Number(failure.id));
+                        }
+                    }
+                    if (active) window.location.reload();
+                } catch (problem) {
+                    error.hidden = false;
+                    error.textContent = problem.message;
+                }
+            })();
+        })();
+        </script>
     <?php endif; ?>
 </div>
