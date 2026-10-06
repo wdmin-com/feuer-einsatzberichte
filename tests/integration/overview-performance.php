@@ -97,16 +97,22 @@ $map_post_id = wp_insert_post([
 if (is_wp_error($map_post_id)) {
     throw new RuntimeException('Could not create background map report.');
 }
+$previous_show_station = get_option('feu_einsatz_single_live_map_show_station', 0);
+$previous_station_street = get_option('feu_einsatz_area_station_street', '');
 try {
     update_post_meta($map_post_id, FEU_Einsatz_Report_Post_Type::MARKER_META, '1');
     update_post_meta($map_post_id, '_feu_einsatz_strasse', 'Performance Test Street');
     update_post_meta($map_post_id, '_feu_einsatz_plz', '22113');
     update_post_meta($map_post_id, '_feu_einsatz_stadt', 'Hamburg');
+    update_option('feu_einsatz_single_live_map_show_station', 1);
+    update_option('feu_einsatz_area_station_street', 'Performance Test Station ' . $suffix);
     $map_requests = 0;
-    $block_map_requests = static function ($pre, $args, $url) use (&$map_requests) {
+    $map_urls = [];
+    $block_map_requests = static function ($pre, $args, $url) use (&$map_requests, &$map_urls) {
         if (str_contains((string) $url, 'nominatim.openstreetmap.org')
             || str_contains((string) $url, 'overpass')) {
             $map_requests++;
+            $map_urls[] = (string) $url;
             return new WP_Error('unexpected_public_map_request', 'Public report rendering attempted remote map lookup.');
         }
         return $pre;
@@ -117,11 +123,19 @@ try {
     } finally {
         remove_filter('pre_http_request', $block_map_requests, 10);
     }
-    if ($map_requests > 0 || !wp_next_scheduled('feu_einsatz_prime_public_map', [$map_post_id])) {
-        throw new RuntimeException('Public report rendering did not defer remote map repair.');
+    $map_event = wp_next_scheduled('feu_einsatz_prime_public_map', [$map_post_id]);
+    $station_event = wp_next_scheduled('feu_einsatz_prime_public_station');
+    if ($map_requests > 0 || !$map_event || !$station_event) {
+        throw new RuntimeException('Public report map repair: requests=' . $map_requests
+            . ', event=' . ($map_event ?: 'none') . ', station=' . ($station_event ?: 'none')
+            . ', urls=' . implode(', ', $map_urls));
     }
 } finally {
     wp_clear_scheduled_hook('feu_einsatz_prime_public_map', [$map_post_id]);
+    wp_clear_scheduled_hook('feu_einsatz_prime_public_station');
+    delete_transient('feu_einsatz_public_station_prime_v1');
+    update_option('feu_einsatz_single_live_map_show_station', $previous_show_station);
+    update_option('feu_einsatz_area_station_street', $previous_station_street);
     wp_delete_post((int) $map_post_id, true);
 }
 

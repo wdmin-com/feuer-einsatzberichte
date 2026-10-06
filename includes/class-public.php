@@ -96,6 +96,7 @@ class FEU_Einsatz_Public {
         }
         add_action('feu_einsatz_reports_restored', ['FEU_Einsatz_Template_Helpers', 'invalidate_overview_cache']);
         add_action('feu_einsatz_prime_public_map', ['FEU_Einsatz_Template_Helpers', 'prime_public_map_in_background']);
+        add_action('feu_einsatz_prime_public_station', ['FEU_Einsatz_Template_Helpers', 'prime_public_station_in_background']);
         add_action('wp_enqueue_scripts', [$this, 'enqueue_scripts']);
         add_action('wp_head', [$this, 'render_social_share_meta_tags'], 5);
         $this->register_shortcode_aliases('count', [$this, 'render_einsatz_count_shortcode']);

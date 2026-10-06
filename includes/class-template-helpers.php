@@ -58,6 +58,10 @@ class FEU_Einsatz_Template_Helpers {
         );
     }
 
+    public static function prime_public_station_in_background(): void {
+        self::get_station_feature_from_settings();
+    }
+
     /**
      * Increment when the public report context gains data that must not be
      * served from an older, otherwise valid transient.
@@ -1750,7 +1754,7 @@ class FEU_Einsatz_Template_Helpers {
         return $best_feature ?: false;
     }
 
-    public static function get_area_station_feature($street, $plz = '', $city = 'Hamburg', $logo_id = 0, $logo_size = 40) {
+    public static function get_area_station_feature($street, $plz = '', $city = 'Hamburg', $logo_id = 0, $logo_size = 40, $allow_remote_refresh = true) {
         $street = trim((string) $street);
         $plz = trim((string) $plz);
         $city = trim((string) $city);
@@ -1772,6 +1776,9 @@ class FEU_Einsatz_Template_Helpers {
             || !is_numeric($cached_coordinates['latitude'])
             || !is_numeric($cached_coordinates['longitude'])
         ) {
+            if (!$allow_remote_refresh) {
+                return false;
+            }
             $geocoded_data = self::request_geocoded_address_data($street, $plz, $city);
 
             if ($geocoded_data) {
@@ -1833,7 +1840,7 @@ class FEU_Einsatz_Template_Helpers {
         ];
     }
 
-    public static function get_station_feature_from_settings() {
+    public static function get_station_feature_from_settings($allow_remote_refresh = true) {
         $street = trim((string) get_option('feu_einsatz_area_station_street', ''));
 
         if ('' === $street) {
@@ -1845,7 +1852,8 @@ class FEU_Einsatz_Template_Helpers {
             preg_replace('/\D+/', '', (string) get_option('feu_einsatz_area_station_postcode', '')),
             trim((string) get_option('feu_einsatz_area_station_city', 'Hamburg')),
             absint(get_option('feu_einsatz_area_station_logo_id', 0)),
-            max(20, min(96, absint(get_option('feu_einsatz_area_station_logo_size', 40))))
+            max(20, min(96, absint(get_option('feu_einsatz_area_station_logo_size', 40)))),
+            $allow_remote_refresh
         );
     }
 
@@ -5908,7 +5916,21 @@ class FEU_Einsatz_Template_Helpers {
         if ($anchor_unverified) {
             $map_fallback_image_url = '';
         }
-        $station_feature = self::get_station_feature_from_settings();
+        $station_feature = $single_live_map_show_station
+            ? self::get_station_feature_from_settings(!$is_public_request)
+            : false;
+        if ($is_public_request && $single_live_map_show_station && !$station_feature) {
+            $station_lock_key = 'feu_einsatz_public_station_prime_v1';
+            if (false === get_transient($station_lock_key)) {
+                set_transient($station_lock_key, 1, 10 * MINUTE_IN_SECONDS);
+                if (!wp_next_scheduled('feu_einsatz_prime_public_station')) {
+                    $scheduled = wp_schedule_single_event(time() + 5, 'feu_einsatz_prime_public_station', [], true);
+                    if (is_wp_error($scheduled) || !$scheduled) {
+                        delete_transient($station_lock_key);
+                    }
+                }
+            }
+        }
         $single_live_map_station_feature = $single_live_map_show_station && is_array($station_feature)
             ? $station_feature
             : false;
