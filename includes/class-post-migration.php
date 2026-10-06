@@ -547,6 +547,7 @@ final class FEU_Einsatz_Post_Migration {
     }
 
     private static function finish_counts_and_caches(array $run): void {
+        FEU_Einsatz_Template_Helpers::invalidate_overview_cache();
         $category_ids = [];
         foreach ((array) ($run['records'] ?? []) as $row) {
             $category_ids = array_merge($category_ids, (array) ($row['category_ids'] ?? []));

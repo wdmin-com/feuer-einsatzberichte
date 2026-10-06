@@ -4,12 +4,65 @@ if (!defined('ABSPATH')) {
 }
 
 class FEU_Einsatz_Template_Helpers {
+    private const OVERVIEW_CACHE_REVISION_OPTION = 'feu_einsatz_overview_cache_revision';
+
+    public static function invalidate_overview_cache(): void {
+        update_option(self::OVERVIEW_CACHE_REVISION_OPTION, wp_generate_uuid4(), false);
+    }
+
+    public static function invalidate_overview_cache_for_post($post_id): void {
+        $post_id = absint($post_id);
+        if ($post_id && FEU_Einsatz_Report_Post_Type::is_marked_report($post_id)) {
+            self::invalidate_overview_cache();
+        }
+    }
+
+    public static function invalidate_overview_cache_for_meta($meta_id, $post_id, $meta_key): void {
+        if (FEU_Einsatz_Report_Post_Type::MARKER_META === (string) $meta_key) {
+            self::invalidate_overview_cache();
+        } elseif (in_array((string) $meta_key, ['_feu_einsatz_datum', '_feu_einsatz_uhrzeit'], true)) {
+            self::invalidate_overview_cache_for_post($post_id);
+        }
+    }
+
+    public static function invalidate_overview_cache_for_terms($post_id, $terms, $tt_ids, $taxonomy): void {
+        if (in_array((string) $taxonomy, ['category', FEU_Einsatz_Report_Taxonomy::TAXONOMY], true)) {
+            self::invalidate_overview_cache_for_post($post_id);
+        }
+    }
+
+    public static function invalidate_overview_cache_for_term($term_id, $tt_id, $taxonomy): void {
+        if (in_array((string) $taxonomy, ['category', FEU_Einsatz_Report_Taxonomy::TAXONOMY], true)) {
+            self::invalidate_overview_cache();
+        }
+    }
+
+    private static function get_overview_cache_revision(): string {
+        return (string) get_option(self::OVERVIEW_CACHE_REVISION_OPTION, 'initial');
+    }
+
+    public static function prime_public_map_in_background($post_id): void {
+        $post_id = absint($post_id);
+        if (!$post_id || !FEU_Einsatz_Report_Post_Type::is_marked_report($post_id)) {
+            return;
+        }
+        $street = trim((string) get_post_meta($post_id, '_feu_einsatz_strasse', true));
+        if ('' === $street) {
+            return;
+        }
+        self::prime_public_map_data(
+            $post_id,
+            $street,
+            (string) get_post_meta($post_id, '_feu_einsatz_plz', true),
+            (string) get_post_meta($post_id, '_feu_einsatz_stadt', true)
+        );
+    }
 
     /**
      * Increment when the public report context gains data that must not be
      * served from an older, otherwise valid transient.
      */
-    const SINGLE_CONTEXT_CACHE_VERSION = '12';
+    const SINGLE_CONTEXT_CACHE_VERSION = '13';
 
     /**
      * Marks geometry that was resolved with the exact, local Overpass query.
@@ -2006,7 +2059,8 @@ class FEU_Einsatz_Template_Helpers {
 
         $post_id = absint($post_id);
         $root_category_id = absint($root_category_id);
-        $cache_key = $post_id . ':' . $root_category_id . ':' . (FEU_Einsatz_Report_Taxonomy::enabled() ? 'keywords' : 'legacy');
+        $cache_key = $post_id . ':' . $root_category_id . ':' . self::get_overview_cache_revision()
+            . ':' . (FEU_Einsatz_Report_Taxonomy::enabled() ? 'keywords' : 'legacy');
 
         if (array_key_exists($cache_key, $cache)) {
             return $cache[$cache_key];
@@ -5415,7 +5469,8 @@ class FEU_Einsatz_Template_Helpers {
             $protected_urls = $image_watermark_enabled
                 ? FEU_Einsatz_Image_Protection::get_protected_image_urls($attachment_id, $can_generate_runtime_assets)
                 : false;
-            $thumb_url = wp_get_attachment_image_url($attachment_id, 'medium_large');
+            $thumb_data = wp_get_attachment_image_src($attachment_id, 'medium_large');
+            $thumb_url = is_array($thumb_data) ? $thumb_data[0] : false;
             $full_url = wp_get_attachment_image_url($attachment_id, 'full');
 
             if ($protected_urls && !empty($protected_urls['thumb']) && !empty($protected_urls['full'])) {
@@ -5432,6 +5487,9 @@ class FEU_Einsatz_Template_Helpers {
                 'full' => $full_url,
                 'alt' => get_post_meta($attachment_id, '_wp_attachment_image_alt', true),
                 'embedded_watermark' => !empty($protected_urls['embedded']),
+                'width' => is_array($thumb_data) ? (int) $thumb_data[1] : 0,
+                'height' => is_array($thumb_data) ? (int) $thumb_data[2] : 0,
+                'srcset' => $protected_urls ? '' : (string) wp_get_attachment_image_srcset($attachment_id, 'medium_large'),
             ];
         }
 
@@ -5684,9 +5742,8 @@ class FEU_Einsatz_Template_Helpers {
             }
         }
 
-        // Public pages normally render only from the local cache. If a plugin
-        // update invalidated an old cache, repair that one report once on the
-        // server instead of publishing an empty map until an editor opens it.
+        // Public requests must never wait for remote geocoding. Schedule a
+        // repair and render the saved preview while the cron job catches up.
         $geometry_source = (string) get_post_meta($post_id, self::FOCUSED_GEOMETRY_SOURCE_META, true);
         $has_complete_geometry_source = in_array(
             $geometry_source,
@@ -5720,16 +5777,10 @@ class FEU_Einsatz_Template_Helpers {
                     defined('MINUTE_IN_SECONDS') ? MINUTE_IN_SECONDS * 10 : 600
                 );
 
-                $primed_map_data = self::prime_public_map_data($post_id, $street, $postcode, $city);
-
-                if (is_array($primed_map_data)) {
-                    if (!empty($primed_map_data['coordinates']['lat']) && !empty($primed_map_data['coordinates']['lng'])) {
-                        $latitude = (string) $primed_map_data['coordinates']['lat'];
-                        $longitude = (string) $primed_map_data['coordinates']['lng'];
-                    }
-                    if (!empty($primed_map_data['geometry'])) {
-                        $street_geometry = $primed_map_data['geometry'];
-                        $street_center = !empty($primed_map_data['center']) ? $primed_map_data['center'] : $street_center;
+                if (!wp_next_scheduled('feu_einsatz_prime_public_map', [$post_id])) {
+                    $scheduled = wp_schedule_single_event(time() + 5, 'feu_einsatz_prime_public_map', [$post_id], true);
+                    if (is_wp_error($scheduled) || !$scheduled) {
+                        delete_transient($prime_lock_key);
                     }
                 }
             }
@@ -6087,8 +6138,9 @@ class FEU_Einsatz_Template_Helpers {
             ];
         }
 
-        if (isset($number_cache[$post_id])) {
-            return $number_cache[$post_id];
+        $number_cache_key = $post_id . ':' . self::get_overview_cache_revision();
+        if (isset($number_cache[$number_cache_key])) {
+            return $number_cache[$number_cache_key];
         }
 
         $root_category = self::find_root_category();
@@ -6096,36 +6148,35 @@ class FEU_Einsatz_Template_Helpers {
         $year = (int) self::get_overview_report_year($post_id);
 
         if ($root_category_id < 1 || $year < 1) {
-            $number_cache[$post_id] = [
+            $number_cache[$number_cache_key] = [
                 'number' => 0,
                 'year' => $year,
             ];
 
-            return $number_cache[$post_id];
+            return $number_cache[$number_cache_key];
         }
 
         $all_category_ids = self::get_overview_category_ids($root_category_id);
-        $overview_post_ids = self::get_overview_index_post_ids($all_category_ids);
-        $index_data = self::build_overview_index_data($overview_post_ids, $root_category_id, '');
+        $index_data = self::get_cached_overview_index_data($all_category_ids, $root_category_id);
         $post_number_map = isset($index_data['post_number_map']) && is_array($index_data['post_number_map'])
             ? $index_data['post_number_map']
             : [];
 
         if (!empty($post_number_map[$post_id]) && is_array($post_number_map[$post_id])) {
-            $number_cache[$post_id] = [
+            $number_cache[$number_cache_key] = [
                 'number' => isset($post_number_map[$post_id]['number']) ? (int) $post_number_map[$post_id]['number'] : 0,
                 'year' => isset($post_number_map[$post_id]['year']) ? (int) $post_number_map[$post_id]['year'] : $year,
             ];
 
-            return $number_cache[$post_id];
+            return $number_cache[$number_cache_key];
         }
 
-        $number_cache[$post_id] = [
+        $number_cache[$number_cache_key] = [
             'number' => 0,
             'year' => $year,
         ];
 
-        return $number_cache[$post_id];
+        return $number_cache[$number_cache_key];
     }
 
     private static function get_overview_report_year($post_id) {
@@ -6249,20 +6300,15 @@ class FEU_Einsatz_Template_Helpers {
 
     private static function get_overview_category_ids($root_category_id) {
         $category_ids = get_term_children((int) $root_category_id, 'category');
+        $category_ids = is_wp_error($category_ids) ? [] : (array) $category_ids;
         $category_ids[] = (int) $root_category_id;
 
         return array_values(array_unique(array_map('intval', $category_ids)));
     }
 
-    private static function get_overview_index_post_ids($category_ids) {
+    private static function query_overview_post_ids($category_ids) {
         $normalized_category_ids = array_values(array_unique(array_map('intval', (array) $category_ids)));
         sort($normalized_category_ids, SORT_NUMERIC);
-        $cache_key = 'feu_overview_index_' . md5(get_current_blog_id() . '|' . wp_json_encode($normalized_category_ids));
-        $cached_post_ids = get_transient($cache_key);
-
-        if (is_array($cached_post_ids)) {
-            return array_values(array_map('intval', $cached_post_ids));
-        }
 
         $index_query_args = [
             'post_type' => FEU_Einsatz_Report_Post_Type::readable_post_types(),
@@ -6293,12 +6339,11 @@ class FEU_Einsatz_Template_Helpers {
         $post_ids = array_values(array_map('intval', (array) get_posts($index_query_args)));
 
         if (empty($post_ids)) {
-            set_transient($cache_key, [], 10 * MINUTE_IN_SECONDS);
             return [];
         }
 
         update_meta_cache('post', $post_ids);
-        update_object_term_cache($post_ids, 'post');
+        update_object_term_cache($post_ids, FEU_Einsatz_Report_Post_Type::readable_post_types());
 
         $post_timestamps = [];
 
@@ -6317,17 +6362,16 @@ class FEU_Einsatz_Template_Helpers {
             return $right_timestamp <=> $left_timestamp;
         });
 
-        set_transient($cache_key, $post_ids, 10 * MINUTE_IN_SECONDS);
-
         return $post_ids;
     }
 
-    private static function build_overview_index_data($overview_post_ids, $root_category_id, $selected_year) {
+    private static function build_overview_index_data($overview_post_ids, $root_category_id) {
         $posts_by_year = [];
         $post_number_map = [];
         $deepest_category_map = [];
         $year_counts = [];
         $scoped_category_stats = [];
+        $category_stats_by_year = [];
         $scoped_total_posts = 0;
 
         foreach ((array) $overview_post_ids as $overview_post_id) {
@@ -6354,23 +6398,25 @@ class FEU_Einsatz_Template_Helpers {
                     'name' => (string) $deepest_category->name,
                 ];
 
-                if ('' === $selected_year || (string) $post_year === (string) $selected_year) {
-                    if (!isset($scoped_category_stats[$deepest_category->term_id])) {
-                        $scoped_category_stats[$deepest_category->term_id] = [
-                            'name' => (string) $deepest_category->name,
-                            'count' => 0,
-                        ];
-                    }
-
-                    $scoped_category_stats[$deepest_category->term_id]['count']++;
+                if (!isset($scoped_category_stats[$deepest_category->term_id])) {
+                    $scoped_category_stats[$deepest_category->term_id] = [
+                        'name' => (string) $deepest_category->name,
+                        'count' => 0,
+                    ];
                 }
+                $scoped_category_stats[$deepest_category->term_id]['count']++;
+                if (!isset($category_stats_by_year[$post_year][$deepest_category->term_id])) {
+                    $category_stats_by_year[$post_year][$deepest_category->term_id] = [
+                        'name' => (string) $deepest_category->name,
+                        'count' => 0,
+                    ];
+                }
+                $category_stats_by_year[$post_year][$deepest_category->term_id]['count']++;
             } else {
                 $deepest_category_map[$overview_post_id] = null;
             }
 
-            if ('' === $selected_year || (string) $post_year === (string) $selected_year) {
-                $scoped_total_posts++;
-            }
+            $scoped_total_posts++;
         }
 
         foreach ($posts_by_year as $year => $post_ids_for_year) {
@@ -6394,16 +6440,44 @@ class FEU_Einsatz_Template_Helpers {
 
             return (int) $right['count'] <=> (int) $left['count'];
         });
+        foreach ($category_stats_by_year as &$year_categories) {
+            uasort($year_categories, static function($left, $right) {
+                return (int) $left['count'] === (int) $right['count']
+                    ? strcmp($left['name'], $right['name'])
+                    : (int) $right['count'] <=> (int) $left['count'];
+            });
+        }
+        unset($year_categories);
 
         return [
+            'post_ids' => array_values(array_map('intval', $overview_post_ids)),
             'posts_by_year' => $posts_by_year,
             'post_number_map' => $post_number_map,
             'deepest_category_map' => $deepest_category_map,
             'year_counts' => $year_counts,
             'all_years' => $all_years,
             'scoped_category_stats' => $scoped_category_stats,
+            'category_stats_by_year' => $category_stats_by_year,
             'scoped_total_posts' => $scoped_total_posts,
         ];
+    }
+
+    private static function get_cached_overview_index_data($category_ids, $root_category_id) {
+        $normalized_category_ids = array_values(array_unique(array_map('intval', (array) $category_ids)));
+        sort($normalized_category_ids, SORT_NUMERIC);
+        $cache_key = 'feu_overview_data_' . md5(get_current_blog_id() . '|2|' . self::get_overview_cache_revision()
+            . '|' . (FEU_Einsatz_Report_Taxonomy::enabled() ? 'keywords' : 'legacy')
+            . '|' . (int) $root_category_id . '|' . wp_json_encode($normalized_category_ids));
+        $cached = get_transient($cache_key);
+        if (is_array($cached) && isset($cached['post_ids'], $cached['post_number_map'], $cached['year_counts'])) {
+            return $cached;
+        }
+
+        $post_ids = self::query_overview_post_ids($normalized_category_ids);
+        $index_data = self::build_overview_index_data($post_ids, $root_category_id);
+        set_transient($cache_key, $index_data, 10 * MINUTE_IN_SECONDS);
+
+        return $index_data;
     }
 
     private static function get_overview_paged_posts($scoped_post_ids, $paged, $posts_per_page) {
@@ -6472,7 +6546,7 @@ class FEU_Einsatz_Template_Helpers {
         $selected_year = self::sanitize_overview_year($args['selected_year']);
         $paged = max(1, (int) $args['paged']);
         $posts_per_page = max(1, (int) $args['posts_per_page']);
-        $cache_key = implode(':', [$selected_year, $paged, $posts_per_page]);
+        $cache_key = implode(':', [self::get_overview_cache_revision(), $selected_year, $paged, $posts_per_page]);
 
         if (isset($context_cache[$cache_key])) {
             return $context_cache[$cache_key];
@@ -6491,8 +6565,8 @@ class FEU_Einsatz_Template_Helpers {
 
         $root_category_id = (int) $root_category->term_id;
         $all_category_ids = self::get_overview_category_ids($root_category_id);
-        $overview_post_ids = self::get_overview_index_post_ids($all_category_ids);
-        $index_data = self::build_overview_index_data($overview_post_ids, $root_category_id, $selected_year);
+        $index_data = self::get_cached_overview_index_data($all_category_ids, $root_category_id);
+        $overview_post_ids = $index_data['post_ids'];
         $scoped_post_ids = $selected_year
             ? (isset($index_data['posts_by_year'][$selected_year]) ? $index_data['posts_by_year'][$selected_year] : [])
             : array_values(array_map('intval', $overview_post_ids));
@@ -6500,8 +6574,12 @@ class FEU_Einsatz_Template_Helpers {
 
         $context['all_years'] = $index_data['all_years'];
         $context['year_counts'] = $index_data['year_counts'];
-        $context['scoped_category_stats'] = $index_data['scoped_category_stats'];
-        $context['scoped_total_posts'] = $index_data['scoped_total_posts'];
+        $context['scoped_category_stats'] = $selected_year
+            ? ($index_data['category_stats_by_year'][$selected_year] ?? [])
+            : $index_data['scoped_category_stats'];
+        $context['scoped_total_posts'] = $selected_year
+            ? (int) ($index_data['year_counts'][$selected_year] ?? 0)
+            : $index_data['scoped_total_posts'];
         $context['posts'] = self::build_overview_page_entries(
             $page_data['page_posts'],
             $index_data['deepest_category_map'],

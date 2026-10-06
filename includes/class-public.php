@@ -83,6 +83,19 @@ class FEU_Einsatz_Public {
         add_filter('has_post_thumbnail', [$this, 'filter_has_post_thumbnail'], 10, 3);
         add_filter('post_thumbnail_html', [$this, 'filter_post_thumbnail_html'], 10, 5);
         add_filter('post_thumbnail_url', [$this, 'filter_post_thumbnail_url'], 10, 3);
+        add_action('save_post', ['FEU_Einsatz_Template_Helpers', 'invalidate_overview_cache_for_post'], 99);
+        add_action('before_delete_post', ['FEU_Einsatz_Template_Helpers', 'invalidate_overview_cache_for_post']);
+        add_action('trashed_post', ['FEU_Einsatz_Template_Helpers', 'invalidate_overview_cache_for_post']);
+        add_action('untrashed_post', ['FEU_Einsatz_Template_Helpers', 'invalidate_overview_cache_for_post']);
+        foreach (['added_post_meta', 'updated_post_meta', 'deleted_post_meta'] as $meta_hook) {
+            add_action($meta_hook, ['FEU_Einsatz_Template_Helpers', 'invalidate_overview_cache_for_meta'], 10, 3);
+        }
+        add_action('set_object_terms', ['FEU_Einsatz_Template_Helpers', 'invalidate_overview_cache_for_terms'], 10, 4);
+        foreach (['created_term', 'edited_term', 'delete_term'] as $term_hook) {
+            add_action($term_hook, ['FEU_Einsatz_Template_Helpers', 'invalidate_overview_cache_for_term'], 10, 3);
+        }
+        add_action('feu_einsatz_reports_restored', ['FEU_Einsatz_Template_Helpers', 'invalidate_overview_cache']);
+        add_action('feu_einsatz_prime_public_map', ['FEU_Einsatz_Template_Helpers', 'prime_public_map_in_background']);
         add_action('wp_enqueue_scripts', [$this, 'enqueue_scripts']);
         add_action('wp_head', [$this, 'render_social_share_meta_tags'], 5);
         $this->register_shortcode_aliases('count', [$this, 'render_einsatz_count_shortcode']);
@@ -1730,7 +1743,7 @@ class FEU_Einsatz_Public {
                 FEU_EINSATZ_PLUGIN_URL . 'assets/public/js/public-script.js',
                 [],
                 $public_script_version,
-                true
+                ['in_footer' => true, 'strategy' => 'defer']
             );
         }
 
@@ -1760,7 +1773,7 @@ class FEU_Einsatz_Public {
                     FEU_EINSATZ_PLUGIN_URL . 'assets/vendor/leaflet/leaflet.js',
                     [],
                     '1.9.4',
-                    true
+                    ['in_footer' => true, 'strategy' => 'defer']
                 );
 
                 wp_enqueue_script(
@@ -1768,7 +1781,7 @@ class FEU_Einsatz_Public {
                     FEU_EINSATZ_PLUGIN_URL . 'assets/public/js/public-script.js',
                     ['feu-einsatz-leaflet'],
                     $public_script_version,
-                    true
+                    ['in_footer' => true, 'strategy' => 'defer']
                 );
             } else {
                 wp_enqueue_script(
@@ -1776,7 +1789,7 @@ class FEU_Einsatz_Public {
                     FEU_EINSATZ_PLUGIN_URL . 'assets/public/js/public-script.js',
                     [],
                     $public_script_version,
-                    true
+                    ['in_footer' => true, 'strategy' => 'defer']
                 );
             }
 
@@ -1801,7 +1814,7 @@ class FEU_Einsatz_Public {
                 FEU_EINSATZ_PLUGIN_URL . 'assets/vendor/leaflet/leaflet.js',
                 [],
                 '1.9.4',
-                true
+                ['in_footer' => true, 'strategy' => 'defer']
             );
 
             wp_enqueue_script(
@@ -1809,58 +1822,16 @@ class FEU_Einsatz_Public {
                 FEU_EINSATZ_PLUGIN_URL . 'assets/public/js/area-map.js',
                 ['feu-einsatz-leaflet'],
                 $area_script_version,
-                true
+                ['in_footer' => true, 'strategy' => 'defer']
             );
 
-            wp_localize_script('feu-einsatz-area-map-script', 'feu_einsatz_area_map', [
-                'strings' => [
-                    'mapUnavailable' => __('Einsatzgebiet-Karte nicht verfuegbar.', 'feuer-einsatzberichte'),
-                    'mapUnavailableHint' => __('Bitte pruefen Sie die hinterlegten PLZ oder die Kartendaten.', 'feuer-einsatzberichte'),
-                    'callSingular' => __('Einsatz', 'feuer-einsatzberichte'),
-                    'callPlural' => __('Einsaetze', 'feuer-einsatzberichte'),
-                    'streetsLabel' => __('Strassen', 'feuer-einsatzberichte'),
-                    'moreStreetsLabel' => __('weitere Strassen', 'feuer-einsatzberichte'),
-                ],
-            ]);
-
-            wp_localize_script('feu-einsatz-area-map-script', 'feu_einsatz_area_map', [
-                'strings' => $area_map_strings,
-            ]);
-        }
-
-        if (false && wp_script_is('feu-einsatz-public-script', 'enqueued')) {
-            wp_add_inline_script(
-                'feu-einsatz-public-script',
-                'window.feu_einsatz_public = Object.assign({}, window.feu_einsatz_public || {}, {strings: ' . wp_json_encode([
-                    'mapUnavailable' => __('Kartenansicht nicht verfuegbar.', 'feuer-einsatzberichte'),
-                    'mapUnavailableHint' => __('Fuer diesen Einsatz sind noch keine ausreichenden Kartendaten gespeichert.', 'feuer-einsatzberichte'),
-                    'pedestrianPartLabel' => __('Fussgaengerbereich', 'feuer-einsatzberichte'),
-                    'streetFallback' => __('Strasse', 'feuer-einsatzberichte'),
-                ]) . '});',
-                'after'
-            );
-        }
-
-        if (false && wp_script_is('feu-einsatz-area-map-script', 'enqueued')) {
-            wp_add_inline_script(
-                'feu-einsatz-area-map-script',
-                'window.feu_einsatz_area_map = Object.assign({}, window.feu_einsatz_area_map || {}, {strings: ' . wp_json_encode([
-                    'mapUnavailable' => __('Einsatzgebiet-Karte nicht verfuegbar.', 'feuer-einsatzberichte'),
-                    'mapUnavailableHint' => __('Bitte pruefen Sie die hinterlegten PLZ oder die Kartendaten.', 'feuer-einsatzberichte'),
-                    'callSingular' => __('Einsatz', 'feuer-einsatzberichte'),
-                    'callPlural' => __('Einsaetze', 'feuer-einsatzberichte'),
-                    'streetsLabel' => __('Strassen', 'feuer-einsatzberichte'),
-                    'moreStreetsLabel' => __('weitere Strassen', 'feuer-einsatzberichte'),
-                ]) . '});',
-                'after'
-            );
         }
 
         if (wp_script_is('feu-einsatz-public-script', 'enqueued')) {
             wp_add_inline_script(
                 'feu-einsatz-public-script',
                 'window.feu_einsatz_public = Object.assign({}, window.feu_einsatz_public || {}, {strings: ' . wp_json_encode($public_strings) . '});',
-                'after'
+                'before'
             );
         }
 
@@ -1868,7 +1839,7 @@ class FEU_Einsatz_Public {
             wp_add_inline_script(
                 'feu-einsatz-area-map-script',
                 'window.feu_einsatz_area_map = Object.assign({}, window.feu_einsatz_area_map || {}, {strings: ' . wp_json_encode($area_map_strings) . '});',
-                'after'
+                'before'
             );
         }
     }

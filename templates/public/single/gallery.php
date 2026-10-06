@@ -25,7 +25,11 @@ $photo_watermark_text = isset($gallery['watermark_text']) ? (string) $gallery['w
                                 data-alt-text="<?php echo esc_attr($gallery_item['alt']); ?>"
                                 data-embedded-watermark="<?php echo !empty($gallery_item['embedded_watermark']) ? '1' : '0'; ?>">
                             <img src="<?php echo esc_url($gallery_item['thumb']); ?>"
-                                 alt="<?php echo esc_attr($gallery_item['alt']); ?>" />
+                                 alt="<?php echo esc_attr($gallery_item['alt']); ?>"
+                                 loading="lazy"
+                                 decoding="async"
+                                 <?php if (!empty($gallery_item['width']) && !empty($gallery_item['height'])) : ?>width="<?php echo esc_attr((string) $gallery_item['width']); ?>" height="<?php echo esc_attr((string) $gallery_item['height']); ?>"<?php endif; ?>
+                                 <?php if (!empty($gallery_item['srcset'])) : ?>srcset="<?php echo esc_attr($gallery_item['srcset']); ?>" sizes="(max-width: 720px) 50vw, (max-width: 1200px) 33vw, 25vw"<?php endif; ?> />
                             <?php if (empty($gallery_item['embedded_watermark']) && $photo_watermark_enabled && '' !== $photo_watermark_text) : ?>
                                 <span class="feu-einsatz-photo-watermark"><?php echo esc_html($photo_watermark_text); ?></span>
                             <?php endif; ?>
