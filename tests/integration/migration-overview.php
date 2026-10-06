@@ -79,13 +79,7 @@ try {
         update_option('feu_einsatz_post_migration_run', [
             'run_id' => wp_generate_uuid4(),
             'status' => 'complete',
-            'records' => [[
-                'id' => $id,
-                'state' => 'migrated',
-                'status' => 'draft',
-                'url' => $url,
-                'fingerprint' => FEU_Einsatz_Post_Migration::fingerprint($id),
-            ]],
+            'records' => [['id' => $id, 'state' => 'migrated', 'status' => 'draft', 'url' => $url]],
         ], false);
         $keyword_run = [
             'status' => 'complete',
@@ -101,11 +95,11 @@ try {
             || !FEU_Einsatz_Migration_Overview::verify_for_acceptance()) {
             throw new RuntimeException('Completed technical runs did not request final acceptance.');
         }
-        update_post_meta($id, '_feu_einsatz_ci_changed', 'after-migration');
+        delete_post_meta($id, FEU_Einsatz_Report_Post_Type::MARKER_META);
         if (FEU_Einsatz_Migration_Overview::verify_for_acceptance()) {
-            throw new RuntimeException('Changed report data passed automatic final verification.');
+            throw new RuntimeException('A report that lost its marker passed final verification.');
         }
-        delete_post_meta($id, '_feu_einsatz_ci_changed');
+        update_post_meta($id, FEU_Einsatz_Report_Post_Type::MARKER_META, '1');
         $keyword_run['reports'][$id]['url'] = 'https://invalid.example.test/changed/';
         update_option('feu_einsatz_keyword_migration_run', $keyword_run, false);
         if (FEU_Einsatz_Migration_Overview::verify_for_acceptance()) {

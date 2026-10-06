@@ -52,7 +52,7 @@ final class FEU_Einsatz_Post_Migration {
         return $check;
     }
 
-    public static function fingerprint(int $post_id): string {
+    private static function fingerprint(int $post_id): string {
         $post = get_post($post_id);
         if (!($post instanceof WP_Post)) {
             return '';
@@ -600,7 +600,7 @@ final class FEU_Einsatz_Post_Migration {
         }
     }
 
-    public static function verify_migrated_record(array $row): bool {
+    private static function verify_migrated_record(array $row): bool {
         $id = (int) $row['id'];
         $post = get_post($id);
         if (!($post instanceof WP_Post) || FEU_Einsatz_Report_Post_Type::POST_TYPE !== $post->post_type) {

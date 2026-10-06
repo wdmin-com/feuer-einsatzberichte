@@ -134,7 +134,10 @@ final class FEU_Einsatz_Migration_Overview {
             }
             $id = (int) ($record['id'] ?? 0);
             if ($id < 1 || 'migrated' !== ($record['state'] ?? '')
-                || !FEU_Einsatz_Post_Migration::verify_migrated_record($record)) {
+                || FEU_Einsatz_Report_Post_Type::POST_TYPE !== get_post_type($id)
+                || !FEU_Einsatz_Report_Post_Type::is_marked_report($id)
+                || 'legacy' !== get_post_meta($id, FEU_Einsatz_Report_Post_Type::URL_SCHEME_META, true)
+                || ('publish' === ($record['status'] ?? '') && get_permalink($id) !== ($record['url'] ?? ''))) {
                 return false;
             }
         }
