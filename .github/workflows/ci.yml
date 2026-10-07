@@ -120,6 +120,8 @@ jobs:
           category_url='http://127.0.0.1:8089/einsaetze/route-ci/http-route-ci-category/'
           for url in "$legacy_url" "$category_url"; do
             status="$(curl -sS -o "$RUNNER_TEMP/report-page.html" -w '%{http_code}' "$url")"
+            echo "report-url=$url status=$status canonical-count=$(grep -Eoc 'rel=.canonical.' "$RUNNER_TEMP/report-page.html" || true)"
+            grep -E 'rel=.canonical.|property=.og:title.|name=.description.|property=.og:image.' "$RUNNER_TEMP/report-page.html" | head -n 8 || true
             test "$status" = '200'
             grep -q "<link rel=.[Cc]anonical.*$url" "$RUNNER_TEMP/report-page.html"
             test "$(grep -Eoc 'rel=.canonical.' "$RUNNER_TEMP/report-page.html")" = '1'
@@ -127,10 +129,13 @@ jobs:
             grep -q 'name="description"' "$RUNNER_TEMP/report-page.html"
           done
           share_image_url="$(node -e 'const h=require("fs").readFileSync(process.argv[1],"utf8");const m=h.match(/<meta property="og:image" content="([^"]+)"/);process.stdout.write(m?m[1].replaceAll("&amp;","&"):"")' "$RUNNER_TEMP/report-page.html")"
+          echo "share-image-present=$([ -n "$share_image_url" ] && echo yes || echo no) image-route=$([ "${share_image_url#*admin-ajax.php}" != "$share_image_url" ] && echo ajax || echo other)"
           test -n "$share_image_url"
           case "$share_image_url" in *exp=*) exit 1;; esac
           case "$share_image_url" in *admin-ajax.php*) ;; *) exit 1;; esac
-          test "$(curl -sS -o "$RUNNER_TEMP/report-share.png" -w '%{http_code}' "$share_image_url")" = '200'
+          image_status="$(curl -sS -o "$RUNNER_TEMP/report-share.png" -w '%{http_code}' "$share_image_url")"
+          echo "share-image-status=$image_status type=$(file --brief --mime-type "$RUNNER_TEMP/report-share.png")"
+          test "$image_status" = '200'
           test "$(file --brief --mime-type "$RUNNER_TEMP/report-share.png")" = 'image/png'
           test "$(curl -sS -o /dev/null -w '%{http_code}' 'http://127.0.0.1:8089/einsaetze/wrong/http-route-ci-category/')" = '404'
           test "$(curl -sS -o /dev/null -w '%{http_code}' 'http://127.0.0.1:8089/einsaetze/http-route-ci-category/')" = '404'
