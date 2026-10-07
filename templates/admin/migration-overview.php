@@ -38,7 +38,6 @@ $missing_authors = count(array_filter((array) ($post_preflight['warnings'] ?? []
     <div class="notice notice-info inline"><p><strong><?php esc_html_e('Speicherstatus:', 'feuer-einsatzberichte'); ?></strong>
         <?php echo esc_html($storage_labels[$migration_state['storage']] ?? $storage_labels['mixed']); ?>.
         <?php if (!empty($migration_state['completed'])) : ?><?php esc_html_e('Die bestätigte Umstellung ist abgeschlossen.', 'feuer-einsatzberichte'); ?><?php endif; ?>
-        <?php if (!empty($migration_state['accepted_before']) && empty($migration_state['completed'])) : ?><?php esc_html_e('Eine frühere Abnahme ist gespeichert. Der aktuelle Speicherzustand muss erneut geprüft werden.', 'feuer-einsatzberichte'); ?><?php endif; ?>
     </p></div>
 
     <table class="widefat striped feu-einsatz-migration-table">
