@@ -2125,6 +2125,20 @@
                 var locationMode = $('input[name="feu_einsatz_map_location_mode"]:checked').val() === 'coordinates' ? 'coordinates' : 'address';
                 var highlightMode = String($('#feu_einsatz_map_highlight_override').val() || 'default');
                 var hasStreet = $.trim($('#feu_einsatz_strasse').val() || '') !== '';
+                var selectedCategories = $('input[name="post_category[]"]:checked').map(function () { return String(this.value); }).get();
+
+                $('[data-feu-map-profile-preset] option').each(function () {
+                    var $option = $(this);
+                    if (this.value === 'custom') { return; }
+                    var allowed = String($option.attr('data-feu-categories') || '').split(',').filter(Boolean);
+                    var mode = String($option.attr('data-feu-mode') || 'default');
+                    var effectiveMode = mode === 'default' ? String($previewMode.data('default-map-mode') || '') : mode;
+                    var categoryMatches = !allowed.length || !selectedCategories.length || selectedCategories.every(function (id) { return allowed.indexOf(id) !== -1; });
+                    var locationMatches = locationMode !== 'coordinates' || hasStreet || ['full', 'length'].indexOf(effectiveMode) === -1;
+                    $option.prop('disabled', !categoryMatches || !locationMatches).prop('hidden', !categoryMatches || !locationMatches);
+                });
+                var preset = $('[data-feu-map-profile-preset]');
+                if (preset.find('option:selected').prop('disabled')) { preset.val('custom'); }
 
                 $locationPanels.each(function () {
                     var $panel = $(this);
@@ -2529,23 +2543,16 @@
                 }, 850);
             });
             $('[data-feu-map-profile-preset]').on('change', function () {
-                var preset = String($(this).val() || 'custom');
-                var presets = {
-                    standard: { mode: 'default' },
-                    full: { mode: 'full' },
-                    segment_100: { mode: 'length', length: 100 },
-                    radius_500: { mode: 'radius', radius: 500 },
-                    radius_1000: { mode: 'radius', radius: 1000 }
-                };
-                var values = presets[preset];
-                if (!values) {
-                    return;
-                }
-                $('#feu_einsatz_map_highlight_override').val(values.mode);
-                if (values.length) { $('#feu_einsatz_map_highlight_length_meters').val(values.length); }
-                if (values.radius) { $('#feu_einsatz_map_highlight_radius_meters').val(values.radius); }
+                var option = $(this).find('option:selected');
+                var mode = String(option.attr('data-feu-mode') || '');
+                var meters = Number(option.attr('data-feu-meters'));
+                if (['default', 'full', 'length', 'radius'].indexOf(mode) === -1) { return; }
+                $('#feu_einsatz_map_highlight_override').val(mode);
+                if (mode === 'length' && Number.isFinite(meters)) { $('#feu_einsatz_map_highlight_length_meters').val(meters); }
+                if (mode === 'radius' && Number.isFinite(meters)) { $('#feu_einsatz_map_highlight_radius_meters').val(meters); }
                 $('#feu_einsatz_map_highlight_override').trigger('change');
             });
+            $('input[name="post_category[]"]').on('change', syncMapProfileControls);
             $('[data-feu-map-area-start]').on('click', function () {
                 areaDrawing = !areaDrawing;
                 $(this).text(areaDrawing ? 'Bereich fertig zeichnen' : 'Bereich in Live-Karte zeichnen');

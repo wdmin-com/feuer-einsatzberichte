@@ -31,6 +31,10 @@ $_POST = [
     'feu_einsatz_active_tab' => 'allgemein',
     'feu_einsatz_map_zoom' => '17',
     'feu_einsatz_map_height' => '420',
+    'feu_einsatz_map_quick_profiles_present' => '1',
+    'feu_einsatz_map_quick_profiles' => [
+        'segment_100' => ['label' => 'Technische Hilfe', 'mode' => 'radius', 'meters' => '750', 'enabled' => '1', 'categories' => ['123']],
+    ],
     'feu_einsatz_functions' => FEU_Einsatz_Installer::get_default_functions(),
     'feu_einsatz_settings_section_visibility_present' => '1',
     'feu_einsatz_settings_section_visibility' => $settings_section_visibility,

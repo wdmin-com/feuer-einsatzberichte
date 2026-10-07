@@ -88,6 +88,7 @@ jobs:
           wp eval-file "$GITHUB_WORKSPACE/tests/integration/setup-wizard.php" --path="$RUNNER_TEMP/wordpress"
           test "$(wp eval 'echo FEU_Einsatz_Report_Taxonomy::enabled() && count(FEU_Einsatz_Report_Taxonomy::get_selected_ids()) === 2 && count(get_terms(["taxonomy" => "category", "hide_empty" => false, "parent" => FEU_Einsatz_Template_Helpers::find_root_category()->term_id])) === 2 && 0 === (int) get_option("feu_einsatz_setup_wizard_pending", 1) ? "1" : "0";' --path="$RUNNER_TEMP/wordpress")" = "1"
           wp eval-file "$GITHUB_WORKSPACE/tests/integration/settings-save.php" --path="$RUNNER_TEMP/wordpress"
+          wp eval-file "$GITHUB_WORKSPACE/tests/integration/map-quick-profiles.php" --path="$RUNNER_TEMP/wordpress"
           test "$(wp option get feu_einsatz_area_station_name --path="$RUNNER_TEMP/wordpress")" = "Feuerwehr Akademie Hamburg"
           test "$(wp option get feu_einsatz_area_station_postcode --path="$RUNNER_TEMP/wordpress")" = "22113"
           test "$(wp eval 'echo count(FEU_Einsatz_Report_Taxonomy::get_selected_ids()) > 0 ? "1" : "0";' --path="$RUNNER_TEMP/wordpress")" = "1"

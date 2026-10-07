@@ -10,4 +10,6 @@ Vor dem Veröffentlichen oder Einreichen zeigt der Berichtseditor eine Prüflist
 
 Die öffentliche Einsatzkarte wird erst geladen, wenn sie in die Nähe des sichtbaren Bereichs scrollt. Für Browser ohne `IntersectionObserver` gilt der bestehende direkte Start.
 
+Unter **Einstellungen → Karten → Schnellprofile im Berichtseditor** lassen sich die fünf Editor-Vorlagen umbenennen, deaktivieren und auf Einsatzstichworte begrenzen. Auch Modus und Abschnitts- beziehungsweise Radiusgröße sind einstellbar. Ohne ausgewählte Stichworte ist ein Profil überall verfügbar. Bei einem Bericht mit mehreren Stichworten erscheint ein eingeschränktes Profil nur, wenn es für jedes davon freigegeben ist. Profile sind Eingabehilfen: Ein Bericht speichert weiterhin die konkret gewählte Kartendarstellung. Änderungen an Profilen schreiben vorhandene Berichte nicht um.
+
 Diese Funktionen setzen WordPress-Cron für die Hintergrundaufgaben voraus. Die Arbeitszentrale zeigt den Status des aktuellen Ausschnitts; sie ist keine vollständige Ereignishistorie. Technische Logs bleiben unter **Einsatzberichte → Logs**.

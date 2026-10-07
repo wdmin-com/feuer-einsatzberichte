@@ -366,6 +366,9 @@ $street_highlight_mode_label = 'full' === $street_highlight_mode
                 <div>
                     <h4 id="feu-einsatz-map-highlight-heading"><?php esc_html_e('Darstellung auf der Karte', 'feuer-einsatzberichte'); ?></h4>
                     <p class="description"><?php esc_html_e('Diese Auswahl gilt nur für diesen Bericht und ebenso für das erzeugte Kartenbild.', 'feuer-einsatzberichte'); ?></p>
+                    <?php if (FEU_Einsatz_Admin::current_user_can_access_plugin_section('settings') && FEU_Einsatz_Admin::is_settings_tab_visible('karten')) : ?>
+                        <a href="<?php echo esc_url(admin_url('admin.php?page=feu-einsatz-einstellungen&tab=karten')); ?>"><?php esc_html_e('Schnellprofile bearbeiten', 'feuer-einsatzberichte'); ?></a>
+                    <?php endif; ?>
                 </div>
             </div>
             <div class="feu-einsatz-map-highlight-controls">
@@ -373,11 +376,11 @@ $street_highlight_mode_label = 'full' === $street_highlight_mode
                     <span class="feu-einsatz-field-label"><?php esc_html_e('Schnellprofil', 'feuer-einsatzberichte'); ?></span>
                     <select id="feu_einsatz_map_profile_preset" class="widefat" data-feu-map-profile-preset>
                         <option value="custom"><?php esc_html_e('Individuell / unverändert', 'feuer-einsatzberichte'); ?></option>
-                        <option value="standard"><?php esc_html_e('Standard aus Einstellungen', 'feuer-einsatzberichte'); ?></option>
-                        <option value="full"><?php esc_html_e('Ganze Straße', 'feuer-einsatzberichte'); ?></option>
-                        <option value="segment_100"><?php esc_html_e('Verkehrsunfall – Abschnitt 100 m', 'feuer-einsatzberichte'); ?></option>
-                        <option value="radius_500"><?php esc_html_e('Wald- / Flächenlage – Radius 500 m', 'feuer-einsatzberichte'); ?></option>
-                        <option value="radius_1000"><?php esc_html_e('Großschaden – Radius 1.000 m', 'feuer-einsatzberichte'); ?></option>
+                        <?php foreach (FEU_Einsatz_Map_Quick_Profiles::get() as $profile_key => $profile) : ?>
+                            <?php if (!empty($profile['enabled'])) : ?>
+                                <option value="<?php echo esc_attr($profile_key); ?>" data-feu-mode="<?php echo esc_attr($profile['mode']); ?>" data-feu-meters="<?php echo esc_attr((string) $profile['meters']); ?>" data-feu-categories="<?php echo esc_attr(implode(',', array_map('absint', $profile['categories']))); ?>"><?php echo esc_html($profile['label']); ?></option>
+                            <?php endif; ?>
+                        <?php endforeach; ?>
                     </select>
                 </label>
                 <label class="feu-einsatz-field">

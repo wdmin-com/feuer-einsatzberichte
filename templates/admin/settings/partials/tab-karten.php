@@ -215,6 +215,54 @@ $generated_map_rebuild_to = isset($generated_map_rebuild_to) ? (string) $generat
         <section class="feu-admin-settings-surface">
             <div class="feu-admin-settings-surface-head">
                 <div>
+                    <h3><?php esc_html_e('Schnellprofile im Berichtseditor', 'feuer-einsatzberichte'); ?></h3>
+                    <p class="description"><?php esc_html_e('Benennen Sie die Vorlagen passend zu Ihren Einsätzen. Optional können Sie ein Profil nur für ausgewählte Einsatzstichworte anbieten. Bereits gespeicherte Berichte bleiben unverändert.', 'feuer-einsatzberichte'); ?></p>
+                </div>
+            </div>
+            <input type="hidden" name="feu_einsatz_map_quick_profiles_present" value="1" />
+            <div class="feu-einsatz-map-quick-profile-grid">
+                <?php foreach ((array) $map_quick_profiles as $profile_key => $profile) : ?>
+                    <div class="feu-einsatz-map-quick-profile-card">
+                        <div class="feu-einsatz-map-quick-profile-card-head">
+                            <strong><?php echo esc_html((string) $profile['label']); ?></strong>
+                            <label><input type="checkbox" name="feu_einsatz_map_quick_profiles[<?php echo esc_attr($profile_key); ?>][enabled]" value="1" <?php checked(!empty($profile['enabled'])); ?> /> <?php esc_html_e('Im Editor anbieten', 'feuer-einsatzberichte'); ?></label>
+                        </div>
+                        <div class="feu-admin-settings-form-grid feu-admin-settings-form-grid--2">
+                            <label class="feu-admin-settings-field">
+                                <span><?php esc_html_e('Name', 'feuer-einsatzberichte'); ?></span>
+                                <input type="text" maxlength="80" name="feu_einsatz_map_quick_profiles[<?php echo esc_attr($profile_key); ?>][label]" value="<?php echo esc_attr((string) $profile['label']); ?>" class="regular-text" />
+                            </label>
+                            <label class="feu-admin-settings-field">
+                                <span><?php esc_html_e('Kartendarstellung', 'feuer-einsatzberichte'); ?></span>
+                                <select name="feu_einsatz_map_quick_profiles[<?php echo esc_attr($profile_key); ?>][mode]">
+                                    <?php foreach (['default' => __('Standard übernehmen', 'feuer-einsatzberichte'), 'full' => __('Ganze Straße', 'feuer-einsatzberichte'), 'length' => __('Straßenabschnitt', 'feuer-einsatzberichte'), 'radius' => __('Radius um Einsatzort', 'feuer-einsatzberichte')] as $mode_key => $mode_label) : ?>
+                                        <option value="<?php echo esc_attr($mode_key); ?>" <?php selected($profile['mode'], $mode_key); ?>><?php echo esc_html($mode_label); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </label>
+                            <label class="feu-admin-settings-field">
+                                <span><?php esc_html_e('Abschnitt oder Radius (m)', 'feuer-einsatzberichte'); ?></span>
+                                <input type="number" min="20" max="5000" step="10" name="feu_einsatz_map_quick_profiles[<?php echo esc_attr($profile_key); ?>][meters]" value="<?php echo esc_attr((string) $profile['meters']); ?>" class="small-text" />
+                                <small><?php esc_html_e('Nur bei Straßenabschnitt oder Radius verwendet.', 'feuer-einsatzberichte'); ?></small>
+                            </label>
+                        </div>
+                        <details class="feu-einsatz-map-quick-profile-categories">
+                            <summary><?php esc_html_e('Einsatzstichworte einschränken', 'feuer-einsatzberichte'); ?><?php if (!empty($profile['categories'])) : ?> (<?php echo esc_html((string) count($profile['categories'])); ?>)<?php endif; ?></summary>
+                            <p class="description"><?php esc_html_e('Keine Auswahl bedeutet: für alle Stichworte verfügbar. Bei mehreren Stichworten muss das Profil zu allen passen.', 'feuer-einsatzberichte'); ?></p>
+                            <div class="feu-einsatz-map-quick-profile-category-list">
+                                <?php foreach ((array) $map_profile_categories as $category) : ?>
+                                    <label><input type="checkbox" name="feu_einsatz_map_quick_profiles[<?php echo esc_attr($profile_key); ?>][categories][]" value="<?php echo esc_attr((string) $category->term_id); ?>" <?php checked(in_array((int) $category->term_id, (array) $profile['categories'], true)); ?> /> <?php echo esc_html($category->name); ?></label>
+                                <?php endforeach; ?>
+                            </div>
+                        </details>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        </section>
+
+        <section class="feu-admin-settings-surface">
+            <div class="feu-admin-settings-surface-head">
+                <div>
                     <h3><?php esc_html_e('Kartenbild fuer Einsatzberichte', 'feuer-einsatzberichte'); ?></h3>
                     <p class="description"><?php esc_html_e('Diese Einstellungen wirken direkt auf das generierte PNG/SVG-Kartenbild und auf die Vorschau darunter.', 'feuer-einsatzberichte'); ?></p>
                 </div>

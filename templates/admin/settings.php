@@ -189,6 +189,7 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
             'feu_einsatz_map_zoom' => (int) get_option('feu_einsatz_map_zoom', 16),
             'feu_einsatz_map_height' => (int) get_option('feu_einsatz_map_height', 400),
             'feu_einsatz_auto_map_image' => (int) get_option('feu_einsatz_auto_map_image', 1),
+            'feu_einsatz_map_quick_profiles' => FEU_Einsatz_Map_Quick_Profiles::get(),
             'feu_einsatz_map_preview_heading_text' => (string) get_option('feu_einsatz_map_preview_heading_text', ''),
             'feu_einsatz_map_preview_show_panel' => (int) get_option('feu_einsatz_map_preview_show_panel', 1),
             'feu_einsatz_map_preview_show_panel_heading' => (int) get_option('feu_einsatz_map_preview_show_panel_heading', 1),
@@ -447,6 +448,18 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
             false
         );
         update_option('feu_einsatz_street_highlight_include_pedestrian', isset($_POST['feu_einsatz_street_highlight_include_pedestrian']) ? 1 : 0, false);
+        if (isset($_POST['feu_einsatz_map_quick_profiles_present'])) {
+            $submitted_profiles = isset($_POST['feu_einsatz_map_quick_profiles']) && is_array($_POST['feu_einsatz_map_quick_profiles'])
+                ? wp_unslash($_POST['feu_einsatz_map_quick_profiles'])
+                : [];
+            foreach (FEU_Einsatz_Map_Quick_Profiles::defaults() as $profile_key => $profile_default) {
+                if (!isset($submitted_profiles[$profile_key]) || !is_array($submitted_profiles[$profile_key])) {
+                    $submitted_profiles[$profile_key] = [];
+                }
+                $submitted_profiles[$profile_key]['enabled'] = isset($submitted_profiles[$profile_key]['enabled']) ? 1 : 0;
+            }
+            update_option(FEU_Einsatz_Map_Quick_Profiles::OPTION, FEU_Einsatz_Map_Quick_Profiles::normalize($submitted_profiles), false);
+        }
         update_option(
             'feu_einsatz_map_preview_font_family',
             $this->normalize_map_preview_font_family(
@@ -770,6 +783,7 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
             'feu_einsatz_map_preview_stroke_width' => max(3, min(18, absint(get_option('feu_einsatz_map_preview_stroke_width', 8)))),
             'feu_einsatz_map_preview_font_family' => $this->normalize_map_preview_font_family(get_option('feu_einsatz_map_preview_font_family', 'auto')),
             'feu_einsatz_street_highlight_mode' => (string) get_option('feu_einsatz_street_highlight_mode', 'full'),
+            'feu_einsatz_map_quick_profiles' => FEU_Einsatz_Map_Quick_Profiles::get(),
             'feu_einsatz_street_highlight_length_meters' => max(20, min(5000, absint(get_option('feu_einsatz_street_highlight_length_meters', 100)))),
             'feu_einsatz_street_highlight_radius_meters' => max(20, min(5000, absint(get_option('feu_einsatz_street_highlight_radius_meters', 100)))),
             'feu_einsatz_area_page_enabled' => (int) get_option('feu_einsatz_area_page_enabled', 0),
@@ -879,6 +893,7 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
             'feu_einsatz_map_preview_stroke_width' => __('Stärke der Straßenmarkierung', 'feuer-einsatzberichte'),
             'feu_einsatz_map_preview_font_family' => __('Schrift im Kartenbild', 'feuer-einsatzberichte'),
             'feu_einsatz_street_highlight_mode' => __('Modus der Straßenmarkierung', 'feuer-einsatzberichte'),
+            'feu_einsatz_map_quick_profiles' => __('Schnellprofile für Berichte', 'feuer-einsatzberichte'),
             'feu_einsatz_street_highlight_length_meters' => __('Länge der Straßenmarkierung', 'feuer-einsatzberichte'),
             'feu_einsatz_street_highlight_radius_meters' => __('Radius der Straßenmarkierung', 'feuer-einsatzberichte'),
             'feu_einsatz_area_page_enabled' => __('Seite Einsatzgebiet', 'feuer-einsatzberichte'),
@@ -1590,6 +1605,8 @@ $settings_summary_cards = [
             'map_preview_highlight_color' => $map_preview_highlight_color,
             'map_preview_stroke_width' => $map_preview_stroke_width,
             'street_highlight_mode' => $street_highlight_mode,
+            'map_quick_profiles' => FEU_Einsatz_Map_Quick_Profiles::get(),
+            'map_profile_categories' => $all_categories,
             'street_highlight_length_meters' => $street_highlight_length_meters,
             'street_highlight_radius_meters' => $street_highlight_radius_meters,
             'street_highlight_include_pedestrian' => $street_highlight_include_pedestrian,
