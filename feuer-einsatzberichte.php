@@ -214,6 +214,8 @@ final class Feuer_Einsatzberichte_Core {
         if ($load_admin_context) {
             require_once FEU_EINSATZ_PLUGIN_DIR . 'includes/class-admin.php';
             $this->admin = new FEU_Einsatz_Admin($this->db);
+            require_once FEU_EINSATZ_PLUGIN_DIR . 'includes/class-operations-center.php';
+            new FEU_Einsatz_Operations_Center($this->admin, $this->db);
         }
 
         require_once FEU_EINSATZ_PLUGIN_DIR . 'includes/class-public.php';

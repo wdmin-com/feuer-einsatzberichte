@@ -4821,6 +4821,7 @@ class FEU_Einsatz_Template_Helpers {
             'street_cache_version' => (string) get_post_meta($post_id, FEU_Einsatz_Street_Cache::POST_META_VERSION, true),
             'street_cache_revision' => (string) get_post_meta($post_id, FEU_Einsatz_Street_Cache::POST_META_REVISION, true),
             'participants' => maybe_serialize(get_post_meta($post_id, '_feu_einsatz_teilnehmer', true)),
+            'participant_data_version' => (int) get_option('feu_einsatz_participant_data_version', 0),
             'organizations' => maybe_serialize(get_post_meta($post_id, '_feu_einsatz_organisationen', true)),
             'gallery' => maybe_serialize(get_post_meta($post_id, '_feu_einsatz_gallery', true)),
             'generated_map_preview_url' => (string) get_post_meta($post_id, '_feu_einsatz_generated_map_preview_url', true),
@@ -4843,6 +4844,7 @@ class FEU_Einsatz_Template_Helpers {
                 'street_highlight_radius_meters' => (int) get_option('feu_einsatz_street_highlight_radius_meters', 100),
                 'show_station' => (int) get_option('feu_einsatz_single_live_map_show_station', 0),
                 'desaturate_orgs' => (int) get_option('feu_einsatz_single_desaturate_organizations', 0),
+                'public_participant_names' => (int) get_option('feu_einsatz_public_participant_names', 1),
                 'watermark_enabled' => (int) get_option('feu_einsatz_photo_watermark_enabled', 1),
                 'watermark_text' => (string) get_option('feu_einsatz_photo_watermark_text', get_bloginfo('name')),
                 'watermark_image_id' => (int) get_option('feu_einsatz_photo_watermark_image_id', 0),
@@ -5925,7 +5927,9 @@ class FEU_Einsatz_Template_Helpers {
             }
         }
 
-        $participant_names = self::get_participant_names($participant_ids);
+        $participant_names = 1 === (int) get_option('feu_einsatz_public_participant_names', 1)
+            ? self::get_participant_names($participant_ids)
+            : [];
         $organization_details = self::get_organization_details($organization_ids);
         $deepest_category = self::get_deepest_category($post_id);
         $related_reports_display = self::normalize_related_reports_display(get_option('feu_einsatz_related_reports_display', 'cards'));
@@ -6134,7 +6138,7 @@ class FEU_Einsatz_Template_Helpers {
                 ] : null,
                 'organizations' => $organization_details,
                 'participant_names' => $participant_names,
-                'participant_count' => count($participant_names),
+                'participant_count' => count($participant_ids),
                 'content' => (string) $post->post_content,
                 'location' => self::build_location_label($display_street, $postcode, $city, $district),
             ],

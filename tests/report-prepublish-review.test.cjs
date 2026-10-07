@@ -6,8 +6,9 @@ const vm = require('node:vm');
 const source = fs.readFileSync(path.join(__dirname, '../assets/admin/js/report-prepublish-review.js'), 'utf8');
 function node(value = '') {
     return {
-        value, textContent: '', hidden: true, disabled: false, listeners: {}, attributes: {},
+        value, textContent: '', hidden: true, disabled: false, listeners: {}, attributes: {}, children: [],
         addEventListener(name, handler) { this.listeners[name] = handler; },
+        appendChild(child) { this.children.push(child); },
         getAttribute(name) { return this.attributes[name]; },
         setAttribute(name, value) { this.attributes[name] = value; },
         scrollIntoView() {}, focus() {}
@@ -17,22 +18,28 @@ const fields = {
     feu_einsatz_strasse: node('Musterstraße'), feu_einsatz_hausnummer: node('7'),
     feu_einsatz_plz: node('22525'), feu_einsatz_stadt: node('Hamburg'),
     feu_einsatz_map_public_precision: node('exact'),
-    feu_einsatz_new_report_title: node('Feuer in Straße')
+    feu_einsatz_new_report_title: node('Feuer in Straße'),
+    feu_einsatz_new_report_content: node('Einsatzbericht'),
+    feu_einsatz_datum: node('07.10.2026'), feu_einsatz_uhrzeit: node('13:30'),
+    feu_einsatz_gallery_ids: node('')
 };
 const address = node();
 const map = node();
 const url = node();
 const urlStatus = node();
 const confirm = node();
+const checklist = node();
 const heading = node();
 const panel = node();
 panel.attributes = { 'data-feu-fixed-url': '' };
 panel.querySelector = (selector) => ({
     '[data-feu-review-address]': address, '[data-feu-review-map]': map,
     '[data-feu-review-url]': url, '[data-feu-review-url-status]': urlStatus,
-    '[data-feu-review-confirm]': confirm, h3: heading
+    '[data-feu-review-confirm]': confirm, '[data-feu-review-checklist]': checklist, h3: heading
 })[selector];
 const open = node();
+const pendingOpen = node();
+pendingOpen.attributes['data-feu-review-status'] = 'pending';
 const keyword = node('11');
 const status = node();
 status.textContent = 'Karte bereit';
@@ -47,8 +54,8 @@ form.querySelector = (selector) => ({
     '[data-feu-address-map-preview-status]': status,
     '[data-feu-address-map-preview-mode]': mode
 })[selector] || null;
-form.querySelectorAll = () => [keyword];
-const document = { querySelector: () => form, getElementById: (id) => fields[id] || null };
+form.querySelectorAll = (selector) => selector === '[data-feu-review-open]' ? [open, pendingOpen] : [keyword];
+const document = { querySelector: () => form, getElementById: (id) => fields[id] || null, createElement: () => node() };
 const requests = [];
 const window = {
     feuEinsatzReportUrlReview: { ajaxUrl: '/wp-admin/admin-ajax.php', nonce: 'test-nonce', strings: {} },
@@ -71,6 +78,12 @@ const flush = () => new Promise((resolve) => setImmediate(resolve));
     requests[0].resolve({ ok: true, json: async () => ({ success: true, data: { status: 'available', url: 'https://example.test/einsaetze/feuer/feuer-in-strasse/' } }) });
     await flush();
     assert.equal(url.textContent, 'https://example.test/einsaetze/feuer/feuer-in-strasse/');
+    assert.equal(confirm.disabled, false);
+    fields.feu_einsatz_new_report_content.value = '';
+    form.listeners.input();
+    assert.equal(confirm.disabled, true);
+    fields.feu_einsatz_new_report_content.value = 'Einsatzbericht';
+    form.listeners.input();
     assert.equal(confirm.disabled, false);
     assert.equal(urlStatus.attributes['data-state'], 'available');
     form.listeners.input();
@@ -114,5 +127,7 @@ const flush = () => new Promise((resolve) => setImmediate(resolve));
     form.listeners.change();
     assert.equal(url.textContent, 'https://example.test/einsaetze/feuer/fest/');
     assert.equal(confirm.disabled, false);
+    pendingOpen.listeners.click();
+    assert.equal(confirm.value, 'pending');
     console.log('Prepublication URL review handles availability, conflicts and stale responses.');
 })().catch((error) => { console.error(error); process.exitCode = 1; });

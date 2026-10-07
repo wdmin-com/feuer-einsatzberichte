@@ -2842,6 +2842,10 @@ class FEU_Einsatz_Database {
         return $this->table_participants;
     }
 
+    public function get_participant_statistics_table_name() {
+        return $this->table_stats;
+    }
+
     public function get_stats_table_name() {
         return $this->table_stats;
     }

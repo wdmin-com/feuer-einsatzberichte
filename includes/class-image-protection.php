@@ -61,13 +61,62 @@ class FEU_Einsatz_Image_Protection {
         }
 
         set_transient($queue_key, 1, HOUR_IN_SECONDS);
-        wp_schedule_single_event(time() + 30, self::BACKGROUND_HOOK, [$attachment_ids, $queue_key]);
+        foreach ($attachment_ids as $attachment_id) {
+            update_post_meta($attachment_id, '_feu_einsatz_watermark_job', ['status' => 'queued', 'updated_at' => time()]);
+        }
+        if (!wp_schedule_single_event(time() + 30, self::BACKGROUND_HOOK, [$attachment_ids, $queue_key])) {
+            delete_transient($queue_key);
+            foreach ($attachment_ids as $attachment_id) {
+                update_post_meta($attachment_id, '_feu_einsatz_watermark_job', ['status' => 'error', 'updated_at' => time()]);
+            }
+        }
+    }
+
+    public static function retry_attachment_cache($attachment_ids): void {
+        $attachment_ids = array_values(array_unique(array_filter(array_map('absint', (array) $attachment_ids))));
+        if (!$attachment_ids || !self::is_image_watermark_enabled()) {
+            return;
+        }
+        $queue_key = 'feu_einsatz_watermark_' . md5(wp_json_encode($attachment_ids));
+        delete_transient($queue_key);
+        wp_clear_scheduled_hook(self::BACKGROUND_HOOK, [$attachment_ids, $queue_key]);
+        self::prime_attachment_cache($attachment_ids);
+    }
+
+    public static function get_attachment_job_status($attachment_id): array {
+        $attachment_id = absint($attachment_id);
+        if (!$attachment_id || !self::is_image_watermark_enabled()) {
+            return ['status' => 'not_required', 'message' => __('Nicht erforderlich', 'feuer-einsatzberichte')];
+        }
+        if (self::get_protected_image_urls($attachment_id, false)) {
+            return ['status' => 'ready', 'message' => __('Wasserzeichen ist bereit', 'feuer-einsatzberichte')];
+        }
+        $job = get_post_meta($attachment_id, '_feu_einsatz_watermark_job', true);
+        $status = is_array($job) ? sanitize_key((string) ($job['status'] ?? '')) : '';
+        if ('error' === $status) {
+            return ['status' => 'error', 'message' => __('Wasserzeichen konnte nicht erstellt werden', 'feuer-einsatzberichte')];
+        }
+        if (in_array($status, ['queued', 'processing'], true) && time() - (int) ($job['updated_at'] ?? 0) > 2 * HOUR_IN_SECONDS) {
+            return ['status' => 'error', 'message' => __('Wasserzeichen-Aufgabe ist stehen geblieben', 'feuer-einsatzberichte')];
+        }
+        if (in_array($status, ['queued', 'processing'], true)) {
+            return ['status' => $status, 'message' => __('Wasserzeichen wird erstellt', 'feuer-einsatzberichte')];
+        }
+        return ['status' => 'missing', 'message' => __('Wasserzeichen fehlt', 'feuer-einsatzberichte')];
     }
 
     public static function handle_background_generation($attachment_ids, $queue_key = '') {
         foreach (array_values(array_unique(array_filter(array_map('absint', (array) $attachment_ids)))) as $attachment_id) {
-            self::generate_protected_image($attachment_id, 'medium_large', true);
-            self::generate_protected_image($attachment_id, 'full', true);
+            update_post_meta($attachment_id, '_feu_einsatz_watermark_job', ['status' => 'processing', 'updated_at' => time()]);
+            try {
+                $thumb = self::generate_protected_image($attachment_id, 'medium_large', true);
+                $full = self::generate_protected_image($attachment_id, 'full', true);
+                $ready = is_array($thumb) && !empty($thumb['url']) && is_array($full) && !empty($full['url']);
+            } catch (Throwable $error) {
+                $ready = false;
+                error_log('[Feuer-Einsatzberichte] Watermark generation failed for attachment ' . $attachment_id . ': ' . $error->getMessage());
+            }
+            update_post_meta($attachment_id, '_feu_einsatz_watermark_job', ['status' => $ready ? 'ready' : 'error', 'updated_at' => time()]);
         }
 
         if ('' !== $queue_key) {

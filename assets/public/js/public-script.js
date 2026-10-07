@@ -781,7 +781,7 @@
                 ? function (fn) { window.requestIdleCallback(fn, { timeout: 400 }); }
                 : function (fn) { window.setTimeout(fn, 50); };
 
-            scheduleInit(function () {
+            function startMap() { scheduleInit(function () {
                 try {
                     renderMap(runtime);
                 } catch (error) {
@@ -797,7 +797,19 @@
 
                     showFallback(runtime, null);
                 }
-            });
+            }); }
+
+            if (typeof window.IntersectionObserver === 'function') {
+                var observer = new window.IntersectionObserver(function (entries) {
+                    if (entries.some(function (entry) { return entry.isIntersecting; })) {
+                        observer.disconnect();
+                        startMap();
+                    }
+                }, { rootMargin: '280px 0px' });
+                observer.observe(runtime);
+            } else {
+                startMap();
+            }
         });
     }
 

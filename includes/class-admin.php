@@ -4906,6 +4906,21 @@ class FEU_Einsatz_Admin {
         return hash_equals($stored_signature, $expected_signature);
     }
 
+    public function retry_generated_map_from_operations(int $post_id): bool {
+        if (!current_user_can('edit_post', $post_id) || !self::current_user_can_access_plugin_section('reports')) {
+            return false;
+        }
+        return (bool) $this->maybe_queue_generated_map_preview_generation(
+            $post_id,
+            (string) get_post_meta($post_id, '_feu_einsatz_strasse', true),
+            (string) get_post_meta($post_id, '_feu_einsatz_plz', true),
+            (string) get_post_meta($post_id, '_feu_einsatz_stadt', true),
+            true,
+            5,
+            'operations_retry'
+        );
+    }
+
     private function maybe_queue_generated_map_preview_generation($post_id, $strasse, $plz = '', $stadt = 'Hamburg', $force = false, $delay_seconds = null, $reason = 'save') {
         $post_id = absint($post_id);
         $strasse = trim((string) $strasse);
@@ -9536,9 +9551,11 @@ class FEU_Einsatz_Admin {
             $success_notice = [
                 'message' => 'future' === $created_report_status
                     ? __('Einsatzbericht wurde im Plugin gespeichert und als geplanter Beitrag angelegt.', 'feuer-einsatzberichte')
+                    : ('pending' === $created_report_status
+                        ? __('Einsatzbericht wurde zur Prüfung eingereicht.', 'feuer-einsatzberichte')
                     : ('publish' === $created_report_status
                         ? __('Einsatzbericht wurde im Plugin erstellt und veröffentlicht.', 'feuer-einsatzberichte')
-                        : __('Einsatzbericht wurde im Plugin als Entwurf gespeichert.', 'feuer-einsatzberichte')),
+                        : __('Einsatzbericht wurde im Plugin als Entwurf gespeichert.', 'feuer-einsatzberichte'))),
                 'view_url' => get_permalink($created_report_id),
                 'plugin_edit_url' => $this->get_internal_report_edit_url($created_report_id),
                 'standard_edit_url' => $this->get_standard_report_edit_url($created_report_id),
@@ -9568,9 +9585,11 @@ class FEU_Einsatz_Admin {
             $success_notice = [
                 'message' => 'future' === $updated_report_status
                     ? __('Einsatzbericht wurde im Plugin aktualisiert und bleibt geplant.', 'feuer-einsatzberichte')
+                    : ('pending' === $updated_report_status
+                        ? __('Einsatzbericht wartet auf Prüfung.', 'feuer-einsatzberichte')
                     : ('publish' === $updated_report_status
                         ? __('Einsatzbericht wurde im Plugin aktualisiert und veröffentlicht.', 'feuer-einsatzberichte')
-                        : __('Einsatzbericht wurde im Plugin als Entwurf aktualisiert.', 'feuer-einsatzberichte')),
+                        : __('Einsatzbericht wurde im Plugin als Entwurf aktualisiert.', 'feuer-einsatzberichte'))),
                 'view_url' => get_permalink($post->ID),
                 'plugin_edit_url' => $this->get_internal_report_edit_url($post->ID),
                 'standard_edit_url' => $this->get_standard_report_edit_url($post->ID),
@@ -9594,12 +9613,13 @@ class FEU_Einsatz_Admin {
 
         $title = isset($_POST['post_title']) ? sanitize_text_field(wp_unslash($_POST['post_title'])) : '';
         $content = isset($_POST['post_content']) ? wp_kses_post(wp_unslash($_POST['post_content'])) : '';
-        $status = isset($_POST['feu_einsatz_report_status']) && 'publish' === sanitize_text_field(wp_unslash($_POST['feu_einsatz_report_status']))
-            ? 'publish'
+        $requested_status = isset($_POST['feu_einsatz_report_status'])
+            ? sanitize_key(wp_unslash($_POST['feu_einsatz_report_status']))
             : 'draft';
+        $status = in_array($requested_status, ['publish', 'pending'], true) ? $requested_status : 'draft';
 
         if ('publish' === $status && !current_user_can('publish_posts')) {
-            $status = 'draft';
+            $status = 'pending';
         }
 
         $selected_categories = isset($validation['categories']) && is_array($validation['categories'])
@@ -9824,11 +9844,11 @@ class FEU_Einsatz_Admin {
         // An implicit form submit must not unpublish an existing report.
         $requested_status = isset($_POST['feu_einsatz_report_status'])
             ? sanitize_key(wp_unslash($_POST['feu_einsatz_report_status']))
-            : (in_array($post->post_status, ['publish', 'future'], true) ? 'publish' : 'draft');
-        $status = 'publish' === $requested_status ? 'publish' : 'draft';
+            : (in_array($post->post_status, ['publish', 'future'], true) ? 'publish' : ('pending' === $post->post_status ? 'pending' : 'draft'));
+        $status = in_array($requested_status, ['publish', 'pending'], true) ? $requested_status : 'draft';
 
         if ('publish' === $status && !current_user_can('publish_posts')) {
-            $status = 'draft';
+            $status = 'pending';
         }
 
         $selected_categories = isset($validation['categories']) && is_array($validation['categories'])

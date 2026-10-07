@@ -178,7 +178,52 @@ class FEU_Einsatz_Report_Share {
             return;
         }
 
-        wp_schedule_single_event(time() + 15, self::BACKGROUND_GENERATION_HOOK, [$post_id]);
+        if (wp_schedule_single_event(time() + 15, self::BACKGROUND_GENERATION_HOOK, [$post_id])) {
+            update_post_meta($post_id, '_feu_einsatz_share_card_job', ['status' => 'queued', 'updated_at' => time()]);
+        }
+    }
+
+    public function retry_share_card_generation(int $post_id): bool {
+        $post = get_post($post_id);
+        if (!$post instanceof WP_Post || 'publish' !== $post->post_status || !($this->fn_is_einsatzbericht)($post)) {
+            return false;
+        }
+        wp_clear_scheduled_hook(self::BACKGROUND_GENERATION_HOOK, [$post_id]);
+        update_post_meta($post_id, '_feu_einsatz_share_card_job', ['status' => 'queued', 'updated_at' => time()]);
+        $scheduled = (bool) wp_schedule_single_event(time() + 5, self::BACKGROUND_GENERATION_HOOK, [$post_id]);
+        if (!$scheduled) {
+            update_post_meta($post_id, '_feu_einsatz_share_card_job', ['status' => 'error', 'updated_at' => time()]);
+        }
+        return $scheduled;
+    }
+
+    public function get_share_card_job_status(int $post_id): array {
+        if ('generated' !== $this->get_social_share_settings()['image_mode'] || 'publish' !== get_post_status($post_id)) {
+            return ['status' => 'not_required', 'message' => __('Nicht erforderlich', 'feuer-einsatzberichte')];
+        }
+        $post = get_post($post_id);
+        if (!$post instanceof WP_Post) {
+            return ['status' => 'not_required', 'message' => __('Bericht fehlt', 'feuer-einsatzberichte')];
+        }
+        $data = $this->build_public_share_card_data($post);
+        $revision = $this->build_share_card_cache_revision($post, $data);
+        $path = $this->get_share_card_cache_path($post_id, $revision);
+        if ('' !== $path && is_readable($path)) {
+            return ['status' => 'ready', 'message' => __('Vorschaubild ist bereit', 'feuer-einsatzberichte')];
+        }
+        $job = get_post_meta($post_id, '_feu_einsatz_share_card_job', true);
+        if (is_array($job) && in_array($job['status'] ?? '', ['queued', 'processing'], true)
+            && time() - (int) ($job['updated_at'] ?? 0) > 2 * HOUR_IN_SECONDS) {
+            return ['status' => 'error', 'message' => __('Vorschaubild-Aufgabe ist stehen geblieben', 'feuer-einsatzberichte')];
+        }
+        $next = wp_next_scheduled(self::BACKGROUND_GENERATION_HOOK, [$post_id]);
+        if ($next) {
+            return ['status' => 'queued', 'message' => __('Vorschaubild wird erstellt', 'feuer-einsatzberichte')];
+        }
+        if (is_array($job) && 'error' === ($job['status'] ?? '')) {
+            return ['status' => 'error', 'message' => __('Vorschaubild konnte nicht erstellt werden', 'feuer-einsatzberichte')];
+        }
+        return ['status' => 'missing', 'message' => __('Vorschaubild fehlt', 'feuer-einsatzberichte')];
     }
 
     public function handle_background_share_card_generation($post_id): void {
@@ -189,7 +234,15 @@ class FEU_Einsatz_Report_Share {
             return;
         }
 
-        $this->generate_share_card_cache($post);
+        update_post_meta($post_id, '_feu_einsatz_share_card_job', ['status' => 'processing', 'updated_at' => time()]);
+        try {
+            $path = $this->generate_share_card_cache($post);
+            $status = '' !== $path && is_readable($path) ? 'ready' : 'error';
+        } catch (Throwable $error) {
+            $status = 'error';
+            error_log('[Feuer-Einsatzberichte] Share card generation failed for report ' . $post_id . ': ' . $error->getMessage());
+        }
+        update_post_meta($post_id, '_feu_einsatz_share_card_job', ['status' => $status, 'updated_at' => time()]);
     }
 
     private function generate_share_card_cache(WP_Post $post): string {

@@ -104,6 +104,7 @@ jobs:
           wp eval-file "$GITHUB_WORKSPACE/tests/integration/migration-diagnostics.php" --path="$RUNNER_TEMP/wordpress"
           wp eval-file "$GITHUB_WORKSPACE/tests/integration/report-edit.php" --path="$RUNNER_TEMP/wordpress"
           wp eval-file "$GITHUB_WORKSPACE/tests/integration/participant-summary.php" --path="$RUNNER_TEMP/wordpress"
+          wp eval-file "$GITHUB_WORKSPACE/tests/integration/operations-center.php" --path="$RUNNER_TEMP/wordpress"
           wp eval-file "$GITHUB_WORKSPACE/tests/integration/report-keywords.php" --path="$RUNNER_TEMP/wordpress"
           wp eval-file "$GITHUB_WORKSPACE/tests/integration/workflow-integrity.php" --path="$RUNNER_TEMP/wordpress"
           wp eval-file "$GITHUB_WORKSPACE/tests/integration/report-duplicate.php" --path="$RUNNER_TEMP/wordpress"
