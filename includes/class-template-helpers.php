@@ -5428,17 +5428,18 @@ class FEU_Einsatz_Template_Helpers {
         return array_values(array_unique($normalized_ids));
     }
 
-    private static function build_location_label($street, $plz, $city) {
+    private static function build_location_label($street, $plz, $city, $district = '') {
         $street = self::strip_house_number_from_street($street);
         $plz = trim((string) $plz);
         $city = trim((string) $city);
+        $district = trim((string) $district);
         $location_parts = [];
 
         if ('' !== $street) {
             $location_parts[] = $street;
         }
 
-        $city_line = trim(implode(' ', array_filter([$plz, $city], static function($value) {
+        $city_line = trim(implode(' ', array_filter([$plz, $city, $district], static function($value) {
             return '' !== trim((string) $value);
         })));
 
@@ -6135,7 +6136,7 @@ class FEU_Einsatz_Template_Helpers {
                 'participant_names' => $participant_names,
                 'participant_count' => count($participant_names),
                 'content' => (string) $post->post_content,
-                'location' => self::build_location_label($display_street, $postcode, $city),
+                'location' => self::build_location_label($display_street, $postcode, $city, $district),
             ],
             'map' => [
                 'height' => $map_height,

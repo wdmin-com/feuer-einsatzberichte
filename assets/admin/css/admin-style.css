@@ -11131,7 +11131,26 @@ body.feu-admin-ui--modern-shell .feu-admin-settings-main .feu-einsatz-tab-conten
     margin: 2px 0 0;
     padding: 0;
     align-self: flex-start;
+    appearance: none;
+    border: 2px solid #8a99a8;
+    border-radius: 50%;
+    background: #fff;
     box-shadow: none;
+    cursor: pointer;
+}
+
+.feu-einsatz-report-create-page .feu-einsatz-report-create-side .feu-einsatz-choice-card input[type="radio"]:checked {
+    border-color: #2271b1;
+    background: radial-gradient(circle at center, #2271b1 0 4px, #fff 4.5px);
+}
+
+.feu-einsatz-report-create-page .feu-einsatz-report-create-side .feu-einsatz-choice-card input[type="radio"]:checked::before {
+    display: none;
+}
+
+.feu-einsatz-report-create-page .feu-einsatz-report-create-side .feu-einsatz-choice-card input[type="radio"]:focus-visible {
+    outline: 2px solid #2271b1;
+    outline-offset: 3px;
 }
 
 .feu-einsatz-report-create-page .feu-einsatz-report-create-side .feu-einsatz-choice-card-body {
@@ -11189,4 +11208,57 @@ body.feu-admin-ui--modern-shell .feu-admin-settings-main .feu-einsatz-tab-conten
 .feu-einsatz-report-create-page .feu-einsatz-report-create-side .feu-einsatz-report-status-actions .button {
     width: 100%;
     justify-content: center;
+}
+
+/* Keep participant comparisons compact and details in the current viewport. */
+.feu-einsatz-ranking-rest {
+    width: min(100%, 940px);
+    margin-inline: auto;
+}
+
+body.feu-einsatz-participant-dialog-open {
+    overflow: hidden;
+}
+
+body .feu-einsatz-detail-panel {
+    position: fixed;
+    z-index: 100000;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    margin: 0;
+    padding: 16px;
+    overflow: hidden;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+body .feu-einsatz-detail-panel[hidden] {
+    display: none;
+}
+
+.feu-einsatz-detail-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, .64);
+}
+
+.feu-einsatz-detail-dialog {
+    position: relative;
+    width: min(100%, 900px);
+    max-height: calc(100dvh - 32px);
+    padding: 24px;
+    overflow: auto;
+    border: 1px solid #dbe4ee;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 28px 80px rgba(15, 23, 42, .28);
+}
+
+@media (max-width: 600px) {
+    .feu-einsatz-detail-dialog {
+        padding: 16px;
+    }
 }

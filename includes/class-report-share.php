@@ -324,15 +324,15 @@ class FEU_Einsatz_Report_Share {
         $signature = isset($_GET['sig']) ? sanitize_text_field(wp_unslash($_GET['sig'])) : '';
         $expires_at = isset($_GET['exp']) ? absint(wp_unslash($_GET['exp'])) : 0;
 
-        if ($post_id < 1 || '' === $signature || $expires_at < 1) {
+        if ($post_id < 1 || '' === $signature) {
             wp_die(esc_html__('Ungueltige Share-Anfrage.', 'feuer-einsatzberichte'), '', ['response' => 400]);
         }
 
-        if ($expires_at < time()) {
+        if ($expires_at > 0 && $expires_at < time()) {
             wp_die(esc_html__('Die Freigabe fuer dieses Share-Bild ist abgelaufen.', 'feuer-einsatzberichte'), '', ['response' => 403]);
         }
 
-        if (($expires_at - time()) > (self::PUBLIC_SHARE_TTL + HOUR_IN_SECONDS)) {
+        if ($expires_at > 0 && ($expires_at - time()) > (self::PUBLIC_SHARE_TTL + HOUR_IN_SECONDS)) {
             wp_die(esc_html__('Ungueltige Share-Anfrage.', 'feuer-einsatzberichte'), '', ['response' => 400]);
         }
 
@@ -373,7 +373,11 @@ class FEU_Einsatz_Report_Share {
         if ('' !== $cached && file_exists($cached) && is_readable($cached)) {
             header('Content-Type: image/png');
             header('Cache-Control: public, max-age=3600');
-            header('X-Robots-Tag: noindex');
+            if ($expires_at > 0) {
+                header('X-Robots-Tag: noindex');
+            } else {
+                header_remove('X-Robots-Tag');
+            }
             header('Content-Disposition: ' . ($download ? 'attachment' : 'inline') . '; filename="' . $this->build_share_filename($post_id) . '"');
             readfile($cached);
             exit;
@@ -387,7 +391,11 @@ class FEU_Einsatz_Report_Share {
 
         header('Content-Type: image/png');
         header('Cache-Control: public, max-age=900');
-        header('X-Robots-Tag: noindex');
+        if ($expires_at > 0) {
+            header('X-Robots-Tag: noindex');
+        } else {
+            header_remove('X-Robots-Tag');
+        }
         header('Content-Disposition: ' . ($download ? 'attachment' : 'inline') . '; filename="' . $this->build_share_filename($post_id) . '"');
         readfile($cached);
         exit;

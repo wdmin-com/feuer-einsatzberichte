@@ -809,7 +809,7 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
                                         <span class="feu-einsatz-presentation-podium-trophy"><i class="ti ti-trophy" aria-hidden="true"></i></span>
                                         <strong><?php echo esc_html(sprintf(__('%d. Platz', 'feuer-einsatzberichte'), $rank)); ?></strong>
                                         <span><?php echo esc_html(FEU_Einsatz_Template_Helpers::format_participant_name($participant->vorname, $participant->nachname)); ?></span>
-                                        <em><?php echo esc_html((string) (int) $participant->gesamt_einsaetze); ?> <?php esc_html_e('Teilnahmen', 'feuer-einsatzberichte'); ?></em>
+                                        <em><?php echo esc_html((string) (int) $participant->gesamt_einsaetze); ?> <?php esc_html_e('Einsätze', 'feuer-einsatzberichte'); ?></em>
                                     </p>
                                 <?php endforeach; ?>
                             </div>
@@ -1521,15 +1521,18 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
                 <?php endif; ?>
             </div>
 
-            <div id="feu-einsatz-participant-detail-panel" class="feu-einsatz-detail-panel" hidden>
-                <div class="feu-einsatz-detail-panel-header">
-                    <div>
-                        <h3 id="feu-einsatz-participant-detail-title"><?php esc_html_e('Teilnehmerdetails', 'feuer-einsatzberichte'); ?></h3>
-                        <p class="description"><?php esc_html_e('Übersicht zu Einsätzen und Funktionen im ausgewählten Jahr.', 'feuer-einsatzberichte'); ?></p>
+            <div id="feu-einsatz-participant-detail-panel" class="feu-einsatz-detail-panel" role="dialog" aria-modal="true" aria-labelledby="feu-einsatz-participant-detail-title" hidden>
+                <div class="feu-einsatz-detail-backdrop" data-feu-participant-detail-backdrop></div>
+                <div class="feu-einsatz-detail-dialog" tabindex="-1">
+                    <div class="feu-einsatz-detail-panel-header">
+                        <div>
+                            <h3 id="feu-einsatz-participant-detail-title"><?php esc_html_e('Teilnehmerdetails', 'feuer-einsatzberichte'); ?></h3>
+                            <p class="description"><?php esc_html_e('Übersicht zu Einsätzen und Funktionen im ausgewählten Jahr.', 'feuer-einsatzberichte'); ?></p>
+                        </div>
+                        <button type="button" class="button" id="feu-einsatz-close-participant-details"><?php esc_html_e('Schließen', 'feuer-einsatzberichte'); ?></button>
                     </div>
-                    <button type="button" class="button" id="feu-einsatz-close-participant-details"><?php esc_html_e('Schließen', 'feuer-einsatzberichte'); ?></button>
+                    <div id="feu-einsatz-participant-detail-content"></div>
                 </div>
-                <div id="feu-einsatz-participant-detail-content"></div>
             </div>
         </div>
     </section>
@@ -1595,6 +1598,11 @@ document.addEventListener('DOMContentLoaded', function() {
     var detailPanel = document.getElementById('feu-einsatz-participant-detail-panel');
     var detailTitle = document.getElementById('feu-einsatz-participant-detail-title');
     var detailContent = document.getElementById('feu-einsatz-participant-detail-content');
+    var detailReturnFocus = null;
+    var detailRequestId = 0;
+    if (detailPanel && detailPanel.parentNode !== document.body) {
+        document.body.appendChild(detailPanel);
+    }
     var activityMapInstance = null;
     var presentationActivityMapInstance = null;
     var activityMapRendered = false;
@@ -3665,12 +3673,18 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        detailRequestId++;
         detailPanel.hidden = true;
         detailContent.innerHTML = '';
+        document.body.classList.remove('feu-einsatz-participant-dialog-open');
 
         if (participantJump) {
             participantJump.value = '';
         }
+        if (detailReturnFocus && detailReturnFocus.isConnected) {
+            detailReturnFocus.focus();
+        }
+        detailReturnFocus = null;
     }
 
     function renderParticipantDetails(response, participantName) {
@@ -3685,8 +3699,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
         html += '<div class="feu-einsatz-detail-shell">';
         html += '<div class="feu-einsatz-detail-summary-grid">';
-        html += '<div class="feu-einsatz-detail-summary-card"><span>Teilnahmen</span><strong>' + escapeHtml(summary.total_einsaetze || einsaetze.length || 0) + '</strong></div>';
-        html += '<div class="feu-einsatz-detail-summary-card"><span>Haeufigste Funktion</span><strong>' + escapeHtml(summary.top_function || 'Keine Daten') + '</strong></div>';
+        html += '<div class="feu-einsatz-detail-summary-card"><span>Einsätze</span><strong>' + escapeHtml(summary.total_einsaetze || einsaetze.length || 0) + '</strong></div>';
+        html += '<div class="feu-einsatz-detail-summary-card"><span>Häufigste Funktion</span><strong>' + escapeHtml(summary.top_function || 'Keine wiederholte Funktion') + '</strong>';
+        if (Number(summary.top_function_count) >= 2) {
+            html += '<small>' + escapeHtml(summary.top_function_count) + ' Einsätze</small>';
+        }
+        html += '</div>';
         html += '<div class="feu-einsatz-detail-summary-card"><span>Erster Einsatz</span><strong>' + escapeHtml(summary.first_einsatz_date || 'Keine Daten') + '</strong></div>';
         html += '<div class="feu-einsatz-detail-summary-card"><span>Letzter Einsatz</span><strong>' + escapeHtml(summary.last_einsatz_date || 'Keine Daten') + '</strong></div>';
         html += '</div>';
@@ -3731,7 +3749,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         detailPanel.hidden = false;
         detailContent.innerHTML = html;
-        detailPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     function openParticipantDetails(participantId, participantName) {
@@ -3739,12 +3756,19 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        detailRequestId++;
+        var requestId = detailRequestId;
+        if (detailPanel.hidden) {
+            detailReturnFocus = document.activeElement;
+        }
         if (participantJump) {
             participantJump.value = String(participantId);
         }
 
         detailPanel.hidden = false;
+        document.body.classList.add('feu-einsatz-participant-dialog-open');
         detailContent.innerHTML = '<div class="feu-einsatz-loading-card">Lade Teilnehmerdetails...</div>';
+        document.getElementById('feu-einsatz-close-participant-details').focus();
 
         jQuery.post(ajaxurl, {
             action: 'feu_einsatz_get_participant_details',
@@ -3752,6 +3776,9 @@ document.addEventListener('DOMContentLoaded', function() {
             jahr: selectedYear,
             nonce: '<?php echo esc_js(wp_create_nonce('feu_einsatz_ajax_nonce')); ?>'
         }, function(response) {
+            if (requestId !== detailRequestId || detailPanel.hidden) {
+                return;
+            }
             if (response.success) {
                 renderParticipantDetails(response, participantName);
                 return;
@@ -3763,6 +3790,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
             detailContent.innerHTML = '<div class="feu-einsatz-loading-card">' + escapeHtml(errorMessage) + '</div>';
         }).fail(function() {
+            if (requestId !== detailRequestId || detailPanel.hidden) {
+                return;
+            }
             detailContent.innerHTML = '<div class="feu-einsatz-loading-card">Fehler beim Laden der Teilnehmerdetails.</div>';
         });
     }
@@ -3827,8 +3857,21 @@ document.addEventListener('DOMContentLoaded', function() {
     if (closeParticipantDetailsButton) {
         closeParticipantDetailsButton.addEventListener('click', closeParticipantDetails);
     }
+    if (detailPanel) {
+        detailPanel.querySelector('[data-feu-participant-detail-backdrop]').addEventListener('click', closeParticipantDetails);
+    }
 
     document.addEventListener('keydown', function(event) {
+        if (detailPanel && !detailPanel.hidden && event.key === 'Tab') {
+            var focusable = Array.prototype.slice.call(detailPanel.querySelectorAll('button:not([disabled]), a[href], [tabindex="0"]'));
+            var first = focusable[0];
+            var last = focusable[focusable.length - 1];
+            if (first && last && ((event.shiftKey && document.activeElement === first) || (!event.shiftKey && document.activeElement === last))) {
+                event.preventDefault();
+                (event.shiftKey ? last : first).focus();
+            }
+            return;
+        }
         if (statisticsPresentationDeck && !statisticsPresentationDeck.hidden) {
             if (event.key === 'ArrowRight' || event.key === 'PageDown') {
                 event.preventDefault();

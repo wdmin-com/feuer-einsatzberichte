@@ -485,6 +485,8 @@ class FEU_Einsatz_Admin {
         add_action('admin_post_feu_einsatz_share_image',              [$this->report_share, 'handle_share_image_download']);
         add_action('admin_post_feu_einsatz_share_image_public',         [$this->report_share, 'handle_public_share_image_request']);
         add_action('admin_post_nopriv_feu_einsatz_share_image_public',  [$this->report_share, 'handle_public_share_image_request']);
+        add_action('wp_ajax_feu_einsatz_share_image_public',            [$this->report_share, 'handle_public_share_image_request']);
+        add_action('wp_ajax_nopriv_feu_einsatz_share_image_public',     [$this->report_share, 'handle_public_share_image_request']);
         add_action('add_meta_boxes', [$this, 'add_meta_boxes'], 10, 2);
         add_action('save_post', [$this, 'save_post_data'], 10, 3);
         add_action('post_updated', [$this, 'on_einsatz_updated'], 10, 1);

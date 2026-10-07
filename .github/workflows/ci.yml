@@ -103,6 +103,7 @@ jobs:
           wp eval-file "$GITHUB_WORKSPACE/tests/integration/migration-overview.php" --path="$RUNNER_TEMP/wordpress"
           wp eval-file "$GITHUB_WORKSPACE/tests/integration/migration-diagnostics.php" --path="$RUNNER_TEMP/wordpress"
           wp eval-file "$GITHUB_WORKSPACE/tests/integration/report-edit.php" --path="$RUNNER_TEMP/wordpress"
+          wp eval-file "$GITHUB_WORKSPACE/tests/integration/participant-summary.php" --path="$RUNNER_TEMP/wordpress"
           wp eval-file "$GITHUB_WORKSPACE/tests/integration/report-keywords.php" --path="$RUNNER_TEMP/wordpress"
           wp eval-file "$GITHUB_WORKSPACE/tests/integration/workflow-integrity.php" --path="$RUNNER_TEMP/wordpress"
           wp eval-file "$GITHUB_WORKSPACE/tests/integration/report-duplicate.php" --path="$RUNNER_TEMP/wordpress"
@@ -121,7 +122,16 @@ jobs:
             status="$(curl -sS -o "$RUNNER_TEMP/report-page.html" -w '%{http_code}' "$url")"
             test "$status" = '200'
             grep -q "<link rel=.[Cc]anonical.*$url" "$RUNNER_TEMP/report-page.html"
+            test "$(grep -Eoc 'rel=.canonical.' "$RUNNER_TEMP/report-page.html")" = '1'
+            grep -q 'property="og:title"' "$RUNNER_TEMP/report-page.html"
+            grep -q 'name="description"' "$RUNNER_TEMP/report-page.html"
           done
+          share_image_url="$(node -e 'const h=require("fs").readFileSync(process.argv[1],"utf8");const m=h.match(/<meta property="og:image" content="([^"]+)"/);process.stdout.write(m?m[1].replaceAll("&amp;","&"):"")' "$RUNNER_TEMP/report-page.html")"
+          test -n "$share_image_url"
+          case "$share_image_url" in *exp=*) exit 1;; esac
+          case "$share_image_url" in *admin-ajax.php*) ;; *) exit 1;; esac
+          test "$(curl -sS -o "$RUNNER_TEMP/report-share.png" -w '%{http_code}' "$share_image_url")" = '200'
+          test "$(file --brief --mime-type "$RUNNER_TEMP/report-share.png")" = 'image/png'
           test "$(curl -sS -o /dev/null -w '%{http_code}' 'http://127.0.0.1:8089/einsaetze/wrong/http-route-ci-category/')" = '404'
           test "$(curl -sS -o /dev/null -w '%{http_code}' 'http://127.0.0.1:8089/einsaetze/http-route-ci-category/')" = '404'
           wp eval 'foreach (["http-route-ci-legacy", "http-route-ci-category"] as $slug) { $post = get_page_by_path($slug, OBJECT, "einsatzbericht"); if ($post) { wp_delete_post($post->ID, true); } }' --path="$RUNNER_TEMP/wordpress"

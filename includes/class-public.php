@@ -692,7 +692,7 @@ class FEU_Einsatz_Public {
         return wp_nonce_url($url, 'feu_einsatz_share_image_' . $post_id);
     }
 
-    private function build_public_share_image_endpoint_url($post_id, $download = false) {
+    private function build_public_share_image_endpoint_url($post_id, $download = false, $permanent = false) {
         $post_id = absint($post_id);
 
         if ($post_id < 1) {
@@ -703,8 +703,10 @@ class FEU_Einsatz_Public {
             'action' => 'feu_einsatz_share_image_public',
             'post_id' => $post_id,
         ];
-        $expires_at = time() + DAY_IN_SECONDS;
-        $args['exp'] = $expires_at;
+        $expires_at = $permanent ? 0 : time() + DAY_IN_SECONDS;
+        if (!$permanent) {
+            $args['exp'] = $expires_at;
+        }
         $args['sig'] = FEU_Einsatz_Template_Helpers::get_public_share_image_signature($post_id, $expires_at);
 
         $revision = $this->get_public_share_image_revision($post_id);
@@ -713,7 +715,7 @@ class FEU_Einsatz_Public {
             $args['rev'] = $revision;
         }
 
-        $url = add_query_arg($args, admin_url('admin-post.php'));
+        $url = add_query_arg($args, admin_url($permanent ? 'admin-ajax.php' : 'admin-post.php'));
 
         if ($download) {
             $url = add_query_arg('download', '1', $url);
@@ -990,7 +992,15 @@ class FEU_Einsatz_Public {
             return [];
         }
 
-        $image_url = FEU_Einsatz_Template_Helpers::get_versioned_attachment_image_url($attachment_id, 'full');
+        $watermark_active = class_exists('FEU_Einsatz_Image_Protection')
+            && FEU_Einsatz_Image_Protection::is_image_watermark_enabled()
+            && '1' !== (string) get_post_meta($attachment_id, '_feu_einsatz_generated_map_preview', true);
+        if ($watermark_active) {
+            $protected_urls = FEU_Einsatz_Image_Protection::get_protected_image_urls($attachment_id, false);
+            $image_url = is_array($protected_urls) ? (string) ($protected_urls['full'] ?? '') : '';
+        } else {
+            $image_url = FEU_Einsatz_Template_Helpers::get_versioned_attachment_image_url($attachment_id, 'full');
+        }
 
         if (!$image_url) {
             return [];
@@ -1017,7 +1027,7 @@ class FEU_Einsatz_Public {
         $default_alt = trim((string) $default_alt);
 
         if ('generated' === ($settings['image_mode'] ?? 'post_image')) {
-            $generated_image_url = $this->build_public_share_image_endpoint_url($post_id);
+            $generated_image_url = $this->build_public_share_image_endpoint_url($post_id, false, true);
             $dimensions = FEU_Einsatz_Template_Helpers::get_social_share_card_dimensions($settings['layout'] ?? 'wide');
 
             if ('' !== $generated_image_url) {
@@ -1042,7 +1052,7 @@ class FEU_Einsatz_Public {
             }
         }
 
-        if (!empty($card_image['url'])) {
+        if (!empty($card_image['url']) && (!$card_attachment_id || !FEU_Einsatz_Image_Protection::is_image_watermark_enabled())) {
             return [
                 'url' => (string) $card_image['url'],
                 'alt' => $default_alt,
@@ -1064,7 +1074,7 @@ class FEU_Einsatz_Public {
             }
         }
 
-        if (!empty($fallback_image['post_image_url'])) {
+        if (!empty($fallback_image['post_image_url']) && (!$fallback_attachment_id || !FEU_Einsatz_Image_Protection::is_image_watermark_enabled())) {
             return [
                 'url' => (string) $fallback_image['post_image_url'],
                 'alt' => $fallback_alt,
@@ -1198,9 +1208,10 @@ class FEU_Einsatz_Public {
         echo "\n";
 
         if (!empty($settings['canonical_enabled'])) {
+            remove_action('wp_head', 'rel_canonical');
             echo '<link rel="canonical" href="' . esc_url($permalink) . '" />' . "\n";
-            echo '<meta name="description" content="' . esc_attr($description) . '" />' . "\n";
         }
+        echo '<meta name="description" content="' . esc_attr($description) . '" />' . "\n";
 
         echo '<meta property="og:locale" content="' . esc_attr($locale) . '" />' . "\n";
         echo '<meta property="og:type" content="article" />' . "\n";

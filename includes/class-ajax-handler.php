@@ -381,10 +381,7 @@ class FEU_Einsatz_Ajax_Handler {
             ];
         }, $einsaetze);
 
-        $top_function = '';
-        if (!empty($funktionen[0]) && !empty($funktionen[0]->funktion)) {
-            $top_function = $funktionen[0]->funktion;
-        }
+        $function_summary = self::summarize_participant_functions($funktionen);
 
         $last_einsatz_date = '';
         $first_einsatz_date = '';
@@ -397,7 +394,8 @@ class FEU_Einsatz_Ajax_Handler {
 
         $summary = [
             'total_einsaetze' => count($formatted_einsaetze),
-            'top_function' => $top_function,
+            'top_function' => $function_summary['name'],
+            'top_function_count' => $function_summary['count'],
             'last_einsatz_date' => $last_einsatz_date,
             'first_einsatz_date' => $first_einsatz_date,
         ];
@@ -407,6 +405,37 @@ class FEU_Einsatz_Ajax_Handler {
             'funktionen' => $funktionen,
             'summary' => $summary,
         ]);
+    }
+
+    public static function summarize_participant_functions($functions) {
+        $counts = [];
+        foreach ((array) $functions as $function) {
+            $name = trim((string) ($function->funktion ?? ''));
+            $count = max(0, (int) ($function->anzahl ?? 0));
+            if ('' !== $name && $count > 0) {
+                $counts[$name] = ($counts[$name] ?? 0) + $count;
+            }
+        }
+
+        if (!$counts) {
+            return ['name' => '', 'count' => 0];
+        }
+
+        $maximum = max($counts);
+        if ($maximum < 2) {
+            return ['name' => '', 'count' => 0];
+        }
+
+        $leaders = array_keys(array_filter($counts, static function ($count) use ($maximum) {
+            return $count === $maximum;
+        }));
+
+        return [
+            'name' => 1 === count($leaders)
+                ? $leaders[0]
+                : sprintf(_n('%d Funktion gleich häufig', '%d Funktionen gleich häufig', count($leaders), 'feuer-einsatzberichte'), count($leaders)),
+            'count' => $maximum,
+        ];
     }
 
     public function feu_einsatz_get_statistics() {
