@@ -17,8 +17,8 @@ if (empty($jahre)) {
 
 $default_jahr = in_array($aktuelles_jahr, $jahre, true) ? $aktuelles_jahr : (int) $jahre[0];
 
-$allowed_tabs = ['categories', 'calendar', 'activity-map', 'participants', 'presentation-settings'];
-$active_tab = 'categories';
+$allowed_tabs = ['overview', 'categories', 'calendar', 'activity-map', 'participants', 'presentation-settings'];
+$active_tab = 'overview';
 if (isset($_POST['feu_einsatz_stats_tab'])) {
     $requested_tab = sanitize_key(wp_unslash($_POST['feu_einsatz_stats_tab']));
     if (in_array($requested_tab, $allowed_tabs, true)) {
@@ -233,10 +233,26 @@ usort($presentation_participants, static function($a, $b) {
     return (int) $b->gesamt_einsaetze <=> (int) $a->gesamt_einsaetze;
 });
 
-$category_history = [];
+$category_history_totals = [];
+$category_history_rows = [];
 foreach ($jahre as $history_year) {
-    $category_history[$history_year] = $this->db->get_category_statistics((int) $history_year);
+    $history_categories = $this->db->get_category_statistics((int) $history_year);
+    $category_history_totals[$history_year] = 0;
+    foreach ($history_categories as $history_category) {
+        $category_name = (string) $history_category->kategorie_name;
+        $category_key = sanitize_title($category_name);
+        $category_count = (int) $history_category->anzahl;
+        if (!isset($category_history_rows[$category_key])) {
+            $category_history_rows[$category_key] = ['name' => $category_name, 'count' => 0, 'years' => []];
+        }
+        $category_history_rows[$category_key]['count'] += $category_count;
+        $category_history_rows[$category_key]['years'][$history_year] = ($category_history_rows[$category_key]['years'][$history_year] ?? 0) + $category_count;
+        $category_history_totals[$history_year] += $category_count;
+    }
 }
+uasort($category_history_rows, static function($a, $b) {
+    return $b['count'] <=> $a['count'] ?: strnatcasecmp($a['name'], $b['name']);
+});
 
 $count_by_date = [];
 foreach ($daily_stats as $stat) {
@@ -793,7 +809,7 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
                                         <span class="feu-einsatz-presentation-podium-trophy"><i class="ti ti-trophy" aria-hidden="true"></i></span>
                                         <strong><?php echo esc_html(sprintf(__('%d. Platz', 'feuer-einsatzberichte'), $rank)); ?></strong>
                                         <span><?php echo esc_html(FEU_Einsatz_Template_Helpers::format_participant_name($participant->vorname, $participant->nachname)); ?></span>
-                                        <em><?php echo esc_html((string) (int) $participant->gesamt_einsaetze); ?> <?php esc_html_e('Teilnahmen', 'feuer-einsatzberichte'); ?></em>
+                                        <em><?php echo esc_html((string) (int) $participant->gesamt_einsaetze); ?> <?php esc_html_e('Einsätze', 'feuer-einsatzberichte'); ?></em>
                                     </p>
                                 <?php endforeach; ?>
                             </div>
@@ -888,6 +904,22 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
         <input type="submit" value="<?php esc_attr_e('Aktualisieren', 'feuer-einsatzberichte'); ?>" class="button button-primary">
     </form>
 
+    <div class="feu-einsatz-stats-tabs" role="tablist" aria-label="<?php esc_attr_e('Statistikbereiche', 'feuer-einsatzberichte'); ?>">
+        <button type="button" class="button feu-einsatz-stats-tab <?php echo 'overview' === $active_tab ? 'is-active' : ''; ?>" data-target="overview" id="feu-einsatz-stats-tab-overview" role="tab" aria-controls="feu-einsatz-stats-panel-overview" aria-selected="<?php echo 'overview' === $active_tab ? 'true' : 'false'; ?>"><?php esc_html_e('Übersicht', 'feuer-einsatzberichte'); ?></button>
+        <button type="button" class="button feu-einsatz-stats-tab <?php echo 'categories' === $active_tab ? 'is-active' : ''; ?>" data-target="categories" id="feu-einsatz-stats-tab-categories" role="tab" aria-controls="feu-einsatz-stats-panel-categories" aria-selected="<?php echo 'categories' === $active_tab ? 'true' : 'false'; ?>"><?php esc_html_e('Einsätze nach Einsatzstichwort', 'feuer-einsatzberichte'); ?></button>
+        <button type="button" class="button feu-einsatz-stats-tab <?php echo 'calendar' === $active_tab ? 'is-active' : ''; ?>" data-target="calendar" id="feu-einsatz-stats-tab-calendar" role="tab" aria-controls="feu-einsatz-stats-panel-calendar" aria-selected="<?php echo 'calendar' === $active_tab ? 'true' : 'false'; ?>"><?php esc_html_e('Kalender', 'feuer-einsatzberichte'); ?></button>
+        <button type="button" class="button feu-einsatz-stats-tab <?php echo 'activity-map' === $active_tab ? 'is-active' : ''; ?>" data-target="activity-map" id="feu-einsatz-stats-tab-activity-map" role="tab" aria-controls="feu-einsatz-stats-panel-activity-map" aria-selected="<?php echo 'activity-map' === $active_tab ? 'true' : 'false'; ?>"><?php esc_html_e('Aktivitätskarte', 'feuer-einsatzberichte'); ?></button>
+        <button type="button" class="button feu-einsatz-stats-tab <?php echo 'participants' === $active_tab ? 'is-active' : ''; ?>" data-target="participants" id="feu-einsatz-stats-tab-participants" role="tab" aria-controls="feu-einsatz-stats-panel-participants" aria-selected="<?php echo 'participants' === $active_tab ? 'true' : 'false'; ?>">
+            <?php esc_html_e('Teilnehmer-Ranking', 'feuer-einsatzberichte'); ?>
+            <?php if (!$participant_ranking_unlocked): ?><span class="feu-einsatz-tab-badge"><?php esc_html_e('PIN', 'feuer-einsatzberichte'); ?></span><?php endif; ?>
+        </button>
+        <button type="button" class="button feu-einsatz-stats-tab <?php echo 'presentation-settings' === $active_tab ? 'is-active' : ''; ?>" data-target="presentation-settings" id="feu-einsatz-stats-tab-presentation-settings" role="tab" aria-controls="feu-einsatz-stats-panel-presentation-settings" aria-selected="<?php echo 'presentation-settings' === $active_tab ? 'true' : 'false'; ?>">
+            <span class="ti ti-slideshow"></span>
+            <?php esc_html_e('Präsentation einstellen', 'feuer-einsatzberichte'); ?>
+        </button>
+    </div>
+
+    <section class="feu-einsatz-stats-panel <?php echo 'overview' === $active_tab ? 'is-active' : ''; ?>" data-panel="overview" id="feu-einsatz-stats-panel-overview" role="tabpanel" aria-labelledby="feu-einsatz-stats-tab-overview">
     <div class="stats-cards feu-einsatz-stat-visual-grid" id="feu-einsatz-statistics-summary-cards">
         <div class="stat-card feu-einsatz-stat-visual-card is-primary" style="--feu-stat-progress: <?php echo esc_attr((string) min(100, max(0, (int) ($total['total_einsaetze'] ?? 0)))); ?>%;">
             <div class="feu-einsatz-stat-card-top">
@@ -966,22 +998,22 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
         <div class="feu-einsatz-admindek-card feu-einsatz-admindek-card--categories">
             <div class="feu-einsatz-admindek-card-head">
                 <div>
-                    <span><i class="ti ti-chart-donut"></i><?php esc_html_e('Einsatzstichworte', 'feuer-einsatzberichte'); ?></span>
-                    <h2><?php esc_html_e('Verteilung', 'feuer-einsatzberichte'); ?></h2>
+                    <span><i class="ti ti-chart-bar"></i><?php esc_html_e('Einsatzstichworte', 'feuer-einsatzberichte'); ?></span>
+                    <h2><?php esc_html_e('Häufigste Stichworte', 'feuer-einsatzberichte'); ?></h2>
                 </div>
-            </div>
-            <div class="feu-einsatz-admindek-donut-wrap">
-                <canvas id="feu-einsatz-admindek-category-chart" height="180" role="img" aria-label="<?php esc_attr_e('Kreisdiagramm: Verteilung der Einsatzstichworte', 'feuer-einsatzberichte'); ?>"></canvas>
             </div>
             <?php if (!empty($category_visual_rows)): ?>
-                <div class="feu-einsatz-admindek-category-key" aria-label="<?php esc_attr_e('Wichtigste Einsatzstichworte', 'feuer-einsatzberichte'); ?>">
-                    <?php foreach (array_slice($category_visual_rows, 0, 3) as $category_row): ?>
-                        <span title="<?php echo esc_attr(sprintf('%s: %d Einsätze (%s%%)', $category_row['name'], (int) $category_row['count'], number_format_i18n((float) $category_row['percent'], 1))); ?>">
-                            <i style="background-color: <?php echo esc_attr($category_row['color']); ?>"></i>
-                            <?php echo esc_html($category_row['name']); ?>
-                        </span>
+                <div class="feu-einsatz-overview-category-list">
+                    <?php foreach (array_slice($category_visual_rows, 0, 5) as $category_row): ?>
+                        <div class="feu-einsatz-overview-category-row" style="--feu-category-color: <?php echo esc_attr($category_row['color']); ?>; --feu-category-percent: <?php echo esc_attr(number_format((float) $category_row['percent'], 2, '.', '')); ?>%;">
+                            <div><span><?php echo esc_html($category_row['name']); ?></span><strong><?php echo esc_html((string) $category_row['count']); ?></strong></div>
+                            <span class="feu-einsatz-overview-category-track" aria-hidden="true"><i></i></span>
+                        </div>
                     <?php endforeach; ?>
                 </div>
+                <p class="feu-einsatz-overview-category-foot"><?php echo esc_html(sprintf(__('Insgesamt %d Einsätze · %d Stichworte', 'feuer-einsatzberichte'), $category_total_count, count($category_visual_rows))); ?></p>
+            <?php else: ?>
+                <p class="description"><?php esc_html_e('Keine Einsatzstichworte für dieses Jahr vorhanden.', 'feuer-einsatzberichte'); ?></p>
             <?php endif; ?>
         </div>
 
@@ -1024,21 +1056,9 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
         </div>
     </section>
 
-    <div class="feu-einsatz-stats-tabs" role="tablist" aria-label="<?php esc_attr_e('Statistikbereiche', 'feuer-einsatzberichte'); ?>">
-        <button type="button" class="button feu-einsatz-stats-tab <?php echo 'categories' === $active_tab ? 'is-active' : ''; ?>" data-target="categories"><?php esc_html_e('Einsätze nach Einsatzstichwort', 'feuer-einsatzberichte'); ?></button>
-        <button type="button" class="button feu-einsatz-stats-tab <?php echo 'calendar' === $active_tab ? 'is-active' : ''; ?>" data-target="calendar"><?php esc_html_e('Kalender', 'feuer-einsatzberichte'); ?></button>
-        <button type="button" class="button feu-einsatz-stats-tab <?php echo 'activity-map' === $active_tab ? 'is-active' : ''; ?>" data-target="activity-map"><?php esc_html_e('Aktivitätskarte', 'feuer-einsatzberichte'); ?></button>
-        <button type="button" class="button feu-einsatz-stats-tab <?php echo 'participants' === $active_tab ? 'is-active' : ''; ?>" data-target="participants">
-            <?php esc_html_e('Teilnehmer-Ranking', 'feuer-einsatzberichte'); ?>
-            <?php if (!$participant_ranking_unlocked): ?><span class="feu-einsatz-tab-badge"><?php esc_html_e('PIN', 'feuer-einsatzberichte'); ?></span><?php endif; ?>
-        </button>
-        <button type="button" class="button feu-einsatz-stats-tab <?php echo 'presentation-settings' === $active_tab ? 'is-active' : ''; ?>" data-target="presentation-settings">
-            <span class="ti ti-slideshow"></span>
-            <?php esc_html_e('Präsentation einstellen', 'feuer-einsatzberichte'); ?>
-        </button>
-    </div>
+    </section>
 
-    <section class="feu-einsatz-stats-panel <?php echo 'presentation-settings' === $active_tab ? 'is-active' : ''; ?>" data-panel="presentation-settings">
+    <section class="feu-einsatz-stats-panel <?php echo 'presentation-settings' === $active_tab ? 'is-active' : ''; ?>" data-panel="presentation-settings" id="feu-einsatz-stats-panel-presentation-settings" role="tabpanel" aria-labelledby="feu-einsatz-stats-tab-presentation-settings">
         <form method="post" action="" class="feu-einsatz-presentation-settings-panel">
             <?php wp_nonce_field('feu_einsatz_statistics_presentation_settings', 'feu_einsatz_statistics_presentation_settings_nonce'); ?>
             <input type="hidden" name="feu_einsatz_presentation_settings_action" value="save" data-feu-presentation-settings-action>
@@ -1182,64 +1202,59 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
         </form>
     </section>
 
-    <section class="feu-einsatz-stats-panel <?php echo 'categories' === $active_tab ? 'is-active' : ''; ?>" data-panel="categories">
+    <section class="feu-einsatz-stats-panel <?php echo 'categories' === $active_tab ? 'is-active' : ''; ?>" data-panel="categories" id="feu-einsatz-stats-panel-categories" role="tabpanel" aria-labelledby="feu-einsatz-stats-tab-categories">
         <div class="feu-einsatz-panel-card">
             <h2><?php esc_html_e('Einsätze nach Einsatzstichwort', 'feuer-einsatzberichte'); ?></h2>
             <div class="feu-einsatz-category-summary-head">
-                <p class="description"><?php esc_html_e('Jedes Einsatzstichwort wird als eigene Linie mit Anzahl und Prozentanteil gezeigt.', 'feuer-einsatzberichte'); ?></p>
+                <p class="description"><?php esc_html_e('So verteilen sich die Einsätze im ausgewählten Jahr auf die Einsatzstichworte.', 'feuer-einsatzberichte'); ?></p>
                 <strong class="feu-einsatz-category-total"><?php echo esc_html((string) $category_total_count); ?> <?php esc_html_e('Einsätze', 'feuer-einsatzberichte'); ?></strong>
             </div>
             <?php if (!empty($category_visual_rows)): ?>
-                <div class="feu-einsatz-category-bars" aria-label="<?php esc_attr_e('Einsatzstichwort-Balken', 'feuer-einsatzberichte'); ?>">
+                <div class="feu-einsatz-category-ranking" role="table" aria-label="<?php esc_attr_e('Einsatzstichworte: Anzahl und Anteil', 'feuer-einsatzberichte'); ?>">
+                    <div class="feu-einsatz-category-ranking-head" role="row">
+                        <span role="columnheader"><?php esc_html_e('Einsatzstichwort', 'feuer-einsatzberichte'); ?></span>
+                        <span role="columnheader"><?php esc_html_e('Anteil', 'feuer-einsatzberichte'); ?></span>
+                        <span role="columnheader"><?php esc_html_e('Einsätze', 'feuer-einsatzberichte'); ?></span>
+                    </div>
                     <?php foreach ($category_visual_rows as $category_row): ?>
-                        <div class="feu-einsatz-category-bar-row" style="--feu-category-color: <?php echo esc_attr($category_row['color']); ?>; --feu-category-percent: <?php echo esc_attr(number_format((float) $category_row['percent'], 2, '.', '')); ?>%;">
-                            <div class="feu-einsatz-category-bar-top">
-                                <span><?php echo esc_html($category_row['name']); ?></span>
-                                <strong><?php echo esc_html((string) $category_row['count']); ?></strong>
+                        <div class="feu-einsatz-category-ranking-row" role="row" style="--feu-category-color: <?php echo esc_attr($category_row['color']); ?>; --feu-category-percent: <?php echo esc_attr(number_format((float) $category_row['percent'], 2, '.', '')); ?>%;">
+                            <strong role="cell"><?php echo esc_html($category_row['name']); ?></strong>
+                            <div class="feu-einsatz-category-ranking-share" role="cell">
+                                <span class="feu-einsatz-category-ranking-track" aria-hidden="true"><i></i></span>
+                                <span><?php echo esc_html(number_format_i18n((float) $category_row['percent'], 1)); ?>%</span>
                             </div>
-                            <div class="feu-einsatz-category-bar-track" aria-hidden="true"><span></span></div>
+                            <b role="cell"><?php echo esc_html((string) $category_row['count']); ?></b>
                         </div>
                     <?php endforeach; ?>
                 </div>
+            <?php else: ?>
+                <p class="feu-einsatz-category-empty"><?php esc_html_e('Für dieses Jahr liegen noch keine Einsätze vor.', 'feuer-einsatzberichte'); ?></p>
             <?php endif; ?>
-            <div class="category-stats feu-einsatz-category-donut-layout">
-                <div class="category-chart-container"><canvas id="categoryDonutChart" width="320" height="320" role="img" aria-label="<?php esc_attr_e('Kreisdiagramm: Einsatzstichworte mit Anzahl und Prozentanteil', 'feuer-einsatzberichte'); ?>"></canvas></div>
-                <div class="category-list">
-                    <?php $total_categories = 0; foreach ($categories as $cat) { $total_categories += (int) $cat->anzahl; } ?>
-                    <?php if (empty($categories)): ?>
-                        <p><?php esc_html_e('Keine Einsatzstichwort-Daten für dieses Jahr vorhanden.', 'feuer-einsatzberichte'); ?></p>
-                    <?php else: ?>
-                        <?php foreach ($categories as $category_index => $cat): ?>
-                            <?php $percent = $total_categories > 0 ? round(((int) $cat->anzahl / $total_categories) * 100, 1) : 0; ?>
-                            <div class="category-list-item">
-                                <span class="category-color" style="background: <?php echo esc_attr($category_visual_rows[$category_index]['color'] ?? '#0f6cbd'); ?>"></span>
-                                <span class="category-list-name"><?php echo esc_html($cat->kategorie_name); ?></span>
-                                <span class="category-list-count"><?php echo esc_html($cat->anzahl); ?></span>
-                                <span class="category-list-prozent"><?php echo esc_html($percent); ?>%</span>
-                            </div>
-                        <?php endforeach; ?>
-                        <div class="category-list-total"><strong><?php esc_html_e('Gesamt:', 'feuer-einsatzberichte'); ?></strong> <?php echo esc_html($total_categories); ?></div>
-                    <?php endif; ?>
-                </div>
-            </div>
-
             <div class="feu-einsatz-category-history">
                 <h3><?php esc_html_e('Einsatzstichworte nach Jahren', 'feuer-einsatzberichte'); ?></h3>
-                <div class="feu-einsatz-category-history-grid">
-                    <?php foreach ($category_history as $history_year => $history_categories): ?>
-                        <div class="feu-einsatz-year-card">
-                            <h4><?php echo esc_html($history_year); ?></h4>
-                            <?php if (empty($history_categories)): ?>
-                                <p class="description"><?php esc_html_e('Keine Daten', 'feuer-einsatzberichte'); ?></p>
-                            <?php else: ?>
-                                <ul>
-                                    <?php foreach ($history_categories as $history_category): ?>
-                                        <li><span><?php echo esc_html($history_category->kategorie_name); ?></span><strong><?php echo esc_html($history_category->anzahl); ?></strong></li>
+                <p class="description"><?php esc_html_e('Jede Zahl zeigt die Einsätze mit diesem Stichwort im jeweiligen Jahr. Die Linie darunter zeigt den Anteil am Jahreswert.', 'feuer-einsatzberichte'); ?></p>
+                <div class="feu-einsatz-category-history-scroll" role="region" tabindex="0" aria-label="<?php esc_attr_e('Vergleich der Einsatzstichworte nach Jahren', 'feuer-einsatzberichte'); ?>">
+                    <table class="feu-einsatz-category-history-table">
+                        <thead><tr><th scope="col"><?php esc_html_e('Einsatzstichwort', 'feuer-einsatzberichte'); ?></th>
+                            <?php foreach ($jahre as $history_year): ?>
+                                <th scope="col" <?php echo (int) $history_year === (int) $jahr ? 'class="is-selected-year"' : ''; ?>><?php echo esc_html((string) $history_year); ?><small><?php echo esc_html((string) $category_history_totals[$history_year]); ?> <?php esc_html_e('Einsätze', 'feuer-einsatzberichte'); ?></small></th>
+                            <?php endforeach; ?>
+                        </tr></thead>
+                        <tbody>
+                            <?php foreach ($category_history_rows as $history_row): ?>
+                                <tr><th scope="row"><?php echo esc_html($history_row['name']); ?></th>
+                                    <?php foreach ($jahre as $history_year): ?>
+                                        <?php $history_count = (int) ($history_row['years'][$history_year] ?? 0); $history_share = $category_history_totals[$history_year] > 0 ? ($history_count / $category_history_totals[$history_year]) * 100 : 0; ?>
+                                        <td <?php echo (int) $history_year === (int) $jahr ? 'class="is-selected-year"' : ''; ?>>
+                                            <strong><?php echo $history_count > 0 ? esc_html((string) $history_count) : '&ndash;'; ?></strong>
+                                            <span class="feu-einsatz-category-history-meter" aria-hidden="true"><i style="width: <?php echo esc_attr(number_format($history_share, 2, '.', '')); ?>%;"></i></span>
+                                        </td>
                                     <?php endforeach; ?>
-                                </ul>
-                            <?php endif; ?>
-                        </div>
-                    <?php endforeach; ?>
+                                </tr>
+                            <?php endforeach; ?>
+                            <?php if (empty($category_history_rows)): ?><tr><td colspan="<?php echo esc_attr((string) (count($jahre) + 1)); ?>"><?php esc_html_e('Noch keine Daten vorhanden.', 'feuer-einsatzberichte'); ?></td></tr><?php endif; ?>
+                        </tbody>
+                    </table>
                 </div>
             </div>
             <div class="feu-einsatz-day-popover" id="feu-einsatz-day-popover" hidden>
@@ -1254,7 +1269,7 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
         </div>
     </section>
 
-    <section class="feu-einsatz-stats-panel <?php echo 'calendar' === $active_tab ? 'is-active' : ''; ?>" data-panel="calendar">
+    <section class="feu-einsatz-stats-panel <?php echo 'calendar' === $active_tab ? 'is-active' : ''; ?>" data-panel="calendar" id="feu-einsatz-stats-panel-calendar" role="tabpanel" aria-labelledby="feu-einsatz-stats-tab-calendar">
         <div class="feu-einsatz-panel-card">
             <div class="feu-einsatz-panel-header">
                 <div>
@@ -1374,7 +1389,7 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
         </div>
     </section>
 
-    <section class="feu-einsatz-stats-panel <?php echo 'activity-map' === $active_tab ? 'is-active' : ''; ?>" data-panel="activity-map">
+    <section class="feu-einsatz-stats-panel <?php echo 'activity-map' === $active_tab ? 'is-active' : ''; ?>" data-panel="activity-map" id="feu-einsatz-stats-panel-activity-map" role="tabpanel" aria-labelledby="feu-einsatz-stats-tab-activity-map">
         <div class="feu-einsatz-panel-card">
             <div class="feu-einsatz-panel-header">
                 <div>
@@ -1397,7 +1412,7 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
         </div>
     </section>
 
-    <section class="feu-einsatz-stats-panel <?php echo 'participants' === $active_tab ? 'is-active' : ''; ?>" data-panel="participants">
+    <section class="feu-einsatz-stats-panel <?php echo 'participants' === $active_tab ? 'is-active' : ''; ?>" data-panel="participants" id="feu-einsatz-stats-panel-participants" role="tabpanel" aria-labelledby="feu-einsatz-stats-tab-participants">
         <div class="feu-einsatz-panel-card">
             <div class="feu-einsatz-panel-header">
                 <div>
@@ -1428,47 +1443,63 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
                     </div>
                 </div>
 
-                <?php if (!empty($participants)): ?>
-                    <div class="feu-einsatz-chart-card feu-einsatz-ranking-chart-card">
-                        <div class="feu-einsatz-chart-card-header">
-                            <div>
-                                <h3><?php esc_html_e('Einsätze nach Teilnehmer', 'feuer-einsatzberichte'); ?></h3>
-                                <p class="description"><?php esc_html_e('Die Grafik zeigt die aktivsten Teilnehmer des ausgewählten Jahres als Vergleich nach Einsätzen.', 'feuer-einsatzberichte'); ?></p>
-                            </div>
-                        </div>
-                        <div class="feu-einsatz-chart-canvas-wrap feu-einsatz-chart-canvas-wrap-ranking">
-                            <canvas id="participantRankingChart" height="300"></canvas>
-                        </div>
-                    </div>
-                <?php endif; ?>
-
                 <?php if (empty($participants)): ?>
                     <p class="description" style="padding:12px 0;"><?php esc_html_e('Keine Teilnehmerdaten für dieses Jahr vorhanden.', 'feuer-einsatzberichte'); ?></p>
                 <?php else: ?>
+                    <div class="feu-einsatz-participant-overview-head">
+                        <div>
+                            <span class="feu-einsatz-participant-overview-kicker"><?php echo esc_html(sprintf(__('Rangliste %d', 'feuer-einsatzberichte'), $jahr)); ?></span>
+                            <h3><?php esc_html_e('Die aktivsten Teilnehmer', 'feuer-einsatzberichte'); ?></h3>
+                            <p class="description"><?php esc_html_e('Platzierung nach der Anzahl der Einsätze im ausgewählten Jahr.', 'feuer-einsatzberichte'); ?></p>
+                        </div>
+                        <span class="feu-einsatz-participant-overview-total"><?php echo esc_html(sprintf(_n('%d Teilnehmer', '%d Teilnehmer', count($participants), 'feuer-einsatzberichte'), count($participants))); ?></span>
+                    </div>
                     <?php $podium_slots = [1, 0, 2]; ?>
-                    <div class="feu-einsatz-ranking-podium">
+                    <div class="feu-einsatz-ranking-podium feu-einsatz-ranking-podium--count-<?php echo esc_attr((string) min(3, count($participants))); ?>" aria-label="<?php esc_attr_e('Aktivste Teilnehmer', 'feuer-einsatzberichte'); ?>">
                         <?php foreach ($podium_slots as $pos): ?>
                             <?php if (!isset($participants[$pos])) continue; ?>
                             <?php $p = $participants[$pos]; ?>
-                            <?php $trophy = $pos === 0 ? '&#x1F947;' : ($pos === 1 ? '&#x1F948;' : '&#x1F949;'); ?>
-                            <div class="feu-einsatz-podium-card feu-einsatz-podium-rank-<?php echo $pos + 1; ?>">
-                                <div class="feu-einsatz-podium-trophy"><?php echo $trophy; ?></div>
-                                <div class="feu-einsatz-podium-name"><?php echo esc_html(FEU_Einsatz_Template_Helpers::format_participant_name($p->vorname, $p->nachname)); ?></div>
-                                <div class="feu-einsatz-podium-count"><?php echo esc_html($p->gesamt_einsaetze); ?> <span><?php esc_html_e('Einsätze', 'feuer-einsatzberichte'); ?></span></div>
-                                <button type="button" class="button button-small feu-einsatz-open-participant-details" data-participant-id="<?php echo esc_attr($p->id); ?>" data-participant-name="<?php echo esc_attr(FEU_Einsatz_Template_Helpers::format_participant_name($p->vorname, $p->nachname)); ?>" <?php disabled(!$participant_ranking_unlocked); ?>><?php esc_html_e('Details', 'feuer-einsatzberichte'); ?></button>
-                            </div>
+                            <article class="feu-einsatz-podium-card feu-einsatz-podium-rank-<?php echo esc_attr((string) ($pos + 1)); ?>">
+                                <div class="feu-einsatz-podium-topline">
+                                    <span class="feu-einsatz-podium-place"><?php echo esc_html(sprintf(__('Platz %d', 'feuer-einsatzberichte'), $pos + 1)); ?></span>
+                                    <span class="feu-einsatz-podium-number"><?php echo esc_html(sprintf('%02d', $pos + 1)); ?></span>
+                                </div>
+                                <strong class="feu-einsatz-podium-name"><?php echo esc_html(FEU_Einsatz_Template_Helpers::format_participant_name($p->vorname, $p->nachname)); ?></strong>
+                                <div class="feu-einsatz-podium-bottomline">
+                                    <div class="feu-einsatz-podium-count">
+                                        <strong><?php echo esc_html((string) $p->gesamt_einsaetze); ?></strong>
+                                        <span><?php esc_html_e('Einsätze', 'feuer-einsatzberichte'); ?></span>
+                                    </div>
+                                    <button type="button" class="button button-secondary feu-einsatz-open-participant-details" data-participant-id="<?php echo esc_attr($p->id); ?>" data-participant-name="<?php echo esc_attr(FEU_Einsatz_Template_Helpers::format_participant_name($p->vorname, $p->nachname)); ?>" <?php disabled(!$participant_ranking_unlocked); ?>><?php esc_html_e('Details', 'feuer-einsatzberichte'); ?></button>
+                                </div>
+                            </article>
                         <?php endforeach; ?>
                     </div>
                     <?php if (count($participants) > 3): ?>
-                        <div class="feu-einsatz-ranking-compact-list">
-                            <?php foreach (array_slice($participants, 3) as $idx => $participant): ?>
-                                <div class="feu-einsatz-ranking-compact-item">
-                                    <span class="feu-einsatz-ranking-compact-rank">#<?php echo $idx + 4; ?></span>
-                                    <span class="feu-einsatz-ranking-compact-name"><?php echo esc_html(FEU_Einsatz_Template_Helpers::format_participant_name($participant->vorname, $participant->nachname)); ?></span>
-                                    <span class="feu-einsatz-ranking-compact-count"><?php echo esc_html($participant->gesamt_einsaetze); ?></span>
-                                    <button type="button" class="button button-small feu-einsatz-open-participant-details" data-participant-id="<?php echo esc_attr($participant->id); ?>" data-participant-name="<?php echo esc_attr(FEU_Einsatz_Template_Helpers::format_participant_name($participant->vorname, $participant->nachname)); ?>" <?php disabled(!$participant_ranking_unlocked); ?>><?php esc_html_e('Details', 'feuer-einsatzberichte'); ?></button>
+                        <div class="feu-einsatz-ranking-rest">
+                            <div class="feu-einsatz-ranking-rest-head">
+                                <div>
+                                    <h3><?php esc_html_e('Weitere Teilnehmer', 'feuer-einsatzberichte'); ?></h3>
+                                    <p class="description"><?php esc_html_e('Alle weiteren Platzierungen im Überblick.', 'feuer-einsatzberichte'); ?></p>
                                 </div>
-                            <?php endforeach; ?>
+                                <span><?php echo esc_html((string) (count($participants) - 3)); ?></span>
+                            </div>
+                            <div class="feu-einsatz-ranking-compact-list" role="table" aria-label="<?php esc_attr_e('Weitere Teilnehmer nach Platzierung', 'feuer-einsatzberichte'); ?>">
+                                <div class="feu-einsatz-ranking-compact-head" role="row">
+                                    <span role="columnheader"><?php esc_html_e('Platz', 'feuer-einsatzberichte'); ?></span>
+                                    <span role="columnheader"><?php esc_html_e('Teilnehmer', 'feuer-einsatzberichte'); ?></span>
+                                    <span role="columnheader"><?php esc_html_e('Einsätze', 'feuer-einsatzberichte'); ?></span>
+                                    <span role="columnheader"><?php esc_html_e('Details', 'feuer-einsatzberichte'); ?></span>
+                                </div>
+                                <?php foreach (array_slice($participants, 3) as $idx => $participant): ?>
+                                    <div class="feu-einsatz-ranking-compact-item" role="row">
+                                        <span class="feu-einsatz-ranking-compact-rank" role="cell"><?php echo esc_html(sprintf('%02d', $idx + 4)); ?></span>
+                                        <span class="feu-einsatz-ranking-compact-name" role="cell"><?php echo esc_html(FEU_Einsatz_Template_Helpers::format_participant_name($participant->vorname, $participant->nachname)); ?></span>
+                                        <strong class="feu-einsatz-ranking-compact-count" role="cell"><?php echo esc_html((string) $participant->gesamt_einsaetze); ?></strong>
+                                        <span role="cell"><button type="button" class="button button-secondary feu-einsatz-open-participant-details" data-participant-id="<?php echo esc_attr($participant->id); ?>" data-participant-name="<?php echo esc_attr(FEU_Einsatz_Template_Helpers::format_participant_name($participant->vorname, $participant->nachname)); ?>" <?php disabled(!$participant_ranking_unlocked); ?>><?php esc_html_e('Details', 'feuer-einsatzberichte'); ?></button></span>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
                         </div>
                     <?php endif; ?>
                 <?php endif; ?>
@@ -1490,15 +1521,18 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
                 <?php endif; ?>
             </div>
 
-            <div id="feu-einsatz-participant-detail-panel" class="feu-einsatz-detail-panel" hidden>
-                <div class="feu-einsatz-detail-panel-header">
-                    <div>
-                        <h3 id="feu-einsatz-participant-detail-title"><?php esc_html_e('Teilnehmerdetails', 'feuer-einsatzberichte'); ?></h3>
-                        <p class="description"><?php esc_html_e('Übersicht zu Einsätzen und Funktionen im ausgewählten Jahr.', 'feuer-einsatzberichte'); ?></p>
+            <div id="feu-einsatz-participant-detail-panel" class="feu-einsatz-detail-panel" role="dialog" aria-modal="true" aria-labelledby="feu-einsatz-participant-detail-title" hidden>
+                <div class="feu-einsatz-detail-backdrop" data-feu-participant-detail-backdrop></div>
+                <div class="feu-einsatz-detail-dialog" tabindex="-1">
+                    <div class="feu-einsatz-detail-panel-header">
+                        <div>
+                            <h3 id="feu-einsatz-participant-detail-title"><?php esc_html_e('Teilnehmerdetails', 'feuer-einsatzberichte'); ?></h3>
+                            <p class="description"><?php esc_html_e('Übersicht zu Einsätzen und Funktionen im ausgewählten Jahr.', 'feuer-einsatzberichte'); ?></p>
+                        </div>
+                        <button type="button" class="button" id="feu-einsatz-close-participant-details"><?php esc_html_e('Schließen', 'feuer-einsatzberichte'); ?></button>
                     </div>
-                    <button type="button" class="button" id="feu-einsatz-close-participant-details"><?php esc_html_e('Schließen', 'feuer-einsatzberichte'); ?></button>
+                    <div id="feu-einsatz-participant-detail-content"></div>
                 </div>
-                <div id="feu-einsatz-participant-detail-content"></div>
             </div>
         </div>
     </section>
@@ -1538,7 +1572,6 @@ $jspdf_version = file_exists($jspdf_path) ? (string) filemtime($jspdf_path) : FE
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     var categories = <?php echo wp_json_encode($categories); ?>;
-    var categoryVisualRows = <?php echo wp_json_encode($category_visual_rows); ?>;
     var monthNames = <?php echo wp_json_encode($month_names); ?>;
     var monthlyTotals = <?php echo wp_json_encode(array_values($monthly_totals)); ?>;
     var selectedYear = <?php echo wp_json_encode($jahr); ?>;
@@ -1565,15 +1598,19 @@ document.addEventListener('DOMContentLoaded', function() {
     var detailPanel = document.getElementById('feu-einsatz-participant-detail-panel');
     var detailTitle = document.getElementById('feu-einsatz-participant-detail-title');
     var detailContent = document.getElementById('feu-einsatz-participant-detail-content');
+    var detailReturnFocus = null;
+    var detailRequestId = 0;
+    if (detailPanel && detailPanel.parentNode !== document.body) {
+        document.body.appendChild(detailPanel);
+    }
     var activityMapInstance = null;
     var presentationActivityMapInstance = null;
     var activityMapRendered = false;
     var activityClusters = [];
-    var categoryChart = null;
     var weekdayChart = null;
-    var participantRankingChart = null;
     var participantDistributionChart = null;
     var monthlyChart = null;
+    var overviewMonthlyChart = null;
     var dayPopover = document.getElementById('feu-einsatz-day-popover');
     var dayPopoverTitle = document.getElementById('feu-einsatz-day-popover-title');
     var dayPopoverContent = document.getElementById('feu-einsatz-day-popover-content');
@@ -1636,45 +1673,6 @@ document.addEventListener('DOMContentLoaded', function() {
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#039;');
     }
-
-    function getCategoryColor(category, index) {
-        var visualRow = categoryVisualRows[index] || {};
-        return visualRow.color || category.color || category.farbe || '#0f6cbd';
-    }
-
-    function getCategoryTotal() {
-        return categories.reduce(function(sum, category) {
-            return sum + Number(category.anzahl || 0);
-        }, 0);
-    }
-
-    var categoryCenterLabelPlugin = {
-        id: 'feuCategoryCenterLabel',
-        afterDraw: function(chart) {
-            if (!chart || !chart.chartArea || chart.config.type !== 'doughnut') {
-                return;
-            }
-
-            var totalValue = getCategoryTotal();
-            var chartArea = chart.chartArea;
-            var centerX = (chartArea.left + chartArea.right) / 2;
-            var centerY = (chartArea.top + chartArea.bottom) / 2;
-            var context = chart.ctx;
-            var compactTotal = new Intl.NumberFormat('de-DE').format(totalValue);
-            var isSmallChart = chart.canvas && chart.canvas.id === 'feu-einsatz-admindek-category-chart';
-
-            context.save();
-            context.textAlign = 'center';
-            context.textBaseline = 'middle';
-            context.fillStyle = '#0f172a';
-            context.font = '800 ' + (isSmallChart ? '24px' : '31px') + ' system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-            context.fillText(compactTotal, centerX, centerY - (isSmallChart ? 6 : 8));
-            context.fillStyle = '#64748b';
-            context.font = '700 ' + (isSmallChart ? '10px' : '11px') + ' system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-            context.fillText('EINSÄTZE', centerX, centerY + (isSmallChart ? 15 : 18));
-            context.restore();
-        }
-    };
 
     function getIsoDateFromCalendarCell(cell) {
         var monthCard = cell ? cell.closest('.feu-einsatz-month-card') : null;
@@ -1758,7 +1756,10 @@ document.addEventListener('DOMContentLoaded', function() {
         syncTabInputs(target);
 
         document.querySelectorAll('.feu-einsatz-stats-tab').forEach(function(tab) {
-            tab.classList.toggle('is-active', tab.getAttribute('data-target') === target);
+            var isActive = tab.getAttribute('data-target') === target;
+            tab.classList.toggle('is-active', isActive);
+            tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
+            tab.tabIndex = isActive ? 0 : -1;
         });
 
         document.querySelectorAll('.feu-einsatz-stats-panel').forEach(function(panel) {
@@ -1770,8 +1771,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         window.setTimeout(function() {
-            if (target === 'categories' && categoryChart) {
-                categoryChart.resize();
+            if (target === 'overview') {
+                if (overviewMonthlyChart) {
+                    overviewMonthlyChart.resize();
+                }
             }
 
             if (target === 'calendar' && weekdayChart) {
@@ -1782,15 +1785,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 monthlyChart.resize();
             }
 
-            if (target === 'participants' && participantRankingChart) {
-                participantRankingChart.resize();
-            }
         }, 80);
     }
 
     document.querySelectorAll('.feu-einsatz-stats-tab').forEach(function(button) {
         button.addEventListener('click', function() {
             setActiveTab(button.getAttribute('data-target'));
+        });
+
+        button.addEventListener('keydown', function(event) {
+            if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
+                return;
+            }
+
+            var tabs = Array.from(document.querySelectorAll('.feu-einsatz-stats-tab'));
+            var currentIndex = tabs.indexOf(button);
+            var nextIndex = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : (currentIndex + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+
+            event.preventDefault();
+            tabs[nextIndex].focus();
+            setActiveTab(tabs[nextIndex].getAttribute('data-target'));
         });
     });
 
@@ -1919,52 +1933,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function getCategoryChartConfig() {
-        return {
-            type: 'doughnut',
-            plugins: [categoryCenterLabelPlugin],
-            data: {
-                labels: categories.map(function(category) { return category.kategorie_name; }),
-                datasets: [{
-                    data: categories.map(function(category) { return parseInt(category.anzahl, 10); }),
-                    backgroundColor: categories.map(function(category, index) { return getCategoryColor(category, index); }),
-                    borderColor: '#ffffff',
-                    borderWidth: 4,
-                    borderRadius: 4,
-                    spacing: 3,
-                    hoverOffset: 12
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                cutout: '67%',
-                layout: { padding: 8 },
-                animation: {
-                    animateRotate: true,
-                    animateScale: true,
-                    duration: 760
-                },
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        displayColors: true,
-                        padding: 12,
-                        cornerRadius: 8,
-                        callbacks: {
-                            label: function(context) {
-                                var value = Number(context.raw || 0);
-                                var totalValue = getCategoryTotal();
-                                var percent = totalValue > 0 ? ((value / totalValue) * 100).toFixed(1) : '0.0';
-                                return context.label + ': ' + value + ' Einsätze (' + percent + '%)';
-                            }
-                        }
-                    }
-                }
-            }
-        };
-    }
-
     function buildDailyTimelineSeries() {
         var startDate = new Date(Number(selectedYear), 0, 1);
         var endDate = new Date(Number(selectedYear), 11, 31);
@@ -2049,77 +2017,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         };
-    }
-
-    function getParticipantRankingChartConfig(limit) {
-        var chartLimit = limit || 10;
-
-        return {
-            type: 'bar',
-            data: {
-                labels: participantStats.slice(0, chartLimit).map(function(participant) { return participant.name; }),
-                datasets: [{
-                    label: 'Einsätze',
-                    data: participantStats.slice(0, chartLimit).map(function(participant) { return participant.count; }),
-                    backgroundColor: '#0a4b78',
-                    borderRadius: 8,
-                    borderSkipped: false,
-                    maxBarThickness: 48
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return context.raw + ' Einsätze';
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        ticks: {
-                            maxRotation: 35,
-                            minRotation: 20,
-                            color: '#334155'
-                        }
-                    },
-                    y: {
-                        beginAtZero: true,
-                        ticks: { precision: 0 }
-                    }
-                }
-            }
-        };
-    }
-
-    function getCategoryChartConfigForType(chartType) {
-        var selectedType = chartType || 'doughnut';
-        var config = getCategoryChartConfig();
-        config.type = selectedType;
-
-        if (selectedType === 'bar') {
-            config.options.indexAxis = 'y';
-            config.options.scales = {
-                x: {
-                    beginAtZero: true,
-                    ticks: {
-                        precision: 0
-                    }
-                }
-            };
-            config.data.datasets[0].borderRadius = 10;
-            config.data.datasets[0].borderSkipped = false;
-        } else {
-            delete config.options.scales;
-            delete config.options.indexAxis;
-        }
-
-        return config;
     }
 
     function getDailyTimelineChartConfigForType(chartType) {
@@ -2284,114 +2181,6 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     }
 
-    function getAdmindekCategoryChartConfig() {
-        return {
-            type: 'doughnut',
-            plugins: [categoryCenterLabelPlugin],
-            data: {
-                labels: categories.map(function(category) { return category.kategorie_name; }),
-                datasets: [{
-                    data: categories.map(function(category) { return parseInt(category.anzahl, 10) || 0; }),
-                    backgroundColor: categories.map(function(category, index) { return getCategoryColor(category, index); }),
-                    borderColor: '#ffffff',
-                    borderWidth: 4,
-                    borderRadius: 4,
-                    spacing: 3,
-                    hoverOffset: 10
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '68%',
-                layout: { padding: 7 },
-                animation: {
-                    animateRotate: true,
-                    animateScale: true,
-                    duration: 760
-                },
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                var value = Number(context.raw || 0);
-                                var totalValue = getCategoryTotal();
-                                var percent = totalValue > 0 ? ((value / totalValue) * 100).toFixed(1) : '0.0';
-                                return context.label + ': ' + value + ' Einsätze (' + percent + '%)';
-                            }
-                        }
-                    }
-                }
-            }
-        };
-    }
-
-    function getParticipantRankingChartConfigForType(limit, chartMode) {
-        var chartLimit = limit || 10;
-        var selectedMode = chartMode || 'absolute';
-        var labels = participantStats.slice(0, chartLimit).map(function(participant) { return participant.name; });
-        var totalAssignments = participantStats.reduce(function(sum, participant) {
-            return sum + Number(participant.count || 0);
-        }, 0);
-        var values = participantStats.slice(0, chartLimit).map(function(participant) {
-            var count = Number(participant.count || 0);
-            return selectedMode === 'share'
-                ? Number((totalAssignments > 0 ? (count / totalAssignments) * 100 : 0).toFixed(1))
-                : count;
-        });
-
-        return {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: selectedMode === 'share' ? 'Anteil in %' : 'Einsätze',
-                    data: values,
-                    backgroundColor: '#0a4b78',
-                    borderRadius: 8,
-                    borderSkipped: false,
-                    maxBarThickness: 48
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return selectedMode === 'share'
-                                    ? context.raw + '%'
-                                    : context.raw + ' Einsätze';
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        ticks: {
-                            maxRotation: 35,
-                            minRotation: 20,
-                            color: '#334155',
-                            font: { size: 12 }
-                        }
-                    },
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            precision: selectedMode === 'share' ? 1 : 0,
-                            callback: function(value) {
-                                return selectedMode === 'share' ? value + '%' : value;
-                            }
-                        }
-                    }
-                }
-            }
-        };
-    }
-
     function getLegacyParticipantDistributionChartConfig(periodKey) {
         var dataset = participantDistributionData[periodKey] || { labels: [], percentages: [], counts: [] };
         return {
@@ -2534,32 +2323,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     var admindekMonthlyChartElement = document.getElementById('feu-einsatz-admindek-monthly-chart');
     if (window.Chart && admindekMonthlyChartElement) {
-        new Chart(admindekMonthlyChartElement.getContext('2d'), getAdmindekMonthlyChartConfig());
-    }
-
-    var admindekCategoryChartElement = document.getElementById('feu-einsatz-admindek-category-chart');
-    if (window.Chart && admindekCategoryChartElement && categories.length) {
-        new Chart(admindekCategoryChartElement.getContext('2d'), getAdmindekCategoryChartConfig());
-    }
-
-    var chartElement = document.getElementById('categoryDonutChart');
-    if (window.Chart && chartElement && categories.length) {
-        categoryChart = new Chart(chartElement.getContext('2d'), getCategoryChartConfigForType('doughnut'));
-        createChartModeToggle({
-            canvas: chartElement,
-            defaultMode: 'doughnut',
-            modes: [
-                { key: 'doughnut', label: 'Donut' },
-                { key: 'bar', label: 'Balken' },
-                { key: 'polarArea', label: 'Polar' }
-            ],
-            onSelect: function(mode) {
-                if (categoryChart) {
-                    categoryChart.destroy();
-                }
-                categoryChart = new Chart(chartElement.getContext('2d'), getCategoryChartConfigForType(mode));
-            }
-        });
+        overviewMonthlyChart = new Chart(admindekMonthlyChartElement.getContext('2d'), getAdmindekMonthlyChartConfig());
     }
 
     var weekdayChartElement = document.getElementById('dailyTimelineChart');
@@ -2579,11 +2343,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 weekdayChart = new Chart(weekdayChartElement.getContext('2d'), getDailyTimelineChartConfigForType(mode));
             }
         });
-    }
-
-    var participantRankingChartElement = document.getElementById('participantRankingChart');
-    if (window.Chart && participantRankingChartElement && participantStats.length) {
-        participantRankingChart = new Chart(participantRankingChartElement.getContext('2d'), getParticipantRankingChartConfigForType(10, 'absolute'));
     }
 
     function getParticipantShareChartConfig(limit) {
@@ -2759,18 +2518,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     mountMonthlyChartCard();
-
-    if (participantRankingChart) {
-        participantRankingChart.destroy();
-        participantRankingChart = new Chart(participantRankingChartElement.getContext('2d'), getParticipantRankingChartConfigForType(10, 'absolute'));
-    }
-
-    var rankingToolbar = participantRankingChartElement && participantRankingChartElement.parentNode
-        ? participantRankingChartElement.parentNode.previousElementSibling
-        : null;
-    if (rankingToolbar && rankingToolbar.classList.contains('feu-admin-chart-switcher')) {
-        rankingToolbar.remove();
-    }
 
     mountParticipantDistributionCard();
 
@@ -3830,108 +3577,23 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function exportStatisticsPdfLegacy() {
-        if (!window.jspdf || !window.jspdf.jsPDF) {
-            window.print();
-            return;
-        }
-
-        var pdf = new window.jspdf.jsPDF({
-            orientation: 'p',
-            unit: 'mm',
-            format: 'a4'
-        });
-        var y = 18;
-        var pageHeight = 287;
-
-        function line(text, indent, fontStyle) {
-            var left = indent || 14;
-            var safeText = sanitizePdfText(text);
-            var wrapped = pdf.splitTextToSize(safeText, 180 - left);
-
-            if (y + (wrapped.length * 7) > pageHeight) {
-                pdf.addPage();
-                y = 18;
-            }
-
-            pdf.setFont('helvetica', fontStyle || 'normal');
-            pdf.text(wrapped, left, y);
-            y += (wrapped.length * 7);
-        }
-
-        pdf.setFontSize(18);
-        pdf.setFont('helvetica', 'bold');
-        pdf.text('Einsatzberichte Statistik ' + selectedYear, 14, y);
-        y += 10;
-
-        pdf.setFontSize(11);
-        line('Gesamteinsätze: ' + (totalStats.total_einsaetze || 0));
-        line('Teilnehmer gesamt: ' + (totalStats.total_teilnehmer_alle || 0));
-        line('Durchschnitt Teilnehmer pro Einsatz: ' + (totalStats.avg_teilnehmer || 0));
-        y += 4;
-
-        line('Einsatzstichworte', 14, 'bold');
-        if (categories.length) {
-            categories.forEach(function(category) {
-                line('- ' + category.kategorie_name + ': ' + category.anzahl, 18);
-            });
-        } else {
-            line('- Keine Einsatzstichwort-Daten vorhanden.', 18);
-        }
-        y += 4;
-
-        line('Häufigste Wochentage', 14, 'bold');
-        if (topWeekdays.length) {
-            topWeekdays.forEach(function(entry) {
-                line('- ' + entry.label + ': ' + entry.count, 18);
-            });
-        } else {
-            line('- Keine Tagesdaten vorhanden.', 18);
-        }
-        y += 4;
-
-        line('Spitzen-Tage', 14, 'bold');
-        if (peakDays.length) {
-            peakDays.forEach(function(entry) {
-                line('- ' + entry.date + ': ' + entry.count, 18);
-            });
-        } else {
-            line('- Keine Spitzentage vorhanden.', 18);
-        }
-        y += 4;
-
-        line('Aktivitätskarte', 14, 'bold');
-        line('- Orte mit Koordinaten: ' + activityMapPoints.length, 18);
-        y += 4;
-
-        if (rankingUnlocked) {
-            line('Teilnehmer-Ranking', 14, 'bold');
-            if (participantStats.length) {
-                participantStats.slice(0, 15).forEach(function(participant, index) {
-                    line((index + 1) + '. ' + participant.name + ': ' + participant.count, 18);
-                });
-            } else {
-                line('- Keine Teilnehmerdaten vorhanden.', 18);
-            }
-        } else {
-            line('Teilnehmer-Ranking', 14, 'bold');
-            line('- Gesperrt. Nicht in den Export aufgenommen.', 18);
-        }
-
-        pdf.save('einsatzberichte-statistik-' + selectedYear + '.pdf');
-    }
-
     function closeParticipantDetails() {
         if (!detailPanel) {
             return;
         }
 
+        detailRequestId++;
         detailPanel.hidden = true;
         detailContent.innerHTML = '';
+        document.body.classList.remove('feu-einsatz-participant-dialog-open');
 
         if (participantJump) {
             participantJump.value = '';
         }
+        if (detailReturnFocus && detailReturnFocus.isConnected) {
+            detailReturnFocus.focus();
+        }
+        detailReturnFocus = null;
     }
 
     function renderParticipantDetails(response, participantName) {
@@ -3946,8 +3608,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
         html += '<div class="feu-einsatz-detail-shell">';
         html += '<div class="feu-einsatz-detail-summary-grid">';
-        html += '<div class="feu-einsatz-detail-summary-card"><span>Teilnahmen</span><strong>' + escapeHtml(summary.total_einsaetze || einsaetze.length || 0) + '</strong></div>';
-        html += '<div class="feu-einsatz-detail-summary-card"><span>Haeufigste Funktion</span><strong>' + escapeHtml(summary.top_function || 'Keine Daten') + '</strong></div>';
+        html += '<div class="feu-einsatz-detail-summary-card"><span>Einsätze</span><strong>' + escapeHtml(summary.total_einsaetze || einsaetze.length || 0) + '</strong></div>';
+        html += '<div class="feu-einsatz-detail-summary-card"><span>Häufigste Funktion</span><strong>' + escapeHtml(summary.top_function || 'Keine wiederholte Funktion') + '</strong>';
+        if (Number(summary.top_function_count) >= 2) {
+            html += '<small>' + escapeHtml(summary.top_function_count) + ' Einsätze</small>';
+        }
+        html += '</div>';
         html += '<div class="feu-einsatz-detail-summary-card"><span>Erster Einsatz</span><strong>' + escapeHtml(summary.first_einsatz_date || 'Keine Daten') + '</strong></div>';
         html += '<div class="feu-einsatz-detail-summary-card"><span>Letzter Einsatz</span><strong>' + escapeHtml(summary.last_einsatz_date || 'Keine Daten') + '</strong></div>';
         html += '</div>';
@@ -3992,7 +3658,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         detailPanel.hidden = false;
         detailContent.innerHTML = html;
-        detailPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     function openParticipantDetails(participantId, participantName) {
@@ -4000,12 +3665,19 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        detailRequestId++;
+        var requestId = detailRequestId;
+        if (detailPanel.hidden) {
+            detailReturnFocus = document.activeElement;
+        }
         if (participantJump) {
             participantJump.value = String(participantId);
         }
 
         detailPanel.hidden = false;
+        document.body.classList.add('feu-einsatz-participant-dialog-open');
         detailContent.innerHTML = '<div class="feu-einsatz-loading-card">Lade Teilnehmerdetails...</div>';
+        document.getElementById('feu-einsatz-close-participant-details').focus();
 
         jQuery.post(ajaxurl, {
             action: 'feu_einsatz_get_participant_details',
@@ -4013,6 +3685,9 @@ document.addEventListener('DOMContentLoaded', function() {
             jahr: selectedYear,
             nonce: '<?php echo esc_js(wp_create_nonce('feu_einsatz_ajax_nonce')); ?>'
         }, function(response) {
+            if (requestId !== detailRequestId || detailPanel.hidden) {
+                return;
+            }
             if (response.success) {
                 renderParticipantDetails(response, participantName);
                 return;
@@ -4024,6 +3699,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
             detailContent.innerHTML = '<div class="feu-einsatz-loading-card">' + escapeHtml(errorMessage) + '</div>';
         }).fail(function() {
+            if (requestId !== detailRequestId || detailPanel.hidden) {
+                return;
+            }
             detailContent.innerHTML = '<div class="feu-einsatz-loading-card">Fehler beim Laden der Teilnehmerdetails.</div>';
         });
     }
@@ -4088,8 +3766,21 @@ document.addEventListener('DOMContentLoaded', function() {
     if (closeParticipantDetailsButton) {
         closeParticipantDetailsButton.addEventListener('click', closeParticipantDetails);
     }
+    if (detailPanel) {
+        detailPanel.querySelector('[data-feu-participant-detail-backdrop]').addEventListener('click', closeParticipantDetails);
+    }
 
     document.addEventListener('keydown', function(event) {
+        if (detailPanel && !detailPanel.hidden && event.key === 'Tab') {
+            var focusable = Array.prototype.slice.call(detailPanel.querySelectorAll('button:not([disabled]), a[href], [tabindex="0"]'));
+            var first = focusable[0];
+            var last = focusable[focusable.length - 1];
+            if (first && last && ((event.shiftKey && document.activeElement === first) || (!event.shiftKey && document.activeElement === last))) {
+                event.preventDefault();
+                (event.shiftKey ? last : first).focus();
+            }
+            return;
+        }
         if (statisticsPresentationDeck && !statisticsPresentationDeck.hidden) {
             if (event.key === 'ArrowRight' || event.key === 'PageDown') {
                 event.preventDefault();

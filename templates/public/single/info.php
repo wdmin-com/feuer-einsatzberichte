@@ -28,8 +28,16 @@ if (!empty($display['single_desaturate_organizations'])) {
                 <div class="feu-einsatz-single-meta-row"><b><?php echo esc_html__('Strasse:', 'feuer-einsatzberichte'); ?></b> <?php echo esc_html($report['street']); ?></div>
             <?php endif; ?>
 
-            <?php if (in_array('location', $info_fields, true) && (!empty($report['postcode']) || !empty($report['city']))) : ?>
-                <div class="feu-einsatz-single-meta-row"><b><?php echo esc_html__('Ort:', 'feuer-einsatzberichte'); ?></b> <?php echo esc_html(trim(($report['postcode'] ?? '') . ' ' . ($report['city'] ?? ''))); ?></div>
+            <?php if (in_array('location', $info_fields, true)) : ?>
+                <?php if (!empty($report['postcode'])) : ?>
+                    <div class="feu-einsatz-single-meta-row"><b><?php echo esc_html__('PLZ:', 'feuer-einsatzberichte'); ?></b> <?php echo esc_html($report['postcode']); ?></div>
+                <?php endif; ?>
+                <?php if (!empty($report['city'])) : ?>
+                    <div class="feu-einsatz-single-meta-row"><b><?php echo esc_html__('Stadt:', 'feuer-einsatzberichte'); ?></b> <?php echo esc_html($report['city']); ?></div>
+                <?php endif; ?>
+                <?php if (!empty($report['district'])) : ?>
+                    <div class="feu-einsatz-single-meta-row"><b><?php echo esc_html__('Stadtteil:', 'feuer-einsatzberichte'); ?></b> <?php echo esc_html($report['district']); ?></div>
+                <?php endif; ?>
             <?php endif; ?>
 
             <?php if (in_array('date', $info_fields, true) && !empty($report['date_display'])) : ?>

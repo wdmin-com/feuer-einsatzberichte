@@ -1239,6 +1239,9 @@ class FEU_Einsatz_Database {
         $formats = ['%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%d', '%s', '%d', '%d'];
 
         if ($id > 0) {
+            if (!$this->get_participant($id)) {
+                return false;
+            }
             return $this->wpdb->update($this->table_participants, $data, ['id' => $id], $formats, ['%d']);
         }
 
@@ -1460,6 +1463,10 @@ class FEU_Einsatz_Database {
      * Teilnehmer löschen
      */
     public function set_participant_archive_status($id, $archived) {
+        $participant = $this->get_participant(absint($id));
+        if (!$participant || !empty($participant->is_deleted)) {
+            return false;
+        }
         $result = $this->wpdb->update(
             $this->table_participants,
             ['is_archived' => $archived ? 1 : 0],
@@ -1472,6 +1479,9 @@ class FEU_Einsatz_Database {
     }
 
     public function set_participant_deleted_status($id, $deleted) {
+        if (!$this->get_participant(absint($id))) {
+            return false;
+        }
         $result = $this->wpdb->update(
             $this->table_participants,
             [
@@ -2091,25 +2101,33 @@ class FEU_Einsatz_Database {
             SELECT COUNT(DISTINCT s.teilnehmer_id)
             FROM {$this->table_stats} s
             INNER JOIN {$this->wpdb->posts} p ON p.ID = s.post_id
+            INNER JOIN {$this->wpdb->postmeta} report ON report.post_id = p.ID
             LEFT JOIN {$this->wpdb->postmeta} event_date ON p.ID = event_date.post_id AND event_date.meta_key = '_feu_einsatz_datum'
             WHERE {$event_year_sql} = %d
+            AND p.post_type IN ('post', 'einsatzbericht')
             AND p.post_status = 'publish'
+            AND report.meta_key = '_feu_einsatz_einsatzbericht'
+            AND report.meta_value = '1'
         ", $jahr));
         
         // Gesamtanzahl aller Teilnehmer
         $total_teilnehmer_alle = $this->wpdb->get_var("SELECT COUNT(*) FROM {$this->table_participants}");
         
-        // Durchschnittliche Teilnehmer pro Einsatz
+        // Include reports without participants in the denominator.
         $avg_teilnehmer = $this->wpdb->get_var($this->wpdb->prepare("
             SELECT AVG(teilnehmer_count)
             FROM (
-                SELECT s.post_id, COUNT(s.teilnehmer_id) as teilnehmer_count
-                FROM {$this->table_stats} s
-                INNER JOIN {$this->wpdb->posts} p ON p.ID = s.post_id
+                SELECT p.ID, COUNT(DISTINCT s.teilnehmer_id) as teilnehmer_count
+                FROM {$this->wpdb->posts} p
+                INNER JOIN {$this->wpdb->postmeta} report ON report.post_id = p.ID
                 LEFT JOIN {$this->wpdb->postmeta} event_date ON p.ID = event_date.post_id AND event_date.meta_key = '_feu_einsatz_datum'
+                LEFT JOIN {$this->table_stats} s ON s.post_id = p.ID
                 WHERE {$event_year_sql} = %d
+                AND p.post_type IN ('post', 'einsatzbericht')
                 AND p.post_status = 'publish'
-                GROUP BY s.post_id
+                AND report.meta_key = '_feu_einsatz_einsatzbericht'
+                AND report.meta_value = '1'
+                GROUP BY p.ID
             ) as counts
         ", $jahr));
         
@@ -2822,6 +2840,10 @@ class FEU_Einsatz_Database {
 
     public function get_participant_table_name() {
         return $this->table_participants;
+    }
+
+    public function get_participant_statistics_table_name() {
+        return $this->table_stats;
     }
 
     public function get_stats_table_name() {

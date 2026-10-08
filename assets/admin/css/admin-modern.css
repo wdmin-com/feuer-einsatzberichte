@@ -712,7 +712,6 @@ body.feu-admin-ui--modern-shell .feu-einsatz-log-filter-bar {
 }
 
 body.feu-admin-ui--modern-shell .feu-einsatz-month-card,
-body.feu-admin-ui--modern-shell .feu-einsatz-year-card,
 body.feu-admin-ui--modern-shell .feu-einsatz-insight-card {
     border-radius: 4px;
     border-color: rgba(15, 23, 42, 0.08);
@@ -818,8 +817,7 @@ body.feu-admin-ui--modern-shell .feu-einsatz-statistics .feu-einsatz-chart-card,
 body.feu-admin-ui--modern-shell .feu-einsatz-statistics .feu-einsatz-active-days-card,
 body.feu-admin-ui--modern-shell .feu-einsatz-statistics .feu-einsatz-calendar-months-card,
 body.feu-admin-ui--modern-shell .feu-einsatz-statistics .feu-einsatz-insight-card,
-body.feu-admin-ui--modern-shell .feu-einsatz-statistics .feu-einsatz-month-card,
-body.feu-admin-ui--modern-shell .feu-einsatz-statistics .feu-einsatz-year-card {
+body.feu-admin-ui--modern-shell .feu-einsatz-statistics .feu-einsatz-month-card {
     background: #f8fafc;
     border: 1px solid rgba(98, 105, 118, 0.12);
     box-shadow: none;

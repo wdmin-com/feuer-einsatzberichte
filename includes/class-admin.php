@@ -45,8 +45,19 @@ class FEU_Einsatz_Admin {
     /** @var FEU_Einsatz_Schnelleingabe */
     private $schnelleingabe;
 
+    /** @var FEU_Einsatz_Operations_Center|null */
+    private $operations_center = null;
+
     public function get_report_share(): FEU_Einsatz_Report_Share {
         return $this->report_share;
+    }
+
+    public function set_operations_center(FEU_Einsatz_Operations_Center $center): void {
+        $this->operations_center = $center;
+    }
+
+    public function get_operations_center(): ?FEU_Einsatz_Operations_Center {
+        return $this->operations_center;
     }
 
     public function __construct($database) {
@@ -476,6 +487,7 @@ class FEU_Einsatz_Admin {
         add_action('admin_post_feu_einsatz_keywords_migrate', [$this, 'handle_keywords_migrate']);
         add_action('admin_post_feu_einsatz_keywords_rollback', [$this, 'handle_keywords_rollback']);
         add_action('admin_post_feu_einsatz_accept_migration', [$this, 'handle_accept_migration']);
+        add_action('admin_post_feu_einsatz_post_migration', [$this, 'handle_post_migration_action']);
         add_action('admin_post_feu_einsatz_generate_map_image_now', [$this, 'handle_generate_map_image_now']);
         add_action('admin_post_feu_einsatz_delete_map_image', [$this, 'handle_delete_map_image']);
         add_action('admin_post_feu_einsatz_save_mannschaft_source', [$this, 'handle_mannschaft_source_save']);
@@ -484,6 +496,8 @@ class FEU_Einsatz_Admin {
         add_action('admin_post_feu_einsatz_share_image',              [$this->report_share, 'handle_share_image_download']);
         add_action('admin_post_feu_einsatz_share_image_public',         [$this->report_share, 'handle_public_share_image_request']);
         add_action('admin_post_nopriv_feu_einsatz_share_image_public',  [$this->report_share, 'handle_public_share_image_request']);
+        add_action('wp_ajax_feu_einsatz_share_image_public',            [$this->report_share, 'handle_public_share_image_request']);
+        add_action('wp_ajax_nopriv_feu_einsatz_share_image_public',     [$this->report_share, 'handle_public_share_image_request']);
         add_action('add_meta_boxes', [$this, 'add_meta_boxes'], 10, 2);
         add_action('save_post', [$this, 'save_post_data'], 10, 3);
         add_action('post_updated', [$this, 'on_einsatz_updated'], 10, 1);
@@ -1990,14 +2004,17 @@ class FEU_Einsatz_Admin {
         }
 
         if (current_user_can('manage_options')) {
-            add_submenu_page(
-                'feuer-einsatzberichte',
-                __('Datenmigration', 'feuer-einsatzberichte'),
-                __('Datenmigration', 'feuer-einsatzberichte'),
-                'manage_options',
-                'feu-einsatz-datenmigration',
-                [$this, 'render_migration_overview']
-            );
+            $migration_completed = FEU_Einsatz_Migration_Overview::complete_verified_migration();
+            if (!$migration_completed && FEU_Einsatz_Migration_Overview::status()['needs_attention']) {
+                add_submenu_page(
+                    'feuer-einsatzberichte',
+                    __('Datenmigration', 'feuer-einsatzberichte'),
+                    __('Datenmigration', 'feuer-einsatzberichte'),
+                    'manage_options',
+                    'feu-einsatz-datenmigration',
+                    [$this, 'render_migration_overview']
+                );
+            }
         }
     }
 
@@ -2415,7 +2432,9 @@ class FEU_Einsatz_Admin {
         wp_enqueue_script(
             'feu-einsatz-admin-script',
             FEU_EINSATZ_PLUGIN_URL . 'assets/admin/js/admin-script.js',
-            ['jquery', 'jquery-ui-datepicker'],
+            $is_report_editor_screen || 'post.php' === $hook || 'post-new.php' === $hook
+                ? ['jquery', 'jquery-ui-datepicker', 'feu-einsatz-admin-leaflet']
+                : ['jquery', 'jquery-ui-datepicker'],
             $admin_script_version,
             true
         );
@@ -4899,6 +4918,21 @@ class FEU_Einsatz_Admin {
         }
 
         return hash_equals($stored_signature, $expected_signature);
+    }
+
+    public function retry_generated_map_from_operations(int $post_id): bool {
+        if (!current_user_can('edit_post', $post_id) || !self::current_user_can_access_plugin_section('reports')) {
+            return false;
+        }
+        return (bool) $this->maybe_queue_generated_map_preview_generation(
+            $post_id,
+            (string) get_post_meta($post_id, '_feu_einsatz_strasse', true),
+            (string) get_post_meta($post_id, '_feu_einsatz_plz', true),
+            (string) get_post_meta($post_id, '_feu_einsatz_stadt', true),
+            true,
+            5,
+            'operations_retry'
+        );
     }
 
     private function maybe_queue_generated_map_preview_generation($post_id, $strasse, $plz = '', $stadt = 'Hamburg', $force = false, $delay_seconds = null, $reason = 'save') {
@@ -8679,6 +8713,13 @@ class FEU_Einsatz_Admin {
             wp_die(esc_html__('Keine Berechtigung', 'feuer-einsatzberichte'));
         }
 
+        $dashboard_tab = isset($_GET['ops_tab']) ? sanitize_key(wp_unslash($_GET['ops_tab'])) : 'overview';
+        if (!in_array($dashboard_tab, ['overview', 'status', 'queue', 'privacy'], true)
+            || ('overview' !== $dashboard_tab && (!$this->operations_center || !FEU_Einsatz_Operations_Center::can_view()))
+            || ('privacy' === $dashboard_tab && !current_user_can('manage_options'))) {
+            $dashboard_tab = 'overview';
+        }
+
         include FEU_EINSATZ_PLUGIN_DIR . 'templates/admin/dashboard.php';
     }
 
@@ -9234,13 +9275,17 @@ class FEU_Einsatz_Admin {
         echo '<div class="notice notice-warning"><p><strong>';
         if (!empty($state['ready_for_acceptance'])) {
             esc_html_e('Die Datenübertragung ist bereit für die abschließende Prüfung.', 'feuer-einsatzberichte');
+        } elseif ($state['old_reports'] > 0 && !empty($state['keywords_enabled'])) {
+            esc_html_e('Die Einsatzstichworte sind übertragen. Einsatzberichte warten noch auf den Umzug.', 'feuer-einsatzberichte');
         } else {
             esc_html_e('Einsatzberichte oder Einsatzstichworte benötigen noch eine Datenprüfung.', 'feuer-einsatzberichte');
         }
         echo '</strong> ';
         esc_html_e('Prüfen Sie den Status und bestätigen Sie die erforderlichen Übertragungen. Bestehende URLs bleiben erhalten.', 'feuer-einsatzberichte');
-        echo ' <a href="' . esc_url(admin_url('admin.php?page=feu-einsatz-datenmigration')) . '">';
-        esc_html_e('Migration prüfen', 'feuer-einsatzberichte');
+        echo '</p><p><a class="button button-primary" href="' . esc_url(admin_url('admin.php?page=feu-einsatz-datenmigration')) . '">';
+        echo esc_html($state['old_reports'] > 0 && !empty($state['keywords_enabled'])
+            ? __('Berichtsumzug öffnen', 'feuer-einsatzberichte')
+            : __('Migration prüfen', 'feuer-einsatzberichte'));
         echo '</a></p></div>';
     }
 
@@ -9253,7 +9298,30 @@ class FEU_Einsatz_Admin {
         $post_preflight = $migration_state['old_reports'] > 0 ? FEU_Einsatz_Post_Migration::preflight() : [];
         $keyword_preflight = !$migration_state['keywords_enabled'] && $migration_state['legacy_keywords'] > 0
             ? FEU_Einsatz_Keyword_Migration::preflight() : [];
+        $post_migration_notice = get_transient('feu_einsatz_post_migration_notice_' . get_current_user_id());
+        delete_transient('feu_einsatz_post_migration_notice_' . get_current_user_id());
         include FEU_EINSATZ_PLUGIN_DIR . 'templates/admin/migration-overview.php';
+    }
+
+    public function handle_post_migration_action(): void {
+        $result = FEU_Einsatz_Post_Migration::handle_admin_action();
+        if (is_wp_error($result)) {
+            $notice = ['type' => 'error', 'message' => $result->get_error_message()];
+        } else {
+            $status = (string) ($result['status'] ?? '');
+            $message = match ($status) {
+                'rolled_back' => __('Die Rücksetzung ist abgeschlossen. Prüfen Sie die Berichte und URLs.', 'feuer-einsatzberichte'),
+                'rolling_back' => __('Zehn weitere Berichte wurden zurückgesetzt. Setzen Sie die Rücksetzung fort.', 'feuer-einsatzberichte'),
+                'complete' => __('Alle Berichte wurden übertragen. Prüfen Sie nun die Daten und URLs.', 'feuer-einsatzberichte'),
+                'partial_error' => __('Der Durchlauf ist beendet. Einzelne Berichte benötigen einen erneuten Versuch.', 'feuer-einsatzberichte'),
+                default => sprintf(__('Bearbeitet: %1$d von %2$d Berichten. Setzen Sie den Umzug mit der nächsten Gruppe fort.', 'feuer-einsatzberichte'),
+                    (int) ($result['cursor'] ?? 0), (int) ($result['total'] ?? 0)),
+            };
+            $notice = ['type' => 'success', 'message' => $message];
+        }
+        set_transient('feu_einsatz_post_migration_notice_' . get_current_user_id(), $notice, 5 * MINUTE_IN_SECONDS);
+        wp_safe_redirect(admin_url('admin.php?page=feu-einsatz-datenmigration'));
+        exit;
     }
 
     public function handle_accept_migration(): void {
@@ -9262,36 +9330,24 @@ class FEU_Einsatz_Admin {
         }
         check_admin_referer('feu_einsatz_accept_migration', 'feu_einsatz_migration_nonce');
         $state = FEU_Einsatz_Migration_Overview::status();
-        $checks = ['backup', 'urls', 'related_data'];
-        $confirmed = !empty($state['ready_for_acceptance']) && empty($state['accepted_before']);
-        foreach ($checks as $check) {
-            $confirmed = $confirmed && isset($_POST['feu_einsatz_migration_' . $check])
-                && '1' === sanitize_text_field(wp_unslash($_POST['feu_einsatz_migration_' . $check]));
+        if (!empty($state['accepted_before'])) {
+            wp_safe_redirect(admin_url('admin.php?page=feuer-einsatzberichte'));
+            exit;
         }
+        $confirmed = !empty($state['ready_for_acceptance']) && empty($state['accepted_before'])
+            && isset($_POST['feu_einsatz_migration_confirm'])
+            && is_scalar($_POST['feu_einsatz_migration_confirm'])
+            && '1' === (string) wp_unslash($_POST['feu_einsatz_migration_confirm']);
         if (!$confirmed) {
             wp_die(esc_html__('Die Abschlussprüfung ist unvollständig. Bitte Daten und URLs prüfen.', 'feuer-einsatzberichte'), '', ['response' => 400]);
         }
         if (!FEU_Einsatz_Migration_Overview::verify_for_acceptance()) {
             wp_die(esc_html__('Die gespeicherten Migrationsdaten stimmen nicht mehr mit den Berichten, Stichworten oder URLs überein.', 'feuer-einsatzberichte'), '', ['response' => 409]);
         }
-        $acceptance = [
-            'at_utc' => gmdate('c'),
-            'actor_id' => get_current_user_id(),
-            'post_run_id' => (string) ($state['post_run']['run_id'] ?? ''),
-            'old_reports' => $state['old_reports'],
-            'new_reports' => $state['new_reports'],
-        ];
-        if ((!update_option('feu_einsatz_storage_migration_acceptance', $acceptance, false)
-                && $acceptance !== get_option('feu_einsatz_storage_migration_acceptance', []))
-            || (!update_option(FEU_Einsatz_Migration_Overview::COMPLETE_OPTION, 1, false)
-                && 1 !== (int) get_option(FEU_Einsatz_Migration_Overview::COMPLETE_OPTION, 0))) {
+        if (!FEU_Einsatz_Migration_Overview::complete_verified_migration()) {
             wp_die(esc_html__('Die Bestätigung konnte nicht gespeichert werden. Bitte erneut versuchen.', 'feuer-einsatzberichte'), '', ['response' => 500]);
         }
-        FEU_Einsatz_Logger::log('storage_migration_accepted', 'system', 0, __('Datenmigration abgenommen', 'feuer-einsatzberichte'), [
-            'actor_id' => get_current_user_id(),
-            'post_run_id' => (string) ($state['post_run']['run_id'] ?? ''),
-        ]);
-        wp_safe_redirect(admin_url('admin.php?page=feu-einsatz-datenmigration&accepted=1'));
+        wp_safe_redirect(admin_url('admin.php?page=feuer-einsatzberichte'));
         exit;
     }
 
@@ -9506,9 +9562,11 @@ class FEU_Einsatz_Admin {
             $success_notice = [
                 'message' => 'future' === $created_report_status
                     ? __('Einsatzbericht wurde im Plugin gespeichert und als geplanter Beitrag angelegt.', 'feuer-einsatzberichte')
+                    : ('pending' === $created_report_status
+                        ? __('Einsatzbericht wurde zur Prüfung eingereicht.', 'feuer-einsatzberichte')
                     : ('publish' === $created_report_status
                         ? __('Einsatzbericht wurde im Plugin erstellt und veröffentlicht.', 'feuer-einsatzberichte')
-                        : __('Einsatzbericht wurde im Plugin als Entwurf gespeichert.', 'feuer-einsatzberichte')),
+                        : __('Einsatzbericht wurde im Plugin als Entwurf gespeichert.', 'feuer-einsatzberichte'))),
                 'view_url' => get_permalink($created_report_id),
                 'plugin_edit_url' => $this->get_internal_report_edit_url($created_report_id),
                 'standard_edit_url' => $this->get_standard_report_edit_url($created_report_id),
@@ -9538,9 +9596,11 @@ class FEU_Einsatz_Admin {
             $success_notice = [
                 'message' => 'future' === $updated_report_status
                     ? __('Einsatzbericht wurde im Plugin aktualisiert und bleibt geplant.', 'feuer-einsatzberichte')
+                    : ('pending' === $updated_report_status
+                        ? __('Einsatzbericht wartet auf Prüfung.', 'feuer-einsatzberichte')
                     : ('publish' === $updated_report_status
                         ? __('Einsatzbericht wurde im Plugin aktualisiert und veröffentlicht.', 'feuer-einsatzberichte')
-                        : __('Einsatzbericht wurde im Plugin als Entwurf aktualisiert.', 'feuer-einsatzberichte')),
+                        : __('Einsatzbericht wurde im Plugin als Entwurf aktualisiert.', 'feuer-einsatzberichte'))),
                 'view_url' => get_permalink($post->ID),
                 'plugin_edit_url' => $this->get_internal_report_edit_url($post->ID),
                 'standard_edit_url' => $this->get_standard_report_edit_url($post->ID),
@@ -9564,12 +9624,13 @@ class FEU_Einsatz_Admin {
 
         $title = isset($_POST['post_title']) ? sanitize_text_field(wp_unslash($_POST['post_title'])) : '';
         $content = isset($_POST['post_content']) ? wp_kses_post(wp_unslash($_POST['post_content'])) : '';
-        $status = isset($_POST['feu_einsatz_report_status']) && 'publish' === sanitize_text_field(wp_unslash($_POST['feu_einsatz_report_status']))
-            ? 'publish'
+        $requested_status = isset($_POST['feu_einsatz_report_status'])
+            ? sanitize_key(wp_unslash($_POST['feu_einsatz_report_status']))
             : 'draft';
+        $status = in_array($requested_status, ['publish', 'pending'], true) ? $requested_status : 'draft';
 
         if ('publish' === $status && !current_user_can('publish_posts')) {
-            $status = 'draft';
+            $status = 'pending';
         }
 
         $selected_categories = isset($validation['categories']) && is_array($validation['categories'])
@@ -9794,11 +9855,11 @@ class FEU_Einsatz_Admin {
         // An implicit form submit must not unpublish an existing report.
         $requested_status = isset($_POST['feu_einsatz_report_status'])
             ? sanitize_key(wp_unslash($_POST['feu_einsatz_report_status']))
-            : (in_array($post->post_status, ['publish', 'future'], true) ? 'publish' : 'draft');
-        $status = 'publish' === $requested_status ? 'publish' : 'draft';
+            : (in_array($post->post_status, ['publish', 'future'], true) ? 'publish' : ('pending' === $post->post_status ? 'pending' : 'draft'));
+        $status = in_array($requested_status, ['publish', 'pending'], true) ? $requested_status : 'draft';
 
         if ('publish' === $status && !current_user_can('publish_posts')) {
-            $status = 'draft';
+            $status = 'pending';
         }
 
         $selected_categories = isset($validation['categories']) && is_array($validation['categories'])

@@ -91,10 +91,13 @@ final class FEU_Einsatz_Migration_Overview {
             && 'complete' === ($keyword_run['status'] ?? '')
             && (int) ($counts['migrated'] ?? -1) === (int) ($post_run['total'] ?? -2);
 
-        $completed = $accepted && $ready_for_acceptance;
+        // Acceptance is a one-time cutover record. Later edits to reports or
+        // keyword selections must not reopen the migration workflow.
+        $completed = $accepted;
         $needs_attention = !$accepted
             && ($ready_for_acceptance || $old_reports > 0 || !$keywords_verified
-                || (!$keywords_enabled && count($legacy_keywords) > 0));
+                || (!$keywords_enabled && count($legacy_keywords) > 0)
+                || in_array((string) ($post_run['status'] ?? ''), ['running', 'failed', 'partial_error', 'rolling_back'], true));
         $has_legacy = $old_reports > 0 || !$keywords_verified
             || (!$keywords_enabled && count($legacy_keywords) > 0);
         $storage = $has_legacy && $new_reports > 0 ? 'mixed' : ($has_legacy ? 'old' : 'new');
@@ -176,6 +179,43 @@ final class FEU_Einsatz_Migration_Overview {
                 return false;
             }
         }
+        return true;
+    }
+
+    /** Close a fully verified cutover after the administrator-approved transfer. */
+    public static function complete_verified_migration(): bool {
+        if (1 === (int) get_option(self::COMPLETE_OPTION, 0)) {
+            return true;
+        }
+        $post_run = get_option('feu_einsatz_post_migration_run', []);
+        $keyword_run = get_option('feu_einsatz_keyword_migration_run', []);
+        if (!is_array($post_run) || 'complete' !== ($post_run['status'] ?? '')
+            || !is_array($keyword_run) || 'complete' !== ($keyword_run['status'] ?? '')) {
+            return false;
+        }
+        $state = self::status();
+        if (empty($state['ready_for_acceptance']) || !self::verify_for_acceptance()) {
+            return false;
+        }
+        $acceptance = [
+            'at_utc' => gmdate('c'),
+            'actor_id' => get_current_user_id(),
+            'post_run_id' => (string) ($post_run['run_id'] ?? ''),
+            'old_reports' => (int) $state['old_reports'],
+            'new_reports' => (int) $state['new_reports'],
+        ];
+        if (!update_option('feu_einsatz_storage_migration_acceptance', $acceptance, false)
+            && $acceptance !== get_option('feu_einsatz_storage_migration_acceptance', [])) {
+            return false;
+        }
+        if (!update_option(self::COMPLETE_OPTION, 1, false)
+            && 1 !== (int) get_option(self::COMPLETE_OPTION, 0)) {
+            return false;
+        }
+        FEU_Einsatz_Logger::log('storage_migration_accepted', 'system', 0, __('Datenmigration abgeschlossen', 'feuer-einsatzberichte'), [
+            'actor_id' => get_current_user_id(),
+            'post_run_id' => (string) ($post_run['run_id'] ?? ''),
+        ]);
         return true;
     }
 }

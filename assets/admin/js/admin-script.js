@@ -1,6 +1,54 @@
 (function ($) {
     'use strict';
 
+    function calculateAvailabilityPreview(mode, dateValue, timeValue, now) {
+        if (mode === 'sofort') {
+            return { kind: 'immediate' };
+        }
+
+        var dateMatch = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(dateValue);
+        var timeMatch = /^(\d{2}):(\d{2})$/.exec(timeValue || '08:00');
+        if (!dateMatch || !timeMatch || Number(timeMatch[1]) > 23 || Number(timeMatch[2]) > 59) {
+            return { kind: 'missing' };
+        }
+
+        var eventDate = new Date(
+            Number(dateMatch[3]), Number(dateMatch[2]) - 1, Number(dateMatch[1]),
+            Number(timeMatch[1]), Number(timeMatch[2]), 0, 0
+        );
+        if (eventDate.getFullYear() !== Number(dateMatch[3])
+            || eventDate.getMonth() !== Number(dateMatch[2]) - 1
+            || eventDate.getDate() !== Number(dateMatch[1])) {
+            return { kind: 'missing' };
+        }
+
+        var currentDate = now instanceof Date ? now : new Date();
+        var releaseDate = eventDate;
+        if (mode === 'plus2') {
+            releaseDate = new Date(eventDate.getTime());
+            releaseDate.setHours(releaseDate.getHours() + 48);
+            if (releaseDate <= currentDate) {
+                releaseDate = new Date(currentDate.getTime());
+                releaseDate.setHours(releaseDate.getHours() + 48);
+            }
+        } else if (releaseDate <= currentDate) {
+            return { kind: 'immediate' };
+        }
+
+        return {
+            kind: 'scheduled',
+            date: String(releaseDate.getDate()).padStart(2, '0') + '.'
+                + String(releaseDate.getMonth() + 1).padStart(2, '0') + '.'
+                + String(releaseDate.getFullYear()),
+            time: String(releaseDate.getHours()).padStart(2, '0') + ':'
+                + String(releaseDate.getMinutes()).padStart(2, '0')
+        };
+    }
+
+    if (typeof module === 'object' && module.exports) {
+        module.exports.calculateAvailabilityPreview = calculateAvailabilityPreview;
+    }
+
     $(document).ready(function () {
         var galleryFrame = null;
         var watermarkFrame = null;
@@ -584,6 +632,10 @@
             var mode = $('input[name="feu_einsatz_availability_mode"]:checked').val();
             var $fields = $('.feu-einsatz-availability-date-fields');
 
+            $('input[name="feu_einsatz_availability_mode"]').each(function () {
+                $(this).closest('.feu-einsatz-choice-card').toggleClass('is-selected', this.checked);
+            });
+
             if (!$fields.length) {
                 return;
             }
@@ -592,66 +644,30 @@
         }
 
         function syncAvailabilityPreview() {
-            function parseGermanDateTime(dateValue, timeValue) {
-                var match = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(dateValue);
-                var timeMatch = /^(\d{2}):(\d{2})$/.exec(timeValue || '08:00');
-
-                if (!match || !timeMatch) {
-                    return null;
-                }
-
-                return new Date(
-                    Number(match[3]),
-                    Number(match[2]) - 1,
-                    Number(match[1]),
-                    Number(timeMatch[1]),
-                    Number(timeMatch[2]),
-                    0,
-                    0
-                );
-            }
-
-            function formatGermanDate(dateObject) {
-                return String(dateObject.getDate()).padStart(2, '0')
-                    + '.'
-                    + String(dateObject.getMonth() + 1).padStart(2, '0')
-                    + '.'
-                    + String(dateObject.getFullYear());
-            }
-
-            function formatGermanTime(dateObject) {
-                return String(dateObject.getHours()).padStart(2, '0')
-                    + ':'
-                    + String(dateObject.getMinutes()).padStart(2, '0');
-            }
-
             var $datePreview = $('#feu-einsatz-availability-preview-date');
             var $timePreview = $('#feu-einsatz-availability-preview-time');
-            var mode = $('input[name="feu_einsatz_availability_mode"]:checked').val() || 'date';
-
             if (!$datePreview.length || !$timePreview.length) {
                 return;
             }
-
-            var dateValue = $.trim($('#feu_einsatz_datum').val() || '');
-            var timeValue = $.trim($('#feu_einsatz_uhrzeit').val() || '');
-
-            if (mode === 'plus2') {
-                var eventDate = parseGermanDateTime(dateValue, timeValue);
-
-                if (eventDate instanceof Date && !isNaN(eventDate.getTime())) {
-                    eventDate.setHours(eventDate.getHours() + 48);
-                    $datePreview.text(formatGermanDate(eventDate));
-                    $timePreview.text(formatGermanTime(eventDate));
-                    return;
-                }
-            }
-
-            $datePreview.text(dateValue || 'Nicht gesetzt');
-            $timePreview.text(timeValue || '08:00');
+            var $preview = $datePreview.closest('.feu-einsatz-availability-date-preview');
+            var immediateText = $preview.attr('data-feu-immediate') || 'Sofort';
+            var missingDateText = $preview.attr('data-feu-missing-date') || 'Einsatzdatum fehlt';
+            var result = calculateAvailabilityPreview(
+                $('input[name="feu_einsatz_availability_mode"]:checked').val() || 'date',
+                $.trim($('#feu_einsatz_datum').val() || ''),
+                $.trim($('#feu_einsatz_uhrzeit').val() || ''),
+                new Date()
+            );
+            $datePreview.text(result.kind === 'scheduled'
+                ? result.date
+                : (result.kind === 'immediate' ? immediateText : missingDateText));
+            $timePreview.text(result.kind === 'scheduled' ? result.time : '');
         }
 
-        $(document).on('change', 'input[name="feu_einsatz_availability_mode"]', toggleAvailabilityDateFields);
+        $(document).on('change', 'input[name="feu_einsatz_availability_mode"]', function () {
+            toggleAvailabilityDateFields();
+            syncAvailabilityPreview();
+        });
         $(document).on('input change', '#feu_einsatz_datum, #feu_einsatz_uhrzeit', syncAvailabilityPreview);
         toggleAvailabilityDateFields();
         syncAvailabilityPreview();
@@ -2109,6 +2125,20 @@
                 var locationMode = $('input[name="feu_einsatz_map_location_mode"]:checked').val() === 'coordinates' ? 'coordinates' : 'address';
                 var highlightMode = String($('#feu_einsatz_map_highlight_override').val() || 'default');
                 var hasStreet = $.trim($('#feu_einsatz_strasse').val() || '') !== '';
+                var selectedCategories = $('input[name="post_category[]"]:checked').map(function () { return String(this.value); }).get();
+
+                $('[data-feu-map-profile-preset] option').each(function () {
+                    var $option = $(this);
+                    if (this.value === 'custom') { return; }
+                    var allowed = String($option.attr('data-feu-categories') || '').split(',').filter(Boolean);
+                    var mode = String($option.attr('data-feu-mode') || 'default');
+                    var effectiveMode = mode === 'default' ? String($previewMode.data('default-map-mode') || '') : mode;
+                    var categoryMatches = !allowed.length || !selectedCategories.length || selectedCategories.every(function (id) { return allowed.indexOf(id) !== -1; });
+                    var locationMatches = locationMode !== 'coordinates' || hasStreet || ['full', 'length'].indexOf(effectiveMode) === -1;
+                    $option.prop('disabled', !categoryMatches || !locationMatches).prop('hidden', !categoryMatches || !locationMatches);
+                });
+                var preset = $('[data-feu-map-profile-preset]');
+                if (preset.find('option:selected').prop('disabled')) { preset.val('custom'); }
 
                 $locationPanels.each(function () {
                     var $panel = $(this);
@@ -2258,6 +2288,14 @@
 
             var showPreview = function () {
                 $preview.prop('hidden', false);
+            };
+
+            var showPreviewError = function (message) {
+                destroyInteractiveMap();
+                $canvas.empty().append(
+                    $('<p class="feu-einsatz-address-map-preview-error" role="status"></p>').text(message)
+                );
+                $status.text(message);
             };
 
             var renderInteractiveMap = function (data) {
@@ -2438,8 +2476,19 @@
 
                     if (response && response.success && response.data) {
                         var previewData = $.extend({ location_mode: details.locationMode }, response.data);
-                        if (!renderInteractiveMap(previewData)) {
-                            $canvas.html(previewData.markup || '');
+                        var rendered = false;
+                        try {
+                            rendered = renderInteractiveMap(previewData);
+                        } catch (mapError) {
+                            destroyInteractiveMap();
+                        }
+                        if (!rendered && previewData.markup) {
+                            $canvas.html(previewData.markup);
+                            rendered = true;
+                        }
+                        if (!rendered) {
+                            showPreviewError('Die Kartenansicht konnte nicht geladen werden. Bitte Karte aktualisieren oder die Kartenverbindung prüfen.');
+                            return;
                         }
                         lastRenderedAddressKey = details.addressKey;
                         $status.text(previewData.message || 'Kartenvorschau aktualisiert.');
@@ -2456,16 +2505,14 @@
                             ).prop('hidden', false);
                         }
                     } else {
-                        $canvas.empty();
-                        $status.text((response && response.data && response.data.message) || 'Kartenvorschau konnte nicht erstellt werden.');
+                        showPreviewError((response && response.data && response.data.message) || 'Kartenvorschau konnte nicht erstellt werden.');
                     }
                 }).fail(function (xhr, status) {
                     if (status === 'abort' || readRequiredDetails().addressKey !== details.addressKey) {
                         return;
                     }
                     var serverMessage = xhr && xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message;
-                    $canvas.empty();
-                    $status.text(serverMessage || 'Kartenvorschau ist momentan nicht verfügbar. Bitte Eingabe oder Kartenverbindung prüfen.');
+                    showPreviewError(serverMessage || 'Kartenvorschau ist momentan nicht verfügbar. Bitte Eingabe oder Kartenverbindung prüfen.');
                 }).always(function () {
                     if (request === activeRequest) {
                         $preview.removeClass('is-loading');
@@ -2496,23 +2543,16 @@
                 }, 850);
             });
             $('[data-feu-map-profile-preset]').on('change', function () {
-                var preset = String($(this).val() || 'custom');
-                var presets = {
-                    standard: { mode: 'default' },
-                    full: { mode: 'full' },
-                    segment_100: { mode: 'length', length: 100 },
-                    radius_500: { mode: 'radius', radius: 500 },
-                    radius_1000: { mode: 'radius', radius: 1000 }
-                };
-                var values = presets[preset];
-                if (!values) {
-                    return;
-                }
-                $('#feu_einsatz_map_highlight_override').val(values.mode);
-                if (values.length) { $('#feu_einsatz_map_highlight_length_meters').val(values.length); }
-                if (values.radius) { $('#feu_einsatz_map_highlight_radius_meters').val(values.radius); }
+                var option = $(this).find('option:selected');
+                var mode = String(option.attr('data-feu-mode') || '');
+                var meters = Number(option.attr('data-feu-meters'));
+                if (['default', 'full', 'length', 'radius'].indexOf(mode) === -1) { return; }
+                $('#feu_einsatz_map_highlight_override').val(mode);
+                if (mode === 'length' && Number.isFinite(meters)) { $('#feu_einsatz_map_highlight_length_meters').val(meters); }
+                if (mode === 'radius' && Number.isFinite(meters)) { $('#feu_einsatz_map_highlight_radius_meters').val(meters); }
                 $('#feu_einsatz_map_highlight_override').trigger('change');
             });
+            $('input[name="post_category[]"]').on('change', syncMapProfileControls);
             $('[data-feu-map-area-start]').on('click', function () {
                 areaDrawing = !areaDrawing;
                 $(this).text(areaDrawing ? 'Bereich fertig zeichnen' : 'Bereich in Live-Karte zeichnen');
@@ -2622,13 +2662,10 @@
         }
 
         function appendGalleryItem(id, imageUrl) {
-            var html = '' +
-                '<div class="feu-einsatz-gallery-item" data-id="' + id + '">' +
-                '<img src="' + imageUrl + '" alt="" class="feu-einsatz-gallery-thumb" />' +
-                '<button type="button" class="button-link-delete feu-einsatz-remove-gallery-image feu-einsatz-gallery-remove-button">x</button>' +
-                '</div>';
-
-            $('#feu-einsatz-gallery-preview').append(html);
+            var $item = $('<div class="feu-einsatz-gallery-item"></div>').attr('data-id', String(id));
+            $('<img class="feu-einsatz-gallery-thumb" alt="" />').attr('src', String(imageUrl || '')).appendTo($item);
+            $('<button type="button" class="button-link-delete feu-einsatz-remove-gallery-image feu-einsatz-gallery-remove-button" aria-label="Foto entfernen">&times;</button>').appendTo($item);
+            $('#feu-einsatz-gallery-preview').append($item);
         }
 
         function showNotice(type, message) {

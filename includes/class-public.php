@@ -83,6 +83,20 @@ class FEU_Einsatz_Public {
         add_filter('has_post_thumbnail', [$this, 'filter_has_post_thumbnail'], 10, 3);
         add_filter('post_thumbnail_html', [$this, 'filter_post_thumbnail_html'], 10, 5);
         add_filter('post_thumbnail_url', [$this, 'filter_post_thumbnail_url'], 10, 3);
+        add_action('save_post', ['FEU_Einsatz_Template_Helpers', 'invalidate_overview_cache_for_post'], 99);
+        add_action('before_delete_post', ['FEU_Einsatz_Template_Helpers', 'invalidate_overview_cache_for_post']);
+        add_action('trashed_post', ['FEU_Einsatz_Template_Helpers', 'invalidate_overview_cache_for_post']);
+        add_action('untrashed_post', ['FEU_Einsatz_Template_Helpers', 'invalidate_overview_cache_for_post']);
+        foreach (['added_post_meta', 'updated_post_meta', 'deleted_post_meta'] as $meta_hook) {
+            add_action($meta_hook, ['FEU_Einsatz_Template_Helpers', 'invalidate_overview_cache_for_meta'], 10, 3);
+        }
+        add_action('set_object_terms', ['FEU_Einsatz_Template_Helpers', 'invalidate_overview_cache_for_terms'], 10, 4);
+        foreach (['created_term', 'edited_term', 'delete_term'] as $term_hook) {
+            add_action($term_hook, ['FEU_Einsatz_Template_Helpers', 'invalidate_overview_cache_for_term'], 10, 3);
+        }
+        add_action('feu_einsatz_reports_restored', ['FEU_Einsatz_Template_Helpers', 'invalidate_overview_cache']);
+        add_action('feu_einsatz_prime_public_map', ['FEU_Einsatz_Template_Helpers', 'prime_public_map_in_background']);
+        add_action('feu_einsatz_prime_public_station', ['FEU_Einsatz_Template_Helpers', 'prime_public_station_in_background']);
         add_action('wp_enqueue_scripts', [$this, 'enqueue_scripts']);
         add_action('wp_head', [$this, 'render_social_share_meta_tags'], 5);
         $this->register_shortcode_aliases('count', [$this, 'render_einsatz_count_shortcode']);
@@ -678,7 +692,7 @@ class FEU_Einsatz_Public {
         return wp_nonce_url($url, 'feu_einsatz_share_image_' . $post_id);
     }
 
-    private function build_public_share_image_endpoint_url($post_id, $download = false) {
+    private function build_public_share_image_endpoint_url($post_id, $download = false, $permanent = false) {
         $post_id = absint($post_id);
 
         if ($post_id < 1) {
@@ -689,8 +703,10 @@ class FEU_Einsatz_Public {
             'action' => 'feu_einsatz_share_image_public',
             'post_id' => $post_id,
         ];
-        $expires_at = time() + DAY_IN_SECONDS;
-        $args['exp'] = $expires_at;
+        $expires_at = $permanent ? 0 : time() + DAY_IN_SECONDS;
+        if (!$permanent) {
+            $args['exp'] = $expires_at;
+        }
         $args['sig'] = FEU_Einsatz_Template_Helpers::get_public_share_image_signature($post_id, $expires_at);
 
         $revision = $this->get_public_share_image_revision($post_id);
@@ -699,7 +715,7 @@ class FEU_Einsatz_Public {
             $args['rev'] = $revision;
         }
 
-        $url = add_query_arg($args, admin_url('admin-post.php'));
+        $url = add_query_arg($args, admin_url($permanent ? 'admin-ajax.php' : 'admin-post.php'));
 
         if ($download) {
             $url = add_query_arg('download', '1', $url);
@@ -976,7 +992,15 @@ class FEU_Einsatz_Public {
             return [];
         }
 
-        $image_url = FEU_Einsatz_Template_Helpers::get_versioned_attachment_image_url($attachment_id, 'full');
+        $watermark_active = class_exists('FEU_Einsatz_Image_Protection')
+            && FEU_Einsatz_Image_Protection::is_image_watermark_enabled()
+            && '1' !== (string) get_post_meta($attachment_id, '_feu_einsatz_generated_map_preview', true);
+        if ($watermark_active) {
+            $protected_urls = FEU_Einsatz_Image_Protection::get_protected_image_urls($attachment_id, false);
+            $image_url = is_array($protected_urls) ? (string) ($protected_urls['full'] ?? '') : '';
+        } else {
+            $image_url = FEU_Einsatz_Template_Helpers::get_versioned_attachment_image_url($attachment_id, 'full');
+        }
 
         if (!$image_url) {
             return [];
@@ -1003,7 +1027,7 @@ class FEU_Einsatz_Public {
         $default_alt = trim((string) $default_alt);
 
         if ('generated' === ($settings['image_mode'] ?? 'post_image')) {
-            $generated_image_url = $this->build_public_share_image_endpoint_url($post_id);
+            $generated_image_url = $this->build_public_share_image_endpoint_url($post_id, false, true);
             $dimensions = FEU_Einsatz_Template_Helpers::get_social_share_card_dimensions($settings['layout'] ?? 'wide');
 
             if ('' !== $generated_image_url) {
@@ -1028,7 +1052,7 @@ class FEU_Einsatz_Public {
             }
         }
 
-        if (!empty($card_image['url'])) {
+        if (!empty($card_image['url']) && (!$card_attachment_id || !FEU_Einsatz_Image_Protection::is_image_watermark_enabled())) {
             return [
                 'url' => (string) $card_image['url'],
                 'alt' => $default_alt,
@@ -1050,7 +1074,7 @@ class FEU_Einsatz_Public {
             }
         }
 
-        if (!empty($fallback_image['post_image_url'])) {
+        if (!empty($fallback_image['post_image_url']) && (!$fallback_attachment_id || !FEU_Einsatz_Image_Protection::is_image_watermark_enabled())) {
             return [
                 'url' => (string) $fallback_image['post_image_url'],
                 'alt' => $fallback_alt,
@@ -1184,9 +1208,10 @@ class FEU_Einsatz_Public {
         echo "\n";
 
         if (!empty($settings['canonical_enabled'])) {
+            remove_action('wp_head', 'rel_canonical');
             echo '<link rel="canonical" href="' . esc_url($permalink) . '" />' . "\n";
-            echo '<meta name="description" content="' . esc_attr($description) . '" />' . "\n";
         }
+        echo '<meta name="description" content="' . esc_attr($description) . '" />' . "\n";
 
         echo '<meta property="og:locale" content="' . esc_attr($locale) . '" />' . "\n";
         echo '<meta property="og:type" content="article" />' . "\n";
@@ -1730,7 +1755,7 @@ class FEU_Einsatz_Public {
                 FEU_EINSATZ_PLUGIN_URL . 'assets/public/js/public-script.js',
                 [],
                 $public_script_version,
-                true
+                ['in_footer' => true, 'strategy' => 'defer']
             );
         }
 
@@ -1760,7 +1785,7 @@ class FEU_Einsatz_Public {
                     FEU_EINSATZ_PLUGIN_URL . 'assets/vendor/leaflet/leaflet.js',
                     [],
                     '1.9.4',
-                    true
+                    ['in_footer' => true, 'strategy' => 'defer']
                 );
 
                 wp_enqueue_script(
@@ -1768,7 +1793,7 @@ class FEU_Einsatz_Public {
                     FEU_EINSATZ_PLUGIN_URL . 'assets/public/js/public-script.js',
                     ['feu-einsatz-leaflet'],
                     $public_script_version,
-                    true
+                    ['in_footer' => true, 'strategy' => 'defer']
                 );
             } else {
                 wp_enqueue_script(
@@ -1776,7 +1801,7 @@ class FEU_Einsatz_Public {
                     FEU_EINSATZ_PLUGIN_URL . 'assets/public/js/public-script.js',
                     [],
                     $public_script_version,
-                    true
+                    ['in_footer' => true, 'strategy' => 'defer']
                 );
             }
 
@@ -1801,7 +1826,7 @@ class FEU_Einsatz_Public {
                 FEU_EINSATZ_PLUGIN_URL . 'assets/vendor/leaflet/leaflet.js',
                 [],
                 '1.9.4',
-                true
+                ['in_footer' => true, 'strategy' => 'defer']
             );
 
             wp_enqueue_script(
@@ -1809,58 +1834,16 @@ class FEU_Einsatz_Public {
                 FEU_EINSATZ_PLUGIN_URL . 'assets/public/js/area-map.js',
                 ['feu-einsatz-leaflet'],
                 $area_script_version,
-                true
+                ['in_footer' => true, 'strategy' => 'defer']
             );
 
-            wp_localize_script('feu-einsatz-area-map-script', 'feu_einsatz_area_map', [
-                'strings' => [
-                    'mapUnavailable' => __('Einsatzgebiet-Karte nicht verfuegbar.', 'feuer-einsatzberichte'),
-                    'mapUnavailableHint' => __('Bitte pruefen Sie die hinterlegten PLZ oder die Kartendaten.', 'feuer-einsatzberichte'),
-                    'callSingular' => __('Einsatz', 'feuer-einsatzberichte'),
-                    'callPlural' => __('Einsaetze', 'feuer-einsatzberichte'),
-                    'streetsLabel' => __('Strassen', 'feuer-einsatzberichte'),
-                    'moreStreetsLabel' => __('weitere Strassen', 'feuer-einsatzberichte'),
-                ],
-            ]);
-
-            wp_localize_script('feu-einsatz-area-map-script', 'feu_einsatz_area_map', [
-                'strings' => $area_map_strings,
-            ]);
-        }
-
-        if (false && wp_script_is('feu-einsatz-public-script', 'enqueued')) {
-            wp_add_inline_script(
-                'feu-einsatz-public-script',
-                'window.feu_einsatz_public = Object.assign({}, window.feu_einsatz_public || {}, {strings: ' . wp_json_encode([
-                    'mapUnavailable' => __('Kartenansicht nicht verfuegbar.', 'feuer-einsatzberichte'),
-                    'mapUnavailableHint' => __('Fuer diesen Einsatz sind noch keine ausreichenden Kartendaten gespeichert.', 'feuer-einsatzberichte'),
-                    'pedestrianPartLabel' => __('Fussgaengerbereich', 'feuer-einsatzberichte'),
-                    'streetFallback' => __('Strasse', 'feuer-einsatzberichte'),
-                ]) . '});',
-                'after'
-            );
-        }
-
-        if (false && wp_script_is('feu-einsatz-area-map-script', 'enqueued')) {
-            wp_add_inline_script(
-                'feu-einsatz-area-map-script',
-                'window.feu_einsatz_area_map = Object.assign({}, window.feu_einsatz_area_map || {}, {strings: ' . wp_json_encode([
-                    'mapUnavailable' => __('Einsatzgebiet-Karte nicht verfuegbar.', 'feuer-einsatzberichte'),
-                    'mapUnavailableHint' => __('Bitte pruefen Sie die hinterlegten PLZ oder die Kartendaten.', 'feuer-einsatzberichte'),
-                    'callSingular' => __('Einsatz', 'feuer-einsatzberichte'),
-                    'callPlural' => __('Einsaetze', 'feuer-einsatzberichte'),
-                    'streetsLabel' => __('Strassen', 'feuer-einsatzberichte'),
-                    'moreStreetsLabel' => __('weitere Strassen', 'feuer-einsatzberichte'),
-                ]) . '});',
-                'after'
-            );
         }
 
         if (wp_script_is('feu-einsatz-public-script', 'enqueued')) {
             wp_add_inline_script(
                 'feu-einsatz-public-script',
                 'window.feu_einsatz_public = Object.assign({}, window.feu_einsatz_public || {}, {strings: ' . wp_json_encode($public_strings) . '});',
-                'after'
+                'before'
             );
         }
 
@@ -1868,7 +1851,7 @@ class FEU_Einsatz_Public {
             wp_add_inline_script(
                 'feu-einsatz-area-map-script',
                 'window.feu_einsatz_area_map = Object.assign({}, window.feu_einsatz_area_map || {}, {strings: ' . wp_json_encode($area_map_strings) . '});',
-                'after'
+                'before'
             );
         }
     }
@@ -1921,7 +1904,11 @@ class FEU_Einsatz_Public {
             $selected_year = FEU_Einsatz_Template_Helpers::sanitize_overview_year($atts['jahr']);
         }
 
-        $paged = max(1, (int) get_query_var('paged'), (int) get_query_var('page'));
+        $requested_page = isset($_GET['feu_page']) && is_scalar($_GET['feu_page'])
+            ? absint(wp_unslash($_GET['feu_page'])) : 0;
+        $paged = $requested_page > 0
+            ? $requested_page
+            : max(1, (int) get_query_var('paged'), (int) get_query_var('page'));
         $posts_per_page = max(1, absint($atts['posts_per_page']));
         $cache_key = $selected_year . ':' . $paged . ':' . $posts_per_page;
 

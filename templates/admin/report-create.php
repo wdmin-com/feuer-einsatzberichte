@@ -15,6 +15,10 @@ $page_description = $is_edit_mode
     : __('Diese Seite ist nur fuer Einsatzberichte gedacht. Normale News-Beitraege bleiben dadurch im regulaeren WordPress-Editor ohne einsatzspezifische Felder.', 'feuer-einsatzberichte');
 $submit_secondary_label = $is_edit_mode ? __('Aenderungen als Entwurf speichern', 'feuer-einsatzberichte') : __('Als Entwurf speichern', 'feuer-einsatzberichte');
 $submit_primary_label = $is_edit_mode ? __('Aenderungen veroeffentlichen', 'feuer-einsatzberichte') : __('Bericht veroeffentlichen', 'feuer-einsatzberichte');
+$can_publish_report = current_user_can('publish_posts');
+if (!$can_publish_report) {
+    $submit_primary_label = __('Zur Prüfung einreichen', 'feuer-einsatzberichte');
+}
 $post_title_value = isset($post->post_title) ? (string) $post->post_title : '';
 $post_content_value = isset($post->post_content) ? (string) $post->post_content : '';
 $comments_feature_enabled = 1 === (int) get_option('feu_einsatz_default_comments_enabled', 0);
@@ -71,13 +75,17 @@ $status_label = __('Entwurf', 'feuer-einsatzberichte');
 $status_hint = __('Der Bericht ist aktuell als Entwurf gespeichert.', 'feuer-einsatzberichte');
 if ('publish' === $current_post_status) {
     $status_badge_class = 'is-active';
-    $status_label = __('Veroeffentlicht', 'feuer-einsatzberichte');
-    $status_hint = __('Der Bericht ist bereits oeffentlich sichtbar.', 'feuer-einsatzberichte');
+    $status_label = __('Veröffentlicht', 'feuer-einsatzberichte');
+    $status_hint = __('Der Bericht ist bereits öffentlich sichtbar.', 'feuer-einsatzberichte');
 } elseif ('future' === $current_post_status) {
     $status_badge_class = 'is-scheduled';
     $status_label = __('Geplant', 'feuer-einsatzberichte');
-    $status_hint = __('Fuer eine sofortige Veroeffentlichung im Block "Verfuegbarkeit" die Option "Sofort" waehlen und anschliessend speichern.', 'feuer-einsatzberichte');
+    $status_hint = __('Für eine sofortige Veröffentlichung „Sofort“ wählen und anschließend speichern.', 'feuer-einsatzberichte');
     $submit_primary_label = __('Status aktualisieren', 'feuer-einsatzberichte');
+} elseif ('pending' === $current_post_status) {
+    $status_badge_class = 'is-scheduled';
+    $status_label = __('Wartet auf Prüfung', 'feuer-einsatzberichte');
+    $status_hint = __('Der Bericht ist gespeichert und wartet auf die Freigabe durch eine Person mit Veröffentlichungsrecht.', 'feuer-einsatzberichte');
 }
 ?>
 
@@ -143,7 +151,7 @@ if ('publish' === $current_post_status) {
             <a class="feu-einsatz-report-section-link" href="#feu-einsatz-report-box-comments"><?php esc_html_e('Kommentare', 'feuer-einsatzberichte'); ?></a>
         <?php endif; ?>
         <a class="feu-einsatz-report-section-link" href="#feu-einsatz-report-box-categories"><?php esc_html_e('Einsatzstichworte', 'feuer-einsatzberichte'); ?></a>
-        <a class="feu-einsatz-report-section-link" href="#feu-einsatz-report-box-publish"><?php esc_html_e('Veroeffentlichung', 'feuer-einsatzberichte'); ?></a>
+        <a class="feu-einsatz-report-section-link" href="#feu-einsatz-report-box-publish"><?php esc_html_e('Veröffentlichung', 'feuer-einsatzberichte'); ?></a>
     </nav>
 
     <div id="feu-einsatz-report-validation-notice" class="notice notice-error feu-einsatz-report-validation-notice" role="alert" hidden>
@@ -447,7 +455,7 @@ if ('publish' === $current_post_status) {
 
                 <div class="postbox feu-einsatz-form-section feu-einsatz-form-section--side" id="feu-einsatz-report-box-publish">
                     <div class="postbox-header">
-                        <h2 class="hndle"><?php _e('Veroeffentlichung', 'feuer-einsatzberichte'); ?></h2>
+                        <h2 class="hndle"><?php esc_html_e('Veröffentlichung', 'feuer-einsatzberichte'); ?></h2>
                     </div>
                     <div class="inside">
                         <p class="feu-einsatz-report-current-status">
@@ -485,15 +493,20 @@ if ('publish' === $current_post_status) {
                                 <div><dt><?php esc_html_e('Karte', 'feuer-einsatzberichte'); ?></dt><dd data-feu-review-map></dd></div>
                                 <div><dt><?php esc_html_e('Öffentliche URL', 'feuer-einsatzberichte'); ?></dt><dd data-feu-review-url></dd></div>
                             </dl>
+                            <h4><?php esc_html_e('Prüfliste', 'feuer-einsatzberichte'); ?></h4>
+                            <ul class="feu-einsatz-review-checklist" data-feu-review-checklist aria-live="polite"></ul>
                             <p class="feu-einsatz-review-url-status" data-feu-review-url-status role="status" aria-live="polite"></p>
                             <?php if (!$has_fixed_public_url) : ?><p class="description"><?php esc_html_e('Die endgültige URL wird beim Speichern von WordPress festgelegt.', 'feuer-einsatzberichte'); ?></p><?php endif; ?>
-                            <button type="submit" name="feu_einsatz_report_status" value="publish" class="button button-primary" data-feu-review-confirm><?php esc_html_e('Veröffentlichung bestätigen', 'feuer-einsatzberichte'); ?></button>
+                            <button type="submit" name="feu_einsatz_report_status" value="<?php echo $can_publish_report ? 'publish' : 'pending'; ?>" class="button button-primary" data-feu-review-confirm><?php echo esc_html($can_publish_report ? __('Veröffentlichung bestätigen', 'feuer-einsatzberichte') : __('Zur Prüfung einreichen', 'feuer-einsatzberichte')); ?></button>
                         </section>
                         <p class="feu-einsatz-report-status-actions">
                             <button type="submit" name="feu_einsatz_report_status" value="draft" class="button button-secondary">
                                 <?php echo esc_html($submit_secondary_label); ?>
                             </button>
-                            <button type="button" value="publish" class="button button-primary" data-feu-review-open>
+                            <?php if ($can_publish_report && !in_array($current_post_status, ['publish', 'future'], true)) : ?>
+                                <button type="button" class="button button-secondary" data-feu-review-open data-feu-review-status="pending"><?php esc_html_e('Zur Prüfung einreichen', 'feuer-einsatzberichte'); ?></button>
+                            <?php endif; ?>
+                            <button type="button" value="publish" class="button button-primary" data-feu-review-open data-feu-review-status="<?php echo $can_publish_report ? 'publish' : 'pending'; ?>">
                                 <?php echo esc_html($submit_primary_label); ?>
                             </button>
                         </p>

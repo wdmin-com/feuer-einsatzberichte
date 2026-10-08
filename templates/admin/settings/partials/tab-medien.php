@@ -29,10 +29,11 @@ if (isset($active_tab) && 'medien' !== (string) $active_tab) {
                            <?php checked($photo_watermark_enabled, 1); ?> />
                     <span class="feu-admin-settings-check-copy">
                         <strong><?php esc_html_e('Wasserzeichen auf Fotos aktivieren', 'feuer-einsatzberichte'); ?></strong>
-                        <small><?php esc_html_e('Galerie-Fotos in Einsatzberichten werden mit Wasserzeichen ausgeliefert.', 'feuer-einsatzberichte'); ?></small>
+                        <small><?php esc_html_e('Mit einem ausgewählten Wasserzeichen-Bild werden separate markierte Kopien erzeugt. Ohne Bild erscheint nur der Text im Seitenlayout.', 'feuer-einsatzberichte'); ?></small>
                     </span>
                 </label>
             </div>
+            <p class="description"><?php esc_html_e('Die Originale bleiben in der WordPress-Mediathek über ihre bestehenden Upload-URLs erreichbar. Für vertrauliche Fotos keine öffentlich zugänglichen Originale hochladen.', 'feuer-einsatzberichte'); ?></p>
         </section>
 
         <section class="feu-admin-settings-surface">

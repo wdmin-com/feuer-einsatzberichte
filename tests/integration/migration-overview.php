@@ -5,6 +5,7 @@ if (!defined('ABSPATH')) {
 }
 
 $previous_complete = get_option(FEU_Einsatz_Migration_Overview::COMPLETE_OPTION, null);
+$previous_acceptance = get_option('feu_einsatz_storage_migration_acceptance', null);
 $previous_post_run = get_option('feu_einsatz_post_migration_run', null);
 $previous_keyword_run = get_option('feu_einsatz_keyword_migration_run', null);
 $previous_taxonomy_enabled = get_option(FEU_Einsatz_Report_Taxonomy::ENABLED_OPTION, null);
@@ -29,8 +30,25 @@ try {
     if (false !== get_option(FEU_Einsatz_Migration_Overview::COMPLETE_OPTION, false)) {
         throw new RuntimeException('Reading migration status wrote a completion marker.');
     }
+    if (FEU_Einsatz_Migration_Overview::complete_verified_migration()) {
+        throw new RuntimeException('Incomplete migration was closed automatically.');
+    }
     if ($old['old_reports'] < 1 || !$old['needs_attention'] || 'old' !== $old['storage'] && 'mixed' !== $old['storage']) {
         throw new RuntimeException('Legacy report did not trigger the migration notice.');
+    }
+    wp_set_current_user(1);
+    $migration_state = $old;
+    $keyword_items = $old['keyword_items'];
+    $post_preflight = FEU_Einsatz_Post_Migration::preflight();
+    $keyword_preflight = [];
+    $post_migration_notice = null;
+    ob_start();
+    include FEU_EINSATZ_PLUGIN_DIR . 'templates/admin/migration-overview.php';
+    $migration_html = ob_get_clean();
+    if (false === strpos($migration_html, 'name="migration_operation" value="start"')
+        || false === strpos($migration_html, 'Archiv erstellen und Übertragung starten')
+        || false !== strpos($migration_html, 'name="database_backup"')) {
+        throw new RuntimeException('The migration overview does not offer the report start action.');
     }
 
     if (!set_post_type($id, FEU_Einsatz_Report_Post_Type::POST_TYPE)) {
@@ -81,6 +99,19 @@ try {
             || !FEU_Einsatz_Migration_Overview::verify_for_acceptance()) {
             throw new RuntimeException('Completed technical runs did not request final acceptance.');
         }
+        if (!FEU_Einsatz_Migration_Overview::complete_verified_migration()
+            || 1 !== (int) get_option(FEU_Einsatz_Migration_Overview::COMPLETE_OPTION, 0)
+            || !FEU_Einsatz_Migration_Overview::status()['completed']) {
+            throw new RuntimeException('Verified migration did not close automatically.');
+        }
+        if (!FEU_Einsatz_Migration_Overview::complete_verified_migration()) {
+            throw new RuntimeException('Completion marker was not idempotent.');
+        }
+        delete_post_meta($id, FEU_Einsatz_Report_Post_Type::MARKER_META);
+        if (FEU_Einsatz_Migration_Overview::verify_for_acceptance()) {
+            throw new RuntimeException('A report that lost its marker passed final verification.');
+        }
+        update_post_meta($id, FEU_Einsatz_Report_Post_Type::MARKER_META, '1');
         $keyword_run['reports'][$id]['url'] = 'https://invalid.example.test/changed/';
         update_option('feu_einsatz_keyword_migration_run', $keyword_run, false);
         if (FEU_Einsatz_Migration_Overview::verify_for_acceptance()) {
@@ -90,8 +121,9 @@ try {
             'status' => 'complete',
             'old_selected' => [999999999],
         ], false);
-        if (FEU_Einsatz_Migration_Overview::status()['ready_for_acceptance']) {
-            throw new RuntimeException('Missing keyword mapping was accepted as a complete migration.');
+        $after_regular_changes = FEU_Einsatz_Migration_Overview::status();
+        if ($after_regular_changes['ready_for_acceptance'] || !$after_regular_changes['completed'] || $after_regular_changes['needs_attention']) {
+            throw new RuntimeException('Accepted migration reopened after journal changes.');
         }
     }
     update_option(FEU_Einsatz_Migration_Overview::COMPLETE_OPTION, 1, false);
@@ -108,6 +140,7 @@ try {
     }
     foreach ([
         FEU_Einsatz_Migration_Overview::COMPLETE_OPTION => $previous_complete,
+        'feu_einsatz_storage_migration_acceptance' => $previous_acceptance,
         'feu_einsatz_post_migration_run' => $previous_post_run,
         'feu_einsatz_keyword_migration_run' => $previous_keyword_run,
         FEU_Einsatz_Report_Taxonomy::ENABLED_OPTION => $previous_taxonomy_enabled,

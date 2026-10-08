@@ -157,6 +157,44 @@ foreach ($legacy_ids as $index => $id) {
     if ('post' !== get_post_type($id) || get_permalink($id) !== $urls_before[$index]) {
         feu_einsatz_migration_fail('Rollback did not restore the original type and URL.');
     }
+}
+
+set_current_screen('dashboard');
+$_POST = [
+    'migration_operation' => 'start',
+    'migration_confirm' => '1',
+    'feu_einsatz_post_migration_nonce' => wp_create_nonce('feu_einsatz_post_migration'),
+];
+$_REQUEST = $_POST;
+$admin_start = FEU_Einsatz_Post_Migration::handle_admin_action();
+if (is_wp_error($admin_start) || 'running' !== ($admin_start['status'] ?? '')
+    || 'plugin_archive' !== ($admin_start['backup']['mode'] ?? '')
+    || empty($admin_start['backup']['filename'])
+    || !is_file(trailingslashit(Feuer_Einsatzberichte_Core::get_instance()->get_backup()->get_archive_storage_dir()) . $admin_start['backup']['filename'])) {
+    feu_einsatz_migration_fail('The administrator start action did not create an automatic plugin archive.');
+}
+$_POST = [
+    'migration_operation' => 'batch',
+    'run_id' => (string) $admin_start['run_id'],
+    'feu_einsatz_post_migration_nonce' => wp_create_nonce('feu_einsatz_post_migration'),
+];
+$_REQUEST = $_POST;
+$admin_batch = FEU_Einsatz_Post_Migration::handle_admin_action();
+if (is_wp_error($admin_batch) || 'complete' !== ($admin_batch['status'] ?? '')) {
+    feu_einsatz_migration_fail('The administrator batch action did not migrate the reports.');
+}
+$_POST = [
+    'migration_operation' => 'rollback',
+    'run_id' => (string) $admin_start['run_id'],
+    'migration_confirmation' => 'ROLLBACK',
+    'feu_einsatz_post_migration_nonce' => wp_create_nonce('feu_einsatz_post_migration'),
+];
+$_REQUEST = $_POST;
+$admin_rollback = FEU_Einsatz_Post_Migration::handle_admin_action();
+if (is_wp_error($admin_rollback) || 'rolled_back' !== ($admin_rollback['status'] ?? '')) {
+    feu_einsatz_migration_fail('The administrator rollback action did not restore the reports.');
+}
+foreach ($legacy_ids as $id) {
     wp_delete_post($id, true);
 }
 

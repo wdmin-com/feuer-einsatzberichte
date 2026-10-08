@@ -5,6 +5,8 @@ if (!defined('ABSPATH') || !defined('WP_CLI') || !WP_CLI) {
 }
 
 wp_set_current_user(1);
+update_option('feu_einsatz_social_meta_enabled', 1, false);
+update_option('feu_einsatz_social_share_image_mode', 'generated', false);
 $root = FEU_Einsatz_Template_Helpers::find_root_category();
 if (!($root instanceof WP_Term)) {
     $created = wp_insert_term('Einsätze', 'category', ['slug' => 'einsaetze']);

@@ -45,6 +45,8 @@ Production updates are served from:
 
 The release ZIP is built with normalized `/` archive paths and neutral ZIP attributes so WordPress updates on Linux hosts do not depend on Windows-style archive metadata.
 
+For a manually installed test candidate, run `pwsh -File tools/build-test-release.ps1 -Version 3.2.93-rc1` with the desired candidate version. The ZIP is written under `release/test/<version>/`; this build does not change the stable plugin source version, update manifest, release notes, or `release/latest/` channel. Test candidates must use a version above the currently installed stable release so WordPress recognizes the upload as an update.
+
 Further details:
 
 - `docs/PLUGIN_FUNCTIONS_AND_FILES.md`

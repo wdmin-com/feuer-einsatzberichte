@@ -34,6 +34,8 @@ $active_id = (int) $active_term['term_id'];
 $retired_id = (int) $retired_term['term_id'];
 $previous_categories = get_option('feu_einsatz_categories', null);
 $previous_auto_map = get_option('feu_einsatz_auto_map_image', null);
+$previous_watermark_enabled = get_option('feu_einsatz_photo_watermark_enabled', null);
+$previous_watermark_image_id = get_option('feu_einsatz_photo_watermark_image_id', null);
 $fixtures = [];
 $participant_id = 0;
 $attachment_id = 0;
@@ -102,6 +104,7 @@ try {
                     'feu_einsatz_hausnummer' => $location === 'address' ? '1' : '',
                     'feu_einsatz_plz' => $location === 'address' ? '22547' : '',
                     'feu_einsatz_stadt' => $location === 'address' ? 'Hamburg' : '',
+                    'feu_einsatz_stadtteil' => $location === 'address' ? 'Lurup' : '',
                     'feu_einsatz_latitude' => '53.57',
                     'feu_einsatz_longitude' => '9.89',
                     'feu_einsatz_datum' => '20.09.2026',
@@ -141,6 +144,13 @@ try {
                 $gallery = get_post_meta($post_id, '_feu_einsatz_gallery', true);
                 feu_report_edit_assert(is_array($assigned) && (int) ($assigned[0]['id'] ?? 0) === $participant_id, 'Participant was lost after save.');
                 feu_report_edit_assert(is_array($gallery) && in_array($attachment_id, array_map('intval', $gallery), true), 'Gallery image was lost after save.');
+                if ('address' === $location) {
+                    feu_report_edit_assert('Lurup' === get_post_meta($post_id, '_feu_einsatz_stadtteil', true), 'District was not saved.');
+                    if (1 === count($fixtures)) {
+                        $report_context = FEU_Einsatz_Template_Helpers::get_single_context($edited);
+                        feu_report_edit_assert('Lurup' === ($report_context['report']['district'] ?? ''), 'District missing from public report context.');
+                    }
+                }
 
                 wp_update_post(['ID' => $post_id, 'post_name' => $slug . '-changed']);
                 feu_report_edit_assert(get_post_field('post_name', $post_id) === $slug, 'Standard WordPress editor changed report URL slug.');
@@ -149,6 +159,14 @@ try {
     }
     $valid_gallery_attachment = new ReflectionMethod(FEU_Einsatz_Admin::class, 'is_valid_gallery_attachment');
     feu_report_edit_assert($valid_gallery_attachment->invoke($admin, $attachment_id), 'Valid gallery attachment was rejected.');
+    update_option('feu_einsatz_photo_watermark_enabled', 1, false);
+    update_option('feu_einsatz_photo_watermark_image_id', 999999, false);
+    $build_gallery = new ReflectionMethod(FEU_Einsatz_Template_Helpers::class, 'build_gallery_items');
+    feu_report_edit_assert([] === $build_gallery->invoke(null, [$attachment_id], false), 'Gallery exposed an original while watermark generation failed.');
+    $safe_image = new ReflectionMethod(FEU_Einsatz_Template_Helpers::class, 'get_safe_report_image_url');
+    feu_report_edit_assert('' === $safe_image->invoke(null, $attachment_id, 'large'), 'Report image fallback exposed an original.');
+    $card_image = FEU_Einsatz_Template_Helpers::get_card_image_data($fixtures[0]);
+    feu_report_edit_assert('' === ($card_image['url'] ?? ''), 'Overview card exposed an unmarked original.');
     wp_update_post(['ID' => $attachment_id, 'post_status' => 'trash']);
     feu_report_edit_assert(!$valid_gallery_attachment->invoke($admin, $attachment_id), 'Trashed gallery attachment was accepted.');
 } finally {
@@ -176,6 +194,16 @@ try {
         delete_option('feu_einsatz_auto_map_image');
     } else {
         update_option('feu_einsatz_auto_map_image', $previous_auto_map, false);
+    }
+    if (null === $previous_watermark_enabled) {
+        delete_option('feu_einsatz_photo_watermark_enabled');
+    } else {
+        update_option('feu_einsatz_photo_watermark_enabled', $previous_watermark_enabled, false);
+    }
+    if (null === $previous_watermark_image_id) {
+        delete_option('feu_einsatz_photo_watermark_image_id');
+    } else {
+        update_option('feu_einsatz_photo_watermark_image_id', $previous_watermark_image_id, false);
     }
 }
 

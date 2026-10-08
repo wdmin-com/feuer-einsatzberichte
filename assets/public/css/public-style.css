@@ -2225,8 +2225,17 @@
 /* Photo gallery */
 .feu-einsatz-photo-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 14px;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+    gap: 16px;
+}
+
+.feu-einsatz-photo-pending {
+    margin: 0 0 16px;
+    padding: 12px 16px;
+    border: 1px solid #d7e5ef;
+    border-radius: 10px;
+    background: #f4f8fb;
+    color: #34485b;
 }
 
 .feu-einsatz-photo-card {
@@ -2235,16 +2244,30 @@
     width: 100%;
     padding: 0;
     border: 0;
-    background: transparent;
+    background: #eaf0f5;
     cursor: pointer;
     overflow: hidden;
     border-radius: 12px;
+    aspect-ratio: 4 / 3;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, .12);
+    transition: box-shadow .18s ease, transform .18s ease;
+}
+
+.feu-einsatz-photo-card:hover,
+.feu-einsatz-photo-card:focus-visible {
+    box-shadow: 0 10px 26px rgba(15, 23, 42, .18);
+    transform: translateY(-2px);
+}
+
+.feu-einsatz-photo-card:focus-visible {
+    outline: 3px solid #2271b1;
+    outline-offset: 3px;
 }
 
 .feu-einsatz-photo-card img {
     display: block;
     width: 100%;
-    height: 220px;
+    height: 100%;
     object-fit: cover;
 }
 
@@ -2316,6 +2339,11 @@
     font-size: 24px;
     line-height: 1;
     cursor: pointer;
+}
+
+.feu-einsatz-photo-modal-close:focus-visible {
+    outline: 3px solid #fff;
+    outline-offset: 3px;
 }
 
 .feu-einsatz-photo-watermark-large {
