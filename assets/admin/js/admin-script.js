@@ -2270,7 +2270,7 @@
 
                 request = null;
                 destroyInteractiveMap();
-                $canvas.empty();
+                $canvas.empty().removeClass('has-leaflet is-awaiting-tiles');
                 lastRenderedAddressKey = '';
                 $preview.prop('hidden', true).removeClass('is-loading');
             };
@@ -2288,11 +2288,14 @@
 
             var showPreview = function () {
                 $preview.prop('hidden', false);
+                if (!$canvas.children().length) {
+                    $canvas.append('<span class="feu-einsatz-address-map-preview-placeholder">Karte wird geladen …</span>');
+                }
             };
 
             var showPreviewError = function (message) {
                 destroyInteractiveMap();
-                $canvas.empty().append(
+                $canvas.empty().removeClass('has-leaflet is-awaiting-tiles').append(
                     $('<p class="feu-einsatz-address-map-preview-error" role="status"></p>').text(message)
                 );
                 $status.text(message);
@@ -2310,14 +2313,33 @@
                 }
 
                 destroyInteractiveMap();
-                $canvas.empty().append('<div class="feu-einsatz-address-map-preview-leaflet"></div>');
+                var hasFallback = !!data.markup;
+                $canvas.empty().addClass('has-leaflet').toggleClass('is-awaiting-tiles', hasFallback);
+                if (hasFallback) {
+                    $canvas.append($('<div class="feu-einsatz-address-map-preview-fallback"></div>').html(data.markup));
+                }
+                $canvas.append('<div class="feu-einsatz-address-map-preview-leaflet"></div>');
                 var element = $canvas.find('.feu-einsatz-address-map-preview-leaflet')[0];
                 map = window.L.map(element, { scrollWheelZoom: true, zoomControl: true });
-                window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                var activeMap = map;
+                var tilesLoaded = false;
+                var tiles = window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     maxNativeZoom: 19,
                     maxZoom: 20,
                     attribution: '&copy; OpenStreetMap contributors'
-                }).addTo(map);
+                });
+                tiles.on('tileload', function () {
+                    if (map === activeMap && !tilesLoaded) {
+                        tilesLoaded = true;
+                        $canvas.removeClass('is-awaiting-tiles');
+                    }
+                });
+                tiles.on('tileerror', function () {
+                    if (map === activeMap && !tilesLoaded && hasFallback) {
+                        $status.text('Kartenkacheln sind nicht erreichbar. Die lokale Kartenvorschau bleibt sichtbar.');
+                    }
+                });
+                tiles.addTo(map);
                 // Set a valid center before optional street geometry is drawn.
                 // The base map must remain usable even if an OSM line is incomplete.
                 map.setView([latitude, longitude], 15);
@@ -2483,7 +2505,7 @@
                             destroyInteractiveMap();
                         }
                         if (!rendered && previewData.markup) {
-                            $canvas.html(previewData.markup);
+                            $canvas.removeClass('has-leaflet is-awaiting-tiles').html(previewData.markup);
                             rendered = true;
                         }
                         if (!rendered) {
@@ -2540,7 +2562,7 @@
 
                 timer = window.setTimeout(function () {
                     update(false);
-                }, 850);
+                }, 400);
             });
             $('[data-feu-map-profile-preset]').on('change', function () {
                 var option = $(this).find('option:selected');
