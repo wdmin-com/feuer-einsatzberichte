@@ -9,6 +9,8 @@
         "Dashboard: Systemstatus, Redaktionsliste und Teilnehmerdaten liegen als Reiter direkt im vorhandenen Dashboard. Der separate Menüpunkt entfällt; bisherige Links werden umgeleitet.",
         "Berichte: Redaktionelle Status, Prüfliste vor der Freigabe und übersichtlichere Veröffentlichung einschließlich Zeitplanung unterstützen den gesamten Bearbeitungsablauf.",
         "Editor: Live-Kartenvorschau und Ortsangaben einschließlich PLZ, Stadt und Stadtteil wurden korrigiert; Karten-Schnellprofile lassen sich benennen und je Einsatzstichwort steuern.",
+        "Live-Kartenvorschau: Die Karte nutzt die volle Editorbreite, startet nach vollständiger Ortsangabe und zeigt eine lokale Vorschau, bis OpenStreetMap-Kacheln geladen sind.",
+        "Karten-Copyright: Das Leaflet-Attributionssymbol bleibt kompakt und verdeckt die Einsatzkarte nicht mehr.",
         "Migration: Der Berichtsumzug erstellt die erforderliche Sicherung automatisch, zeigt den Fortschritt, prüft die übertragenen Daten und blendet den Migrationsbereich nach bestätigtem Abschluss aus.",
         "Statistik: Navigation direkt unter der Jahresauswahl, überarbeitete Stichwort- und Jahresvergleiche sowie ein kompakteres Teilnehmer-Ranking mit Detaildialog.",
         "Teilnehmer: Häufigste Funktionen werden aus den Einsätzen gezählt; Präsentationsansichten verwenden Einsätze als Bezeichnung. Export und kontrollierte Anonymisierung sind im Dashboard verfügbar.",

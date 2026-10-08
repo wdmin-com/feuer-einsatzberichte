@@ -9081,10 +9081,20 @@
     border-style: solid;
 }
 
-.feu-einsatz-address-map-preview-canvas svg {
+.feu-einsatz-address-map-preview-canvas > svg,
+.feu-einsatz-address-map-preview-canvas > .feu-einsatz-map-inline-preview svg {
     display: block;
     width: 100%;
     height: auto;
+}
+
+.feu-einsatz-address-map-preview-leaflet .leaflet-control-attribution img,
+.feu-einsatz-address-map-preview-leaflet .leaflet-control-attribution svg {
+    display: inline !important;
+    width: auto !important;
+    max-width: 14px !important;
+    max-height: 14px !important;
+    vertical-align: -2px;
 }
 
 .feu-einsatz-address-map-preview-leaflet {
