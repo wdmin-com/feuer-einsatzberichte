@@ -1,6 +1,23 @@
 {
   "releases": [
     {
+      "version": "3.2.93",
+      "date": "2026-10-08",
+      "title": "Redaktion, Statistik und Migration im Einsatzalltag",
+      "summary": "Ein durchgängiger Berichtseditor, ein übersichtliches Dashboard, verlässlichere Datenmigration und neu gestaltete Statistiken erleichtern die tägliche Arbeit.",
+      "changes": [
+        "Dashboard: Systemstatus, Redaktionsliste und Teilnehmerdaten liegen als Reiter direkt im vorhandenen Dashboard. Der separate Menüpunkt entfällt; bisherige Links werden umgeleitet.",
+        "Berichte: Redaktionelle Status, Prüfliste vor der Freigabe und übersichtlichere Veröffentlichung einschließlich Zeitplanung unterstützen den gesamten Bearbeitungsablauf.",
+        "Editor: Live-Kartenvorschau und Ortsangaben einschließlich PLZ, Stadt und Stadtteil wurden korrigiert; Karten-Schnellprofile lassen sich benennen und je Einsatzstichwort steuern.",
+        "Migration: Der Berichtsumzug erstellt die erforderliche Sicherung automatisch, zeigt den Fortschritt, prüft die übertragenen Daten und blendet den Migrationsbereich nach bestätigtem Abschluss aus.",
+        "Statistik: Navigation direkt unter der Jahresauswahl, überarbeitete Stichwort- und Jahresvergleiche sowie ein kompakteres Teilnehmer-Ranking mit Detaildialog.",
+        "Teilnehmer: Häufigste Funktionen werden aus den Einsätzen gezählt; Präsentationsansichten verwenden Einsätze als Bezeichnung. Export und kontrollierte Anonymisierung sind im Dashboard verfügbar.",
+        "Öffentliche Berichte: Schnellere Übersichtsseite durch Cache und verzögerte Kartenarbeit; Seitennavigation auf WordPress-Seiten wurde korrigiert.",
+        "Medien und SEO: Geschützte Fotoausgabe, Wasserzeichenverarbeitung sowie Titel, Beschreibung und Vorschaubild für Suchmaschinen und geteilte Links wurden verbessert.",
+        "Qualität: Integrationstests für Redaktion, Migration, Kartenprofile, Bearbeitung und öffentliche SEO-Ausgabe wurden erweitert."
+      ]
+    },
+    {
       "version": "3.2.92",
       "date": "2026-10-04",
       "title": "Status und sichere Prüfung der Datenmigration",

@@ -45,8 +45,19 @@ class FEU_Einsatz_Admin {
     /** @var FEU_Einsatz_Schnelleingabe */
     private $schnelleingabe;
 
+    /** @var FEU_Einsatz_Operations_Center|null */
+    private $operations_center = null;
+
     public function get_report_share(): FEU_Einsatz_Report_Share {
         return $this->report_share;
+    }
+
+    public function set_operations_center(FEU_Einsatz_Operations_Center $center): void {
+        $this->operations_center = $center;
+    }
+
+    public function get_operations_center(): ?FEU_Einsatz_Operations_Center {
+        return $this->operations_center;
     }
 
     public function __construct($database) {
@@ -8700,6 +8711,13 @@ class FEU_Einsatz_Admin {
             }
 
             wp_die(esc_html__('Keine Berechtigung', 'feuer-einsatzberichte'));
+        }
+
+        $dashboard_tab = isset($_GET['ops_tab']) ? sanitize_key(wp_unslash($_GET['ops_tab'])) : 'overview';
+        if (!in_array($dashboard_tab, ['overview', 'status', 'queue', 'privacy'], true)
+            || ('overview' !== $dashboard_tab && (!$this->operations_center || !FEU_Einsatz_Operations_Center::can_view()))
+            || ('privacy' === $dashboard_tab && !current_user_can('manage_options'))) {
+            $dashboard_tab = 'overview';
         }
 
         include FEU_EINSATZ_PLUGIN_DIR . 'templates/admin/dashboard.php';

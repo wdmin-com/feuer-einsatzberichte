@@ -3,6 +3,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+if ('overview' === $dashboard_tab) :
 $total_einsaetze = (int) $this->db->count_report_posts();
 $total_teilnehmer = count($this->db->get_participants([
     'include_archived' => false,
@@ -39,6 +40,8 @@ $quick_links = [
         'icon' => 'ti ti-settings',
     ],
 ];
+endif;
+$dashboard_url = admin_url('admin.php?page=feuer-einsatzberichte');
 ?>
 
 <div class="wrap feu-einsatz-dashboard feu-admin-page">
@@ -59,6 +62,19 @@ $quick_links = [
             </a>
         </div>
     </div>
+
+    <?php if ($this->operations_center && FEU_Einsatz_Operations_Center::can_view()) : ?>
+        <nav class="feu-einsatz-operations-tabs" aria-label="<?php esc_attr_e('Dashboard-Bereiche', 'feuer-einsatzberichte'); ?>">
+            <?php foreach (['overview' => __('Übersicht', 'feuer-einsatzberichte'), 'status' => __('Systemstatus', 'feuer-einsatzberichte'), 'queue' => __('Redaktionsliste', 'feuer-einsatzberichte')] as $tab_key => $tab_label) : ?>
+                <a href="<?php echo esc_url('overview' === $tab_key ? $dashboard_url : add_query_arg('ops_tab', $tab_key, $dashboard_url)); ?>" <?php if ($dashboard_tab === $tab_key) : ?>aria-current="page"<?php endif; ?>><?php echo esc_html($tab_label); ?></a>
+            <?php endforeach; ?>
+            <?php if (current_user_can('manage_options')) : ?>
+                <a href="<?php echo esc_url(add_query_arg('ops_tab', 'privacy', $dashboard_url)); ?>" <?php if ('privacy' === $dashboard_tab) : ?>aria-current="page"<?php endif; ?>><?php esc_html_e('Teilnehmerdaten', 'feuer-einsatzberichte'); ?></a>
+            <?php endif; ?>
+        </nav>
+    <?php endif; ?>
+
+    <?php if ('overview' === $dashboard_tab) : ?>
 
     <div class="feu-admin-stat-grid">
         <article class="feu-admin-stat-card">
@@ -225,4 +241,7 @@ $quick_links = [
             <?php endif; ?>
         </section>
     </div>
+    <?php else : ?>
+        <?php $this->operations_center->render_dashboard_panel($dashboard_tab); ?>
+    <?php endif; ?>
 </div>

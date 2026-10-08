@@ -11265,11 +11265,6 @@ body .feu-einsatz-detail-panel[hidden] {
 
 /* Editorial operations centre and publication checklist. */
 .feu-einsatz-operations { max-width: 1480px; color: #17253a; }
-.feu-einsatz-operations-hero { display: flex; justify-content: space-between; align-items: center; gap: 24px; margin: 20px 0 0; padding: 30px 34px; color: #fff; background: linear-gradient(125deg, #102a43, #18537b); border-radius: 18px; }
-.feu-einsatz-operations-hero h1 { color: #fff; font-size: 30px; line-height: 1.2; margin: 8px 0; }
-.feu-einsatz-operations-hero p { margin: 0; color: #dceaf4; font-size: 14px; }
-.feu-einsatz-operations-eyebrow { color: #a7d5ed; font-size: 11px; font-weight: 700; letter-spacing: .13em; text-transform: uppercase; }
-.feu-einsatz-operations-hero .button { flex: none; padding: 5px 18px; border-color: #fff; background: #fff; color: #123b5d; font-weight: 700; }
 .feu-einsatz-operations-tabs { display: flex; gap: 6px; margin: 16px 0 20px; border-bottom: 1px solid #cfd9e4; }
 .feu-einsatz-operations-tabs a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; color: #475569; text-decoration: none; font-weight: 600; border-bottom: 3px solid transparent; }
 .feu-einsatz-operations-tabs a[aria-current="page"] { color: #0c4a6e; border-color: #1477b8; }
@@ -11320,7 +11315,7 @@ body .feu-einsatz-detail-panel[hidden] {
 .feu-einsatz-review-check--ready .feu-einsatz-review-check-mark { background: #d9f6e8; color: #087647; }
 .feu-einsatz-review-check--missing .feu-einsatz-review-check-mark { background: #fde8e7; color: #b42318; }
 @media (max-width: 900px) { .feu-einsatz-operations-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); } .feu-einsatz-operations-job { grid-template-columns: 1fr; gap: 4px; } .feu-einsatz-operations-queue-row { grid-template-columns: 1fr; gap: 10px; } }
-@media (max-width: 600px) { .feu-einsatz-operations-hero { display: grid; padding: 22px; } .feu-einsatz-operations-tabs { overflow-x: auto; white-space: nowrap; } .feu-einsatz-operations-summary { gap: 8px; } .feu-einsatz-operations-panel { padding: 16px; } }
+@media (max-width: 600px) { .feu-einsatz-operations-tabs { overflow-x: auto; white-space: nowrap; } .feu-einsatz-operations-summary { gap: 8px; } .feu-einsatz-operations-panel { padding: 16px; } }
 
 .feu-einsatz-map-quick-profile-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr)); gap: 14px; }
 .feu-einsatz-map-quick-profile-card { padding: 18px; border: 1px solid #dbe4ee; border-radius: 12px; background: #fff; }

@@ -1,6 +1,6 @@
 # Redaktion und Arbeitszentrale
 
-Die **Arbeitszentrale** im Plugin-Menü verbindet drei Arbeitsabläufe:
+Im vorhandenen **Einsatzberichte → Dashboard** stehen neben der Übersicht drei Arbeitsbereiche als Reiter. Es gibt keine zusätzliche Verwaltungsseite:
 
 1. **Systemstatus:** Die letzten 40 Einsatzberichte zeigen den Zustand von Kartenbild, Link-Vorschaubild, Wasserzeichen und geplanter Veröffentlichung. Fehlgeschlagene Karten, Share Cards und Wasserzeichen lassen sich pro Bericht erneut einplanen. Eine fehlgeschlagene Aufgabe hält andere Berichte nicht an. Ein überfälliger Veröffentlichungstermin erscheint zusätzlich unter **Werkzeuge → Website-Zustand**; dort WP-Cron prüfen.
 2. **Redaktionsliste:** Berichte lassen sich nach „Zur Prüfung“, Entwurf, geplant und veröffentlicht filtern. Personen mit `edit_posts` können Berichte bearbeiten; `publish_posts` ist für die Freigabe nötig. Der Status `pending` nutzt den regulären WordPress-Beitragsstatus und damit dessen vorhandene Rechte und Revisionen.

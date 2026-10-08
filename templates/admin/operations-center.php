@@ -2,8 +2,7 @@
 if (!defined('ABSPATH')) {
     exit;
 }
-$center_url = admin_url('admin.php?page=feu-einsatz-arbeitszentrale');
-$tab_url = static fn($value) => add_query_arg('tab', $value, $center_url);
+$center_url = admin_url('admin.php?page=feuer-einsatzberichte');
 $status_labels = [
     'pending' => __('Wartet auf Prüfung', 'feuer-einsatzberichte'),
     'draft' => __('Entwurf', 'feuer-einsatzberichte'),
@@ -13,24 +12,7 @@ $status_labels = [
 $retention_years = (int) get_option('feu_einsatz_participant_retention_years', 0);
 $retention_cutoff = $retention_years > 0 ? strtotime('-' . $retention_years . ' years', current_time('timestamp')) : 0;
 ?>
-<div class="wrap feu-einsatz-operations">
-    <div class="feu-einsatz-operations-hero">
-        <div>
-            <span class="feu-einsatz-operations-eyebrow"><?php esc_html_e('Einsatzberichte · Redaktion', 'feuer-einsatzberichte'); ?></span>
-            <h1><?php esc_html_e('Arbeitszentrale', 'feuer-einsatzberichte'); ?></h1>
-            <p><?php esc_html_e('Berichte, Hintergrundaufgaben und Teilnehmerdaten an einem Ort prüfen.', 'feuer-einsatzberichte'); ?></p>
-        </div>
-        <?php if (FEU_Einsatz_Admin::current_user_can_access_plugin_section('create_report')) : ?>
-            <a class="button button-primary" href="<?php echo esc_url(admin_url('admin.php?page=feu-einsatz-neuer-bericht')); ?>"><?php esc_html_e('Neuen Bericht erstellen', 'feuer-einsatzberichte'); ?></a>
-        <?php endif; ?>
-    </div>
-    <nav class="feu-einsatz-operations-tabs" aria-label="<?php esc_attr_e('Bereiche der Arbeitszentrale', 'feuer-einsatzberichte'); ?>">
-        <a href="<?php echo esc_url($tab_url('status')); ?>" <?php if ('status' === $tab) : ?>aria-current="page"<?php endif; ?>><?php esc_html_e('Systemstatus', 'feuer-einsatzberichte'); ?></a>
-        <a href="<?php echo esc_url($tab_url('queue')); ?>" <?php if ('queue' === $tab) : ?>aria-current="page"<?php endif; ?>><?php esc_html_e('Redaktionsliste', 'feuer-einsatzberichte'); ?></a>
-        <?php if (current_user_can('manage_options')) : ?>
-            <a href="<?php echo esc_url($tab_url('privacy')); ?>" <?php if ('privacy' === $tab) : ?>aria-current="page"<?php endif; ?>><?php esc_html_e('Teilnehmerdaten', 'feuer-einsatzberichte'); ?></a>
-        <?php endif; ?>
-    </nav>
+<div class="feu-einsatz-operations">
 
     <?php if ('status' === $tab) : ?>
         <?php if (isset($_GET['job_result'])) : ?>
@@ -84,7 +66,7 @@ $retention_cutoff = $retention_years > 0 ? strtotime('-' . $retention_years . ' 
             <div class="feu-einsatz-operations-panel-heading"><div><h2><?php esc_html_e('Redaktionsliste', 'feuer-einsatzberichte'); ?></h2><p><?php esc_html_e('Prüfen Sie einen Bericht im Plugin, bevor Sie ihn freigeben.', 'feuer-einsatzberichte'); ?></p></div></div>
             <nav class="feu-einsatz-operations-filters" aria-label="<?php esc_attr_e('Berichte nach Status', 'feuer-einsatzberichte'); ?>">
                 <?php foreach (['pending' => __('Zur Prüfung', 'feuer-einsatzberichte'), 'draft' => __('Entwürfe', 'feuer-einsatzberichte'), 'future' => __('Geplant', 'feuer-einsatzberichte'), 'publish' => __('Veröffentlicht', 'feuer-einsatzberichte'), 'all' => __('Alle', 'feuer-einsatzberichte')] as $key => $label) : ?>
-                    <a class="<?php echo $queue_status === $key ? 'is-active' : ''; ?>" href="<?php echo esc_url(add_query_arg(['tab' => 'queue', 'report_status' => $key], $center_url)); ?>" <?php if ($queue_status === $key) : ?>aria-current="page"<?php endif; ?>><?php echo esc_html($label); ?></a>
+                    <a class="<?php echo $queue_status === $key ? 'is-active' : ''; ?>" href="<?php echo esc_url(add_query_arg(['ops_tab' => 'queue', 'report_status' => $key], $center_url)); ?>" <?php if ($queue_status === $key) : ?>aria-current="page"<?php endif; ?>><?php echo esc_html($label); ?></a>
                 <?php endforeach; ?>
             </nav>
             <?php if (!$queue->posts) : ?><p class="feu-einsatz-operations-empty"><?php esc_html_e('Keine Berichte mit diesem Status.', 'feuer-einsatzberichte'); ?></p><?php endif; ?>
@@ -101,7 +83,7 @@ $retention_cutoff = $retention_years > 0 ? strtotime('-' . $retention_years . ' 
                     </article>
                 <?php endforeach; ?>
             </div>
-            <?php if ($queue->max_num_pages > 1) : ?><div class="tablenav"><div class="tablenav-pages"><?php echo wp_kses_post(paginate_links(['base' => add_query_arg(['tab' => 'queue', 'report_status' => $queue_status, 'paged' => '%#%'], $center_url), 'current' => $page, 'total' => (int) $queue->max_num_pages])); ?></div></div><?php endif; ?>
+            <?php if ($queue->max_num_pages > 1) : ?><div class="tablenav"><div class="tablenav-pages"><?php echo wp_kses_post(paginate_links(['base' => add_query_arg(['ops_tab' => 'queue', 'report_status' => $queue_status, 'paged' => '%#%'], $center_url), 'current' => $page, 'total' => (int) $queue->max_num_pages])); ?></div></div><?php endif; ?>
         </section>
 
     <?php else : ?>
@@ -116,7 +98,7 @@ $retention_cutoff = $retention_years > 0 ? strtotime('-' . $retention_years . ' 
                 <p class="description"><?php esc_html_e('Die Frist kennzeichnet alte Profile zur manuellen Prüfung. Es werden keine Teilnehmer automatisch gelöscht.', 'feuer-einsatzberichte'); ?></p>
                 <button class="button button-primary" type="submit"><?php esc_html_e('Einstellungen speichern', 'feuer-einsatzberichte'); ?></button>
             </form>
-            <form method="get" class="feu-einsatz-operations-search"><input type="hidden" name="page" value="feu-einsatz-arbeitszentrale" /><input type="hidden" name="tab" value="privacy" /><label for="feu-operations-search"><?php esc_html_e('Teilnehmer suchen', 'feuer-einsatzberichte'); ?></label><input id="feu-operations-search" name="s" value="<?php echo esc_attr($privacy_search); ?>" /><button type="submit" class="button"><?php esc_html_e('Suchen', 'feuer-einsatzberichte'); ?></button></form>
+            <form method="get" class="feu-einsatz-operations-search"><input type="hidden" name="page" value="feuer-einsatzberichte" /><input type="hidden" name="ops_tab" value="privacy" /><label for="feu-operations-search"><?php esc_html_e('Teilnehmer suchen', 'feuer-einsatzberichte'); ?></label><input id="feu-operations-search" name="s" value="<?php echo esc_attr($privacy_search); ?>" /><button type="submit" class="button"><?php esc_html_e('Suchen', 'feuer-einsatzberichte'); ?></button></form>
             <div class="feu-einsatz-operations-queue">
                 <?php foreach ($participants['items'] as $participant) : ?>
                     <?php $participant_id = (int) $participant->id; ?>
@@ -130,7 +112,7 @@ $retention_cutoff = $retention_years > 0 ? strtotime('-' . $retention_years . ' 
                 <?php endforeach; ?>
             </div>
             <?php if (!$participants['items']) : ?><p class="feu-einsatz-operations-empty"><?php esc_html_e('Keine Teilnehmer gefunden.', 'feuer-einsatzberichte'); ?></p><?php endif; ?>
-            <?php if ($participants['total'] > 20) : ?><div class="tablenav"><div class="tablenav-pages"><?php echo wp_kses_post(paginate_links(['base' => add_query_arg(['tab' => 'privacy', 's' => $privacy_search, 'paged' => '%#%'], $center_url), 'current' => $page, 'total' => (int) ceil($participants['total'] / 20)])); ?></div></div><?php endif; ?>
+            <?php if ($participants['total'] > 20) : ?><div class="tablenav"><div class="tablenav-pages"><?php echo wp_kses_post(paginate_links(['base' => add_query_arg(['ops_tab' => 'privacy', 's' => $privacy_search, 'paged' => '%#%'], $center_url), 'current' => $page, 'total' => (int) ceil($participants['total'] / 20)])); ?></div></div><?php endif; ?>
         </section>
     <?php endif; ?>
 </div>

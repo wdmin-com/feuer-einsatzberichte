@@ -11,7 +11,7 @@ class FEU_Einsatz_Operations_Center {
     public function __construct(FEU_Einsatz_Admin $admin, FEU_Einsatz_Database $db) {
         $this->admin = $admin;
         $this->db = $db;
-        add_action('admin_menu', [$this, 'add_menu'], 20);
+        add_action('admin_init', [$this, 'redirect_legacy_page']);
         add_action('admin_post_feu_einsatz_retry_job', [$this, 'handle_retry_job']);
         add_action('admin_post_feu_einsatz_participant_data', [$this, 'handle_participant_data']);
         add_action('admin_post_feu_einsatz_privacy_settings', [$this, 'handle_privacy_settings']);
@@ -20,21 +20,31 @@ class FEU_Einsatz_Operations_Center {
 
     public static function can_view(): bool {
         return current_user_can('edit_posts')
+            && FEU_Einsatz_Admin::current_user_can_access_plugin_section('dashboard')
             && FEU_Einsatz_Admin::current_user_can_access_plugin_section('reports');
     }
 
-    public function add_menu(): void {
-        if (!self::can_view()) {
+    public function redirect_legacy_page(): void {
+        $page = isset($_GET['page']) ? sanitize_key(wp_unslash($_GET['page'])) : '';
+        if ('feu-einsatz-arbeitszentrale' !== $page || !self::can_view()) {
             return;
         }
-        add_submenu_page(
-            'feuer-einsatzberichte',
-            __('Arbeitszentrale', 'feuer-einsatzberichte'),
-            __('Arbeitszentrale', 'feuer-einsatzberichte'),
-            'edit_posts',
-            'feu-einsatz-arbeitszentrale',
-            [$this, 'render']
-        );
+        $tab = isset($_GET['tab']) ? sanitize_key(wp_unslash($_GET['tab'])) : 'status';
+        if (!in_array($tab, ['status', 'queue', 'privacy'], true) || ('privacy' === $tab && !current_user_can('manage_options'))) {
+            $tab = 'status';
+        }
+        $args = ['page' => 'feuer-einsatzberichte', 'ops_tab' => $tab];
+        if ('queue' === $tab && isset($_GET['report_status'])) {
+            $args['report_status'] = sanitize_key(wp_unslash($_GET['report_status']));
+        }
+        if ('privacy' === $tab && isset($_GET['s'])) {
+            $args['s'] = sanitize_text_field(wp_unslash($_GET['s']));
+        }
+        if (isset($_GET['paged'])) {
+            $args['paged'] = max(1, absint(wp_unslash($_GET['paged'])));
+        }
+        wp_safe_redirect(add_query_arg($args, admin_url('admin.php')));
+        exit;
     }
 
     private function get_reports(array $statuses, int $page = 1, int $per_page = 20): WP_Query {
@@ -176,11 +186,10 @@ class FEU_Einsatz_Operations_Center {
         return ['items' => is_array($rows) ? $rows : [], 'total' => $total];
     }
 
-    public function render(): void {
+    public function render_dashboard_panel(string $tab): void {
         if (!self::can_view()) {
             wp_die(esc_html__('Keine Berechtigung', 'feuer-einsatzberichte'));
         }
-        $tab = isset($_GET['tab']) ? sanitize_key(wp_unslash($_GET['tab'])) : 'status';
         if (!in_array($tab, ['status', 'queue', 'privacy'], true)) {
             $tab = 'status';
         }
@@ -219,7 +228,7 @@ class FEU_Einsatz_Operations_Center {
             $queued = (bool) $ids;
         }
         wp_safe_redirect(add_query_arg(
-            ['page' => 'feu-einsatz-arbeitszentrale', 'tab' => 'status', 'job_result' => $queued ? 'queued' : 'failed'],
+            ['page' => 'feuer-einsatzberichte', 'ops_tab' => 'status', 'job_result' => $queued ? 'queued' : 'failed'],
             admin_url('admin.php')
         ));
         exit;
@@ -233,7 +242,7 @@ class FEU_Einsatz_Operations_Center {
         update_option('feu_einsatz_public_participant_names', isset($_POST['public_names']) ? 1 : 0, false);
         $years = isset($_POST['retention_years']) ? absint(wp_unslash($_POST['retention_years'])) : 0;
         update_option('feu_einsatz_participant_retention_years', min(20, $years), false);
-        wp_safe_redirect(admin_url('admin.php?page=feu-einsatz-arbeitszentrale&tab=privacy&saved=1'));
+        wp_safe_redirect(admin_url('admin.php?page=feuer-einsatzberichte&ops_tab=privacy&saved=1'));
         exit;
     }
 
@@ -279,7 +288,7 @@ class FEU_Einsatz_Operations_Center {
         $this->db->invalidate_statistics_dashboard_cache();
         update_option('feu_einsatz_participant_data_version', (int) get_option('feu_einsatz_participant_data_version', 0) + 1, false);
         FEU_Einsatz_Logger::log('participant_anonymized', 'participant', $participant_id, 'Participant profile anonymized.');
-        wp_safe_redirect(admin_url('admin.php?page=feu-einsatz-arbeitszentrale&tab=privacy&anonymized=1'));
+        wp_safe_redirect(admin_url('admin.php?page=feuer-einsatzberichte&ops_tab=privacy&anonymized=1'));
         exit;
     }
 
@@ -306,7 +315,7 @@ class FEU_Einsatz_Operations_Center {
             'status' => $overdue ? 'recommended' : 'good',
             'badge' => ['label' => __('Einsatzberichte', 'feuer-einsatzberichte'), 'color' => 'blue'],
             'description' => '<p>' . esc_html($overdue ? __('Prüfen Sie WP-Cron und die Arbeitszentrale.', 'feuer-einsatzberichte') : __('Keine überfällige Veröffentlichung gefunden.', 'feuer-einsatzberichte')) . '</p>',
-            'actions' => '<a href="' . esc_url(admin_url('admin.php?page=feu-einsatz-arbeitszentrale')) . '">' . esc_html__('Arbeitszentrale öffnen', 'feuer-einsatzberichte') . '</a>',
+            'actions' => '<a href="' . esc_url(admin_url('admin.php?page=feuer-einsatzberichte&ops_tab=status')) . '">' . esc_html__('Dashboard: Systemstatus öffnen', 'feuer-einsatzberichte') . '</a>',
             'test' => 'feu_einsatz_schedule',
         ];
     }
