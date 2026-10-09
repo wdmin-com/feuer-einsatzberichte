@@ -122,6 +122,7 @@ final class FEU_Einsatz_Keyword_Migration {
         if (!$legacy_ids) {
             $errors[] = __('Es sind keine Einsatzstichworte für die Übertragung ausgewählt.', 'feuer-einsatzberichte');
         }
+        $checked_targets = [];
         foreach ($legacy_ids as $legacy_id) {
             $term = get_term($legacy_id, 'category');
             if (!($term instanceof WP_Term)) {
@@ -133,16 +134,31 @@ final class FEU_Einsatz_Keyword_Migration {
                 $errors[] = sprintf(__('Kategorie %s gehört nicht zu Einsätze.', 'feuer-einsatzberichte'), $term->name);
                 continue;
             }
-            $existing = get_term_by('slug', (string) $term->slug, FEU_Einsatz_Report_Taxonomy::TAXONOMY);
-            if ($existing instanceof WP_Term) {
+            // A selected term also copies its ancestors. Check every existing target before writing anything.
+            $lineage = array_reverse(array_merge([$legacy_id], get_ancestors($legacy_id, 'category')));
+            foreach ($lineage as $source_id) {
+                if (isset($checked_targets[$source_id])) {
+                    continue;
+                }
+                $checked_targets[$source_id] = true;
+                $source = get_term((int) $source_id, 'category');
+                if (!($source instanceof WP_Term)) {
+                    $errors[] = sprintf(__('Kategorie-ID %d fehlt.', 'feuer-einsatzberichte'), $source_id);
+                    continue;
+                }
+                $existing = get_term_by('slug', (string) $source->slug, FEU_Einsatz_Report_Taxonomy::TAXONOMY);
+                if (!($existing instanceof WP_Term)) {
+                    continue;
+                }
                 $owner = (int) get_term_meta((int) $existing->term_id, FEU_Einsatz_Report_Taxonomy::LEGACY_TERM_META, true);
-                $legacy_parent = (int) $term->parent > 0 ? get_term((int) $term->parent, 'category') : null;
+                $legacy_parent = (int) $source->parent > 0 ? get_term((int) $source->parent, 'category') : null;
                 $expected_parent = $legacy_parent instanceof WP_Term
                     ? get_term_by('slug', (string) $legacy_parent->slug, FEU_Einsatz_Report_Taxonomy::TAXONOMY)
                     : null;
-                if (($owner && $owner !== $legacy_id)
-                    || ($expected_parent instanceof WP_Term && (int) $existing->parent !== (int) $expected_parent->term_id)) {
-                    $errors[] = sprintf(__('Slug-Konflikt: %s.', 'feuer-einsatzberichte'), $term->slug);
+                if ($owner !== (int) $source_id
+                    || ($legacy_parent instanceof WP_Term && !($expected_parent instanceof WP_Term))
+                    || (int) $existing->parent !== (int) ($expected_parent instanceof WP_Term ? $expected_parent->term_id : 0)) {
+                    $errors[] = sprintf(__('Slug-Konflikt: %s.', 'feuer-einsatzberichte'), $source->slug);
                 }
             }
         }
