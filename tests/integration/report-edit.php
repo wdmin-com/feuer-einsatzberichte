@@ -48,7 +48,13 @@ try {
         'nachname' => 'Regression ' . $suffix,
     ]);
     feu_report_edit_assert($participant_id > 0, 'Cannot create participant fixture.');
-    $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScL7WQAAAABJRU5ErkJggg==', true);
+    $fixture_image = imagecreatetruecolor(16, 16);
+    $fixture_color = imagecolorallocate($fixture_image, 20, 110, 170);
+    imagefill($fixture_image, 0, 0, $fixture_color);
+    ob_start();
+    imagepng($fixture_image);
+    $png = ob_get_clean();
+    imagedestroy($fixture_image);
     $upload = wp_upload_bits('report-edit-' . $suffix . '.png', null, $png);
     feu_report_edit_assert(empty($upload['error']) && !empty($upload['file']), 'Cannot create gallery image fixture.');
     $attachment_id = (int) wp_insert_attachment([
@@ -160,6 +166,20 @@ try {
     $valid_gallery_attachment = new ReflectionMethod(FEU_Einsatz_Admin::class, 'is_valid_gallery_attachment');
     feu_report_edit_assert($valid_gallery_attachment->invoke($admin, $attachment_id), 'Valid gallery attachment was rejected.');
     update_option('feu_einsatz_photo_watermark_enabled', 1, false);
+    update_option('feu_einsatz_photo_watermark_image_id', $attachment_id, false);
+    $protected_image = new ReflectionMethod(FEU_Einsatz_Image_Protection::class, 'generate_protected_image');
+    $protected_full = $protected_image->invoke(null, $attachment_id, 'full', true);
+    feu_report_edit_assert(
+        is_array($protected_full) && is_file($protected_full['path']),
+        'Protected gallery image was not generated: ' . (is_wp_error($protected_full) ? $protected_full->get_error_code() : gettype($protected_full))
+    );
+    file_put_contents($protected_full['path'], '');
+    feu_report_edit_assert(false === $protected_image->invoke(null, $attachment_id, 'full', false), 'Empty protected image was treated as ready.');
+    $repaired_full = $protected_image->invoke(null, $attachment_id, 'full', true);
+    if (is_array($repaired_full) && isset($repaired_full['path'])) {
+        clearstatcache(true, $repaired_full['path']);
+    }
+    feu_report_edit_assert(is_array($repaired_full) && filesize($repaired_full['path']) > 0, 'Empty protected image was not regenerated.');
     update_option('feu_einsatz_photo_watermark_image_id', 999999, false);
     $build_gallery = new ReflectionMethod(FEU_Einsatz_Template_Helpers::class, 'build_gallery_items');
     feu_report_edit_assert([] === $build_gallery->invoke(null, [$attachment_id], false), 'Gallery exposed an original while watermark generation failed.');

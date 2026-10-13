@@ -13,6 +13,7 @@ class FEU_Einsatz_Admin {
     const GENERATED_MAP_ATTACHMENT_META = '_feu_einsatz_generated_map_preview';
     const GENERATED_MAP_PREVIEW_URL_META = '_feu_einsatz_generated_map_preview_url';
     const GENERATED_MAP_PREVIEW_FILE_META = '_feu_einsatz_generated_map_preview_file';
+    const GENERATED_MAP_PREVIEW_REVISION_META = '_feu_einsatz_generated_map_preview_revision';
     const GENERATED_MAP_SIGNATURE_META = '_feu_einsatz_generated_map_signature';
     const GENERATED_MAP_QUEUE_META = '_feu_einsatz_generated_map_queue';
     const GENERATED_MAP_STATUS_META = '_feu_einsatz_generated_map_status';
@@ -5808,6 +5809,7 @@ class FEU_Einsatz_Admin {
 
         delete_post_meta($post_id, self::GENERATED_MAP_PREVIEW_FILE_META);
         delete_post_meta($post_id, self::GENERATED_MAP_PREVIEW_URL_META);
+        delete_post_meta($post_id, self::GENERATED_MAP_PREVIEW_REVISION_META);
         $this->report_share->invalidate_share_card_cache((int) $post_id);
     }
 
@@ -8444,6 +8446,7 @@ class FEU_Einsatz_Admin {
 
         update_post_meta($post_id, self::GENERATED_MAP_PREVIEW_FILE_META, $preview_file);
         update_post_meta($post_id, self::GENERATED_MAP_PREVIEW_URL_META, trailingslashit($preview_url_base) . wp_basename($preview_file));
+        update_post_meta($post_id, self::GENERATED_MAP_PREVIEW_REVISION_META, wp_generate_uuid4());
         $this->report_share->invalidate_share_card_cache((int) $post_id);
 
         return [
@@ -10124,6 +10127,7 @@ class FEU_Einsatz_Admin {
         $report_query = new WP_Query([
             'post_type' => FEU_Einsatz_Report_Post_Type::readable_post_types(),
             'post_status' => 'all' === $report_status ? array_slice($allowed_statuses, 1) : $report_status,
+            'perm' => 'readable',
             'posts_per_page' => 20,
             'paged' => $report_page,
             's' => $report_search,

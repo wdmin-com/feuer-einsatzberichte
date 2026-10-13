@@ -26,8 +26,29 @@ try {
         throw new RuntimeException('Could not write static map fixture.');
     }
 
+    update_post_meta($post_id, '_feu_einsatz_generated_map_preview_url', 'https://old.example.invalid/uploads/feu-static-map-' . $post_id . '.png');
+    $migrated_url = FEU_Einsatz_Template_Helpers::get_generated_map_preview_public_url($post_id);
+    if (0 !== strpos($migrated_url, $url . '?v=')) {
+        throw new RuntimeException('A migrated report still uses the obsolete map image domain.');
+    }
+    update_post_meta($post_id, '_feu_einsatz_generated_map_preview_url', $url);
+
+    delete_post_meta($post_id, '_feu_einsatz_generated_map_preview_url');
+    if (0 !== strpos(FEU_Einsatz_Template_Helpers::get_generated_map_preview_public_url($post_id), $url . '?v=')) {
+        throw new RuntimeException('A local map image without stored URL could not be recovered.');
+    }
+    update_post_meta($post_id, '_feu_einsatz_generated_map_preview_url', $url);
+
     $fingerprint = new ReflectionMethod(FEU_Einsatz_Template_Helpers::class, 'get_single_context_cache_fingerprint');
     $first_fingerprint = $fingerprint->invoke(null, get_post($post_id));
+    update_post_meta($post_id, '_feu_einsatz_generated_map_preview_revision', 'ci-revision-2');
+    if (false === strpos(FEU_Einsatz_Template_Helpers::get_generated_map_preview_public_url($post_id), '?v=ci-revision-2')) {
+        throw new RuntimeException('Regenerated same-path map image kept the previous browser cache URL.');
+    }
+    $revision_fingerprint = $fingerprint->invoke(null, get_post($post_id));
+    if ($first_fingerprint === $revision_fingerprint) {
+        throw new RuntimeException('Regenerated same-path map image did not invalidate the report context.');
+    }
     file_put_contents($file, $png . $png);
     clearstatcache(true, $file);
     $second_fingerprint = $fingerprint->invoke(null, get_post($post_id));

@@ -2207,6 +2207,18 @@ class FEU_Einsatz_Template_Helpers {
         return wp_normalize_path(trailingslashit($basedir) . $relative_path);
     }
 
+    private static function resolve_current_upload_url_from_path($path) {
+        $upload_dir = wp_upload_dir();
+        $basedir = isset($upload_dir['basedir']) ? rtrim(wp_normalize_path((string) $upload_dir['basedir']), '/') : '';
+        $baseurl = isset($upload_dir['baseurl']) ? rtrim((string) $upload_dir['baseurl'], '/') : '';
+        $path = wp_normalize_path((string) $path);
+        if ('' === $basedir || '' === $baseurl || 0 !== strpos($path, $basedir . '/')) {
+            return '';
+        }
+
+        return $baseurl . substr($path, strlen($basedir));
+    }
+
     public static function get_generated_map_preview_public_url($post_id) {
         $post_id = absint($post_id);
 
@@ -2226,8 +2238,11 @@ class FEU_Einsatz_Template_Helpers {
         }
 
         if ('' !== $preview_file && is_file($preview_file) && is_readable($preview_file) && filesize($preview_file) > 0) {
-            if ('' !== $preview_url) {
-                return add_query_arg('v', (string) filemtime($preview_file), $preview_url);
+            $current_url = self::resolve_current_upload_url_from_path($preview_file);
+            $public_url = '' !== $current_url ? $current_url : $preview_url;
+            if ('' !== $public_url) {
+                $revision = trim((string) get_post_meta($post_id, '_feu_einsatz_generated_map_preview_revision', true));
+                return add_query_arg('v', '' !== $revision ? $revision : (string) filemtime($preview_file), $public_url);
             }
         }
 
@@ -4856,8 +4871,10 @@ class FEU_Einsatz_Template_Helpers {
             'gallery' => maybe_serialize(get_post_meta($post_id, '_feu_einsatz_gallery', true)),
             'generated_map_preview_url' => (string) get_post_meta($post_id, '_feu_einsatz_generated_map_preview_url', true),
             'generated_map_preview_file' => (string) get_post_meta($post_id, '_feu_einsatz_generated_map_preview_file', true),
+            'generated_map_preview_revision' => (string) get_post_meta($post_id, '_feu_einsatz_generated_map_preview_revision', true),
             'generated_map_attachment_id' => $generated_attachment_id,
             'generated_map_file_signature' => $preview_file_signature,
+            'uploads_base_url' => (string) (wp_upload_dir()['baseurl'] ?? ''),
             'comments_enabled' => (string) get_post_meta($post_id, '_feu_einsatz_comments_enabled', true),
             'comment_count' => (int) get_comments_number($post_id),
             'display' => [

@@ -646,14 +646,38 @@
         var tileLayer = window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(map);
+        });
+        var tileSucceeded = false;
+        var tileSettled = false;
+        var tileTimeout = null;
+        var completeTileLoad;
+        var tileReadyPromise = new Promise(function (resolve) { completeTileLoad = resolve; });
 
-        // Load the base map before optional geometry, labels or station
-        // decoration. A malformed historic segment must never leave a freshly
-        // created Leaflet canvas without a view (and therefore without tiles).
-        if (center) {
-            map.setView(center, zoom);
+        function finishTileLoad() {
+            if (tileSettled) {
+                return;
+            }
+            tileSettled = true;
+            window.clearTimeout(tileTimeout);
+            if (tileSucceeded) {
+                showReady(runtime);
+                window.setTimeout(function () { map.invalidateSize(); }, 0);
+                completeTileLoad();
+                return;
+            }
+            try {
+                map.remove();
+            } catch (error) {
+                // A failed Leaflet cleanup must not keep the retry button locked.
+            }
+            showFallback(runtime, null);
+            completeTileLoad();
         }
+
+        tileLayer.on('tileload', function () {
+            tileSucceeded = true;
+        });
+        tileLayer.on('load', finishTileLoad);
 
         if (loadBar) {
             tileLayer.on('tileloadstart', function () {
@@ -676,6 +700,12 @@
                 loadBar.setAttribute('aria-valuenow', 100);
                 window.setTimeout(function () { loadBar.classList.add('is-done'); }, 500);
             });
+        }
+
+        // Establish the view before requesting tiles. Leaflet can emit its
+        // initial load event immediately when a tile layer has no view yet.
+        if (center) {
+            map.setView(center, zoom);
         }
 
         var bounds = window.L.latLngBounds([]);
@@ -719,30 +749,51 @@
         } else if (center) {
             map.setView(center, zoom);
         } else {
+            map.remove();
             showFallback(runtime, null);
+            completeTileLoad();
             return;
         }
 
-        window.setTimeout(function () {
-            map.invalidateSize();
-        }, 120);
+        tileTimeout = window.setTimeout(finishTileLoad, 12000);
+        tileLayer.addTo(map);
 
-        showReady(runtime);
+        return tileReadyPromise;
+
     }
 
     var leafletLoadPromise = null;
+    var leafletStylePromise = null;
 
     function loadLeafletOnDemand() {
         var config = window.feu_einsatz_public || {};
-        if (!document.querySelector('link[data-feu-public-leaflet]') && config.leafletStyleUrl) {
-            var style = document.createElement('link');
-            style.rel = 'stylesheet';
-            style.href = config.leafletStyleUrl;
-            style.setAttribute('data-feu-public-leaflet', '1');
-            document.head.appendChild(style);
+        if (!leafletStylePromise) {
+            leafletStylePromise = new Promise(function (resolve, reject) {
+                if (document.querySelector('link[data-feu-public-leaflet]')) {
+                    resolve();
+                    return;
+                }
+                if (!config.leafletStyleUrl) {
+                    reject(new Error('Leaflet CSS URL fehlt.'));
+                    return;
+                }
+                var style = document.createElement('link');
+                style.rel = 'stylesheet';
+                style.href = config.leafletStyleUrl;
+                style.setAttribute('data-feu-public-leaflet', '1');
+                style.onload = resolve;
+                style.onerror = function () {
+                    style.remove();
+                    reject(new Error('Leaflet CSS konnte nicht geladen werden.'));
+                };
+                document.head.appendChild(style);
+            }).catch(function (error) {
+                leafletStylePromise = null;
+                throw error;
+            });
         }
         if (window.L) {
-            return Promise.resolve();
+            return leafletStylePromise;
         }
         if (!leafletLoadPromise) {
             leafletLoadPromise = new Promise(function (resolve, reject) {
@@ -753,14 +804,17 @@
                 var script = document.createElement('script');
                 script.src = config.leafletScriptUrl;
                 script.onload = function () { window.L ? resolve() : reject(new Error('Leaflet konnte nicht geladen werden.')); };
-                script.onerror = function () { reject(new Error('Leaflet konnte nicht geladen werden.')); };
+                script.onerror = function () {
+                    script.remove();
+                    reject(new Error('Leaflet konnte nicht geladen werden.'));
+                };
                 document.head.appendChild(script);
             }).catch(function (error) {
                 leafletLoadPromise = null;
                 throw error;
             });
         }
-        return leafletLoadPromise;
+        return Promise.all([leafletStylePromise, leafletLoadPromise]);
     }
 
     function activateMap(runtime) {
@@ -774,7 +828,7 @@
         }
         loadLeafletOnDemand().then(function () {
             try {
-                renderMap(runtime);
+                return renderMap(runtime);
             } catch (error) {
                 var canvas = runtime.querySelector('.feu-einsatz-live-map');
                 if (canvas && canvas._leaflet_id) {
@@ -800,6 +854,7 @@
 
         if (activateButton) {
             activateButton.addEventListener('click', function () {
+                if (activateButton.disabled) { return; }
                 runtime.setAttribute('data-map-enabled', '1');
                 activateMap(runtime);
             });
@@ -807,6 +862,7 @@
 
         if (allowButton) {
             allowButton.addEventListener('click', function () {
+                if (allowButton.disabled) { return; }
                 runtime.setAttribute('data-map-enabled', '1');
                 activateMap(runtime);
             });
