@@ -3720,6 +3720,76 @@
     margin: 8px 0 18px;
 }
 
+.feu-einsatz-participant-tools {
+    flex-wrap: wrap;
+    align-items: end;
+}
+
+.feu-einsatz-participation-setting-form {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.feu-einsatz-participation-setting-form label,
+.feu-einsatz-participation-setting-label {
+    color: #334155;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.feu-einsatz-participation-setting-controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.feu-einsatz-participation-setting-controls input {
+    width: 76px;
+    min-height: 34px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.feu-einsatz-participation-rate {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+    width: fit-content;
+    padding: 6px 9px;
+    border-radius: 6px;
+    background: #eef4fb;
+    color: #0f4c81;
+    font-variant-numeric: tabular-nums;
+}
+
+.feu-einsatz-participation-rate strong {
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.feu-einsatz-participation-rate span {
+    font-size: 12px;
+}
+
+.feu-einsatz-participation-rate.is-below-minimum {
+    background: #fef3f2;
+    color: #b42318;
+    font-weight: 700;
+}
+
+.feu-einsatz-participation-rate.is-below-minimum strong {
+    font-weight: 800;
+}
+
+.feu-einsatz-participation-rate--compact {
+    padding: 4px 7px;
+}
+
+.feu-einsatz-participation-rate--compact strong {
+    font-size: 13px;
+}
+
 .feu-einsatz-participant-overview-head h3 {
     margin: 4px 0 2px;
     color: #0f172a;
@@ -3909,7 +3979,7 @@
 .feu-einsatz-ranking-compact-head,
 .feu-einsatz-ranking-compact-item {
     display: grid;
-    grid-template-columns: 64px minmax(0, 1fr) 100px 112px;
+    grid-template-columns: 64px minmax(0, 1fr) 90px 105px 112px;
     gap: 16px;
     align-items: center;
     padding: 10px 20px;
@@ -3983,17 +4053,27 @@
 
     .feu-einsatz-ranking-compact-head,
     .feu-einsatz-ranking-compact-item {
-        grid-template-columns: 42px minmax(0, 1fr) 74px;
+        grid-template-columns: 42px minmax(0, 1fr) 78px;
         gap: 8px;
         padding: 10px 12px;
     }
 
-    .feu-einsatz-ranking-compact-item > span:last-child {
-        grid-column: 2 / -1;
-    }
-
+    .feu-einsatz-ranking-compact-head span:nth-child(3),
     .feu-einsatz-ranking-compact-head span:last-child {
         display: none;
+    }
+
+    .feu-einsatz-ranking-compact-item .feu-einsatz-ranking-compact-count {
+        grid-column: 2;
+    }
+
+    .feu-einsatz-ranking-compact-item .feu-einsatz-participation-rate {
+        grid-column: 3;
+        grid-row: 1;
+    }
+
+    .feu-einsatz-ranking-compact-item > span:last-child {
+        grid-column: 3;
     }
 
     .feu-einsatz-ranking-compact-item .button {
@@ -8678,6 +8758,17 @@
     font-size: clamp(15px, 1.2vw, 20px);
 }
 
+.feu-einsatz-presentation-participation {
+    color: #0f4c81;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.feu-einsatz-presentation-participation.is-below-minimum {
+    color: #b42318 !important;
+    font-weight: 800 !important;
+}
+
 .feu-einsatz-presentation-podium-rank-1 {
     --feu-winner-color: #d69e00;
     min-height: 220px !important;
@@ -8755,6 +8846,11 @@
 .feu-einsatz-presentation-participant-list strong {
     color: #0f172a;
     font-size: 18px;
+    text-align: right;
+}
+
+.feu-einsatz-presentation-participant-list .feu-einsatz-presentation-participation {
+    grid-column: 1 / -1;
     text-align: right;
 }
 

@@ -1071,7 +1071,8 @@ class FEU_Einsatz_Database {
      */
     public function get_statistics_dashboard_data($jahr = null) {
         $jahr = absint($jahr ?: date('Y'));
-        $cache_key = self::STATISTICS_DASHBOARD_CACHE_PREFIX . $jahr;
+        // V2 excludes non-report posts from participant counts. Do not reuse older cached rows.
+        $cache_key = self::STATISTICS_DASHBOARD_CACHE_PREFIX . 'v2_' . $jahr;
         $cached = get_transient($cache_key);
 
         if (is_array($cached)) {
@@ -1583,8 +1584,10 @@ class FEU_Einsatz_Database {
             FROM {$this->table_participants} t
             INNER JOIN {$this->table_stats} s ON s.teilnehmer_id = t.id
             INNER JOIN {$this->wpdb->posts} p ON p.ID = s.post_id
+            INNER JOIN {$this->wpdb->postmeta} report ON report.post_id = p.ID AND report.meta_key = '_feu_einsatz_einsatzbericht' AND report.meta_value = '1'
             LEFT JOIN {$this->wpdb->postmeta} event_date ON p.ID = event_date.post_id AND event_date.meta_key = '_feu_einsatz_datum'
             WHERE {$event_year_sql} = %d
+            AND p.post_type IN ('post', 'einsatzbericht')
             AND p.post_status = 'publish'
             GROUP BY t.id
             ORDER BY gesamt_einsaetze DESC
@@ -1758,9 +1761,11 @@ class FEU_Einsatz_Database {
                 s.funktion
             FROM {$this->table_stats} s
             INNER JOIN {$this->wpdb->posts} p ON p.ID = s.post_id
+            INNER JOIN {$this->wpdb->postmeta} report ON report.post_id = p.ID AND report.meta_key = '_feu_einsatz_einsatzbericht' AND report.meta_value = '1'
             LEFT JOIN {$this->wpdb->postmeta} event_date ON p.ID = event_date.post_id AND event_date.meta_key = '_feu_einsatz_datum'
             WHERE s.teilnehmer_id = %d
             AND {$event_year_sql} = %d
+            AND p.post_type IN ('post', 'einsatzbericht')
             AND p.post_status = 'publish'
             ORDER BY {$event_date_sql} DESC, p.post_date DESC
         ", $teilnehmer_id, $jahr);
@@ -1781,9 +1786,11 @@ class FEU_Einsatz_Database {
                 COUNT(s.id) as anzahl
             FROM {$this->table_stats} s
             INNER JOIN {$this->wpdb->posts} p ON p.ID = s.post_id
+            INNER JOIN {$this->wpdb->postmeta} report ON report.post_id = p.ID AND report.meta_key = '_feu_einsatz_einsatzbericht' AND report.meta_value = '1'
             LEFT JOIN {$this->wpdb->postmeta} event_date ON p.ID = event_date.post_id AND event_date.meta_key = '_feu_einsatz_datum'
             WHERE s.teilnehmer_id = %d
             AND {$event_year_sql} = %d
+            AND p.post_type IN ('post', 'einsatzbericht')
             AND p.post_status = 'publish'
             GROUP BY s.funktion
             ORDER BY anzahl DESC
