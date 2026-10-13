@@ -3581,23 +3581,6 @@
     color: #fff;
 }
 
-.feu-einsatz-tab-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 34px;
-    min-height: 22px;
-    padding: 0 8px;
-    border-radius: 999px;
-    background: rgba(15, 23, 42, 0.12);
-    font-size: 11px;
-    font-weight: 700;
-}
-
-.feu-einsatz-stats-tab.is-active .feu-einsatz-tab-badge {
-    background: rgba(255, 255, 255, 0.18);
-}
-
 .feu-einsatz-stats-panel {
     display: none;
 }
@@ -3620,25 +3603,6 @@
     gap: 20px;
     align-items: flex-end;
     margin-bottom: 16px;
-}
-
-.feu-einsatz-pin-card {
-    border: 1px dashed #cbd5e1;
-    border-radius: 4px;
-    padding: 18px;
-    background: #f8fafc;
-}
-
-.feu-einsatz-pin-form {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    gap: 12px;
-}
-
-.feu-einsatz-pin-form label {
-    font-weight: 600;
-    min-width: 100%;
 }
 
 .feu-einsatz-calendar-insights {
@@ -4427,23 +4391,6 @@
 
 .feu-einsatz-ranking-stage {
     position: relative;
-}
-
-.feu-einsatz-ranking-stage.is-locked > :not(.feu-einsatz-ranking-overlay) {
-    filter: blur(8px);
-    opacity: 0.55;
-    pointer-events: none;
-    user-select: none;
-}
-
-.feu-einsatz-ranking-overlay {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
-    background: rgba(248, 250, 252, 0.25);
 }
 
 @media (max-width: 1040px) {
@@ -5483,8 +5430,7 @@
 
     .feu-einsatz-list-item,
     .feu-einsatz-add-button-container,
-    .feu-einsatz-statistics-toolbar,
-    .feu-einsatz-pin-form {
+    .feu-einsatz-statistics-toolbar {
         display: grid;
         grid-template-columns: 1fr;
         align-items: stretch;
@@ -5505,8 +5451,6 @@
     }
 
     .feu-einsatz-statistics-toolbar .button,
-    .feu-einsatz-pin-form .button,
-    .feu-einsatz-inline-lock-form .button,
     .feu-einsatz-stats-tab,
     .feu-einsatz-detail-panel .button {
         width: 100%;
@@ -5743,8 +5687,7 @@
     .feu-einsatz-form-card,
     .feu-einsatz-chart-card,
     .feu-einsatz-active-days-card,
-    .feu-einsatz-calendar-months-card,
-    .feu-einsatz-pin-card {
+    .feu-einsatz-calendar-months-card {
         padding: 16px;
         border-radius: 4px;
     }

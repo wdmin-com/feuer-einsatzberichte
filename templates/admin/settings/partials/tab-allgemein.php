@@ -211,12 +211,12 @@ if (isset($active_tab) && 'allgemein' !== (string) $active_tab) {
         <section class="feu-admin-settings-surface">
             <div class="feu-admin-settings-surface-head">
                 <div>
-                    <h2><?php esc_html_e('Sicherheit und Archiv', 'feuer-einsatzberichte'); ?></h2>
-                    <p class="description"><?php esc_html_e('Verwaltet Archivaufbewahrung und die Absicherung des Teilnehmer-Rankings.', 'feuer-einsatzberichte'); ?></p>
+                    <h2><?php esc_html_e('Archivaufbewahrung', 'feuer-einsatzberichte'); ?></h2>
+                    <p class="description"><?php esc_html_e('Legen Sie fest, wie viele Sicherungsarchive gespeichert bleiben.', 'feuer-einsatzberichte'); ?></p>
                 </div>
             </div>
 
-            <div class="feu-admin-settings-form-grid feu-admin-settings-form-grid--2">
+            <div class="feu-admin-settings-form-grid">
                 <label class="feu-admin-settings-field">
                     <span><?php esc_html_e('Gespeicherte Archive', 'feuer-einsatzberichte'); ?></span>
                     <input type="number"
@@ -230,25 +230,6 @@ if (isset($active_tab) && 'allgemein' !== (string) $active_tab) {
                     <small><?php esc_html_e('Sobald mehr Archive vorhanden sind, werden die aeltesten Sicherungen automatisch entfernt.', 'feuer-einsatzberichte'); ?></small>
                 </label>
 
-                <label class="feu-admin-settings-field">
-                    <span><?php esc_html_e('PIN fuer Teilnehmer-Ranking', 'feuer-einsatzberichte'); ?></span>
-                    <input type="password"
-                           id="feu_einsatz_participant_ranking_pin"
-                           name="feu_einsatz_participant_ranking_pin"
-                           value=""
-                           class="regular-text"
-                           maxlength="64"
-                           autocomplete="new-password"
-                           inputmode="numeric"
-                           placeholder="<?php esc_attr_e('Neuen PIN eingeben', 'feuer-einsatzberichte'); ?>" />
-                    <small>
-                        <?php if (!empty($participant_ranking_pin_is_configured)) : ?>
-                            <?php esc_html_e('Es ist bereits ein PIN gesetzt. Feld leer lassen, wenn der vorhandene PIN unveraendert bleiben soll.', 'feuer-einsatzberichte'); ?>
-                        <?php else : ?>
-                            <?php esc_html_e('Wenn hier ein PIN gesetzt wird, ist das Teilnehmer-Ranking nur noch nach Eingabe dieses PIN sichtbar.', 'feuer-einsatzberichte'); ?>
-                        <?php endif; ?>
-                    </small>
-                </label>
             </div>
         </section>
 

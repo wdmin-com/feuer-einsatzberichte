@@ -289,7 +289,6 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
             'feu_einsatz_photo_watermark_scale' => max(10, min(90, absint(get_option('feu_einsatz_photo_watermark_scale', 42)))),
         ];
         $this->save_settings_snapshot($previous_settings);
-        $previous_participant_ranking_pin = FEU_Einsatz_Admin::get_participant_ranking_pin();
 
         update_option('feu_einsatz_update_manifest_url', FEU_Einsatz_Updater::get_default_manifest_url());
 
@@ -746,16 +745,6 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
             isset($_POST['feu_einsatz_photo_watermark_scale']) ? max(10, min(90, absint(wp_unslash($_POST['feu_einsatz_photo_watermark_scale'])))) : 42
         );
 
-        if (isset($_POST['feu_einsatz_participant_ranking_pin'])) {
-            $submitted_participant_ranking_pin = FEU_Einsatz_Admin::sanitize_participant_ranking_pin(
-                wp_unslash($_POST['feu_einsatz_participant_ranking_pin'])
-            );
-
-            if ('' !== $submitted_participant_ranking_pin) {
-                FEU_Einsatz_Admin::update_participant_ranking_pin($submitted_participant_ranking_pin);
-            }
-        }
-
         $this->invalidate_all_share_card_caches();
 
         FEU_Einsatz_Updater::clear_cached_metadata();
@@ -868,7 +857,6 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
             'feu_einsatz_photo_watermark_opacity' => max(5, min(100, absint(get_option('feu_einsatz_photo_watermark_opacity', 36)))),
             'feu_einsatz_photo_watermark_scale' => max(10, min(90, absint(get_option('feu_einsatz_photo_watermark_scale', 42)))),
         ];
-        $current_participant_ranking_pin = FEU_Einsatz_Admin::get_participant_ranking_pin();
         $setting_labels = [
             'feu_einsatz_functions' => __('Funktionen', 'feuer-einsatzberichte'),
             'feu_einsatz_participant_provider' => __('Quelle der Teilnehmerdaten', 'feuer-einsatzberichte'),
@@ -974,17 +962,6 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
                 'label' => $setting_label,
                 'before' => $before_value,
                 'after' => $after_value,
-            ];
-        }
-
-        if (
-            '' !== $current_participant_ranking_pin
-            && !hash_equals($previous_participant_ranking_pin, $current_participant_ranking_pin)
-        ) {
-            $changed_settings['feu_einsatz_participant_ranking_pin'] = [
-                'label' => __('PIN Teilnehmer-Ranking', 'feuer-einsatzberichte'),
-                'before' => '' === $previous_participant_ranking_pin ? __('nicht gesetzt', 'feuer-einsatzberichte') : __('gesetzt', 'feuer-einsatzberichte'),
-                'after' => '' === $previous_participant_ranking_pin ? __('gesetzt', 'feuer-einsatzberichte') : __('geaendert', 'feuer-einsatzberichte'),
             ];
         }
 
@@ -1329,7 +1306,6 @@ $map_preview_live_fallback_markup = $is_karten_tab
         'highlight_radius_meters' => $map_preview_live_highlight['radius_meters'],
     ])
     : '';
-$participant_ranking_pin_is_configured = '' !== FEU_Einsatz_Admin::get_participant_ranking_pin();
 $settings_history = $this->get_settings_history();
 $street_cache_entries = $is_karten_tab ? FEU_Einsatz_Street_Cache::get_cache_entry_count() : 0;
 $street_registry_entries = $is_strassenregister_tab ? $this->db->get_street_registry_entries(['limit' => 1000]) : [];
@@ -1476,7 +1452,6 @@ $settings_summary_cards = [
             'overview_show_stats' => $overview_show_stats,
             'overview_show_year_filter' => $overview_show_year_filter,
             'backup_retention_limit' => $backup_retention_limit,
-            'participant_ranking_pin_is_configured' => $participant_ranking_pin_is_configured,
             'related_reports_display' => $related_reports_display,
             'related_reports_count' => $related_reports_count,
             'single_desaturate_organizations' => $single_desaturate_organizations,

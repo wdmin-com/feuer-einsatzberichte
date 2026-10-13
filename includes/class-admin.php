@@ -3,17 +3,12 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-require_once FEU_EINSATZ_PLUGIN_DIR . 'includes/class-participant-ranking.php';
 require_once FEU_EINSATZ_PLUGIN_DIR . 'includes/class-report-logger.php';
 require_once FEU_EINSATZ_PLUGIN_DIR . 'includes/class-report-share.php';
 require_once FEU_EINSATZ_PLUGIN_DIR . 'includes/class-schnelleingabe.php';
 
 class FEU_Einsatz_Admin {
 
-    // Ranking-Konstanten: Rückwärtskompatibilität (Aufrufer nutzen FEU_Einsatz_Admin::...)
-    const PARTICIPANT_RANKING_PIN_OPTION  = FEU_Einsatz_Participant_Ranking::PIN_OPTION;
-    const PARTICIPANT_RANKING_UNLOCK_META = FEU_Einsatz_Participant_Ranking::UNLOCK_META;
-    const PARTICIPANT_RANKING_UNLOCK_TTL  = FEU_Einsatz_Participant_Ranking::UNLOCK_TTL;
     const GENERATED_MAP_THUMBNAIL_META = '_feu_einsatz_generated_map_thumbnail_id';
     const GENERATED_MAP_ATTACHMENT_META = '_feu_einsatz_generated_map_preview';
     const GENERATED_MAP_PREVIEW_URL_META = '_feu_einsatz_generated_map_preview_url';
@@ -32,9 +27,6 @@ class FEU_Einsatz_Admin {
 
     private $db;
     private $generated_map_upload_subdir = '';
-
-    /** @var FEU_Einsatz_Participant_Ranking */
-    private $ranking;
 
     /** @var FEU_Einsatz_Report_Logger */
     private $report_logger;
@@ -62,7 +54,6 @@ class FEU_Einsatz_Admin {
 
     public function __construct($database) {
         $this->db           = $database;
-        $this->ranking      = new FEU_Einsatz_Participant_Ranking();
         $this->report_logger = new FEU_Einsatz_Report_Logger();
         $this->report_share  = new FEU_Einsatz_Report_Share(
             fn($c, $x, $y, $t, $s, $col, $mw) => $this->draw_map_preview_text($c, $x, $y, $t, $s, $col, $mw),
@@ -1620,46 +1611,6 @@ class FEU_Einsatz_Admin {
         return trim($classes);
     }
 
-
-    // Rueckwaertskompatible Ranking-Weiterleitungen.
-    // Externe Aufrufer (templates/admin/statistics.php, class-ajax-handler.php)
-    // nutzen FEU_Einsatz_Admin::...; diese Methoden delegieren an die neue Klasse.
-
-    public static function get_participant_ranking_pin_file_path() {
-        return FEU_Einsatz_Participant_Ranking::get_pin_file_path();
-    }
-
-    public static function sanitize_participant_ranking_pin($pin) {
-        return FEU_Einsatz_Participant_Ranking::sanitize_pin((string) $pin);
-    }
-
-    public static function get_participant_ranking_pin() {
-        return FEU_Einsatz_Participant_Ranking::get_pin();
-    }
-
-    public static function cleanup_legacy_participant_ranking_pin_file() {
-        return FEU_Einsatz_Participant_Ranking::cleanup_legacy_pin_file();
-    }
-
-    public static function update_participant_ranking_pin($pin) {
-        return FEU_Einsatz_Participant_Ranking::update_pin((string) $pin);
-    }
-
-    public static function verify_participant_ranking_pin($pin) {
-        return FEU_Einsatz_Participant_Ranking::verify_pin((string) $pin);
-    }
-
-    public static function is_participant_ranking_unlocked_for_current_user() {
-        return FEU_Einsatz_Participant_Ranking::is_unlocked_for_current_user();
-    }
-
-    public static function unlock_participant_ranking_for_current_user() {
-        return FEU_Einsatz_Participant_Ranking::unlock_for_current_user();
-    }
-
-    public static function lock_participant_ranking_for_current_user() {
-        return FEU_Einsatz_Participant_Ranking::lock_for_current_user();
-    }
 
     // Rueckwaertskompatible Share-Weiterleitung fuer Templates.
 
