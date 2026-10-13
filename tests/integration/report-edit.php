@@ -160,6 +160,14 @@ try {
     $valid_gallery_attachment = new ReflectionMethod(FEU_Einsatz_Admin::class, 'is_valid_gallery_attachment');
     feu_report_edit_assert($valid_gallery_attachment->invoke($admin, $attachment_id), 'Valid gallery attachment was rejected.');
     update_option('feu_einsatz_photo_watermark_enabled', 1, false);
+    update_option('feu_einsatz_photo_watermark_image_id', $attachment_id, false);
+    $protected_image = new ReflectionMethod(FEU_Einsatz_Image_Protection::class, 'generate_protected_image');
+    $protected_full = $protected_image->invoke(null, $attachment_id, 'full', true);
+    feu_report_edit_assert(is_array($protected_full) && is_file($protected_full['path']), 'Protected gallery image was not generated.');
+    file_put_contents($protected_full['path'], '');
+    feu_report_edit_assert(false === $protected_image->invoke(null, $attachment_id, 'full', false), 'Empty protected image was treated as ready.');
+    $repaired_full = $protected_image->invoke(null, $attachment_id, 'full', true);
+    feu_report_edit_assert(is_array($repaired_full) && filesize($repaired_full['path']) > 0, 'Empty protected image was not regenerated.');
     update_option('feu_einsatz_photo_watermark_image_id', 999999, false);
     $build_gallery = new ReflectionMethod(FEU_Einsatz_Template_Helpers::class, 'build_gallery_items');
     feu_report_edit_assert([] === $build_gallery->invoke(null, [$attachment_id], false), 'Gallery exposed an original while watermark generation failed.');

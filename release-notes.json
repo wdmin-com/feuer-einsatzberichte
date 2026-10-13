@@ -1,6 +1,20 @@
 {
   "releases": [
     {
+      "version": "3.2.97",
+      "date": "2026-10-13",
+      "title": "Zuverlässigere Karten- und Bildvorschau",
+      "summary": "Gespeicherte Karten bleiben bei langsamen oder fehlerhaften Kacheln sichtbar; lokale Bilddateien und Wasserzeichen werden zuverlässiger geprüft und erneuert.",
+      "changes": [
+        "Interaktive Karte: Das gespeicherte Kartenbild bleibt während des Ladens sichtbar und wird erst nach erfolgreich geladenen OpenStreetMap-Kacheln ausgeblendet. Bei einem Fehlschlag bleibt es erhalten und ein weiterer Versuch ist möglich.",
+        "Kartenbilder: Nach einem Domainwechsel wird die öffentliche Bildadresse aus dem aktuellen Upload-Verzeichnis abgeleitet. Auch eine fehlende gespeicherte URL kann so wiederhergestellt werden.",
+        "Cache: Erneut erzeugte Kartenbilder erhalten eine eigene Revision. Browser und Berichtskontext erkennen damit auch Ersetzungen am selben Dateipfad innerhalb einer Sekunde.",
+        "Fotos: Leere Wasserzeichen-Dateien gelten nicht länger als fertige geschützte Bilder und werden bei Bedarf neu erstellt.",
+        "Berichtsübersicht: Private Berichte werden nur entsprechend den WordPress-Leserechten geladen; die Schaltfläche für neue Berichte erscheint nur bei entsprechendem Plugin-Zugriff.",
+        "Qualität: Browser- und WordPress-Tests decken Kartenfehler, Domainwechsel, Bildrevision und leere Wasserzeichen-Dateien ab."
+      ]
+    },
+    {
       "version": "3.2.96",
       "date": "2026-10-13",
       "title": "Sofort sichtbare Karten aus lokalem Cache",

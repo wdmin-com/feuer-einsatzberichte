@@ -28,7 +28,9 @@ $status_labels = [
             <h1><?php esc_html_e('Alle Berichte', 'feuer-einsatzberichte'); ?></h1>
             <p><?php esc_html_e('Berichte finden, Kartenbilder ansehen und fehlende Bilder direkt neu generieren.', 'feuer-einsatzberichte'); ?></p>
         </div>
-        <a class="button button-primary" href="<?php echo esc_url(admin_url('admin.php?page=feu-einsatz-neuer-bericht')); ?>"><?php esc_html_e('Neuer Bericht', 'feuer-einsatzberichte'); ?></a>
+        <?php if (FEU_Einsatz_Admin::current_user_can_access_plugin_section('create_report')) : ?>
+            <a class="button button-primary" href="<?php echo esc_url(admin_url('admin.php?page=feu-einsatz-neuer-bericht')); ?>"><?php esc_html_e('Neuer Bericht', 'feuer-einsatzberichte'); ?></a>
+        <?php endif; ?>
     </div>
 
     <?php if (isset($_GET['feu_map_generation'])) :

@@ -163,7 +163,8 @@ class FEU_Einsatz_Image_Protection {
             return $output;
         }
 
-        if (file_exists($output['path'])) {
+        clearstatcache(true, $output['path']);
+        if (is_file($output['path']) && is_readable($output['path']) && filesize($output['path']) > 0) {
             return $output;
         }
 
