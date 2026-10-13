@@ -439,7 +439,7 @@ class FEU_Einsatz_Admin {
 
         $candidates = [
             'dashboard' => admin_url('admin.php?page=feuer-einsatzberichte'),
-            'reports' => $can_edit_posts ? admin_url('edit.php?post_type=einsatzbericht&feu_einsatz_filter=1') : '',
+            'reports' => $can_edit_posts ? admin_url('admin.php?page=feu-einsatz-berichte') : '',
             'create_report' => $can_edit_posts ? admin_url('admin.php?page=feu-einsatz-neuer-bericht') : '',
             'quick_entry' => $can_edit_posts ? admin_url('admin.php?page=feu-einsatz-schnelleingabe') : '',
             'participants' => admin_url('admin.php?page=feu-einsatz-teilnehmer'),
@@ -460,6 +460,7 @@ class FEU_Einsatz_Admin {
 
     private function init_hooks() {
         add_action('admin_init', [$this, 'redirect_to_first_setup']);
+        add_action('admin_init', [$this, 'redirect_legacy_report_list']);
         add_action('admin_menu', [$this, 'add_admin_menus']);
         add_action('current_screen', [$this, 'guard_report_post_type_screen']);
         add_action('admin_head', [$this, 'hide_internal_admin_page_links']);
@@ -538,6 +539,40 @@ class FEU_Einsatz_Admin {
         }
         delete_option('feu_einsatz_setup_redirect_pending');
         wp_safe_redirect(admin_url('admin.php?page=feuer-einsatzberichte'));
+        exit;
+    }
+
+    public function redirect_legacy_report_list(): void {
+        if (
+            'edit.php' !== ($GLOBALS['pagenow'] ?? '')
+            || 'GET' !== ($_SERVER['REQUEST_METHOD'] ?? 'GET')
+            || '1' !== (isset($_GET['feu_einsatz_filter']) ? sanitize_text_field(wp_unslash($_GET['feu_einsatz_filter'])) : '')
+            || !current_user_can('edit_posts')
+            || !self::current_user_can_access_plugin_section('reports')
+        ) {
+            return;
+        }
+
+        $args = ['page' => 'feu-einsatz-berichte'];
+        if (isset($_GET['s'])) {
+            $args['report_search'] = sanitize_text_field(wp_unslash($_GET['s']));
+        }
+        if (isset($_GET['post_status'])) {
+            $args['report_status'] = sanitize_key(wp_unslash($_GET['post_status']));
+        }
+        if (isset($_GET['paged'])) {
+            $args['report_page'] = max(1, absint(wp_unslash($_GET['paged'])));
+        }
+        foreach (['feu_einsatz_street', 'feu_einsatz_city'] as $key) {
+            if (isset($_GET[$key])) {
+                $args[$key] = sanitize_text_field(wp_unslash($_GET[$key]));
+            }
+        }
+        if (isset($_GET['feu_einsatz_postcode'])) {
+            $args['feu_einsatz_postcode'] = preg_replace('/\D+/', '', (string) wp_unslash($_GET['feu_einsatz_postcode']));
+        }
+
+        wp_safe_redirect(add_query_arg($args, admin_url('admin.php')));
         exit;
     }
 
@@ -1570,6 +1605,7 @@ class FEU_Einsatz_Admin {
             'feu-einsatz-archive',
             'feu-einsatz-logs',
             'feu-einsatz-neuer-bericht',
+            'feu-einsatz-berichte',
             'feu-einsatz-bericht-bearbeiten',
             'feu-einsatz-schnelleingabe',
         ];
@@ -1862,7 +1898,8 @@ class FEU_Einsatz_Admin {
                 __('Alle Berichte', 'feuer-einsatzberichte'),
                 __('Alle Berichte', 'feuer-einsatzberichte'),
                 'edit_posts',
-                'edit.php?post_type=einsatzbericht&feu_einsatz_filter=1'
+                'feu-einsatz-berichte',
+                [$this, 'render_reports']
             );
         }
 
@@ -2389,6 +2426,13 @@ class FEU_Einsatz_Admin {
             $admin_script_version,
             true
         );
+
+        if (false !== strpos((string) $hook, 'feu-einsatz-berichte')) {
+            $report_list_style = FEU_EINSATZ_PLUGIN_DIR . 'assets/admin/css/report-list.css';
+            $report_list_script = FEU_EINSATZ_PLUGIN_DIR . 'assets/admin/js/report-map-review.js';
+            wp_enqueue_style('feu-einsatz-report-list', FEU_EINSATZ_PLUGIN_URL . 'assets/admin/css/report-list.css', ['feu-einsatz-apple-admin-system'], (string) filemtime($report_list_style));
+            wp_enqueue_script('feu-einsatz-report-map-review', FEU_EINSATZ_PLUGIN_URL . 'assets/admin/js/report-map-review.js', [], (string) filemtime($report_list_script), true);
+        }
 
         if ($is_settings_screen || $is_report_editor_screen) {
             wp_enqueue_script(
@@ -4647,10 +4691,7 @@ class FEU_Einsatz_Admin {
                 continue;
             }
 
-            if (
-                absint(get_post_thumbnail_id($post_id)) > 0
-                || '' !== trim((string) get_post_meta($post_id, self::GENERATED_MAP_PREVIEW_URL_META, true))
-            ) {
+            if ($this->has_generated_map_asset($post_id)) {
                 continue;
             }
 
@@ -4834,23 +4875,7 @@ class FEU_Einsatz_Admin {
 
     private function has_generated_map_asset($post_id) {
         $post_id = absint($post_id);
-
-        if (!$post_id) {
-            return false;
-        }
-
-        $preview_file = trim((string) get_post_meta($post_id, self::GENERATED_MAP_PREVIEW_FILE_META, true));
-        if ('' !== $preview_file && file_exists($preview_file)) {
-            return true;
-        }
-
-        if ('' !== FEU_Einsatz_Template_Helpers::get_generated_map_preview_public_url($post_id)) {
-            return true;
-        }
-
-        $generated_thumbnail_id = $this->get_generated_map_thumbnail_id($post_id);
-
-        return $generated_thumbnail_id > 0 && get_post($generated_thumbnail_id) instanceof WP_Post;
+        return $post_id > 0 && '' !== FEU_Einsatz_Template_Helpers::get_generated_map_preview_public_url($post_id);
     }
 
     private function has_current_generated_map_signature($post_id, $strasse, $plz = '', $stadt = 'Hamburg') {
@@ -5383,6 +5408,11 @@ class FEU_Einsatz_Admin {
             $message = __('Kartenbild ist aktuell.', 'feuer-einsatzberichte');
         } elseif ('processing' === $status && 'geocode' === $stage) {
             $message = __('Adresse wird gerade im Hintergrund vorbereitet.', 'feuer-einsatzberichte');
+        }
+
+        if ('ready' === $status && !$has_generated_asset) {
+            $status = 'missing';
+            $message = __('Kartenbild-Datei fehlt. Bitte erneut generieren.', 'feuer-einsatzberichte');
         }
 
         $publish_hold = get_post_meta($post_id, self::GENERATED_MAP_PUBLISH_HOLD_META, true);
@@ -8601,24 +8631,12 @@ class FEU_Einsatz_Admin {
         return $new_columns;
     }
 
-    private function get_admin_preview_image_url($post_id, $size = 'thumbnail') {
+    private function get_admin_preview_image_url($post_id) {
         $post_id = absint($post_id);
         if (!$post_id) {
             return '';
         }
-
-        $thumbnail_id = (int) get_post_thumbnail_id($post_id);
-        if ($thumbnail_id) {
-            $thumbnail_url = wp_get_attachment_image_url($thumbnail_id, $size);
-
-            if ($thumbnail_url) {
-                return $thumbnail_url;
-            }
-        }
-
-        $preview_url = trim((string) get_post_meta($post_id, self::GENERATED_MAP_PREVIEW_URL_META, true));
-
-        return $preview_url;
+        return FEU_Einsatz_Template_Helpers::get_generated_map_preview_public_url($post_id);
     }
 
     public function render_custom_columns($column, $post_id) {
@@ -8628,7 +8646,7 @@ class FEU_Einsatz_Admin {
 
         switch ($column) {
             case 'einsatz_preview':
-                $preview_image_url = $this->get_admin_preview_image_url($post_id, 'thumbnail');
+                $preview_image_url = $this->get_admin_preview_image_url($post_id);
 
                 if ($preview_image_url) {
                     echo '<div class="feu-einsatz-admin-list-preview">';
@@ -8754,10 +8772,8 @@ class FEU_Einsatz_Admin {
 
             $status = $this->get_generated_map_admin_status((int) $report->ID);
             $bucket = $this->get_generated_map_dashboard_bucket($status);
-            $generated_thumbnail_id = $this->get_generated_map_thumbnail_id((int) $report->ID);
-            $preview_url = trim((string) get_post_meta((int) $report->ID, self::GENERATED_MAP_PREVIEW_URL_META, true));
-            $has_any_thumbnail = absint(get_post_thumbnail_id((int) $report->ID)) > 0;
-            $missing_map_image = $generated_thumbnail_id < 1 && '' === $preview_url && !$has_any_thumbnail;
+            $missing_map_image = !$this->has_generated_map_asset((int) $report->ID)
+                && 'hidden' !== FEU_Einsatz_Template_Helpers::get_report_map_public_precision((int) $report->ID);
 
             if ('idle' === $bucket && $missing_map_image) {
                 $street = trim((string) get_post_meta((int) $report->ID, '_feu_einsatz_strasse', true));
@@ -9719,8 +9735,7 @@ class FEU_Einsatz_Admin {
             $this->clear_generated_map_publish_hold($post_id);
         }
 
-        $has_preview_image = (int) get_post_thumbnail_id($post_id) > 0
-            || '' !== (string) get_post_meta($post_id, self::GENERATED_MAP_PREVIEW_URL_META, true);
+        $has_preview_image = $this->has_generated_map_asset($post_id);
 
         $map_generation_queued = false;
 
@@ -10062,7 +10077,8 @@ class FEU_Einsatz_Admin {
     public function filter_admin_parent_file($parent_file) {
         $page = isset($_GET['page']) ? sanitize_key(wp_unslash($_GET['page'])) : '';
 
-        if ('feu-einsatz-bericht-bearbeiten' === $page) {
+        if ('feu-einsatz-bericht-bearbeiten' === $page
+            || ('edit.php' === ($GLOBALS['pagenow'] ?? '') && isset($_GET['feu_einsatz_filter']) && '1' === sanitize_text_field(wp_unslash($_GET['feu_einsatz_filter'])))) {
             return 'feuer-einsatzberichte';
         }
 
@@ -10073,10 +10089,51 @@ class FEU_Einsatz_Admin {
         $page = isset($_GET['page']) ? sanitize_key(wp_unslash($_GET['page'])) : '';
 
         if ('feu-einsatz-bericht-bearbeiten' === $page) {
-            return 'edit.php?post_type=einsatzbericht&feu_einsatz_filter=1';
+            return 'feu-einsatz-berichte';
         }
 
         return $submenu_file;
+    }
+
+    public function render_reports() {
+        $this->enforce_plugin_section_access('reports');
+        if (!current_user_can('edit_posts')) {
+            wp_die(esc_html__('Keine Berechtigung für Einsatzberichte.', 'feuer-einsatzberichte'), '', ['response' => 403]);
+        }
+
+        $report_search = isset($_GET['report_search']) ? trim(sanitize_text_field(wp_unslash($_GET['report_search']))) : '';
+        $report_status = isset($_GET['report_status']) ? sanitize_key(wp_unslash($_GET['report_status'])) : 'all';
+        $allowed_statuses = ['all', 'publish', 'draft', 'pending', 'future', 'private'];
+        if (!in_array($report_status, $allowed_statuses, true)) {
+            $report_status = 'all';
+        }
+        $report_page = isset($_GET['report_page']) ? max(1, absint(wp_unslash($_GET['report_page']))) : 1;
+        $street_filter = isset($_GET['feu_einsatz_street']) ? trim(sanitize_text_field(wp_unslash($_GET['feu_einsatz_street']))) : '';
+        $postcode_filter = isset($_GET['feu_einsatz_postcode']) ? preg_replace('/\D+/', '', (string) wp_unslash($_GET['feu_einsatz_postcode'])) : '';
+        $city_filter = isset($_GET['feu_einsatz_city']) ? trim(sanitize_text_field(wp_unslash($_GET['feu_einsatz_city']))) : '';
+        $meta_query = [[
+            'key' => FEU_Einsatz_Report_Post_Type::MARKER_META,
+            'value' => '1',
+            'compare' => '=',
+        ]];
+        foreach (['_feu_einsatz_strasse' => $street_filter, '_feu_einsatz_plz' => $postcode_filter, '_feu_einsatz_stadt' => $city_filter] as $key => $value) {
+            if ('' !== $value) {
+                $meta_query[] = ['key' => $key, 'value' => $value, 'compare' => '='];
+            }
+        }
+        $report_query = new WP_Query([
+            'post_type' => FEU_Einsatz_Report_Post_Type::readable_post_types(),
+            'post_status' => 'all' === $report_status ? array_slice($allowed_statuses, 1) : $report_status,
+            'posts_per_page' => 20,
+            'paged' => $report_page,
+            's' => $report_search,
+            'orderby' => 'modified',
+            'order' => 'DESC',
+            'meta_query' => $meta_query,
+        ]);
+
+        include FEU_EINSATZ_PLUGIN_DIR . 'templates/admin/reports.php';
+        wp_reset_postdata();
     }
 
     public function render_participants() {

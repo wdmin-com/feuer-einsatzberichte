@@ -2035,7 +2035,7 @@ jQuery(document).ready(function($) {
         var meta = getStreetRegistryMeta({ postcode: postcode, city: city });
 
         if (!reportUrl) {
-            reportUrl = 'edit.php?post_type=einsatzbericht&feu_einsatz_filter=1'
+            reportUrl = 'admin.php?page=feu-einsatz-berichte'
                 + '&feu_einsatz_street=' + encodeURIComponent(street)
                 + (postcode ? '&feu_einsatz_postcode=' + encodeURIComponent(postcode) : '')
                 + (city ? '&feu_einsatz_city=' + encodeURIComponent(city) : '');

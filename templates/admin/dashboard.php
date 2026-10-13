@@ -52,7 +52,7 @@ $dashboard_url = admin_url('admin.php?page=feuer-einsatzberichte');
             <p><?php esc_html_e('Schneller Zugriff auf Redaktionsablauf, Kennzahlen und die letzten Einsatzberichte.', 'feuer-einsatzberichte'); ?></p>
         </div>
         <div class="feu-admin-page-actions">
-            <a href="<?php echo esc_url(admin_url('edit.php?post_type=einsatzbericht&feu_einsatz_filter=1')); ?>" class="button button-secondary">
+            <a href="<?php echo esc_url(admin_url('admin.php?page=feu-einsatz-berichte')); ?>" class="button button-secondary">
                 <span class="ti ti-list-details"></span>
                 <?php esc_html_e('Alle Berichte', 'feuer-einsatzberichte'); ?>
             </a>

@@ -424,7 +424,7 @@ Parent slug: feuer-einsatzberichte
 | Slug | Назначение |
 |---|---|
 | feuer-einsatzberichte | dashboard |
-| edit.php?post_type=post&feu_einsatz_filter=1 | список отчётов |
+| admin.php?page=feu-einsatz-berichte | список отчётов с просмотром и перегенерацией карт |
 | feu-einsatz-neuer-bericht | новый отчёт |
 | feu-einsatz-schnelleingabe | быстрый ввод |
 | feu-einsatz-bericht-bearbeiten | редактирование |

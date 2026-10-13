@@ -1,0 +1,43 @@
+.feu-report-list{max-width:1500px;margin-right:24px}
+.feu-report-list .feu-admin-page-header{margin:0 0 24px}
+.feu-report-list-address-filter{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin:0 0 12px;padding:10px 14px;border:1px solid #c9ddf4;border-radius:10px;background:#eff6ff;color:#164c84;font-weight:650}
+.feu-report-list-filters{display:flex;flex-wrap:wrap;align-items:end;gap:12px;padding:18px 20px;background:#fff;border:1px solid #dde3eb;border-radius:16px}
+.feu-report-list-filters label{display:grid;gap:6px;min-width:180px;font-weight:650;color:#263346}
+.feu-report-list-filters label:first-of-type{flex:1 1 280px}
+.feu-report-list-filters input,.feu-report-list-filters select{width:100%;min-height:40px}
+.feu-report-list-filters .button{min-height:40px}
+.feu-report-list-count{margin:20px 0 12px;color:#475569;font-weight:700}
+.feu-report-list-items{display:grid;gap:10px}
+.feu-report-list-item{display:grid;grid-template-columns:152px minmax(0,1fr) auto;gap:18px;align-items:center;padding:14px 18px;background:#fff;border:1px solid #dde3eb;border-radius:16px}
+.feu-report-list-image{display:flex;align-items:center;justify-content:center;width:152px;height:104px;background:#f2f5f8;border-radius:10px;overflow:hidden}
+.feu-report-list-image-button{display:block;width:100%;height:100%;padding:0;border:0;background:transparent;cursor:zoom-in}
+.feu-report-list-image-button:focus-visible{outline:3px solid #2271b1;outline-offset:-3px}
+.feu-report-list-image img{display:block;width:100%;height:100%;object-fit:cover}
+.feu-report-list-image-empty{padding:10px;color:#64748b;text-align:center;font-size:12px;font-weight:650}
+.feu-report-list-main{min-width:0}
+.feu-report-list-heading{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px}
+.feu-report-list-heading h2{margin:0;font-size:17px;line-height:1.3}
+.feu-report-list-heading h2 a{text-decoration:none}
+.feu-report-list-post-status{padding:3px 8px;border:1px solid #dbe3ed;border-radius:999px;color:#475569;font-size:11px;font-weight:700}
+.feu-report-list-meta{margin:6px 0 8px;color:#475569;font-size:13px}
+.feu-report-list-health{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;color:#526174;font-size:12px}
+.feu-report-list-health-badge{padding:4px 9px;border-radius:999px;background:#eef2f7;color:#334155;font-weight:750}
+.feu-report-list-health-badge--ready{background:#e7f7ee;color:#146c3d}
+.feu-report-list-health-badge--missing,.feu-report-list-health-badge--error{background:#fff0ed;color:#a92d22}
+.feu-report-list-health-badge--queued,.feu-report-list-health-badge--processing{background:#eaf3ff;color:#155ca0}
+.feu-report-list-actions{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:6px;max-width:340px}
+.feu-report-list-actions form{margin:0}
+.feu-report-list-actions .button{white-space:nowrap}
+.feu-report-list-empty{padding:40px 20px;border:1px dashed #cbd5e1;border-radius:16px;background:#fff;text-align:center;color:#475569}
+.feu-report-list-pagination{display:flex;justify-content:center;gap:6px;margin:24px 0}
+.feu-report-list-pagination .page-numbers{min-width:36px;padding:8px 12px;border:1px solid #dce4ed;border-radius:8px;background:#fff;text-align:center;text-decoration:none}
+.feu-report-list-pagination .page-numbers.current{background:#1d67b5;border-color:#1d67b5;color:#fff}
+.feu-report-map-dialog{width:min(1000px,calc(100vw - 32px));max-height:calc(100vh - 48px);padding:22px;border:0;border-radius:18px;box-shadow:0 25px 80px #0f172a55}
+.feu-report-map-dialog::backdrop{background:#0f172a99}
+.feu-report-map-dialog-header{display:flex;align-items:start;justify-content:space-between;gap:16px;margin-bottom:16px}
+.feu-report-map-dialog-header h2{margin:6px 0 0;font-size:20px}
+.feu-report-map-dialog img{display:block;max-width:100%;max-height:calc(100vh - 160px);margin:auto;object-fit:contain}
+.feu-report-map-dialog img[hidden]{display:none}
+.feu-report-map-dialog-error{padding:14px;background:#fff0ed;border-radius:10px;color:#a92d22;font-weight:650}
+@media(max-width:1100px){.feu-report-list-item{grid-template-columns:132px minmax(0,1fr)}.feu-report-list-image{width:132px;height:94px}.feu-report-list-actions{grid-column:2;justify-content:flex-start;max-width:none}}
+@media(max-width:700px){.feu-report-list{margin-right:10px}.feu-report-list-item{grid-template-columns:1fr}.feu-report-list-image{width:100%;height:170px}.feu-report-list-actions{grid-column:1}.feu-report-list-actions .button{white-space:normal}.feu-report-map-dialog{padding:16px}}

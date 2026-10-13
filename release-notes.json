@@ -1,6 +1,20 @@
 {
   "releases": [
     {
+      "version": "3.2.95",
+      "date": "2026-10-13",
+      "title": "Berichtsübersicht und Kartenbild-Prüfung",
+      "summary": "Eine kompakte Berichtsübersicht zeigt die wirklich verfügbaren Kartenbilder, öffnet sie zur Prüfung und ermöglicht eine direkte Neugenerierung.",
+      "changes": [
+        "Berichte: Der Link Alle Berichte öffnet eine eigene, übersichtliche Plugin-Seite mit Suche, Statusfilter, Seitenwechsel und klaren Aktionen statt der umfangreichen WordPress-Beitragstabelle.",
+        "Kartenbilder: Jedes vorhandene Bild lässt sich in einem großen Dialog prüfen und mit einem Klick erneut generieren; fehlende Dateien sind direkt am Bericht erkennbar.",
+        "Dateiprüfung: Ein gespeicherter URL- oder Attachment-Eintrag gilt nicht mehr als fertiges Kartenbild, wenn die lokale Datei fehlt oder leer ist. Fehlende Bildgrößen fallen auf die Originaldatei zurück.",
+        "Vorschau: Kann der Browser die öffentliche Bildadresse nicht laden, zeigt die Liste einen Fehlerzustand und bietet die Neugenerierung an.",
+        "Navigation: Die aktive Plugin-Rubrik bleibt im WordPress-Menü sichtbar; bisherige Links zum gefilterten Standard-Beitragsverzeichnis werden zur neuen Berichtsübersicht umgeleitet.",
+        "Qualität: Ein WordPress-Integrationstest prüft fehlende Dateien, verwaiste Attachment-Einträge, die Berichtsübersicht und die aktive Menüzuordnung."
+      ]
+    },
+    {
       "version": "3.2.94",
       "date": "2026-10-13",
       "title": "Kartenadresse und Teilnehmerstatistik",

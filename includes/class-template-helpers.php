@@ -2225,7 +2225,7 @@ class FEU_Einsatz_Template_Helpers {
             $preview_file = self::resolve_local_upload_path_from_url($preview_url);
         }
 
-        if ('' !== $preview_file && file_exists($preview_file)) {
+        if ('' !== $preview_file && is_file($preview_file) && is_readable($preview_file) && filesize($preview_file) > 0) {
             if ('' !== $preview_url) {
                 return add_query_arg('v', (string) filemtime($preview_file), $preview_url);
             }
@@ -2241,17 +2241,9 @@ class FEU_Einsatz_Template_Helpers {
                 $attachment_url = wp_get_attachment_url($generated_attachment_id);
             }
 
-            if ($attachment_url) {
-                if ('' !== $attachment_file && file_exists($attachment_file)) {
-                    return add_query_arg('v', (string) filemtime($attachment_file), (string) $attachment_url);
-                }
-
-                return (string) $attachment_url;
+            if ($attachment_url && '' !== $attachment_file && is_file($attachment_file) && is_readable($attachment_file) && filesize($attachment_file) > 0) {
+                return add_query_arg('v', (string) filemtime($attachment_file), (string) $attachment_url);
             }
-        }
-
-        if ('' !== $preview_file && file_exists($preview_file) && '' !== $preview_url) {
-            return add_query_arg('v', (string) filemtime($preview_file), $preview_url);
         }
 
         return '';
@@ -2264,23 +2256,18 @@ class FEU_Einsatz_Template_Helpers {
             return '';
         }
 
-        $image_url = wp_get_attachment_image_url($attachment_id, $size);
-
-        if (!$image_url) {
-            return '';
-        }
-
         $image_file = (string) get_attached_file($attachment_id);
-
-        if ('' !== $image_file && file_exists($image_file)) {
-            return add_query_arg('v', (string) filemtime($image_file), $image_url);
-        }
-
-        if ('' !== $image_file) {
+        if ('' === $image_file || !is_file($image_file) || !is_readable($image_file) || filesize($image_file) < 1) {
             return '';
         }
 
-        return $image_url;
+        $image_url = wp_get_attachment_image_url($attachment_id, $size);
+        $size_file = $image_url ? self::resolve_local_upload_path_from_url($image_url) : '';
+        if (!$image_url || ('' !== $size_file && !is_file($size_file))) {
+            $image_url = wp_get_attachment_image_url($attachment_id, 'full');
+        }
+
+        return $image_url ? add_query_arg('v', (string) filemtime($image_file), $image_url) : '';
     }
 
     public static function get_card_image_data($post_id, $size = 'medium_large') {
