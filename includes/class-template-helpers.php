@@ -3058,6 +3058,20 @@ class FEU_Einsatz_Template_Helpers {
         return $closest_distance;
     }
 
+    /** A street cache can contain only the branch around an older report. */
+    public static function is_map_geometry_near_coordinates($geometry, $latitude, $longitude, $maximum_meters = 150) {
+        if (!is_numeric($latitude) || !is_numeric($longitude)) {
+            return false;
+        }
+
+        $distance = self::get_geometry_distance_to_incident($geometry, [
+            'lat' => (float) $latitude,
+            'lng' => (float) $longitude,
+        ]);
+
+        return null !== $distance && $distance <= max(0, (float) $maximum_meters);
+    }
+
     private static function needs_incident_anchor_geometry($geometry, array $coordinates, $post_id = 0) {
         if (!self::uses_precise_incident_anchor($post_id)) {
             return false;

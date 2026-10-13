@@ -2560,6 +2560,13 @@
                     return;
                 }
 
+                // Never leave the previous house's map visible while a new
+                // address is waiting for its own geocoding response.
+                destroyInteractiveMap();
+                $canvas.empty().removeClass('has-leaflet is-awaiting-tiles')
+                    .append('<span class="feu-einsatz-address-map-preview-placeholder">Karte wird geladen …</span>');
+                $status.text('Adresse und Straßenabschnitt werden geprüft …');
+
                 timer = window.setTimeout(function () {
                     update(false);
                 }, 400);

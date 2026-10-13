@@ -118,6 +118,12 @@ $length_highlight = FEU_Einsatz_Template_Helpers::apply_street_highlight_mode(
 if ('length' !== ($length_highlight['mode'] ?? '') || empty($length_highlight['geometry'])) {
     feu_einsatz_ci_fail('Street-length highlight did not retain a visible geometry.');
 }
+if (
+    !FEU_Einsatz_Template_Helpers::is_map_geometry_near_coordinates($street_geometry['geometry'], 53.528320, 10.083210)
+    || FEU_Einsatz_Template_Helpers::is_map_geometry_near_coordinates($street_geometry['geometry'], 53.550000, 10.100000)
+) {
+    feu_einsatz_ci_fail('A cached street branch was accepted for a distant new house.');
+}
 
 update_option('feu_einsatz_street_highlight_mode', 'radius', false);
 update_option('feu_einsatz_street_highlight_radius_meters', 120, false);
@@ -448,6 +454,12 @@ $precise_address = FEU_Einsatz_Template_Helpers::request_geocoded_address_data('
 remove_filter('pre_http_request', $geocoder_fixture, 10);
 if (!is_array($precise_address) || '12' !== ($precise_address['house_number'] ?? '') || 53.53 !== (float) ($precise_address['lat'] ?? 0) || 1 !== $geocoder_calls) {
     feu_einsatz_ci_fail('Precise geocoder accepted a wrong first result or queried twice despite an exact candidate.');
+}
+add_filter('pre_http_request', $geocoder_fixture, 10, 3);
+$unknown_house = FEU_Einsatz_Template_Helpers::request_geocoded_address_data('CI Testweg', '22113', 'Hamburg', '255');
+remove_filter('pre_http_request', $geocoder_fixture, 10);
+if ($unknown_house) {
+    feu_einsatz_ci_fail('A cached street with house 12 was resolved as the new house 255.');
 }
 
 $parent = wp_insert_term('CI Einsätze', 'category');
