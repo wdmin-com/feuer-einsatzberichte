@@ -517,6 +517,15 @@
 
         fallback.hidden = false;
 
+        var cachedPreview = fallback.querySelector('.feu-einsatz-map-static-preview');
+        if (cachedPreview) {
+            var loadError = fallback.querySelector('[data-feu-map-load-error]');
+            if (loadError) {
+                loadError.hidden = false;
+            }
+            return;
+        }
+
         if (placeholderCoordinates && Array.isArray(coordinates) && coordinates.length >= 2) {
             placeholderCoordinates.textContent = coordinates[0].toFixed(6) + ', ' + coordinates[1].toFixed(6);
         }
@@ -721,15 +730,85 @@
         showReady(runtime);
     }
 
+    var leafletLoadPromise = null;
+
+    function loadLeafletOnDemand() {
+        var config = window.feu_einsatz_public || {};
+        if (!document.querySelector('link[data-feu-public-leaflet]') && config.leafletStyleUrl) {
+            var style = document.createElement('link');
+            style.rel = 'stylesheet';
+            style.href = config.leafletStyleUrl;
+            style.setAttribute('data-feu-public-leaflet', '1');
+            document.head.appendChild(style);
+        }
+        if (window.L) {
+            return Promise.resolve();
+        }
+        if (!leafletLoadPromise) {
+            leafletLoadPromise = new Promise(function (resolve, reject) {
+                if (!config.leafletScriptUrl) {
+                    reject(new Error('Leaflet URL fehlt.'));
+                    return;
+                }
+                var script = document.createElement('script');
+                script.src = config.leafletScriptUrl;
+                script.onload = function () { window.L ? resolve() : reject(new Error('Leaflet konnte nicht geladen werden.')); };
+                script.onerror = function () { reject(new Error('Leaflet konnte nicht geladen werden.')); };
+                document.head.appendChild(script);
+            }).catch(function (error) {
+                leafletLoadPromise = null;
+                throw error;
+            });
+        }
+        return leafletLoadPromise;
+    }
+
+    function activateMap(runtime) {
+        var button = runtime.querySelector('[data-feu-map-action="activate"], [data-feu-map-action="allow"]');
+        var loadError = runtime.querySelector('[data-feu-map-load-error]');
+        if (loadError) {
+            loadError.hidden = true;
+        }
+        if (button) {
+            button.disabled = true;
+        }
+        loadLeafletOnDemand().then(function () {
+            try {
+                renderMap(runtime);
+            } catch (error) {
+                var canvas = runtime.querySelector('.feu-einsatz-live-map');
+                if (canvas && canvas._leaflet_id) {
+                    showReady(runtime);
+                    return;
+                }
+                showFallback(runtime, null);
+            }
+        }).catch(function () {
+            showFallback(runtime, null);
+        }).finally(function () {
+            if (button) {
+                button.disabled = false;
+            }
+        });
+    }
+
     function initMapConsent(runtime) {
+        var activateButton = runtime.querySelector('[data-feu-map-action="activate"]');
         var allowButton = runtime.querySelector('[data-feu-map-action="allow"]');
         var declineButton = runtime.querySelector('[data-feu-map-action="decline"]');
         var cookieSettingsButton = runtime.querySelector('[data-feu-map-open-cookie-settings]');
 
+        if (activateButton) {
+            activateButton.addEventListener('click', function () {
+                runtime.setAttribute('data-map-enabled', '1');
+                activateMap(runtime);
+            });
+        }
+
         if (allowButton) {
             allowButton.addEventListener('click', function () {
                 runtime.setAttribute('data-map-enabled', '1');
-                renderMap(runtime);
+                activateMap(runtime);
             });
         }
 
@@ -756,60 +835,17 @@
 
         runtimes.forEach(function (runtime) {
             var displayMode = String(runtime.getAttribute('data-map-display-mode') || 'live');
-            var privacyMode = String(runtime.getAttribute('data-map-privacy-mode') || 'always');
             var liveAvailable = runtime.getAttribute('data-map-live-available') === '1';
-            var enabled = runtime.getAttribute('data-map-enabled') === '1';
 
             if (displayMode !== 'live') {
                 return;
             }
 
             if (!liveAvailable) {
-                showFallback(runtime, null);
                 return;
             }
 
             initMapConsent(runtime);
-
-            if (privacyMode !== 'always') {
-                if (!enabled) {
-                    return;
-                }
-            }
-
-            var scheduleInit = typeof window.requestIdleCallback === 'function'
-                ? function (fn) { window.requestIdleCallback(fn, { timeout: 400 }); }
-                : function (fn) { window.setTimeout(fn, 50); };
-
-            function startMap() { scheduleInit(function () {
-                try {
-                    renderMap(runtime);
-                } catch (error) {
-                    var canvas = runtime.querySelector('.feu-einsatz-live-map');
-
-                    // The renderer sets a base view before optional layers.
-                    // Retain that usable map instead of covering it with an
-                    // incorrect "insufficient map data" message.
-                    if (canvas && canvas._leaflet_id) {
-                        showReady(runtime);
-                        return;
-                    }
-
-                    showFallback(runtime, null);
-                }
-            }); }
-
-            if (typeof window.IntersectionObserver === 'function') {
-                var observer = new window.IntersectionObserver(function (entries) {
-                    if (entries.some(function (entry) { return entry.isIntersecting; })) {
-                        observer.disconnect();
-                        startMap();
-                    }
-                }, { rootMargin: '280px 0px' });
-                observer.observe(runtime);
-            } else {
-                startMap();
-            }
         });
     }
 
