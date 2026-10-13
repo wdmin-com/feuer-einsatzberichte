@@ -48,7 +48,13 @@ try {
         'nachname' => 'Regression ' . $suffix,
     ]);
     feu_report_edit_assert($participant_id > 0, 'Cannot create participant fixture.');
-    $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScL7WQAAAABJRU5ErkJggg==', true);
+    $fixture_image = imagecreatetruecolor(16, 16);
+    $fixture_color = imagecolorallocate($fixture_image, 20, 110, 170);
+    imagefill($fixture_image, 0, 0, $fixture_color);
+    ob_start();
+    imagepng($fixture_image);
+    $png = ob_get_clean();
+    imagedestroy($fixture_image);
     $upload = wp_upload_bits('report-edit-' . $suffix . '.png', null, $png);
     feu_report_edit_assert(empty($upload['error']) && !empty($upload['file']), 'Cannot create gallery image fixture.');
     $attachment_id = (int) wp_insert_attachment([
@@ -163,7 +169,10 @@ try {
     update_option('feu_einsatz_photo_watermark_image_id', $attachment_id, false);
     $protected_image = new ReflectionMethod(FEU_Einsatz_Image_Protection::class, 'generate_protected_image');
     $protected_full = $protected_image->invoke(null, $attachment_id, 'full', true);
-    feu_report_edit_assert(is_array($protected_full) && is_file($protected_full['path']), 'Protected gallery image was not generated.');
+    feu_report_edit_assert(
+        is_array($protected_full) && is_file($protected_full['path']),
+        'Protected gallery image was not generated: ' . (is_wp_error($protected_full) ? $protected_full->get_error_code() : gettype($protected_full))
+    );
     file_put_contents($protected_full['path'], '');
     feu_report_edit_assert(false === $protected_image->invoke(null, $attachment_id, 'full', false), 'Empty protected image was treated as ready.');
     $repaired_full = $protected_image->invoke(null, $attachment_id, 'full', true);
