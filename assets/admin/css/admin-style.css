@@ -3581,23 +3581,6 @@
     color: #fff;
 }
 
-.feu-einsatz-tab-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 34px;
-    min-height: 22px;
-    padding: 0 8px;
-    border-radius: 999px;
-    background: rgba(15, 23, 42, 0.12);
-    font-size: 11px;
-    font-weight: 700;
-}
-
-.feu-einsatz-stats-tab.is-active .feu-einsatz-tab-badge {
-    background: rgba(255, 255, 255, 0.18);
-}
-
 .feu-einsatz-stats-panel {
     display: none;
 }
@@ -3620,25 +3603,6 @@
     gap: 20px;
     align-items: flex-end;
     margin-bottom: 16px;
-}
-
-.feu-einsatz-pin-card {
-    border: 1px dashed #cbd5e1;
-    border-radius: 4px;
-    padding: 18px;
-    background: #f8fafc;
-}
-
-.feu-einsatz-pin-form {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    gap: 12px;
-}
-
-.feu-einsatz-pin-form label {
-    font-weight: 600;
-    min-width: 100%;
 }
 
 .feu-einsatz-calendar-insights {
@@ -3718,6 +3682,76 @@
     align-items: flex-start;
     gap: 16px;
     margin: 8px 0 18px;
+}
+
+.feu-einsatz-participant-tools {
+    flex-wrap: wrap;
+    align-items: end;
+}
+
+.feu-einsatz-participation-setting-form {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.feu-einsatz-participation-setting-form label,
+.feu-einsatz-participation-setting-label {
+    color: #334155;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.feu-einsatz-participation-setting-controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.feu-einsatz-participation-setting-controls input {
+    width: 76px;
+    min-height: 34px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.feu-einsatz-participation-rate {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+    width: fit-content;
+    padding: 6px 9px;
+    border-radius: 6px;
+    background: #eef4fb;
+    color: #0f4c81;
+    font-variant-numeric: tabular-nums;
+}
+
+.feu-einsatz-participation-rate strong {
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.feu-einsatz-participation-rate span {
+    font-size: 12px;
+}
+
+.feu-einsatz-participation-rate.is-below-minimum {
+    background: #fef3f2;
+    color: #b42318;
+    font-weight: 700;
+}
+
+.feu-einsatz-participation-rate.is-below-minimum strong {
+    font-weight: 800;
+}
+
+.feu-einsatz-participation-rate--compact {
+    padding: 4px 7px;
+}
+
+.feu-einsatz-participation-rate--compact strong {
+    font-size: 13px;
 }
 
 .feu-einsatz-participant-overview-head h3 {
@@ -3909,7 +3943,7 @@
 .feu-einsatz-ranking-compact-head,
 .feu-einsatz-ranking-compact-item {
     display: grid;
-    grid-template-columns: 64px minmax(0, 1fr) 100px 112px;
+    grid-template-columns: 64px minmax(0, 1fr) 90px 105px 112px;
     gap: 16px;
     align-items: center;
     padding: 10px 20px;
@@ -3983,17 +4017,27 @@
 
     .feu-einsatz-ranking-compact-head,
     .feu-einsatz-ranking-compact-item {
-        grid-template-columns: 42px minmax(0, 1fr) 74px;
+        grid-template-columns: 42px minmax(0, 1fr) 78px;
         gap: 8px;
         padding: 10px 12px;
     }
 
-    .feu-einsatz-ranking-compact-item > span:last-child {
-        grid-column: 2 / -1;
-    }
-
+    .feu-einsatz-ranking-compact-head span:nth-child(3),
     .feu-einsatz-ranking-compact-head span:last-child {
         display: none;
+    }
+
+    .feu-einsatz-ranking-compact-item .feu-einsatz-ranking-compact-count {
+        grid-column: 2;
+    }
+
+    .feu-einsatz-ranking-compact-item .feu-einsatz-participation-rate {
+        grid-column: 3;
+        grid-row: 1;
+    }
+
+    .feu-einsatz-ranking-compact-item > span:last-child {
+        grid-column: 3;
     }
 
     .feu-einsatz-ranking-compact-item .button {
@@ -4347,23 +4391,6 @@
 
 .feu-einsatz-ranking-stage {
     position: relative;
-}
-
-.feu-einsatz-ranking-stage.is-locked > :not(.feu-einsatz-ranking-overlay) {
-    filter: blur(8px);
-    opacity: 0.55;
-    pointer-events: none;
-    user-select: none;
-}
-
-.feu-einsatz-ranking-overlay {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
-    background: rgba(248, 250, 252, 0.25);
 }
 
 @media (max-width: 1040px) {
@@ -5403,8 +5430,7 @@
 
     .feu-einsatz-list-item,
     .feu-einsatz-add-button-container,
-    .feu-einsatz-statistics-toolbar,
-    .feu-einsatz-pin-form {
+    .feu-einsatz-statistics-toolbar {
         display: grid;
         grid-template-columns: 1fr;
         align-items: stretch;
@@ -5425,8 +5451,6 @@
     }
 
     .feu-einsatz-statistics-toolbar .button,
-    .feu-einsatz-pin-form .button,
-    .feu-einsatz-inline-lock-form .button,
     .feu-einsatz-stats-tab,
     .feu-einsatz-detail-panel .button {
         width: 100%;
@@ -5663,8 +5687,7 @@
     .feu-einsatz-form-card,
     .feu-einsatz-chart-card,
     .feu-einsatz-active-days-card,
-    .feu-einsatz-calendar-months-card,
-    .feu-einsatz-pin-card {
+    .feu-einsatz-calendar-months-card {
         padding: 16px;
         border-radius: 4px;
     }
@@ -8678,6 +8701,17 @@
     font-size: clamp(15px, 1.2vw, 20px);
 }
 
+.feu-einsatz-presentation-participation {
+    color: #0f4c81;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.feu-einsatz-presentation-participation.is-below-minimum {
+    color: #b42318 !important;
+    font-weight: 800 !important;
+}
+
 .feu-einsatz-presentation-podium-rank-1 {
     --feu-winner-color: #d69e00;
     min-height: 220px !important;
@@ -8755,6 +8789,11 @@
 .feu-einsatz-presentation-participant-list strong {
     color: #0f172a;
     font-size: 18px;
+    text-align: right;
+}
+
+.feu-einsatz-presentation-participant-list .feu-einsatz-presentation-participation {
+    grid-column: 1 / -1;
     text-align: right;
 }
 

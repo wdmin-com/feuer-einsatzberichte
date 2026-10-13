@@ -29,8 +29,8 @@ if (isset($_POST['feu_einsatz_stats_tab'])) {
 $requested_year = isset($_REQUEST['jahr']) ? absint(wp_unslash($_REQUEST['jahr'])) : 0;
 $jahr = in_array($requested_year, $jahre, true) ? $requested_year : $default_jahr;
 $selected_participant_id = isset($_GET['participant']) ? absint(wp_unslash($_GET['participant'])) : 0;
-$participant_ranking_unlocked = FEU_Einsatz_Admin::is_participant_ranking_unlocked_for_current_user();
-$participant_ranking_notice = null;
+$participant_stats_notice = null;
+$minimum_participation = max(0, min(100, (int) get_option('feu_einsatz_minimum_participation', 30)));
 $presentation_settings_notice = null;
 $presentation_setting_options = [
     'welcome' => ['page' => 1, 'title' => __('Willkommen', 'feuer-einsatzberichte'), 'blocks' => [__('Logo aus Einstellungen', 'feuer-einsatzberichte')]],
@@ -181,33 +181,24 @@ if (isset($_POST['feu_einsatz_presentation_settings_action'])) {
 }
 
 if (isset($_POST['feu_einsatz_stats_action'])) {
-    if (check_admin_referer('feu_einsatz_statistics_participant_access', 'feu_einsatz_statistics_participant_access_nonce')) {
+    if (check_admin_referer('feu_einsatz_statistics_participation_settings', 'feu_einsatz_statistics_participation_nonce')) {
         $stats_action = sanitize_key(wp_unslash($_POST['feu_einsatz_stats_action']));
 
-        if ('unlock_participant_ranking' === $stats_action) {
-            $submitted_pin = isset($_POST['feu_einsatz_participant_ranking_pin']) ? sanitize_text_field(wp_unslash($_POST['feu_einsatz_participant_ranking_pin'])) : '';
-
-            if (FEU_Einsatz_Admin::verify_participant_ranking_pin($submitted_pin)) {
-                FEU_Einsatz_Admin::unlock_participant_ranking_for_current_user();
-                $participant_ranking_unlocked = true;
-                $participant_ranking_notice = ['type' => 'success', 'message' => __('Teilnehmer-Ranking wurde erfolgreich entsperrt.', 'feuer-einsatzberichte')];
+        if ('save_minimum_participation' === $stats_action) {
+            $submitted_minimum = isset($_POST['feu_einsatz_minimum_participation']) && is_scalar($_POST['feu_einsatz_minimum_participation'])
+                ? trim((string) wp_unslash($_POST['feu_einsatz_minimum_participation']))
+                : '';
+            if (current_user_can('manage_options') && preg_match('/^\d{1,3}$/', $submitted_minimum) && (int) $submitted_minimum <= 100) {
+                $minimum_participation = (int) $submitted_minimum;
+                update_option('feu_einsatz_minimum_participation', $minimum_participation, false);
+                $participant_stats_notice = ['type' => 'success', 'message' => __('Mindestbeteiligung wurde gespeichert.', 'feuer-einsatzberichte')];
             } else {
-                FEU_Einsatz_Admin::lock_participant_ranking_for_current_user();
-                $participant_ranking_unlocked = false;
-                $participant_ranking_notice = ['type' => 'error', 'message' => __('PIN ist ungültig. Bitte versuchen Sie es erneut.', 'feuer-einsatzberichte')];
+                $participant_stats_notice = ['type' => 'error', 'message' => __('Die Mindestbeteiligung muss zwischen 0 und 100 Prozent liegen.', 'feuer-einsatzberichte')];
             }
-
-            $active_tab = 'participants';
-        }
-
-        if ('lock_participant_ranking' === $stats_action) {
-            FEU_Einsatz_Admin::lock_participant_ranking_for_current_user();
-            $participant_ranking_unlocked = false;
-            $participant_ranking_notice = ['type' => 'success', 'message' => __('Teilnehmer-Ranking wurde wieder gesperrt.', 'feuer-einsatzberichte')];
             $active_tab = 'participants';
         }
     } else {
-        $participant_ranking_notice = ['type' => 'error', 'message' => __('Sicherheitsprüfung fehlgeschlagen. Bitte laden Sie die Seite neu.', 'feuer-einsatzberichte')];
+        $participant_stats_notice = ['type' => 'error', 'message' => __('Sicherheitsprüfung fehlgeschlagen. Bitte laden Sie die Seite neu.', 'feuer-einsatzberichte')];
         $active_tab = 'participants';
     }
 }
@@ -218,9 +209,10 @@ if ($selected_participant_id > 0) {
 
 $statistics_dashboard_data = $this->db->get_statistics_dashboard_data($jahr);
 $total = $statistics_dashboard_data['total'];
+$total_calls = max(0, (int) ($total['total_einsaetze'] ?? 0));
 $categories = $statistics_dashboard_data['categories'];
-$participants = $participant_ranking_unlocked ? $statistics_dashboard_data['participants'] : [];
-$presentation_participants = $statistics_dashboard_data['participants'];
+$participants = $statistics_dashboard_data['participants'];
+$presentation_participants = $participants;
 $daily_stats = $statistics_dashboard_data['daily_stats'];
 $daily_report_entries = $statistics_dashboard_data['daily_report_entries'];
 $activity_map_points = $statistics_dashboard_data['activity_map_points'];
@@ -634,7 +626,6 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
         $month_names = is_array($args['month_names'] ?? null) ? $args['month_names'] : [];
         $participants = is_array($args['participants'] ?? null) ? $args['participants'] : [];
         $custom_pages = is_array($args['custom_pages'] ?? null) ? $args['custom_pages'] : [];
-        $ranking_unlocked = !empty($args['ranking_unlocked']);
         $activity_map_svg = (string) ($args['activity_map_svg'] ?? '');
         $station_feature = is_array($args['station_feature'] ?? null) ? $args['station_feature'] : [];
         $top_category_label = (string) ($args['top_category_label'] ?? __('Keine Daten', 'feuer-einsatzberichte'));
@@ -642,6 +633,7 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
         $total_calls = (int) ($total_stats['total_einsaetze'] ?? 0);
         $participant_count = count($participants);
         $top_three = array_slice($participants, 0, 3);
+        $minimum_participation = max(0, min(100, (int) ($args['minimum_participation'] ?? 30)));
         $max_month_total = !empty($monthly_totals) ? max(array_map('intval', $monthly_totals)) : 0;
         $top_months = [];
         foreach ($monthly_totals as $month_index => $month_total) {
@@ -810,6 +802,8 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
                                         <strong><?php echo esc_html(sprintf(__('%d. Platz', 'feuer-einsatzberichte'), $rank)); ?></strong>
                                         <span><?php echo esc_html(FEU_Einsatz_Template_Helpers::format_participant_name($participant->vorname, $participant->nachname)); ?></span>
                                         <em><?php echo esc_html((string) (int) $participant->gesamt_einsaetze); ?> <?php esc_html_e('Einsätze', 'feuer-einsatzberichte'); ?></em>
+                                        <?php $presentation_percent = FEU_Einsatz_Template_Helpers::participant_participation_percent($participant->gesamt_einsaetze, $total_calls); ?>
+                                        <small class="feu-einsatz-presentation-participation <?php echo FEU_Einsatz_Template_Helpers::participant_below_minimum($participant->gesamt_einsaetze, $total_calls, $minimum_participation) ? 'is-below-minimum' : ''; ?>"><?php echo esc_html(number_format_i18n($presentation_percent, 1)); ?> % <?php echo esc_html(sprintf(__('von %d Einsätzen', 'feuer-einsatzberichte'), $total_calls)); ?></small>
                                     </p>
                                 <?php endforeach; ?>
                             </div>
@@ -821,6 +815,8 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
                                 <p>
                                     <span><?php echo esc_html((string) ($participant_index + 4) . '. ' . FEU_Einsatz_Template_Helpers::format_participant_name($participant->vorname, $participant->nachname)); ?></span>
                                     <strong><?php echo esc_html((string) (int) $participant->gesamt_einsaetze); ?></strong>
+                                    <?php $presentation_percent = FEU_Einsatz_Template_Helpers::participant_participation_percent($participant->gesamt_einsaetze, $total_calls); ?>
+                                    <small class="feu-einsatz-presentation-participation <?php echo FEU_Einsatz_Template_Helpers::participant_below_minimum($participant->gesamt_einsaetze, $total_calls, $minimum_participation) ? 'is-below-minimum' : ''; ?>"><?php echo esc_html(number_format_i18n($presentation_percent, 1)); ?> %</small>
                                 </p>
                             <?php endforeach; ?>
                         </div>
@@ -879,9 +875,9 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
         </div>
     </div>
 
-    <?php if (!empty($participant_ranking_notice)): ?>
-        <div class="notice notice-<?php echo esc_attr($participant_ranking_notice['type']); ?> is-dismissible">
-            <p><?php echo esc_html($participant_ranking_notice['message']); ?></p>
+    <?php if (!empty($participant_stats_notice)): ?>
+        <div class="notice notice-<?php echo esc_attr($participant_stats_notice['type']); ?> is-dismissible">
+            <p><?php echo esc_html($participant_stats_notice['message']); ?></p>
         </div>
     <?php endif; ?>
 
@@ -911,7 +907,6 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
         <button type="button" class="button feu-einsatz-stats-tab <?php echo 'activity-map' === $active_tab ? 'is-active' : ''; ?>" data-target="activity-map" id="feu-einsatz-stats-tab-activity-map" role="tab" aria-controls="feu-einsatz-stats-panel-activity-map" aria-selected="<?php echo 'activity-map' === $active_tab ? 'true' : 'false'; ?>"><?php esc_html_e('Aktivitätskarte', 'feuer-einsatzberichte'); ?></button>
         <button type="button" class="button feu-einsatz-stats-tab <?php echo 'participants' === $active_tab ? 'is-active' : ''; ?>" data-target="participants" id="feu-einsatz-stats-tab-participants" role="tab" aria-controls="feu-einsatz-stats-panel-participants" aria-selected="<?php echo 'participants' === $active_tab ? 'true' : 'false'; ?>">
             <?php esc_html_e('Teilnehmer-Ranking', 'feuer-einsatzberichte'); ?>
-            <?php if (!$participant_ranking_unlocked): ?><span class="feu-einsatz-tab-badge"><?php esc_html_e('PIN', 'feuer-einsatzberichte'); ?></span><?php endif; ?>
         </button>
         <button type="button" class="button feu-einsatz-stats-tab <?php echo 'presentation-settings' === $active_tab ? 'is-active' : ''; ?>" data-target="presentation-settings" id="feu-einsatz-stats-tab-presentation-settings" role="tab" aria-controls="feu-einsatz-stats-panel-presentation-settings" aria-selected="<?php echo 'presentation-settings' === $active_tab ? 'true' : 'false'; ?>">
             <span class="ti ti-slideshow"></span>
@@ -1417,29 +1412,38 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
             <div class="feu-einsatz-panel-header">
                 <div>
                     <h2><?php esc_html_e('Teilnehmer-Ranking', 'feuer-einsatzberichte'); ?> <?php echo esc_html($jahr); ?></h2>
-                    <p class="description"><?php echo $participant_ranking_unlocked ? esc_html__('Details und Einsätze können jetzt eingesehen werden.', 'feuer-einsatzberichte') : esc_html__('Dieser Bereich ist gesichert. Die Daten bleiben unscharf, bis die PIN eingegeben wurde.', 'feuer-einsatzberichte'); ?></p>
+                    <p class="description"><?php esc_html_e('Teilnehmer, Einsätze und Beteiligungsquoten im ausgewählten Jahr.', 'feuer-einsatzberichte'); ?></p>
                 </div>
-                <?php if ($participant_ranking_unlocked): ?>
-                    <form method="post" action="" class="feu-einsatz-inline-lock-form">
-                        <?php wp_nonce_field('feu_einsatz_statistics_participant_access', 'feu_einsatz_statistics_participant_access_nonce'); ?>
-                        <input type="hidden" name="jahr" value="<?php echo esc_attr($jahr); ?>">
-                        <input type="hidden" name="feu_einsatz_stats_tab" value="participants" class="feu-einsatz-stats-tab-input">
-                        <input type="hidden" name="feu_einsatz_stats_action" value="lock_participant_ranking">
-                        <button type="submit" class="button"><?php esc_html_e('Wieder sperren', 'feuer-einsatzberichte'); ?></button>
-                    </form>
-                <?php endif; ?>
             </div>
 
-            <div class="feu-einsatz-ranking-stage <?php echo $participant_ranking_unlocked ? '' : 'is-locked'; ?>">
+            <div class="feu-einsatz-ranking-stage">
                 <div class="feu-einsatz-panel-header feu-einsatz-participant-tools">
                     <div class="feu-einsatz-participant-jump">
                         <label for="feu-einsatz-participant-jump"><?php esc_html_e('Teilnehmerdetails:', 'feuer-einsatzberichte'); ?></label>
-                        <select id="feu-einsatz-participant-jump" <?php disabled(!$participant_ranking_unlocked); ?>>
+                        <select id="feu-einsatz-participant-jump">
                             <option value=""><?php esc_html_e('Teilnehmer auswählen', 'feuer-einsatzberichte'); ?></option>
                             <?php foreach ($participants as $participant): ?>
                                 <option value="<?php echo esc_attr($participant->id); ?>"><?php echo esc_html(FEU_Einsatz_Template_Helpers::format_participant_name($participant->vorname, $participant->nachname)); ?></option>
                             <?php endforeach; ?>
                         </select>
+                    </div>
+                    <div class="feu-einsatz-participation-setting">
+                        <?php if (current_user_can('manage_options')): ?>
+                            <form method="post" action="" class="feu-einsatz-participation-setting-form">
+                                <?php wp_nonce_field('feu_einsatz_statistics_participation_settings', 'feu_einsatz_statistics_participation_nonce'); ?>
+                                <input type="hidden" name="jahr" value="<?php echo esc_attr($jahr); ?>">
+                                <input type="hidden" name="feu_einsatz_stats_tab" value="participants">
+                                <input type="hidden" name="feu_einsatz_stats_action" value="save_minimum_participation">
+                                <label for="feu-einsatz-minimum-participation"><?php esc_html_e('Mindestbeteiligung', 'feuer-einsatzberichte'); ?></label>
+                                <span class="feu-einsatz-participation-setting-controls">
+                                    <input type="number" id="feu-einsatz-minimum-participation" name="feu_einsatz_minimum_participation" min="0" max="100" step="1" value="<?php echo esc_attr((string) $minimum_participation); ?>" required>
+                                    <span aria-hidden="true">%</span>
+                                    <button type="submit" class="button button-secondary"><?php esc_html_e('Speichern', 'feuer-einsatzberichte'); ?></button>
+                                </span>
+                            </form>
+                        <?php else: ?>
+                            <span class="feu-einsatz-participation-setting-label"><?php echo esc_html(sprintf(__('Mindestbeteiligung: %d %%', 'feuer-einsatzberichte'), $minimum_participation)); ?></span>
+                        <?php endif; ?>
                     </div>
                 </div>
 
@@ -1450,7 +1454,7 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
                         <div>
                             <span class="feu-einsatz-participant-overview-kicker"><?php echo esc_html(sprintf(__('Rangliste %d', 'feuer-einsatzberichte'), $jahr)); ?></span>
                             <h3><?php esc_html_e('Die aktivsten Teilnehmer', 'feuer-einsatzberichte'); ?></h3>
-                            <p class="description"><?php esc_html_e('Platzierung nach der Anzahl der Einsätze im ausgewählten Jahr.', 'feuer-einsatzberichte'); ?></p>
+                            <p class="description"><?php echo esc_html(sprintf(__('Anteil an %d veröffentlichten Einsätzen im ausgewählten Jahr. Werte unter %d %% Mindestbeteiligung sind rot markiert.', 'feuer-einsatzberichte'), $total_calls, $minimum_participation)); ?></p>
                         </div>
                         <span class="feu-einsatz-participant-overview-total"><?php echo esc_html(sprintf(_n('%d Teilnehmer', '%d Teilnehmer', count($participants), 'feuer-einsatzberichte'), count($participants))); ?></span>
                     </div>
@@ -1459,18 +1463,24 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
                         <?php foreach ($podium_slots as $pos): ?>
                             <?php if (!isset($participants[$pos])) continue; ?>
                             <?php $p = $participants[$pos]; ?>
+                            <?php $participation_percent = FEU_Einsatz_Template_Helpers::participant_participation_percent($p->gesamt_einsaetze, $total_calls); ?>
+                            <?php $below_minimum = FEU_Einsatz_Template_Helpers::participant_below_minimum($p->gesamt_einsaetze, $total_calls, $minimum_participation); ?>
                             <article class="feu-einsatz-podium-card feu-einsatz-podium-rank-<?php echo esc_attr((string) ($pos + 1)); ?>">
                                 <div class="feu-einsatz-podium-topline">
                                     <span class="feu-einsatz-podium-place"><?php echo esc_html(sprintf(__('Platz %d', 'feuer-einsatzberichte'), $pos + 1)); ?></span>
                                     <span class="feu-einsatz-podium-number"><?php echo esc_html(sprintf('%02d', $pos + 1)); ?></span>
                                 </div>
                                 <strong class="feu-einsatz-podium-name"><?php echo esc_html(FEU_Einsatz_Template_Helpers::format_participant_name($p->vorname, $p->nachname)); ?></strong>
+                                <div class="feu-einsatz-participation-rate <?php echo $below_minimum ? 'is-below-minimum' : ''; ?>">
+                                    <strong><?php echo esc_html(number_format_i18n($participation_percent, 1)); ?> %</strong>
+                                    <span><?php echo esc_html(sprintf(__('%1$d von %2$d Einsätzen', 'feuer-einsatzberichte'), (int) $p->gesamt_einsaetze, $total_calls)); ?></span>
+                                </div>
                                 <div class="feu-einsatz-podium-bottomline">
                                     <div class="feu-einsatz-podium-count">
                                         <strong><?php echo esc_html((string) $p->gesamt_einsaetze); ?></strong>
                                         <span><?php esc_html_e('Einsätze', 'feuer-einsatzberichte'); ?></span>
                                     </div>
-                                    <button type="button" class="button button-secondary feu-einsatz-open-participant-details" data-participant-id="<?php echo esc_attr($p->id); ?>" data-participant-name="<?php echo esc_attr(FEU_Einsatz_Template_Helpers::format_participant_name($p->vorname, $p->nachname)); ?>" <?php disabled(!$participant_ranking_unlocked); ?>><?php esc_html_e('Details', 'feuer-einsatzberichte'); ?></button>
+                                    <button type="button" class="button button-secondary feu-einsatz-open-participant-details" data-participant-id="<?php echo esc_attr($p->id); ?>" data-participant-name="<?php echo esc_attr(FEU_Einsatz_Template_Helpers::format_participant_name($p->vorname, $p->nachname)); ?>"><?php esc_html_e('Details', 'feuer-einsatzberichte'); ?></button>
                                 </div>
                             </article>
                         <?php endforeach; ?>
@@ -1489,14 +1499,18 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
                                     <span role="columnheader"><?php esc_html_e('Platz', 'feuer-einsatzberichte'); ?></span>
                                     <span role="columnheader"><?php esc_html_e('Teilnehmer', 'feuer-einsatzberichte'); ?></span>
                                     <span role="columnheader"><?php esc_html_e('Einsätze', 'feuer-einsatzberichte'); ?></span>
+                                    <span role="columnheader"><?php esc_html_e('Beteiligung', 'feuer-einsatzberichte'); ?></span>
                                     <span role="columnheader"><?php esc_html_e('Details', 'feuer-einsatzberichte'); ?></span>
                                 </div>
                                 <?php foreach (array_slice($participants, 3) as $idx => $participant): ?>
+                                    <?php $participation_percent = FEU_Einsatz_Template_Helpers::participant_participation_percent($participant->gesamt_einsaetze, $total_calls); ?>
+                                    <?php $below_minimum = FEU_Einsatz_Template_Helpers::participant_below_minimum($participant->gesamt_einsaetze, $total_calls, $minimum_participation); ?>
                                     <div class="feu-einsatz-ranking-compact-item" role="row">
                                         <span class="feu-einsatz-ranking-compact-rank" role="cell"><?php echo esc_html(sprintf('%02d', $idx + 4)); ?></span>
                                         <span class="feu-einsatz-ranking-compact-name" role="cell"><?php echo esc_html(FEU_Einsatz_Template_Helpers::format_participant_name($participant->vorname, $participant->nachname)); ?></span>
-                                        <strong class="feu-einsatz-ranking-compact-count" role="cell"><?php echo esc_html((string) $participant->gesamt_einsaetze); ?></strong>
-                                        <span role="cell"><button type="button" class="button button-secondary feu-einsatz-open-participant-details" data-participant-id="<?php echo esc_attr($participant->id); ?>" data-participant-name="<?php echo esc_attr(FEU_Einsatz_Template_Helpers::format_participant_name($participant->vorname, $participant->nachname)); ?>" <?php disabled(!$participant_ranking_unlocked); ?>><?php esc_html_e('Details', 'feuer-einsatzberichte'); ?></button></span>
+                                        <strong class="feu-einsatz-ranking-compact-count" role="cell"><?php echo esc_html((string) $participant->gesamt_einsaetze . ' / ' . (string) $total_calls); ?></strong>
+                                        <span class="feu-einsatz-participation-rate feu-einsatz-participation-rate--compact <?php echo $below_minimum ? 'is-below-minimum' : ''; ?>" role="cell"><strong><?php echo esc_html(number_format_i18n($participation_percent, 1)); ?> %</strong></span>
+                                        <span role="cell"><button type="button" class="button button-secondary feu-einsatz-open-participant-details" data-participant-id="<?php echo esc_attr($participant->id); ?>" data-participant-name="<?php echo esc_attr(FEU_Einsatz_Template_Helpers::format_participant_name($participant->vorname, $participant->nachname)); ?>"><?php esc_html_e('Details', 'feuer-einsatzberichte'); ?></button></span>
                                     </div>
                                 <?php endforeach; ?>
                             </div>
@@ -1504,21 +1518,6 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
                     <?php endif; ?>
                 <?php endif; ?>
 
-                <?php if (!$participant_ranking_unlocked): ?>
-                    <div class="feu-einsatz-ranking-overlay">
-                        <div class="feu-einsatz-pin-card">
-                            <form method="post" action="" class="feu-einsatz-pin-form">
-                                <?php wp_nonce_field('feu_einsatz_statistics_participant_access', 'feu_einsatz_statistics_participant_access_nonce'); ?>
-                                <input type="hidden" name="jahr" value="<?php echo esc_attr($jahr); ?>">
-                                <input type="hidden" name="feu_einsatz_stats_tab" value="participants" class="feu-einsatz-stats-tab-input">
-                                <input type="hidden" name="feu_einsatz_stats_action" value="unlock_participant_ranking">
-                                <label for="feu-einsatz-participant-ranking-pin"><?php esc_html_e('PIN eingeben', 'feuer-einsatzberichte'); ?></label>
-                                <input type="password" id="feu-einsatz-participant-ranking-pin" name="feu_einsatz_participant_ranking_pin" inputmode="numeric" pattern="[0-9]*" maxlength="12" autocomplete="one-time-code" class="regular-text" placeholder="<?php esc_attr_e('PIN', 'feuer-einsatzberichte'); ?>" required>
-                                <button type="submit" class="button button-primary"><?php esc_html_e('Freischalten', 'feuer-einsatzberichte'); ?></button>
-                            </form>
-                        </div>
-                    </div>
-                <?php endif; ?>
             </div>
 
             <div id="feu-einsatz-participant-detail-panel" class="feu-einsatz-detail-panel" role="dialog" aria-modal="true" aria-labelledby="feu-einsatz-participant-detail-title" hidden>
@@ -1548,7 +1547,7 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
         'monthly_totals' => $monthly_totals,
         'month_names' => $month_names,
         'participants' => $presentation_participants,
-        'ranking_unlocked' => true,
+        'minimum_participation' => $minimum_participation,
         'activity_map_svg' => $activity_map_svg,
         'station_feature' => is_array($statistics_station_feature) ? $statistics_station_feature : [],
         'top_category_label' => $top_category_label,
@@ -1578,22 +1577,24 @@ document.addEventListener('DOMContentLoaded', function() {
     var activityMapPoints = <?php echo wp_json_encode($activity_map_points); ?>;
     var presentationStationFeature = <?php echo wp_json_encode(is_array($statistics_station_feature) ? $statistics_station_feature : null); ?>;
     var totalStats = <?php echo wp_json_encode($total); ?>;
+    var minimumParticipation = <?php echo wp_json_encode($minimum_participation); ?>;
     var peakDays = <?php echo wp_json_encode($peak_days); ?>;
     var topWeekdays = <?php echo wp_json_encode($top_weekdays); ?>;
     var dailyCountByDate = <?php echo wp_json_encode($count_by_date); ?>;
     var dailyReportsByDate = <?php echo wp_json_encode($daily_reports_by_date); ?>;
-    var participantLookup = <?php echo wp_json_encode($participant_ranking_unlocked ? array_values(array_map(static function($participant) {
+    var participantLookup = <?php echo wp_json_encode(array_values(array_map(static function($participant) {
         return ['id' => (int) $participant->id, 'name' => FEU_Einsatz_Template_Helpers::format_participant_name($participant->vorname, $participant->nachname)];
-    }, $participants)) : []); ?>;
-    var participantStats = <?php echo wp_json_encode($participant_ranking_unlocked ? array_values(array_map(static function($participant) {
+    }, $participants))); ?>;
+    var participantStats = <?php echo wp_json_encode(array_values(array_map(static function($participant) use ($total_calls, $minimum_participation) {
         return [
             'name' => FEU_Einsatz_Template_Helpers::format_participant_name($participant->vorname, $participant->nachname),
             'count' => (int) $participant->gesamt_einsaetze,
+            'percentage' => FEU_Einsatz_Template_Helpers::participant_participation_percent($participant->gesamt_einsaetze, $total_calls),
+            'belowMinimum' => FEU_Einsatz_Template_Helpers::participant_below_minimum($participant->gesamt_einsaetze, $total_calls, $minimum_participation),
         ];
-    }, $participants)) : []); ?>;
+    }, $participants))); ?>;
     var participantDistributionData = <?php echo wp_json_encode($participant_distribution_chart_data); ?>;
-    var preselectedParticipantId = <?php echo wp_json_encode($participant_ranking_unlocked ? $selected_participant_id : 0); ?>;
-    var rankingUnlocked = <?php echo wp_json_encode($participant_ranking_unlocked); ?>;
+    var preselectedParticipantId = <?php echo wp_json_encode($selected_participant_id); ?>;
     var activeTab = <?php echo wp_json_encode($active_tab); ?>;
     var detailPanel = document.getElementById('feu-einsatz-participant-detail-panel');
     var detailTitle = document.getElementById('feu-einsatz-participant-detail-title');
@@ -3531,7 +3532,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 };
             });
             var rankingListItems = participantStats.slice(0, 12).map(function(participant, index) {
-                return (index + 1) + '. ' + participant.name + ' - ' + participant.count;
+                return (index + 1) + '. ' + participant.name + ' - ' + participant.count + ' / ' + totalStats.total_einsaetze
+                    + ' (' + participant.percentage.toFixed(1).replace('.', ',') + ' %)'
+                    + (participant.belowMinimum ? ' - unter Mindestbeteiligung' : '');
             });
             var exportSubtitle = 'Jahr ' + selectedYear + ' - Export ' + new Date().toLocaleDateString('de-DE');
 
@@ -3558,14 +3561,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 'Snapshot der Aktivitätskarte für den PDF-Export'
             );
 
-            if (rankingUnlocked) {
-                pdf.addPage();
-                drawPdfHeader(pdf, 'Teilnehmer-Ranking', exportSubtitle);
-                drawPdfHorizontalBarChart(pdf, 14, 34, 182, 104, 'Ranking-Grafik', 'Aktivste Teilnehmer im ausgewaehlten Jahr', rankingItems, [10, 75, 120]);
-                drawPdfListCard(pdf, 14, 146, 182, 120, 'Top Teilnehmer', rankingListItems);
-            } else {
-                drawPdfListCard(pdf, 14, 248, 182, 28, 'Teilnehmer-Ranking', ['Nicht im PDF enthalten, da der Bereich aktuell gesperrt ist.']);
-            }
+            pdf.addPage();
+            drawPdfHeader(pdf, 'Teilnehmer-Ranking', exportSubtitle);
+            drawPdfHorizontalBarChart(pdf, 14, 34, 182, 104, 'Ranking-Grafik', 'Aktivste Teilnehmer im ausgewaehlten Jahr', rankingItems, [10, 75, 120]);
+            drawPdfListCard(pdf, 14, 146, 182, 120, 'Top Teilnehmer', rankingListItems);
 
             addPdfFooters(pdf);
             pdf.save('einsatzberichte-statistik-' + selectedYear + '.pdf');
@@ -3608,7 +3607,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
         html += '<div class="feu-einsatz-detail-shell">';
         html += '<div class="feu-einsatz-detail-summary-grid">';
-        html += '<div class="feu-einsatz-detail-summary-card"><span>Einsätze</span><strong>' + escapeHtml(summary.total_einsaetze || einsaetze.length || 0) + '</strong></div>';
+        var participantCalls = Number(summary.total_einsaetze || einsaetze.length || 0);
+        var annualCalls = Number(totalStats.total_einsaetze || 0);
+        var participationPercent = annualCalls > 0 ? Math.min(100, Math.floor(participantCalls * 1000 / annualCalls) / 10) : 0;
+        var belowMinimum = annualCalls > 0 && participantCalls * 100 < minimumParticipation * annualCalls;
+        html += '<div class="feu-einsatz-detail-summary-card"><span>Einsätze</span><strong>' + escapeHtml(participantCalls) + ' / ' + escapeHtml(annualCalls) + '</strong>';
+        html += '<div class="feu-einsatz-participation-rate' + (belowMinimum ? ' is-below-minimum' : '') + '"><strong>'
+            + escapeHtml(participationPercent.toFixed(1).replace('.', ',')) + ' %</strong></div><small>Mindestbeteiligung ' + escapeHtml(minimumParticipation) + ' %</small></div>';
         html += '<div class="feu-einsatz-detail-summary-card"><span>Häufigste Funktion</span><strong>' + escapeHtml(summary.top_function || 'Keine wiederholte Funktion') + '</strong>';
         if (Number(summary.top_function_count) >= 2) {
             html += '<small>' + escapeHtml(summary.top_function_count) + ' Einsätze</small>';
@@ -3661,7 +3666,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function openParticipantDetails(participantId, participantName) {
-        if (!rankingUnlocked || !participantId || !detailPanel) {
+        if (!participantId || !detailPanel) {
             return;
         }
 
@@ -3817,7 +3822,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     animateStatisticVisuals();
 
-    if (preselectedParticipantId && rankingUnlocked) {
+    if (preselectedParticipantId) {
         var selectedParticipant = participantLookup.find(function(item) {
             return item.id === preselectedParticipantId;
         });

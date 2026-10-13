@@ -1,6 +1,20 @@
 {
   "releases": [
     {
+      "version": "3.2.94",
+      "date": "2026-10-13",
+      "title": "Kartenadresse und Teilnehmerstatistik",
+      "summary": "Die Live-Karte prüft neue Hausnummern strikt und zeigt keine Geometrie eines früheren Einsatzorts; die Teilnehmerstatistik zeigt Beteiligungsquoten ohne PIN-Sperre.",
+      "changes": [
+        "Live-Karte: Eine neue Hausnummer übernimmt keine Kartenlinie eines anderen Hauses aus dem Straßencache. Entfernte oder unpassende Geometrie wird verworfen und am bestätigten Einsatzort neu abgefragt.",
+        "Adressprüfung: Kann eine Hausnummer nicht bestätigt werden, erscheint eine klare Fehlermeldung statt einer Karte mit einem falschen Einsatzort. Genaue Koordinaten können weiterhin verwendet werden.",
+        "Editor: Beim Ändern der Adresse wird die bisherige Karte sofort entfernt; alte Vorschau-Antworten werden ignoriert.",
+        "Teilnehmerstatistik: Pro Teilnehmer erscheint die Beteiligung als Anzahl und Prozentanteil der Einsätze im ausgewählten Jahr. Die Grenze für minimale Teilnahme ist einstellbar und niedrige Werte sind rot und fett hervorgehoben.",
+        "Statistik: Die PIN-Abfrage und die Passwort-Eingabe für die Teilnehmeransicht wurden entfernt. Es gelten weiterhin die normalen WordPress-Zugriffsrechte.",
+        "Qualität: Integrationstests prüfen getrennte Hausnummern und die räumliche Zuordnung zwischengespeicherter Straßenlinien."
+      ]
+    },
+    {
       "version": "3.2.93",
       "date": "2026-10-08",
       "title": "Redaktion, Statistik und Migration im Einsatzalltag",

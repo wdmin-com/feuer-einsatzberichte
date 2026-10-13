@@ -352,11 +352,6 @@ class FEU_Einsatz_Ajax_Handler {
             return;
         }
 
-        if (!FEU_Einsatz_Admin::is_participant_ranking_unlocked_for_current_user()) {
-            wp_send_json_error(['message' => __('Teilnehmer-Ranking ist gesperrt. Bitte PIN eingeben.', 'feuer-einsatzberichte')], 403);
-            return;
-        }
-
         $teilnehmer_id = isset($_POST['teilnehmer_id']) ? absint(wp_unslash($_POST['teilnehmer_id'])) : 0;
         $jahr = isset($_POST['jahr']) ? absint(wp_unslash($_POST['jahr'])) : (int) date('Y');
 
@@ -449,9 +444,7 @@ class FEU_Einsatz_Ajax_Handler {
         $data = [
             'total' => $statistics_dashboard_data['total'],
             'categories' => $statistics_dashboard_data['categories'],
-            'participants' => FEU_Einsatz_Admin::is_participant_ranking_unlocked_for_current_user()
-                ? $statistics_dashboard_data['participants']
-                : [],
+            'participants' => $statistics_dashboard_data['participants'],
         ];
 
         wp_send_json_success($data);

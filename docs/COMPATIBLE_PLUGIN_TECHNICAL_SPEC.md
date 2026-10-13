@@ -574,7 +574,6 @@ Restore проверяет ZIP/manifest до записи, импортируе�
 | FEU_Einsatz_Backup_Manager | archives |
 | FEU_Einsatz_Report_Share | signed share cards |
 | FEU_Einsatz_Image_Protection | watermark |
-| FEU_Einsatz_Participant_Ranking | ranking |
 | FEU_Einsatz_Schnelleingabe | quick entry |
 | FEU_Einsatz_Logger / FEU_Einsatz_Report_Logger | audit logging |
 | FEU_Einsatz_Updater | update manifest |

@@ -831,6 +831,24 @@ class FEU_Einsatz_Template_Helpers {
         return implode((string) $separator, $parts);
     }
 
+    public static function participant_participation_percent($participant_calls, $total_calls) {
+        $total_calls = max(0, (int) $total_calls);
+        if (0 === $total_calls) {
+            return 0.0;
+        }
+
+        // Truncate to one decimal so a value just below the threshold never displays as meeting it.
+        return min(100.0, floor(max(0, (int) $participant_calls) * 1000 / $total_calls) / 10);
+    }
+
+    public static function participant_below_minimum($participant_calls, $total_calls, $minimum_percent) {
+        $total_calls = max(0, (int) $total_calls);
+        $minimum_percent = max(0, min(100, (int) $minimum_percent));
+
+        return $total_calls > 0
+            && max(0, (int) $participant_calls) * 100 < $minimum_percent * $total_calls;
+    }
+
     public static function sanitize_postcode_list($value) {
         $parts = self::sanitize_area_entry_list($value);
         $postcodes = [];
@@ -3038,6 +3056,20 @@ class FEU_Einsatz_Template_Helpers {
         }
 
         return $closest_distance;
+    }
+
+    /** A street cache can contain only the branch around an older report. */
+    public static function is_map_geometry_near_coordinates($geometry, $latitude, $longitude, $maximum_meters = 150) {
+        if (!is_numeric($latitude) || !is_numeric($longitude)) {
+            return false;
+        }
+
+        $distance = self::get_geometry_distance_to_incident($geometry, [
+            'lat' => (float) $latitude,
+            'lng' => (float) $longitude,
+        ]);
+
+        return null !== $distance && $distance <= max(0, (float) $maximum_meters);
     }
 
     private static function needs_incident_anchor_geometry($geometry, array $coordinates, $post_id = 0) {

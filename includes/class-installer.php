@@ -251,7 +251,7 @@ class FEU_Einsatz_Installer {
         }
         self::maybe_upgrade_default_functions_option();
         self::ensure_default_participant_function_option();
-        self::migrate_legacy_participant_ranking_pin();
+        self::retire_participant_ranking_pin();
         self::create_upload_directory();
         self::add_default_organizations();
         self::migrate_existing_data();
@@ -710,48 +710,23 @@ class FEU_Einsatz_Installer {
         return trailingslashit(FEU_EINSATZ_PLUGIN_DIR) . 'feuer-einsatzberichte-participant-ranking-pin.php';
     }
 
-    private static function migrate_legacy_participant_ranking_pin() {
-        $stored_pin = get_option('feu_einsatz_participant_ranking_pin', '');
-
-        if (is_scalar($stored_pin) && '' !== trim((string) $stored_pin)) {
-            self::cleanup_legacy_participant_ranking_pin_file();
+    private static function retire_participant_ranking_pin() {
+        if (get_option('feu_einsatz_participant_ranking_pin_retired', false)) {
             return;
         }
 
-        $pin_file = self::get_legacy_participant_ranking_pin_file_path();
-
-        if (!file_exists($pin_file) || !is_readable($pin_file)) {
-            return;
+        delete_option('feu_einsatz_participant_ranking_pin');
+        foreach ([
+            '_feu_einsatz_participant_ranking_unlocked_until',
+            '_feu_einsatz_participant_ranking_failed_attempts',
+            '_feu_einsatz_participant_ranking_locked_until',
+        ] as $meta_key) {
+            delete_metadata('user', 0, $meta_key, '', true);
         }
-
-        $pin = '';
-        $file_contents = @file_get_contents($pin_file);
-
-        if (is_string($file_contents) && '' !== $file_contents) {
-            if (0 === strpos($file_contents, "\xEF\xBB\xBF")) {
-                $file_contents = substr($file_contents, 3);
-            }
-
-            if (preg_match('/return\s+[\'"]([^\'"]+)[\'"]\s*;/i', $file_contents, $matches)) {
-                $pin = (string) ($matches[1] ?? '');
-            } else {
-                $plain_contents = preg_replace('/<\?(php)?/i', '', $file_contents);
-                $plain_contents = preg_replace('/return\s+/i', '', (string) $plain_contents);
-                $plain_contents = str_replace([';', '?', '>'], '', (string) $plain_contents);
-                $pin = trim((string) $plain_contents);
-            }
-        }
-
-        if ('' !== $pin) {
-            $pin = sanitize_text_field($pin);
-            $pin = trim($pin);
-
-            if ('' !== $pin) {
-                update_option('feu_einsatz_participant_ranking_pin', substr($pin, 0, 64), false);
-            }
-        }
-
         self::cleanup_legacy_participant_ranking_pin_file();
+        if (!file_exists(self::get_legacy_participant_ranking_pin_file_path())) {
+            update_option('feu_einsatz_participant_ranking_pin_retired', 1, false);
+        }
     }
 
     private static function cleanup_legacy_participant_ranking_pin_file() {
@@ -928,7 +903,7 @@ class FEU_Einsatz_Installer {
         delete_option('feu_einsatz_overview_scroll_animation');
         self::maybe_upgrade_default_functions_option();
         self::ensure_default_participant_function_option();
-        self::migrate_legacy_participant_ranking_pin();
+        self::retire_participant_ranking_pin();
         self::add_default_organizations();
 
         if (self::SCHEMA_VERSION !== $schema_version) {
