@@ -90,7 +90,7 @@ if (!empty($map['fallback_image_url'])) : ?>
          fetchpriority="high" />
 <?php elseif (!empty($map['preview_markup'])) :
     echo $map['preview_markup'];
-<?php else : ?>
+else : ?>
     <div class="feu-einsatz-map-placeholder">
         <strong><?php echo esc_html__('Kartenansicht nicht verfuegbar.', 'feuer-einsatzberichte'); ?></strong>
         <p><?php echo esc_html__('Fuer diesen Einsatz sind noch keine ausreichenden Kartendaten gespeichert.', 'feuer-einsatzberichte'); ?></p>
