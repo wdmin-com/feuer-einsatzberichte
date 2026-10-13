@@ -82,13 +82,15 @@ elseif ('' !== $post_image_url) : ?>
 $post_image_markup = (string) ob_get_clean();
 
 ob_start();
-if (!empty($map['preview_markup'])) :
-    echo $map['preview_markup'];
-elseif (!empty($map['fallback_image_url'])) : ?>
+if (!empty($map['fallback_image_url'])) : ?>
     <img src="<?php echo esc_url($map['fallback_image_url']); ?>"
          alt="<?php echo esc_attr($map['fallback_alt'] ?? ''); ?>"
-         class="feu-einsatz-map-fallback-image" />
-<?php else : ?>
+         class="feu-einsatz-map-fallback-image"
+         decoding="async"
+         fetchpriority="high" />
+<?php elseif (!empty($map['preview_markup'])) :
+    echo $map['preview_markup'];
+else : ?>
     <div class="feu-einsatz-map-placeholder">
         <strong><?php echo esc_html__('Kartenansicht nicht verfuegbar.', 'feuer-einsatzberichte'); ?></strong>
         <p><?php echo esc_html__('Fuer diesen Einsatz sind noch keine ausreichenden Kartendaten gespeichert.', 'feuer-einsatzberichte'); ?></p>
@@ -170,7 +172,15 @@ if ($show_live_map) {
                     </div>
                 </div>
             <?php else : ?>
-                <?php echo $preview_markup; ?>
+                <div class="feu-einsatz-map-static-preview"><?php echo $preview_markup; ?></div>
+                <?php if ($show_live_map) : ?>
+                    <button type="button" class="feu-einsatz-map-activate" data-feu-map-action="activate">
+                        <?php esc_html_e('Interaktive Karte laden', 'feuer-einsatzberichte'); ?>
+                    </button>
+                    <p class="feu-einsatz-map-load-error" data-feu-map-load-error hidden>
+                        <?php esc_html_e('Die interaktive Karte konnte nicht geladen werden. Die gespeicherte Karte bleibt verfügbar.', 'feuer-einsatzberichte'); ?>
+                    </p>
+                <?php endif; ?>
             <?php endif; ?>
         </div>
 

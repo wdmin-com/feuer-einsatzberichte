@@ -66,7 +66,7 @@ class FEU_Einsatz_Template_Helpers {
      * Increment when the public report context gains data that must not be
      * served from an older, otherwise valid transient.
      */
-    const SINGLE_CONTEXT_CACHE_VERSION = '14';
+    const SINGLE_CONTEXT_CACHE_VERSION = '15';
 
     /**
      * Marks geometry that was resolved with the exact, local Overpass query.
@@ -2221,7 +2221,7 @@ class FEU_Einsatz_Template_Helpers {
 
         $preview_file = trim((string) get_post_meta($post_id, '_feu_einsatz_generated_map_preview_file', true));
 
-        if ('' === $preview_file && '' !== $preview_url) {
+        if (('' === $preview_file || !is_file($preview_file)) && '' !== $preview_url) {
             $preview_file = self::resolve_local_upload_path_from_url($preview_url);
         }
 
@@ -4813,6 +4813,17 @@ class FEU_Einsatz_Template_Helpers {
 
     private static function get_single_context_cache_fingerprint(WP_Post $post) {
         $post_id = (int) $post->ID;
+        $preview_file = trim((string) get_post_meta($post_id, '_feu_einsatz_generated_map_preview_file', true));
+        if ('' === $preview_file || !is_file($preview_file)) {
+            $preview_file = self::resolve_local_upload_path_from_url((string) get_post_meta($post_id, '_feu_einsatz_generated_map_preview_url', true));
+        }
+        $generated_attachment_id = absint(get_post_meta($post_id, '_feu_einsatz_generated_map_thumbnail_id', true));
+        if ('' === $preview_file || !is_file($preview_file)) {
+            $preview_file = $generated_attachment_id > 0 ? (string) get_attached_file($generated_attachment_id) : '';
+        }
+        $preview_file_signature = '' !== $preview_file && is_file($preview_file)
+            ? (string) @filemtime($preview_file) . ':' . (string) @filesize($preview_file)
+            : 'missing';
 
         return md5(wp_json_encode([
             'context_cache_version' => self::SINGLE_CONTEXT_CACHE_VERSION,
@@ -4845,6 +4856,8 @@ class FEU_Einsatz_Template_Helpers {
             'gallery' => maybe_serialize(get_post_meta($post_id, '_feu_einsatz_gallery', true)),
             'generated_map_preview_url' => (string) get_post_meta($post_id, '_feu_einsatz_generated_map_preview_url', true),
             'generated_map_preview_file' => (string) get_post_meta($post_id, '_feu_einsatz_generated_map_preview_file', true),
+            'generated_map_attachment_id' => $generated_attachment_id,
+            'generated_map_file_signature' => $preview_file_signature,
             'comments_enabled' => (string) get_post_meta($post_id, '_feu_einsatz_comments_enabled', true),
             'comment_count' => (int) get_comments_number($post_id),
             'display' => [
@@ -4873,14 +4886,14 @@ class FEU_Einsatz_Template_Helpers {
         ]));
     }
 
-    private static function get_single_context_transient_key(WP_Post $post) {
+    private static function get_single_context_transient_key(WP_Post $post, $fingerprint = '') {
         $post_id = (int) $post->ID;
 
         if ($post_id < 1) {
             return '';
         }
 
-        return 'feu_single_ctx_' . $post_id . '_' . self::get_single_context_cache_fingerprint($post);
+        return 'feu_single_ctx_' . $post_id . '_' . ('' !== $fingerprint ? $fingerprint : self::get_single_context_cache_fingerprint($post));
     }
 
     public static function strip_house_number_from_street($street) {
@@ -5754,14 +5767,15 @@ class FEU_Einsatz_Template_Helpers {
         // A request may save a report and render its preview again before PHP
         // exits. Keying only by post ID served the former in-memory context in
         // that case, even though the post meta had already changed.
-        $memory_cache_key = $post_id . '_' . self::get_single_context_cache_fingerprint($post);
+        $fingerprint = self::get_single_context_cache_fingerprint($post);
+        $memory_cache_key = $post_id . '_' . $fingerprint;
 
         if (isset($single_context_cache[$memory_cache_key])) {
             return $single_context_cache[$memory_cache_key];
         }
 
         if ($is_public_request) {
-            $transient_key = self::get_single_context_transient_key($post);
+            $transient_key = self::get_single_context_transient_key($post, $fingerprint);
 
             if ('' !== $transient_key) {
                 $cached_context = get_transient($transient_key);
@@ -6044,11 +6058,10 @@ class FEU_Einsatz_Template_Helpers {
             && is_numeric($latitude)
             && is_numeric($longitude);
 
-        if (is_admin() || $radius_has_public_preview) {
-            // A circle around a verified incident coordinate is meaningful on
-            // its own. Keep an SVG fallback for public radius maps as well, so
-            // a browser-side Leaflet error can never degrade into the generic
-            // "not enough map data" placeholder.
+        if (is_admin() || $radius_has_public_preview || ($is_public_request && '' === $map_fallback_image_url)) {
+            // A saved image is preferred on public reports. Historic reports
+            // without one receive a local SVG so their first view never waits
+            // for external map tiles.
             $local_map_preview_markup = self::build_local_map_preview_markup([
                 'latitude' => $latitude,
                 'longitude' => $longitude,

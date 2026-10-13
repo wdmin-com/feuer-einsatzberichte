@@ -1,6 +1,20 @@
 {
   "releases": [
     {
+      "version": "3.2.96",
+      "date": "2026-10-13",
+      "title": "Sofort sichtbare Karten aus lokalem Cache",
+      "summary": "Bestehende Berichte zeigen zuerst ihr gespeichertes Kartenbild; OpenStreetMap-Kacheln werden nur nach bewusstem Öffnen der interaktiven Karte geladen.",
+      "changes": [
+        "Berichte: Das generierte Kartenbild aus den lokalen WordPress-Uploads erscheint sofort als Standardansicht. Bei älteren Berichten ohne Bild dient eine lokale SVG-Vorschau als Ersatz.",
+        "Interaktive Karte: Leaflet und OpenStreetMap-Kacheln werden erst geladen, wenn Besucher die interaktive Karte ausdrücklich öffnen. Das reduziert anfängliche Datenübertragung und Abhängigkeit vom Kartenanbieter.",
+        "Kartenfehler: Kann die interaktive Karte nicht geladen werden, bleibt die gespeicherte Bildansicht sichtbar.",
+        "Cache: Der Seitenkontext berücksichtigt Änderungszeit und Dateigröße des Kartenbilds; eine Regenerierung oder fehlende Datei macht veraltete Cache-Einträge sofort ungültig.",
+        "Migration: Ein veralteter absoluter Dateipfad kann über die aktuelle Upload-URL aufgelöst werden, sodass vorhandene Karten nach einem Serverumzug weiterhin erscheinen.",
+        "Qualität: Browser- und WordPress-Tests prüfen die verzögerte Kartenaktivierung, die lokale Bildansicht und die Cache-Aktualisierung."
+      ]
+    },
+    {
       "version": "3.2.95",
       "date": "2026-10-13",
       "title": "Berichtsübersicht und Kartenbild-Prüfung",

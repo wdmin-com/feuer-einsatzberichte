@@ -393,18 +393,7 @@ class FEU_Einsatz_Public {
             return '';
         }
 
-        $preview_url = FEU_Einsatz_Template_Helpers::get_generated_map_preview_public_url($post_id);
-        $preview_file = trim((string) get_post_meta($post_id, '_feu_einsatz_generated_map_preview_file', true));
-
-        if ('' === $preview_url) {
-            return '';
-        }
-
-        if ('' !== $preview_file) {
-            return file_exists($preview_file) ? $preview_url : '';
-        }
-
-        return $preview_url;
+        return FEU_Einsatz_Template_Helpers::get_generated_map_preview_public_url($post_id);
     }
 
     private function get_generated_map_preview_dimensions($post_id) {
@@ -1760,11 +1749,6 @@ class FEU_Einsatz_Public {
         }
 
         if ($is_single_report) {
-            $single_map_display_mode = FEU_Einsatz_Template_Helpers::normalize_single_map_display_mode(get_option('feu_einsatz_single_map_display_mode', 'live'));
-            $cookie_map_integration_active = FEU_Einsatz_Template_Helpers::has_cookie_map_consent_integration();
-            $cookie_map_consent_granted = !$cookie_map_integration_active || FEU_Einsatz_Template_Helpers::has_cookie_map_consent();
-            $should_load_single_map_runtime = 'live' === $single_map_display_mode && $cookie_map_consent_granted;
-
             wp_enqueue_style(
                 'dashicons',
                 includes_url('css/dashicons.min.css'),
@@ -1772,38 +1756,13 @@ class FEU_Einsatz_Public {
                 get_bloginfo('version')
             );
 
-            if ($should_load_single_map_runtime) {
-                wp_enqueue_style(
-                    'feu-einsatz-leaflet',
-                    FEU_EINSATZ_PLUGIN_URL . 'assets/vendor/leaflet/leaflet.css',
-                    [],
-                    '1.9.4'
-                );
-
-                wp_enqueue_script(
-                    'feu-einsatz-leaflet',
-                    FEU_EINSATZ_PLUGIN_URL . 'assets/vendor/leaflet/leaflet.js',
-                    [],
-                    '1.9.4',
-                    ['in_footer' => true, 'strategy' => 'defer']
-                );
-
-                wp_enqueue_script(
-                    'feu-einsatz-public-script',
-                    FEU_EINSATZ_PLUGIN_URL . 'assets/public/js/public-script.js',
-                    ['feu-einsatz-leaflet'],
-                    $public_script_version,
-                    ['in_footer' => true, 'strategy' => 'defer']
-                );
-            } else {
-                wp_enqueue_script(
-                    'feu-einsatz-public-script',
-                    FEU_EINSATZ_PLUGIN_URL . 'assets/public/js/public-script.js',
-                    [],
-                    $public_script_version,
-                    ['in_footer' => true, 'strategy' => 'defer']
-                );
-            }
+            wp_enqueue_script(
+                'feu-einsatz-public-script',
+                FEU_EINSATZ_PLUGIN_URL . 'assets/public/js/public-script.js',
+                [],
+                $public_script_version,
+                ['in_footer' => true, 'strategy' => 'defer']
+            );
 
             if (FEU_Einsatz_Template_Helpers::is_comments_enabled($current_post_id) && get_option('thread_comments')) {
                 wp_enqueue_script('comment-reply');
@@ -1842,7 +1801,11 @@ class FEU_Einsatz_Public {
         if (wp_script_is('feu-einsatz-public-script', 'enqueued')) {
             wp_add_inline_script(
                 'feu-einsatz-public-script',
-                'window.feu_einsatz_public = Object.assign({}, window.feu_einsatz_public || {}, {strings: ' . wp_json_encode($public_strings) . '});',
+                'window.feu_einsatz_public = Object.assign({}, window.feu_einsatz_public || {}, ' . wp_json_encode([
+                    'strings' => $public_strings,
+                    'leafletScriptUrl' => FEU_EINSATZ_PLUGIN_URL . 'assets/vendor/leaflet/leaflet.js',
+                    'leafletStyleUrl' => FEU_EINSATZ_PLUGIN_URL . 'assets/vendor/leaflet/leaflet.css',
+                ]) . ');',
                 'before'
             );
         }
