@@ -176,6 +176,9 @@ try {
     file_put_contents($protected_full['path'], '');
     feu_report_edit_assert(false === $protected_image->invoke(null, $attachment_id, 'full', false), 'Empty protected image was treated as ready.');
     $repaired_full = $protected_image->invoke(null, $attachment_id, 'full', true);
+    if (is_array($repaired_full) && isset($repaired_full['path'])) {
+        clearstatcache(true, $repaired_full['path']);
+    }
     feu_report_edit_assert(is_array($repaired_full) && filesize($repaired_full['path']) > 0, 'Empty protected image was not regenerated.');
     update_option('feu_einsatz_photo_watermark_image_id', 999999, false);
     $build_gallery = new ReflectionMethod(FEU_Einsatz_Template_Helpers::class, 'build_gallery_items');
