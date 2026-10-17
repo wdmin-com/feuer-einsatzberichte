@@ -13,6 +13,9 @@ $remote_version = is_array($remote_manifest_payload) ? (string) ($remote_manifes
 $remote_last_updated = is_array($remote_manifest_payload) ? (string) ($remote_manifest_payload['last_updated'] ?? '') : '';
 $update_status_class = 'is-neutral';
 $update_status_text = __('Remote-Manifest aktuell nicht erreichbar', 'feuer-einsatzberichte');
+$release_history_count = count($release_notes_entries);
+$oldest_release = $release_history_count > 0 ? $release_notes_entries[$release_history_count - 1] : [];
+$oldest_release_version = (string) ($oldest_release['version'] ?? '');
 
 if ('' !== $remote_version) {
     if (version_compare(FEU_EINSATZ_VERSION, $remote_version, '<')) {
@@ -37,17 +40,13 @@ $manifest_reference_items = [
         'value' => 'https://wdmin.com/',
         'description' => __('Oeffentliche Seite des Autors und Anbieters.', 'feuer-einsatzberichte'),
     ],
-    __('Manifest-Datei lokal', 'feuer-einsatzberichte') => [
-        'value' => $manifest_path,
-        'description' => __('Lokale Quelle fuer die technische WordPress-Update-Pruefung.', 'feuer-einsatzberichte'),
+    __('Update-Manifest', 'feuer-einsatzberichte') => [
+        'value' => $remote_manifest_url,
+        'description' => __('Remote-Quelle fuer die technische WordPress-Update-Pruefung.', 'feuer-einsatzberichte'),
     ],
     __('Release-Liste lokal', 'feuer-einsatzberichte') => [
         'value' => $release_notes_path,
         'description' => __('Liefert die menschenlesbare Liste der zuletzt veroeffentlichten Versionen.', 'feuer-einsatzberichte'),
-    ],
-    __('Manifest-Beispiel', 'feuer-einsatzberichte') => [
-        'value' => $manifest_example_path,
-        'description' => __('Vorlage fuer neue Releases oder Anpassungen am Manifest-Schema.', 'feuer-einsatzberichte'),
     ],
 ];
 ?>
@@ -126,17 +125,17 @@ $manifest_reference_items = [
         </section>
 
         <section class="feu-admin-settings-surface">
-            <div class="feu-admin-settings-form-grid feu-admin-settings-form-grid--2">
+            <div class="feu-admin-settings-form-grid">
                 <div class="feu-admin-settings-field">
                     <span><?php esc_html_e('Produktiv-Manifest', 'feuer-einsatzberichte'); ?></span>
-                    <textarea readonly rows="16" class="large-text code feu-admin-settings-textarea-code"><?php echo esc_textarea($manifest_display_contents); ?></textarea>
-                    <small><?php esc_html_e('Download-Felder werden hier bewusst ausgeblendet. Das produktive Manifest behaelt sie nur fuer den technischen WordPress-Update-Prozess.', 'feuer-einsatzberichte'); ?></small>
-                </div>
-
-                <div class="feu-admin-settings-field">
-                    <span><?php esc_html_e('Release-Hinweis Vorlage', 'feuer-einsatzberichte'); ?></span>
-                    <textarea readonly rows="16" class="large-text code feu-admin-settings-textarea-code"><?php echo esc_textarea($manifest_example_contents); ?></textarea>
-                    <small><?php esc_html_e('Diese Datei dient als Ausgangspunkt fuer kommende Versionen.', 'feuer-einsatzberichte'); ?></small>
+                    <?php if ('' !== $manifest_display_contents) : ?>
+                        <textarea readonly rows="16" class="large-text code feu-admin-settings-textarea-code"><?php echo esc_textarea($manifest_display_contents); ?></textarea>
+                    <?php else : ?>
+                        <div class="feu-einsatz-log-empty-card">
+                            <p class="description"><?php esc_html_e('Das Produktiv-Manifest konnte momentan nicht geladen werden.', 'feuer-einsatzberichte'); ?></p>
+                        </div>
+                    <?php endif; ?>
+                    <small><?php esc_html_e('Download- und Hash-Felder werden hier bewusst ausgeblendet. Sie bleiben Teil des technischen WordPress-Update-Prozesses.', 'feuer-einsatzberichte'); ?></small>
                 </div>
             </div>
         </section>
@@ -144,8 +143,20 @@ $manifest_reference_items = [
         <section class="feu-admin-settings-surface">
             <div class="feu-admin-settings-surface-head">
                 <div>
-                    <h2><?php esc_html_e('Letzte Versionen', 'feuer-einsatzberichte'); ?></h2>
-                    <p class="description"><?php esc_html_e('Die Uebersicht wird direkt aus der lokalen Release-Datei gelesen und zeigt die zuletzt veroeffentlichten Aenderungen.', 'feuer-einsatzberichte'); ?></p>
+                    <h2><?php esc_html_e('Letzte 10 Versionen', 'feuer-einsatzberichte'); ?></h2>
+                    <p class="description"><?php esc_html_e('Die Uebersicht wird direkt aus der mitgelieferten Release-Datei gelesen und zeigt die zehn zuletzt veroeffentlichten Aenderungen.', 'feuer-einsatzberichte'); ?></p>
+                    <?php if ($release_history_count > 0 && '' !== $oldest_release_version) : ?>
+                        <p class="description">
+                            <?php
+                            printf(
+                                /* translators: %1$d: number of documented releases, %2$s: oldest documented version */
+                                esc_html__('Release-Archiv: %1$d dokumentierte Versionen seit %2$s.', 'feuer-einsatzberichte'),
+                                $release_history_count,
+                                esc_html($oldest_release_version)
+                            );
+                            ?>
+                        </p>
+                    <?php endif; ?>
                 </div>
             </div>
 
@@ -155,7 +166,7 @@ $manifest_reference_items = [
                 </div>
             <?php else : ?>
                 <div class="feu-einsatz-release-note-list">
-                    <?php foreach (array_slice($release_notes_entries, 0, 5) as $release_note) : ?>
+                    <?php foreach (array_slice($release_notes_entries, 0, 10) as $release_note) : ?>
                         <article class="feu-einsatz-release-note-card">
                             <div class="feu-einsatz-release-note-head">
                                 <div>

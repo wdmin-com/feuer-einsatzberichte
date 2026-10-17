@@ -184,8 +184,7 @@ Copy-PluginTree -SourceRoot $repoRoot -TargetRoot $stagePluginRoot -ExcludeTopLe
     'feuer-einsatzberichte.git',
     '.gitattributes',
     '.gitignore',
-    'update-manifest.json',
-    'release-notes.json'
+    'update-manifest.json'
 )
 
 $bomFiles = Get-ChildItem -LiteralPath $stagePluginRoot -Recurse -File -Filter '*.php' | Where-Object {

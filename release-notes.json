@@ -1,6 +1,19 @@
 {
   "releases": [
     {
+      "version": "3.2.99",
+      "date": "2026-10-17",
+      "title": "Vollständige Versionshistorie in den Einstellungen",
+      "summary": "Die installierte Plugin-Ausgabe enthält ihre Release-Historie und zeigt die zehn letzten Versionen zuverlässig an.",
+      "changes": [
+        "Versionshistorie: Die Einstellungen zeigen jetzt die zehn zuletzt veröffentlichten Versionen statt nur fünf Einträgen.",
+        "Release-Paket: release-notes.json wird in das installierbare Plugin-ZIP aufgenommen, damit die Historie auch nach einer normalen WordPress-Installation verfügbar ist.",
+        "Update-Informationen: Fehlt das absichtlich nicht mitgelieferte technische Manifest lokal, zeigt die Oberfläche die bereinigten Daten aus der Remote-Update-Quelle statt eines leeren Feldes.",
+        "Oberfläche: Nicht vorhandene lokale Manifest-Dateien und die leere Release-Vorlage wurden aus den Referenzen entfernt; ein verständlicher Fehlerzustand ersetzt leere Textfelder.",
+        "Qualität: Die CI prüft den Paketinhalt sowie Vollständigkeit, Eindeutigkeit, Sortierung und die Ausgabe der zehn neuesten Release-Einträge."
+      ]
+    },
+    {
       "version": "3.2.98",
       "date": "2026-10-17",
       "title": "Zuverlässige Hintergrundaufträge und Share-Bilder",

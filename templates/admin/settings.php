@@ -1321,22 +1321,22 @@ $generated_map_rebuild_from = isset($_POST['feu_einsatz_generated_map_rebuild_fr
 $generated_map_rebuild_to = isset($_POST['feu_einsatz_generated_map_rebuild_to'])
     ? sanitize_text_field(wp_unslash($_POST['feu_einsatz_generated_map_rebuild_to']))
     : '';
+$remote_manifest_url = FEU_Einsatz_Updater::get_manifest_url();
+$updater = Feuer_Einsatzberichte_Core::get_instance()->get_updater();
+$remote_manifest_payload = ($is_manifest_tab && $updater instanceof FEU_Einsatz_Updater) ? $updater->get_manifest_payload() : false;
 $manifest_path = FEU_EINSATZ_PLUGIN_DIR . 'update-manifest.json';
 $manifest_contents = $is_manifest_tab && file_exists($manifest_path)
     ? trim((string) file_get_contents($manifest_path))
     : '';
-$manifest_display_contents = $manifest_contents;
-if ('' !== $manifest_display_contents) {
-    $manifest_display_payload = json_decode($manifest_display_contents, true);
-    if (is_array($manifest_display_payload)) {
-        unset($manifest_display_payload['download_url'], $manifest_display_payload['package']);
-        $manifest_display_contents = (string) wp_json_encode($manifest_display_payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-    }
+$manifest_display_payload = '' !== $manifest_contents ? json_decode($manifest_contents, true) : null;
+if (!is_array($manifest_display_payload) && is_array($remote_manifest_payload)) {
+    $manifest_display_payload = $remote_manifest_payload;
 }
-$manifest_example_path = FEU_EINSATZ_PLUGIN_DIR . 'update-manifest.example.json';
-$manifest_example_contents = $is_manifest_tab && file_exists($manifest_example_path)
-    ? trim((string) file_get_contents($manifest_example_path))
-    : '';
+$manifest_display_contents = '';
+if (is_array($manifest_display_payload)) {
+    unset($manifest_display_payload['download_url'], $manifest_display_payload['package'], $manifest_display_payload['package_hash']);
+    $manifest_display_contents = (string) wp_json_encode($manifest_display_payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+}
 $release_notes_path = FEU_EINSATZ_PLUGIN_DIR . 'release-notes.json';
 $release_notes_contents = $is_manifest_tab && file_exists($release_notes_path)
     ? trim((string) file_get_contents($release_notes_path))
@@ -1345,9 +1345,6 @@ $release_notes_data = json_decode($release_notes_contents, true);
 $release_notes_entries = (is_array($release_notes_data) && !empty($release_notes_data['releases']) && is_array($release_notes_data['releases']))
     ? $release_notes_data['releases']
     : [];
-$remote_manifest_url = FEU_Einsatz_Updater::get_manifest_url();
-$updater = Feuer_Einsatzberichte_Core::get_instance()->get_updater();
-$remote_manifest_payload = ($is_manifest_tab && $updater instanceof FEU_Einsatz_Updater) ? $updater->get_manifest_payload() : false;
 $functions_reference_path = FEU_EINSATZ_PLUGIN_DIR . 'docs/PLUGIN_FUNCTIONS_AND_FILES.md';
 $update_guide_path = FEU_EINSATZ_PLUGIN_DIR . 'docs/UPDATE_HOSTING_AND_GITHUB.md';
 $docs_directory = FEU_EINSATZ_PLUGIN_DIR . 'docs';
@@ -1621,8 +1618,6 @@ $settings_summary_cards = [
             'manifest_path' => $manifest_path,
             'manifest_contents' => $manifest_contents,
             'manifest_display_contents' => $manifest_display_contents,
-            'manifest_example_path' => $manifest_example_path,
-            'manifest_example_contents' => $manifest_example_contents,
             'release_notes_path' => $release_notes_path,
             'release_notes_entries' => $release_notes_entries,
             'remote_manifest_url' => $remote_manifest_url,
