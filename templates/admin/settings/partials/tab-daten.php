@@ -5,8 +5,8 @@ if (!defined('ABSPATH')) {
 
 $purge_sections = [
     'participants' => [
-        'label' => __('Teilnehmer', 'feuer-einsatzberichte'),
-        'description' => __('Entfernt Teilnehmer, Zuordnungen in Einsatzberichten und davon abhängige Statistik.', 'feuer-einsatzberichte'),
+        'label' => __('Mannschaft', 'feuer-einsatzberichte'),
+        'description' => __('Entfernt Mannschaftsmitglieder, Zuordnungen in Einsatzberichten und davon abhängige Statistik.', 'feuer-einsatzberichte'),
     ],
     'reports' => [
         'label' => __('Einsatzberichte', 'feuer-einsatzberichte'),

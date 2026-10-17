@@ -88,7 +88,7 @@ const participants = participantNames.map(([vorname, nachname], index) => ({
   rank_title: index % 7 === 0 ? "Hauptbrandmeister/in" : index % 4 === 0 ? "Oberbrandmeister/in" : "Feuerwehrmann/-frau",
   member_function: index % 8 === 0 ? "Führungskraft" : "Einsatzabteilung",
   education: "Grundausbildung und regelmäßige Fortbildung",
-  description: "Demodatensatz für die Präsentation der Teilnehmerverwaltung.",
+  description: "Demodatensatz für die Präsentation der Mannschaftsverwaltung.",
   sort_order: index + 1,
   category_ids: "[]",
   gallery_ids: "[]",

@@ -129,7 +129,7 @@
             }
             if (!rows('#feu-einsatz-teilnehmer-list .feu-einsatz-participant-row').some(function (row) { return row.getAttribute('data-id') === String(item.id); })) {
                 unresolved.participants.push(item);
-                warn(recoveryStrings.participant || 'Teilnehmer %s konnte nicht wiederhergestellt werden.', item.name || '#' + item.id);
+                warn(recoveryStrings.participant || 'Mannschaftsmitglied %s konnte nicht wiederhergestellt werden.', item.name || '#' + item.id);
             }
             rows('#feu-einsatz-teilnehmer-list .feu-einsatz-participant-row').forEach(function (row) {
                 if (row.getAttribute('data-id') !== String(item.id)) return;

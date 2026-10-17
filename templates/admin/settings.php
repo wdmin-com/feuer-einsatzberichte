@@ -859,7 +859,7 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
         ];
         $setting_labels = [
             'feu_einsatz_functions' => __('Funktionen', 'feuer-einsatzberichte'),
-            'feu_einsatz_participant_provider' => __('Quelle der Teilnehmerdaten', 'feuer-einsatzberichte'),
+            'feu_einsatz_participant_provider' => __('Quelle der Mannschaftsdaten', 'feuer-einsatzberichte'),
             'feu_einsatz_categories' => __('Einsatzstichworte', 'feuer-einsatzberichte'),
             'feu_einsatz_map_zoom' => __('Karten-Zoom', 'feuer-einsatzberichte'),
             'feu_einsatz_map_height' => __('Kartenhöhe', 'feuer-einsatzberichte'),

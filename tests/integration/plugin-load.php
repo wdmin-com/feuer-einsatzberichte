@@ -370,7 +370,7 @@ if (!wp_next_scheduled('feu_einsatz_generate_share_card_background', [(int) $rep
 
 $participant_id = $database->save_participant(0, [
     'vorname' => 'CI',
-    'nachname' => 'Teilnehmer',
+    'nachname' => 'Mitglied',
     'member_function' => 'Test',
 ]);
 if (!$participant_id) {

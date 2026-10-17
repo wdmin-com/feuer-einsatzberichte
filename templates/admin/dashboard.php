@@ -18,7 +18,7 @@ $quick_links = [
     [
         'url' => admin_url('admin.php?page=feu-einsatz-neuer-bericht'),
         'label' => __('Neuen Einsatzbericht', 'feuer-einsatzberichte'),
-        'description' => __('Vollstaendige Bearbeitung mit Karten, Medien und Teilnehmern.', 'feuer-einsatzberichte'),
+        'description' => __('Vollstaendige Bearbeitung mit Karten, Medien und Mannschaftsmitgliedern.', 'feuer-einsatzberichte'),
         'icon' => 'ti ti-file-plus',
     ],
     [
@@ -69,7 +69,7 @@ $dashboard_url = admin_url('admin.php?page=feuer-einsatzberichte');
                 <a href="<?php echo esc_url('overview' === $tab_key ? $dashboard_url : add_query_arg('ops_tab', $tab_key, $dashboard_url)); ?>" <?php if ($dashboard_tab === $tab_key) : ?>aria-current="page"<?php endif; ?>><?php echo esc_html($tab_label); ?></a>
             <?php endforeach; ?>
             <?php if (current_user_can('manage_options')) : ?>
-                <a href="<?php echo esc_url(add_query_arg('ops_tab', 'privacy', $dashboard_url)); ?>" <?php if ('privacy' === $dashboard_tab) : ?>aria-current="page"<?php endif; ?>><?php esc_html_e('Teilnehmerdaten', 'feuer-einsatzberichte'); ?></a>
+                <a href="<?php echo esc_url(add_query_arg('ops_tab', 'privacy', $dashboard_url)); ?>" <?php if ('privacy' === $dashboard_tab) : ?>aria-current="page"<?php endif; ?>><?php esc_html_e('Mannschaftsdaten', 'feuer-einsatzberichte'); ?></a>
             <?php endif; ?>
         </nav>
     <?php endif; ?>
@@ -94,7 +94,7 @@ $dashboard_url = admin_url('admin.php?page=feuer-einsatzberichte');
         <article class="feu-admin-stat-card">
             <div class="feu-admin-stat-icon"><span class="ti ti-users-group"></span></div>
             <div class="feu-admin-stat-content">
-                <span class="feu-admin-stat-label"><?php esc_html_e('Aktive Teilnehmer', 'feuer-einsatzberichte'); ?></span>
+                <span class="feu-admin-stat-label"><?php esc_html_e('Aktive Mitglieder', 'feuer-einsatzberichte'); ?></span>
                 <strong class="feu-admin-stat-value"><?php echo esc_html($total_teilnehmer); ?></strong>
             </div>
         </article>

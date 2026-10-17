@@ -143,7 +143,7 @@ if ('publish' === $current_post_status) {
     <nav class="feu-einsatz-report-section-nav" aria-label="<?php echo esc_attr__('Abschnitte im Formular', 'feuer-einsatzberichte'); ?>">
         <a class="feu-einsatz-report-section-link" href="#feu-einsatz-report-box-details"><?php esc_html_e('Einsatzdetails', 'feuer-einsatzberichte'); ?></a>
         <a class="feu-einsatz-report-section-link" href="#feu-einsatz-report-section-basics"><?php esc_html_e('Grunddaten', 'feuer-einsatzberichte'); ?></a>
-        <a class="feu-einsatz-report-section-link" href="#feu-einsatz-report-box-teilnehmer"><?php esc_html_e('Teilnehmer', 'feuer-einsatzberichte'); ?></a>
+        <a class="feu-einsatz-report-section-link" href="#feu-einsatz-report-box-teilnehmer"><?php esc_html_e('Mannschaft', 'feuer-einsatzberichte'); ?></a>
         <a class="feu-einsatz-report-section-link" href="#feu-einsatz-report-box-kraefte"><?php esc_html_e('Kraefte vor Ort', 'feuer-einsatzberichte'); ?></a>
         <a class="feu-einsatz-report-section-link" href="#feu-einsatz-report-box-map"><?php esc_html_e('Kartenbild', 'feuer-einsatzberichte'); ?></a>
         <a class="feu-einsatz-report-section-link" href="#feu-einsatz-report-box-photos"><?php esc_html_e('Fotos', 'feuer-einsatzberichte'); ?></a>
@@ -251,7 +251,7 @@ if ('publish' === $current_post_status) {
 
                 <div class="postbox feu-einsatz-form-section" id="feu-einsatz-report-box-teilnehmer">
                     <div class="postbox-header">
-                        <h2 class="hndle"><?php _e('Teilnehmer', 'feuer-einsatzberichte'); ?></h2>
+                        <h2 class="hndle"><?php _e('Mannschaft', 'feuer-einsatzberichte'); ?></h2>
                     </div>
                     <div class="inside">
                         <?php

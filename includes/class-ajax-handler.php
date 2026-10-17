@@ -356,7 +356,7 @@ class FEU_Einsatz_Ajax_Handler {
         $jahr = isset($_POST['jahr']) ? absint(wp_unslash($_POST['jahr'])) : (int) date('Y');
 
         if (!$teilnehmer_id) {
-            wp_send_json_error(['message' => __('Keine Teilnehmer-ID', 'feuer-einsatzberichte')], 400);
+            wp_send_json_error(['message' => __('Keine ID des Mannschaftsmitglieds', 'feuer-einsatzberichte')], 400);
             return;
         }
 
@@ -621,7 +621,7 @@ class FEU_Einsatz_Ajax_Handler {
         }
 
         if (FEU_Einsatz_Mannschaft_Integration::is_enabled()) {
-            wp_send_json_error(['message' => __('Teilnehmer werden von Feuer-Mannschaft verwaltet. Bitte verwalten Sie das Profil dort.', 'feuer-einsatzberichte')], 409);
+            wp_send_json_error(['message' => __('Mannschaftsprofile werden von Feuer-Mannschaft verwaltet. Bitte verwalten Sie das Profil dort.', 'feuer-einsatzberichte')], 409);
             return;
         }
 
@@ -630,7 +630,7 @@ class FEU_Einsatz_Ajax_Handler {
         $existing_participant = $id > 0 ? $this->db->get_participant($id) : null;
 
         if ($id > 0 && (!$existing_participant || !empty($existing_participant->is_deleted))) {
-            wp_send_json_error(['message' => __('Teilnehmer nicht gefunden', 'feuer-einsatzberichte')], 404);
+            wp_send_json_error(['message' => __('Mannschaftsmitglied nicht gefunden', 'feuer-einsatzberichte')], 404);
             return;
         }
 
@@ -726,7 +726,7 @@ class FEU_Einsatz_Ajax_Handler {
                 $id > 0 ? 'participant_updated' : 'participant_created',
                 'participant',
                 $participant_id,
-                $id > 0 ? __('Teilnehmer aktualisiert', 'feuer-einsatzberichte') : __('Teilnehmer erstellt', 'feuer-einsatzberichte'),
+                $id > 0 ? __('Mannschaftsmitglied aktualisiert', 'feuer-einsatzberichte') : __('Mannschaftsmitglied erstellt', 'feuer-einsatzberichte'),
                 [
                     'name' => $participant_name,
                     'archived' => !empty($participant['is_archived']),
@@ -736,7 +736,7 @@ class FEU_Einsatz_Ajax_Handler {
                 ]
             );
 
-            wp_send_json_success(['message' => __('Teilnehmer gespeichert', 'feuer-einsatzberichte')]);
+            wp_send_json_success(['message' => __('Mannschaftsmitglied gespeichert', 'feuer-einsatzberichte')]);
             return;
         }
 
@@ -749,7 +749,7 @@ class FEU_Einsatz_Ajax_Handler {
         }
 
         if (FEU_Einsatz_Mannschaft_Integration::is_enabled()) {
-            wp_send_json_error(['message' => __('Teilnehmer werden von Feuer-Mannschaft verwaltet. Bitte ändern Sie den Status dort.', 'feuer-einsatzberichte')], 409);
+            wp_send_json_error(['message' => __('Mannschaftsprofile werden von Feuer-Mannschaft verwaltet. Bitte ändern Sie den Status dort.', 'feuer-einsatzberichte')], 409);
             return;
         }
 
@@ -770,7 +770,7 @@ class FEU_Einsatz_Ajax_Handler {
                 1 === $archived ? 'participant_archived' : 'participant_activated',
                 'participant',
                 $id,
-                1 === $archived ? __('Teilnehmer archiviert', 'feuer-einsatzberichte') : __('Teilnehmer aktiviert', 'feuer-einsatzberichte'),
+                1 === $archived ? __('Mannschaftsmitglied archiviert', 'feuer-einsatzberichte') : __('Mannschaftsmitglied aktiviert', 'feuer-einsatzberichte'),
                 [
                     'name' => $participant ? FEU_Einsatz_Template_Helpers::format_participant_name($participant->vorname, $participant->nachname) : '',
                 ]
@@ -778,8 +778,8 @@ class FEU_Einsatz_Ajax_Handler {
 
             wp_send_json_success([
                 'message' => 1 === $archived
-                    ? __('Teilnehmer archiviert', 'feuer-einsatzberichte')
-                    : __('Teilnehmer aktiviert', 'feuer-einsatzberichte'),
+                    ? __('Mannschaftsmitglied archiviert', 'feuer-einsatzberichte')
+                    : __('Mannschaftsmitglied aktiviert', 'feuer-einsatzberichte'),
             ]);
             return;
         }
@@ -793,13 +793,13 @@ class FEU_Einsatz_Ajax_Handler {
         }
 
         if (FEU_Einsatz_Mannschaft_Integration::is_enabled()) {
-            wp_send_json_error(['message' => __('Teilnehmer werden von Feuer-Mannschaft verwaltet. Bitte löschen Sie Profile dort.', 'feuer-einsatzberichte')], 409);
+            wp_send_json_error(['message' => __('Mannschaftsprofile werden von Feuer-Mannschaft verwaltet. Bitte löschen Sie Profile dort.', 'feuer-einsatzberichte')], 409);
             return;
         }
 
         if (!$this->can_remove_participant()) {
             wp_send_json_error(
-                ['message' => __('Nur die Hauptadministration darf Teilnehmer aus der Verwaltung entfernen.', 'feuer-einsatzberichte')],
+                ['message' => __('Nur die Hauptadministration darf Mannschaftsmitglieder aus der Verwaltung entfernen.', 'feuer-einsatzberichte')],
                 403
             );
             return;
@@ -821,20 +821,20 @@ class FEU_Einsatz_Ajax_Handler {
                 'participant_deleted',
                 'participant',
                 $id,
-                __('Teilnehmer aus der Verwaltung entfernt', 'feuer-einsatzberichte'),
+                __('Mannschaftsmitglied aus der Verwaltung entfernt', 'feuer-einsatzberichte'),
                 [
                     'name' => $participant ? FEU_Einsatz_Template_Helpers::format_participant_name($participant->vorname, $participant->nachname) : '',
                 ]
             );
 
             wp_send_json_success([
-                'message' => __('Teilnehmer wurde aus der Verwaltung entfernt. Statistik und bestehende Einsatzberichte bleiben erhalten.', 'feuer-einsatzberichte'),
+                'message' => __('Mannschaftsmitglied wurde aus der Verwaltung entfernt. Statistik und bestehende Einsatzberichte bleiben erhalten.', 'feuer-einsatzberichte'),
             ]);
             return;
         }
 
         wp_send_json_error(
-            ['message' => __('Teilnehmer konnte nicht entfernt werden.', 'feuer-einsatzberichte')],
+            ['message' => __('Mannschaftsmitglied konnte nicht entfernt werden.', 'feuer-einsatzberichte')],
             500
         );
     }

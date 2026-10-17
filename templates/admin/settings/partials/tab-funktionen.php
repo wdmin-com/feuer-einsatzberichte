@@ -12,10 +12,10 @@ if (!isset($active_tab) || 'funktionen' !== (string) $active_tab) {
 
 <div id="tab-funktionen" class="<?php echo esc_attr($tab_funktionen_classes); ?>">
     <h2><?php _e('Funktionen', 'feuer-einsatzberichte'); ?></h2>
-    <p><?php _e('Definieren Sie die Einsatzfunktionen. Neue Einsatzteilnehmer erhalten zuerst die am Teilnehmer hinterlegte Standardfunktion. Ohne eigene Vorgabe wird die unten gewählte Standardfunktion gesetzt.', 'feuer-einsatzberichte'); ?></p>
+    <p><?php _e('Definieren Sie die Einsatzfunktionen. Neue Mannschaftsmitglieder erhalten zuerst die am Mannschaftsmitglied hinterlegte Standardfunktion. Ohne eigene Vorgabe wird die unten gewählte Standardfunktion gesetzt.', 'feuer-einsatzberichte'); ?></p>
 
     <div class="feu-einsatz-manifest-preview-card feu-einsatz-function-default-card">
-        <h3><?php _e('Standardfunktion ohne Teilnehmer-Vorgabe', 'feuer-einsatzberichte'); ?></h3>
+        <h3><?php _e('Standardfunktion ohne Mitgliedsvorgabe', 'feuer-einsatzberichte'); ?></h3>
         <label for="feu_einsatz_default_participant_function" class="screen-reader-text"><?php _e('Standardfunktion auswählen', 'feuer-einsatzberichte'); ?></label>
         <select id="feu_einsatz_default_participant_function"
                 name="feu_einsatz_default_participant_function"
@@ -26,7 +26,7 @@ if (!isset($active_tab) || 'funktionen' !== (string) $active_tab) {
                 </option>
             <?php endforeach; ?>
         </select>
-        <p class="description"><?php _e('Diese Funktion wird automatisch gesetzt, wenn ein ausgewählter Teilnehmer keine eigene Standardfunktion hat. Keine Funktion bleibt im Einsatzbericht weiterhin manuell waehlbar.', 'feuer-einsatzberichte'); ?></p>
+        <p class="description"><?php _e('Diese Funktion wird automatisch gesetzt, wenn ein ausgewähltes Mannschaftsmitglied keine eigene Standardfunktion hat. Keine Funktion bleibt im Einsatzbericht weiterhin manuell waehlbar.', 'feuer-einsatzberichte'); ?></p>
     </div>
 
     <div id="feu-einsatz-functions-list">

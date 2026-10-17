@@ -239,7 +239,7 @@ $street_suggestions = FEU_Einsatz_Template_Helpers::get_street_suggestions();
         <?php if (!empty($participants)) : ?>
             <section class="feu-se-block">
                 <h2 class="feu-se-block-title">
-                    <?php esc_html_e('Teilnehmer', 'feuer-einsatzberichte'); ?>
+                    <?php esc_html_e('Mannschaft', 'feuer-einsatzberichte'); ?>
                     <span class="feu-se-count" data-feu-participant-count></span>
                 </h2>
                 <div class="feu-se-search-wrap">

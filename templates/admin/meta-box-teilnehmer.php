@@ -214,11 +214,11 @@ if (!function_exists('feu_einsatz_render_function_quick_actions')) {
                     <?php if (!$suppress_section_titles) : ?>
                         <h3 class="feu-einsatz-meta-section-title">
                             <span class="dashicons dashicons-groups"></span>
-                            <?php _e('Teilnehmer', 'feuer-einsatzberichte'); ?>
+                            <?php _e('Mannschaft', 'feuer-einsatzberichte'); ?>
                         </h3>
                     <?php endif; ?>
                     <p class="description">
-                        <?php _e('Teilnehmer per Klick auswaehlen. Die Funktion im Einsatz erscheint sofort direkt daneben.', 'feuer-einsatzberichte'); ?>
+                        <?php _e('Mannschaftsmitglieder per Klick auswählen. Die Funktion im Einsatz erscheint sofort direkt daneben.', 'feuer-einsatzberichte'); ?>
                     </p>
                 </div>
                 <span class="feu-einsatz-badge" id="feu-einsatz-teilnehmer-count"><?php echo esc_html(count($teilnehmer)); ?></span>
@@ -262,7 +262,7 @@ if (!function_exists('feu_einsatz_render_function_quick_actions')) {
 
             <div id="feu-einsatz-teilnehmer-list" class="feu-einsatz-list-container feu-einsatz-list-container--participants">
                 <?php if (empty($teilnehmer)) : ?>
-                    <p class="feu-einsatz-empty-message"><?php _e('Noch keine Teilnehmer ausgewaehlt.', 'feuer-einsatzberichte'); ?></p>
+                    <p class="feu-einsatz-empty-message"><?php _e('Noch keine Mannschaftsmitglieder ausgewählt.', 'feuer-einsatzberichte'); ?></p>
                 <?php else : ?>
                     <?php foreach (array_values($teilnehmer) as $index => $teilnehmer_data) : ?>
                         <?php
@@ -302,7 +302,7 @@ if (!function_exists('feu_einsatz_render_function_quick_actions')) {
                                         class="button feu-einsatz-remove-item feu-einsatz-pr-delete"
                                         data-type="teilnehmer"
                                         data-id="<?php echo esc_attr($participant_id); ?>"
-                                        aria-label="<?php esc_attr_e('Teilnehmer entfernen', 'feuer-einsatzberichte'); ?>">
+                                        aria-label="<?php esc_attr_e('Mitglied entfernen', 'feuer-einsatzberichte'); ?>">
                                     &#x2715;
                                 </button>
                             </div>
@@ -407,7 +407,7 @@ if (!function_exists('feu_einsatz_render_function_quick_actions')) {
         <div class="feu-einsatz-meta-hinweis">
             <p class="description">
                 <span class="dashicons dashicons-info"></span>
-                <?php _e('Archivierte oder entfernte Teilnehmer koennen nicht neu hinzugefuegt werden, bleiben aber in bestehenden Einsatzberichten erhalten.', 'feuer-einsatzberichte'); ?>
+                <?php _e('Archivierte oder entfernte Mannschaftsmitglieder können nicht neu hinzugefügt werden, bleiben aber in bestehenden Einsatzberichten erhalten.', 'feuer-einsatzberichte'); ?>
                 <?php echo ' ' . esc_html__('Archivierte Organisationen koennen nicht neu hinzugefuegt werden, bleiben aber in bestehenden Einsatzberichten erhalten.', 'feuer-einsatzberichte'); ?>
             </p>
         </div>
@@ -446,9 +446,9 @@ jQuery(document).ready(function($) {
         }, array_values($organization_lookup)));
     ?>;
     var selectedOrganizations = <?php echo wp_json_encode(array_values(array_map('strval', $selected_organization_ids))); ?>;
-    var participantEmptyMessage = <?php echo wp_json_encode(__('Noch keine Teilnehmer ausgewaehlt.', 'feuer-einsatzberichte')); ?>;
+    var participantEmptyMessage = <?php echo wp_json_encode(__('Noch keine Mannschaftsmitglieder ausgewählt.', 'feuer-einsatzberichte')); ?>;
     var participantRoleLabel = <?php echo wp_json_encode(__('Funktion im Einsatz', 'feuer-einsatzberichte')); ?>;
-    var participantRemoveLabel = <?php echo wp_json_encode(__('Teilnehmer entfernen', 'feuer-einsatzberichte')); ?>;
+    var participantRemoveLabel = <?php echo wp_json_encode(__('Mitglied entfernen', 'feuer-einsatzberichte')); ?>;
     var participantStandardPrefix = <?php echo wp_json_encode(__('Standard:', 'feuer-einsatzberichte')); ?>;
     var participantQuickActionHint = <?php echo wp_json_encode(__('Oft genutzt', 'feuer-einsatzberichte')); ?>;
     var organizationEmptyMessage = <?php echo wp_json_encode(__('Noch keine Organisation ausgewaehlt.', 'feuer-einsatzberichte')); ?>;

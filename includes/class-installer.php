@@ -321,7 +321,7 @@ class FEU_Einsatz_Installer {
         
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
         
-        // Tabelle: Teilnehmer
+        // Tabelle: Mannschaft
         $sql1 = "CREATE TABLE IF NOT EXISTS $table_participants (
             id int(11) NOT NULL AUTO_INCREMENT,
             vorname varchar(100) NOT NULL,
@@ -348,7 +348,7 @@ class FEU_Einsatz_Installer {
         ) $charset_collate;";
         dbDelta($sql1);
         
-        // Tabelle: Statistiken (Einsätze pro Teilnehmer)
+        // Tabelle: Statistiken (Einsätze pro Mannschaftsmitglied)
         $sql2 = "CREATE TABLE IF NOT EXISTS $table_stats (
             id int(11) NOT NULL AUTO_INCREMENT,
             post_id int(11) NOT NULL,

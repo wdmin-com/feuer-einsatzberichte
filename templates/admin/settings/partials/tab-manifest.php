@@ -96,9 +96,9 @@ $manifest_reference_items = [
                 </div>
 
                 <div class="feu-einsatz-settings-note-card">
-                    <h3><?php esc_html_e('Teilnehmer-Standard', 'feuer-einsatzberichte'); ?></h3>
+                    <h3><?php esc_html_e('Standardfunktion der Mannschaft', 'feuer-einsatzberichte'); ?></h3>
                     <p><code><?php echo esc_html($participant_fallback_function); ?></code></p>
-                    <p class="description"><?php esc_html_e('Neue Einsatzteilnehmer erhalten zuerst ihre eigene Standardfunktion. Ohne Vorgabe bleibt der Wert im Einsatzbericht manuell waehlbar.', 'feuer-einsatzberichte'); ?></p>
+                    <p class="description"><?php esc_html_e('Neue Mannschaftsmitglieder erhalten zuerst ihre eigene Standardfunktion. Ohne Vorgabe bleibt der Wert im Einsatzbericht manuell waehlbar.', 'feuer-einsatzberichte'); ?></p>
                 </div>
             </div>
         </section>

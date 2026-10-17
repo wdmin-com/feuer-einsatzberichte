@@ -27,7 +27,7 @@ $plugin_version = $plugin_version !== '' ? $plugin_version : '3.2.9';
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Feuer-Einsatzberichte - WordPress Plugin fuer Feuerwehren</title>
-    <meta name="description" content="Feuer-Einsatzberichte ist ein WordPress Plugin fuer professionelle Einsatzberichte, Karten, animierte Statistiken, Teilnehmerverwaltung und oeffentliche Feuerwehr-Kommunikation.">
+    <meta name="description" content="Feuer-Einsatzberichte ist ein WordPress Plugin fuer professionelle Einsatzberichte, Karten, animierte Statistiken, Mannschaftsverwaltung und oeffentliche Feuerwehr-Kommunikation.">
     <style>
         :root {
             --feu-bg: #f3f6f9;
@@ -325,7 +325,7 @@ $plugin_version = $plugin_version !== '' ? $plugin_version : '3.2.9';
                 <h1 id="plugin-title">Feuer-Einsatzberichte fuer moderne Feuerwehr-Websites.</h1>
                 <p class="lead">
                     Feuer-Einsatzberichte erweitert WordPress um einen spezialisierten Redaktionsablauf fuer
-                    Einsatzberichte, Kartenbilder, Teilnehmerverwaltung, animierte Statistiken und oeffentliche
+                    Einsatzberichte, Kartenbilder, Mannschaftsverwaltung, animierte Statistiken und oeffentliche
                     Feuerwehr-Kommunikation. Diese Seite beschreibt Funktionen und Einsatzbereiche; direkte
                     Paket-Downloads werden hier nicht angeboten.
                 </p>
@@ -383,7 +383,7 @@ $plugin_version = $plugin_version !== '' ? $plugin_version : '3.2.9';
                     <span class="feature-icon">03</span>
                     <h3>Mannschaft und Funktionen</h3>
                     <p>
-                        Teilnehmer, Standardfunktionen, Kraefte vor Ort und Einsatzfunktionen lassen sich
+                        Mannschaft, Standardfunktionen, Kraefte vor Ort und Einsatzfunktionen lassen sich
                         zentral verwalten und direkt mit Einsatzberichten verbinden.
                     </p>
                 </article>
@@ -437,7 +437,7 @@ $plugin_version = $plugin_version !== '' ? $plugin_version : '3.2.9';
                     <h3>Schneller publizieren</h3>
                     <p>
                         Wiederkehrende Angaben, Strassen-Memory, PLZ-Unterstuetzung, Kategorien,
-                        Teilnehmer und Hintergrundprozesse senken den manuellen Aufwand pro Einsatzbericht.
+                        Mannschaft und Hintergrundprozesse senken den manuellen Aufwand pro Einsatzbericht.
                     </p>
                 </article>
                 <article class="card">

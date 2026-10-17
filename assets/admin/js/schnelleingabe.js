@@ -163,7 +163,7 @@
                     if (!emptyHint) {
                         emptyHint = document.createElement('p');
                         emptyHint.className = 'feu-se-empty';
-                        emptyHint.textContent = 'Keine Teilnehmer gefunden.';
+                        emptyHint.textContent = 'Keine Mannschaftsmitglieder gefunden.';
                         participantList.appendChild(emptyHint);
                     }
 

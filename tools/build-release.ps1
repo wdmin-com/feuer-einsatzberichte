@@ -254,8 +254,8 @@ Demoinhalt:
 - Feuerwehrhaus: Feuerwehrakademie Hamburg, Bredowstraße 4, 22113 Hamburg
 - 30 veröffentlichte, vollständig erfundene Einsatzberichte, darunter 5 QA-Szenarien
 - 15 Einsatzberichte aus 2026 und 15 aus 2025
-- 25 vollständig erfundene Teilnehmer
-- 6 Organisationen, Kategorien, Teilnehmerzuordnungen und Kartenlinien
+- 25 vollständig erfundene Mannschaftsmitglieder
+- 6 Organisationen, Kategorien, Mannschaftszuordnungen und Kartenlinien
 
 Alle Personen- und Einsatzangaben sind Demodaten und stellen keine realen Ereignisse dar.
 "@
