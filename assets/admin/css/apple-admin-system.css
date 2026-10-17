@@ -323,9 +323,8 @@ body.feu-apple-settings .feu-admin-settings-nav {
     width: auto !important;
     gap: 2px;
     margin: 0;
-    padding: 0 14px 0 0;
+    padding: 0;
     border: 0;
-    border-right: 1px solid var(--feu-ui-line);
     border-radius: 0;
     background: transparent;
 }
@@ -393,42 +392,42 @@ body.feu-apple-settings .feu-einsatz-tab-content {
     box-shadow: none;
 }
 
-/* Settings hierarchy: page canvas → section title → one grouped surface.
- * Do not permit a surface to visually wrap another surface.  This applies to
- * Social, Media, Maps, Modules and every other settings tab alike. */
+/* Every settings section is a self-contained card. */
 body.feu-apple-settings .feu-einsatz-tab-content .feu-admin-settings-stack {
     display: grid;
-    gap: 44px;
+    gap: 22px;
 }
 
 body.feu-apple-settings .feu-einsatz-tab-content .feu-admin-settings-surface {
     display: grid;
-    gap: 18px;
+    gap: 0;
     margin: 0;
     padding: 0;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-    box-shadow: none;
+    overflow: hidden;
+    border: 1px solid var(--feu-ui-line);
+    border-radius: 18px;
+    background: var(--feu-ui-surface);
+    box-shadow: 0 10px 30px rgba(15, 23, 42, .045);
 }
 
 body.feu-apple-settings .feu-einsatz-tab-content .feu-admin-settings-surface-head {
-    padding: 0 2px;
+    padding: 20px 22px 18px;
     border: 0;
-    background: transparent;
+    border-bottom: 1px solid var(--feu-ui-line);
+    background: #fbfcfe;
 }
 
 body.feu-apple-settings .feu-einsatz-tab-content .feu-admin-settings-surface-head h2,
 body.feu-apple-settings .feu-einsatz-tab-content .feu-admin-settings-surface-head h3 {
     margin: 0 0 6px;
     color: var(--feu-ui-text);
-    font-size: 22px;
+    font-size: 18px;
     font-weight: 700;
     letter-spacing: -.03em;
 }
 
 body.feu-apple-settings .feu-einsatz-tab-content .feu-admin-settings-surface-head h2 {
-    font-size: 28px;
+    font-size: 22px;
 }
 
 body.feu-apple-settings .feu-einsatz-tab-content .feu-admin-settings-surface-head .description {
@@ -441,12 +440,66 @@ body.feu-apple-settings .feu-einsatz-tab-content .feu-admin-settings-fieldset {
     display: grid;
     align-content: start;
     gap: 16px;
+    margin: 20px 22px;
+    padding: 18px;
+    border: 1px solid #e8edf4;
+    border-radius: 14px;
+    background: #fbfcfe;
+    box-shadow: none;
+}
+
+body.feu-apple-settings .feu-einsatz-tab-content .feu-admin-settings-surface > *:not(.feu-admin-settings-surface-head):not(.feu-admin-settings-fieldset) {
     margin: 0;
+    padding: 20px 22px;
+}
+
+body.feu-apple-settings .feu-einsatz-tab-content .feu-admin-settings-surface > *:not(.feu-admin-settings-surface-head) + *:not(.feu-admin-settings-fieldset) {
+    border-top: 1px solid var(--feu-ui-line);
+}
+
+body.feu-apple-settings .feu-einsatz-tab-content .feu-admin-settings-form-grid > .feu-admin-settings-fieldset {
+    margin: 0;
+}
+
+body.feu-apple-settings .feu-einsatz-tab-content.feu-admin-settings-panel--card {
     padding: 22px;
     border: 1px solid var(--feu-ui-line);
     border-radius: 18px;
     background: var(--feu-ui-surface);
-    box-shadow: none;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, .045);
+}
+
+body.feu-apple-settings .feu-einsatz-tab-content.feu-admin-settings-panel--card > h2:first-child,
+body.feu-apple-settings .feu-einsatz-tab-content.feu-admin-settings-panel--card > .feu-admin-card-header:first-child h2 {
+    margin-top: 0;
+}
+
+body.feu-apple-settings .feu-einsatz-categories-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 8px;
+    max-height: none;
+    overflow: visible;
+    padding: 14px;
+    border-color: var(--feu-ui-line);
+    background: #fbfcfe;
+}
+
+body.feu-apple-settings .feu-einsatz-categories-list label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+    margin: 0;
+    padding: 9px 11px;
+    border: 1px solid #e8edf4;
+    border-radius: 10px;
+    background: var(--feu-ui-surface);
+}
+
+body.feu-apple-settings .feu-einsatz-categories-list input[type="checkbox"] {
+    flex: 0 0 auto;
+    margin: 0;
 }
 
 body.feu-apple-settings .feu-einsatz-tab-content .feu-admin-settings-fieldset-head {

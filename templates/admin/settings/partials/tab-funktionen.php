@@ -3,7 +3,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-$tab_funktionen_classes = 'feu-einsatz-tab-content';
+$tab_funktionen_classes = 'feu-einsatz-tab-content feu-admin-settings-panel--card';
 
 if (!isset($active_tab) || 'funktionen' !== (string) $active_tab) {
     $tab_funktionen_classes .= ' feu-einsatz-tab-content-hidden';
