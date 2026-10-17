@@ -88,17 +88,17 @@ $retention_cutoff = $retention_years > 0 ? strtotime('-' . $retention_years . ' 
 
     <?php else : ?>
         <section class="feu-einsatz-operations-panel">
-            <div class="feu-einsatz-operations-panel-heading"><div><h2><?php esc_html_e('Teilnehmerdaten', 'feuer-einsatzberichte'); ?></h2><p><?php esc_html_e('Die Teilnehmer sind Einsatzpersonen im Plugin und keine WordPress-Benutzerkonten.', 'feuer-einsatzberichte'); ?></p></div></div>
+            <div class="feu-einsatz-operations-panel-heading"><div><h2><?php esc_html_e('Mannschaftsdaten', 'feuer-einsatzberichte'); ?></h2><p><?php esc_html_e('Die Mannschaftsmitglieder sind Einsatzpersonen im Plugin und keine WordPress-Benutzerkonten.', 'feuer-einsatzberichte'); ?></p></div></div>
             <?php if (isset($_GET['saved'])) : ?><div class="notice notice-success"><p><?php esc_html_e('Datenschutz-Einstellungen gespeichert.', 'feuer-einsatzberichte'); ?></p></div><?php endif; ?>
-            <?php if (isset($_GET['anonymized'])) : ?><div class="notice notice-success"><p><?php esc_html_e('Teilnehmerprofil anonymisiert. Berichtstexte und Fotos bitte separat prüfen.', 'feuer-einsatzberichte'); ?></p></div><?php endif; ?>
+            <?php if (isset($_GET['anonymized'])) : ?><div class="notice notice-success"><p><?php esc_html_e('Mannschaftsprofil anonymisiert. Berichtstexte und Fotos bitte separat prüfen.', 'feuer-einsatzberichte'); ?></p></div><?php endif; ?>
             <form class="feu-einsatz-operations-privacy-settings" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
                 <input type="hidden" name="action" value="feu_einsatz_privacy_settings" /><?php wp_nonce_field('feu_einsatz_privacy_settings'); ?>
-                <label><input type="checkbox" name="public_names" value="1" <?php checked(1, (int) get_option('feu_einsatz_public_participant_names', 1)); ?> /> <?php esc_html_e('Teilnehmernamen in öffentlichen Einsatzberichten anzeigen', 'feuer-einsatzberichte'); ?></label>
+                <label><input type="checkbox" name="public_names" value="1" <?php checked(1, (int) get_option('feu_einsatz_public_participant_names', 1)); ?> /> <?php esc_html_e('Mannschaftsnamen in öffentlichen Einsatzberichten anzeigen', 'feuer-einsatzberichte'); ?></label>
                 <label><?php esc_html_e('Aufbewahrung prüfen nach', 'feuer-einsatzberichte'); ?> <select name="retention_years"><?php foreach ([0, 1, 2, 3, 5, 10, 15, 20] as $years) : ?><option value="<?php echo esc_attr((string) $years); ?>" <?php selected($years, (int) get_option('feu_einsatz_participant_retention_years', 0)); ?>><?php echo $years ? esc_html(sprintf(__('%d Jahren', 'feuer-einsatzberichte'), $years)) : esc_html__('manueller Entscheidung', 'feuer-einsatzberichte'); ?></option><?php endforeach; ?></select></label>
-                <p class="description"><?php esc_html_e('Die Frist kennzeichnet alte Profile zur manuellen Prüfung. Es werden keine Teilnehmer automatisch gelöscht.', 'feuer-einsatzberichte'); ?></p>
+                <p class="description"><?php esc_html_e('Die Frist kennzeichnet alte Profile zur manuellen Prüfung. Es werden keine Mannschaftsmitglieder automatisch gelöscht.', 'feuer-einsatzberichte'); ?></p>
                 <button class="button button-primary" type="submit"><?php esc_html_e('Einstellungen speichern', 'feuer-einsatzberichte'); ?></button>
             </form>
-            <form method="get" class="feu-einsatz-operations-search"><input type="hidden" name="page" value="feuer-einsatzberichte" /><input type="hidden" name="ops_tab" value="privacy" /><label for="feu-operations-search"><?php esc_html_e('Teilnehmer suchen', 'feuer-einsatzberichte'); ?></label><input id="feu-operations-search" name="s" value="<?php echo esc_attr($privacy_search); ?>" /><button type="submit" class="button"><?php esc_html_e('Suchen', 'feuer-einsatzberichte'); ?></button></form>
+            <form method="get" class="feu-einsatz-operations-search"><input type="hidden" name="page" value="feuer-einsatzberichte" /><input type="hidden" name="ops_tab" value="privacy" /><label for="feu-operations-search"><?php esc_html_e('Mitglied suchen', 'feuer-einsatzberichte'); ?></label><input id="feu-operations-search" name="s" value="<?php echo esc_attr($privacy_search); ?>" /><button type="submit" class="button"><?php esc_html_e('Suchen', 'feuer-einsatzberichte'); ?></button></form>
             <div class="feu-einsatz-operations-queue">
                 <?php foreach ($participants['items'] as $participant) : ?>
                     <?php $participant_id = (int) $participant->id; ?>
@@ -111,7 +111,7 @@ $retention_cutoff = $retention_years > 0 ? strtotime('-' . $retention_years . ' 
                     </article>
                 <?php endforeach; ?>
             </div>
-            <?php if (!$participants['items']) : ?><p class="feu-einsatz-operations-empty"><?php esc_html_e('Keine Teilnehmer gefunden.', 'feuer-einsatzberichte'); ?></p><?php endif; ?>
+            <?php if (!$participants['items']) : ?><p class="feu-einsatz-operations-empty"><?php esc_html_e('Keine Mannschaftsmitglieder gefunden.', 'feuer-einsatzberichte'); ?></p><?php endif; ?>
             <?php if ($participants['total'] > 20) : ?><div class="tablenav"><div class="tablenav-pages"><?php echo wp_kses_post(paginate_links(['base' => add_query_arg(['ops_tab' => 'privacy', 's' => $privacy_search, 'paged' => '%#%'], $center_url), 'current' => $page, 'total' => (int) ceil($participants['total'] / 20)])); ?></div></div><?php endif; ?>
         </section>
     <?php endif; ?>

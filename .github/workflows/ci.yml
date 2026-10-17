@@ -33,6 +33,7 @@ jobs:
           node tests/report-prepublish-review.test.cjs
           node tests/report-availability-preview.test.cjs
           node tests/setup-wizard-client.test.cjs
+          node tests/mannschaft-copy.test.cjs
 
   wordpress-integration:
     name: WordPress activation smoke test

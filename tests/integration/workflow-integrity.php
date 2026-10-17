@@ -56,6 +56,19 @@ try {
         throw new RuntimeException('Statistics excluded a zero-participant report or included an ordinary post.');
     }
 
+    $_GET['jahr'] = '2098';
+    $_GET['tab'] = 'participants';
+    $_REQUEST['jahr'] = '2098';
+    ob_start();
+    Feuer_Einsatzberichte_Core::get_instance()->get_admin()->render_statistics();
+    $statistics_markup = (string) ob_get_clean();
+    unset($_GET['jahr'], $_GET['tab']);
+    unset($_REQUEST['jahr']);
+
+    if (false === strpos($statistics_markup, '1 von 2 Einsätzen')) {
+        throw new RuntimeException('The participant ranking lost the annual report total while preparing distribution charts.');
+    }
+
     if (!$db->delete_participant($participant_id)
         || false !== $db->set_participant_archive_status($participant_id, false)) {
         throw new RuntimeException('A removed participant was reactivated.');

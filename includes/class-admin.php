@@ -112,7 +112,7 @@ class FEU_Einsatz_Admin {
             'functions' => [
                 'tab' => 'funktionen',
                 'label' => __('Funktionen', 'feuer-einsatzberichte'),
-                'description' => __('Dienstfunktionen für Teilnehmer verwalten.', 'feuer-einsatzberichte'),
+                'description' => __('Dienstfunktionen für die Mannschaft verwalten.', 'feuer-einsatzberichte'),
                 'icon' => 'ti ti-badge',
             ],
             'maps' => [
@@ -246,8 +246,8 @@ class FEU_Einsatz_Admin {
                 'description' => __('Mobile Schnelleingabe für neue Einsatzberichte.', 'feuer-einsatzberichte'),
             ],
             'participants' => [
-                'label' => __('Teilnehmer', 'feuer-einsatzberichte'),
-                'description' => __('Teilnehmerliste und Standardfunktionen verwalten.', 'feuer-einsatzberichte'),
+                'label' => __('Mannschaft', 'feuer-einsatzberichte'),
+                'description' => __('Mannschaftsliste und Standardfunktionen verwalten.', 'feuer-einsatzberichte'),
             ],
             'statistics' => [
                 'label' => __('Statistiken', 'feuer-einsatzberichte'),
@@ -730,7 +730,7 @@ class FEU_Einsatz_Admin {
         $add_item(
             $items,
             'functions',
-            __('Teilnehmer-Funktionen', 'feuer-einsatzberichte'),
+            __('Mannschaftsfunktionen', 'feuer-einsatzberichte'),
             $functions_ok
                 ? sprintf(
                     /* translators: %d: function count */
@@ -762,17 +762,17 @@ class FEU_Einsatz_Admin {
         $add_item(
             $items,
             'participants',
-            __('Teilnehmer', 'feuer-einsatzberichte'),
+            __('Mannschaft', 'feuer-einsatzberichte'),
             $participants_count > 0
                 ? sprintf(
                     /* translators: %d: participant count */
-                    _n('%d aktiver Teilnehmer ist vorhanden.', '%d aktive Teilnehmer sind vorhanden.', $participants_count, 'feuer-einsatzberichte'),
+                    _n('%d aktives Mannschaftsmitglied ist vorhanden.', '%d aktive Mannschaftsmitglieder sind vorhanden.', $participants_count, 'feuer-einsatzberichte'),
                     $participants_count
                 )
-                : __('Empfohlen: Teilnehmer anlegen, damit sie im ersten Bericht gewählt werden können.', 'feuer-einsatzberichte'),
+                : __('Empfohlen: Mannschaftsmitglieder anlegen, damit sie im ersten Bericht gewählt werden können.', 'feuer-einsatzberichte'),
             $participants_count > 0 ? 'ok' : 'warning',
             false,
-            __('Teilnehmer verwalten', 'feuer-einsatzberichte'),
+            __('Mannschaft verwalten', 'feuer-einsatzberichte'),
             $participants_url
         );
 
@@ -1055,7 +1055,7 @@ class FEU_Einsatz_Admin {
                     <ol>
                         <li><?php esc_html_e('Feuerwehrhaus-Adresse und Logo unter Einstellungen > Karten pflegen.', 'feuer-einsatzberichte'); ?></li>
                         <li><?php esc_html_e('Einsatzstichworte und Funktionen festlegen.', 'feuer-einsatzberichte'); ?></li>
-                        <li><?php esc_html_e('Teilnehmer und Kraefte vor Ort anlegen.', 'feuer-einsatzberichte'); ?></li>
+                        <li><?php esc_html_e('Mannschaftsmitglieder und Kräfte vor Ort anlegen.', 'feuer-einsatzberichte'); ?></li>
                         <li><?php esc_html_e('Share-Karte, Wasserzeichen und Shortcode-Seiten pruefen.', 'feuer-einsatzberichte'); ?></li>
                     </ol>
                 </div>
@@ -1160,7 +1160,7 @@ class FEU_Einsatz_Admin {
                                 <label><span><?php esc_html_e('Beispiel-PLZ', 'feuer-einsatzberichte'); ?></span><input type="text" name="feu_einsatz_sample_postcode" value="<?php echo esc_attr($wizard_value('feu_einsatz_sample_postcode')); ?>" pattern="[0-9]{5}" maxlength="5" inputmode="numeric" placeholder="22525" /></label>
                             </div>
                             <label><span><?php esc_html_e('Beispielstadt', 'feuer-einsatzberichte'); ?></span><input type="text" name="feu_einsatz_sample_city" value="<?php echo esc_attr($wizard_value('feu_einsatz_sample_city')); ?>" placeholder="Hamburg" /></label>
-                            <label class="feu-einsatz-setup-wizard-check"><input type="checkbox" name="feu_einsatz_create_sample_participant" value="1" <?php checked((int) $wizard_value('feu_einsatz_create_sample_participant', 0), 1); ?> /> <span><?php esc_html_e('Ersten Teilnehmer als Beispiel anlegen', 'feuer-einsatzberichte'); ?></span></label>
+                            <label class="feu-einsatz-setup-wizard-check"><input type="checkbox" name="feu_einsatz_create_sample_participant" value="1" <?php checked((int) $wizard_value('feu_einsatz_create_sample_participant', 0), 1); ?> /> <span><?php esc_html_e('Erstes Mannschaftsmitglied als Beispiel anlegen', 'feuer-einsatzberichte'); ?></span></label>
                             <div class="feu-einsatz-setup-wizard-grid">
                                 <label><span><?php esc_html_e('Vorname', 'feuer-einsatzberichte'); ?></span><input type="text" name="feu_einsatz_sample_first_name" value="<?php echo esc_attr($wizard_value('feu_einsatz_sample_first_name')); ?>" placeholder="Max" /></label>
                                 <label><span><?php esc_html_e('Nachname', 'feuer-einsatzberichte'); ?></span><input type="text" name="feu_einsatz_sample_last_name" value="<?php echo esc_attr($wizard_value('feu_einsatz_sample_last_name')); ?>" placeholder="Mustermann" /></label>
@@ -1506,7 +1506,7 @@ class FEU_Einsatz_Admin {
         $this->db->invalidate_statistics_dashboard_cache();
 
         $section_labels = [
-            'participants' => __('Teilnehmer', 'feuer-einsatzberichte'),
+            'participants' => __('Mannschaft', 'feuer-einsatzberichte'),
             'reports' => __('Einsatzberichte', 'feuer-einsatzberichte'),
             'statistics' => __('Statistik', 'feuer-einsatzberichte'),
             'settings' => __('Einstellungen', 'feuer-einsatzberichte'),
@@ -1940,8 +1940,8 @@ class FEU_Einsatz_Admin {
         if (self::current_user_can_access_plugin_section('participants')) {
             add_submenu_page(
                 'feuer-einsatzberichte',
-                __('Teilnehmer', 'feuer-einsatzberichte'),
-                __('Teilnehmer', 'feuer-einsatzberichte'),
+                __('Mannschaft', 'feuer-einsatzberichte'),
+                __('Mannschaft', 'feuer-einsatzberichte'),
                 'read',
                 'feu-einsatz-teilnehmer',
                 [$this, 'render_participants']
@@ -2483,7 +2483,7 @@ class FEU_Einsatz_Admin {
                     'ajaxUrl' => admin_url('admin-ajax.php'),
                     'nonce' => wp_create_nonce('feu_einsatz_validate_recovery_gallery'),
                     'strings' => [
-                        'participant' => __('Teilnehmer %s konnte nicht wiederhergestellt werden.', 'feuer-einsatzberichte'),
+                        'participant' => __('Mannschaftsmitglied %s konnte nicht wiederhergestellt werden.', 'feuer-einsatzberichte'),
                         'organization' => __('Organisation %s konnte nicht wiederhergestellt werden.', 'feuer-einsatzberichte'),
                         'category' => __('Einsatzstichwort %s konnte nicht wiederhergestellt werden. Bitte ein neues wählen.', 'feuer-einsatzberichte'),
                         'photo' => __('Foto-ID %s ist nicht mehr verfügbar.', 'feuer-einsatzberichte'),
@@ -2622,7 +2622,7 @@ class FEU_Einsatz_Admin {
 
         add_meta_box(
             'feu_einsatz_teilnehmer',
-            __('Teilnehmer & Kräfte vor Ort', 'feuer-einsatzberichte'),
+            __('Mannschaft & Kräfte vor Ort', 'feuer-einsatzberichte'),
             [$this, 'render_teilnehmer_meta_box'],
             $post_type,
             'normal',
@@ -8888,7 +8888,7 @@ class FEU_Einsatz_Admin {
         echo '<div class="feu-einsatz-dashboard-widget-grid">';
         echo '<div class="feu-einsatz-dashboard-stat"><strong>' . esc_html($total_reports) . '</strong><span>' . esc_html__('Einsätze gesamt', 'feuer-einsatzberichte') . '</span></div>';
         echo '<div class="feu-einsatz-dashboard-stat"><strong>' . esc_html($reports_this_year) . '</strong><span>' . esc_html(sprintf(__('Einsätze %d', 'feuer-einsatzberichte'), $current_year)) . '</span></div>';
-        echo '<div class="feu-einsatz-dashboard-stat"><strong>' . esc_html($participants_total) . '</strong><span>' . esc_html__('Aktive Teilnehmer', 'feuer-einsatzberichte') . '</span></div>';
+        echo '<div class="feu-einsatz-dashboard-stat"><strong>' . esc_html($participants_total) . '</strong><span>' . esc_html__('Aktive Mitglieder', 'feuer-einsatzberichte') . '</span></div>';
         echo '<div class="feu-einsatz-dashboard-stat"><strong>' . esc_html($categories_total) . '</strong><span>' . esc_html__('Konfigurierte Einsatzstichworte', 'feuer-einsatzberichte') . '</span></div>';
         echo '</div>';
 
@@ -10202,8 +10202,8 @@ class FEU_Einsatz_Admin {
         }
 
         wp_die(
-            esc_html__('Die Datenquelle wurde gespeichert. Bitte öffnen Sie die Teilnehmerverwaltung erneut.', 'feuer-einsatzberichte'),
-            esc_html__('Teilnehmerdaten gespeichert', 'feuer-einsatzberichte'),
+            esc_html__('Die Datenquelle wurde gespeichert. Bitte öffnen Sie die Mannschaftsverwaltung erneut.', 'feuer-einsatzberichte'),
+            esc_html__('Mannschaftsdaten gespeichert', 'feuer-einsatzberichte'),
             ['response' => 200]
         );
     }

@@ -168,7 +168,7 @@ const flush = () => new Promise((resolve) => setImmediate(resolve));
     await flush();
     assert.equal(missing.warning.hidden, false);
     assert.equal(missing.warningList.children.length, 4, missing.warningList.children.map((item) => item.textContent).join(' | '));
-    assert.match(missing.warningList.children[0].textContent, /Teilnehmer Max Mustermann/);
+    assert.match(missing.warningList.children[0].textContent, /Mannschaftsmitglied Max Mustermann/);
     assert.match(missing.warningList.children[1].textContent, /Organisation LF Hamburg/);
     assert.match(missing.warningList.children[2].textContent, /Einsatzstichwort Feuer/);
     assert.match(missing.warningList.children[3].textContent, /Foto-ID 15/);

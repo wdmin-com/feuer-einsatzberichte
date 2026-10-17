@@ -1,6 +1,19 @@
 {
   "releases": [
     {
+      "version": "3.3.0",
+      "date": "2026-10-17",
+      "title": "Korrektes Mannschaft-Ranking und einheitliche Mannschaftssprache",
+      "summary": "Das Ranking verwendet wieder die tatsächliche Zahl der Jahreseinsätze; Oberfläche und Präsentation erhalten eine klare, einheitliche Mannschaftsdarstellung.",
+      "changes": [
+        "Statistik: Das Mannschaft-Ranking verliert die Gesamtzahl der veröffentlichten Jahreseinsätze nicht mehr beim Aufbau der Verteilungsdiagramme. Angaben wie 6 von 25 und die Beteiligungsquote werden wieder korrekt berechnet.",
+        "Begriffe: Sichtbare Bezeichnungen wurden pluginweit von Teilnehmer auf Mannschaft, Mitglied oder Mannschaftsmitglied umgestellt. Interne Datenbank- und API-Schlüssel bleiben für Updates und Backups kompatibel.",
+        "Präsentation: Prozentwert und Verhältnis der Einsätze stehen in getrennten, responsiven Zeilen. Lange Namen und Werte überlagern sich nicht mehr.",
+        "Export und Verwaltung: Statistik-PDF, Dashboard, Berichtseditor, Schnelleingabe, Einstellungen, Datenschutzbereich, Meldungen und Mannschaftsverwaltung verwenden denselben Wortschatz.",
+        "Qualität: Ein WordPress-Integrationstest prüft den Nenner des Rankings mit echten Berichtsdaten; ein Quelltest verhindert die Rückkehr der alten sichtbaren Bezeichnung."
+      ]
+    },
+    {
       "version": "3.2.99",
       "date": "2026-10-17",
       "title": "Vollständige Versionshistorie in den Einstellungen",

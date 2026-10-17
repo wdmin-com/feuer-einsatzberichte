@@ -255,7 +255,7 @@ class FEU_Einsatz_Operations_Center {
         }
         $participant = $this->db->get_participant($participant_id);
         if (!$participant || !empty($participant->is_deleted)) {
-            wp_die(esc_html__('Teilnehmer nicht gefunden', 'feuer-einsatzberichte'));
+            wp_die(esc_html__('Mannschaftsmitglied nicht gefunden', 'feuer-einsatzberichte'));
         }
         global $wpdb;
         $stats = $wpdb->get_results($wpdb->prepare(

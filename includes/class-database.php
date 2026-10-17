@@ -1127,7 +1127,7 @@ class FEU_Einsatz_Database {
     // ============ TEILNEHMER FUNKTIONEN ============
     
     /**
-     * Alle Teilnehmer abrufen
+     * Alle Mannschaftsmitglieder abrufen
      */
     public function get_participants($args = []) {
         $args = wp_parse_args($args, [
@@ -1194,7 +1194,7 @@ class FEU_Einsatz_Database {
     }
     
     /**
-     * Einzelnen Teilnehmer abrufen
+     * Einzelnes Mannschaftsmitglied abrufen
      */
     public function get_participant($id) {
         $participant = $this->wpdb->get_row(
@@ -1208,7 +1208,7 @@ class FEU_Einsatz_Database {
     }
     
     /**
-     * Teilnehmer speichern (neu oder bearbeiten)
+     * Mannschaftsmitglied speichern (neu oder bearbeiten)
      */
     public function save_participant($id, $participant, $nachname = '', $default_functions = []) {
         if (!is_array($participant)) {
@@ -1461,7 +1461,7 @@ class FEU_Einsatz_Database {
     }
     
     /**
-     * Teilnehmer löschen
+     * Mannschaftsmitglied löschen
      */
     public function set_participant_archive_status($id, $archived) {
         $participant = $this->get_participant(absint($id));
@@ -1532,7 +1532,7 @@ class FEU_Einsatz_Database {
     // ============ STATISTIK FUNKTIONEN ============
     
     /**
-     * Teilnehmer-Statistiken für einen Einsatz speichern
+     * Mannschaftsstatistiken für einen Einsatz speichern
      */
     public function save_participant_stats($post_id, $teilnehmer) {
         // Lösche alte Einträge
@@ -1567,7 +1567,7 @@ class FEU_Einsatz_Database {
     }
     
     /**
-     * Teilnehmer-Statistiken für ein Jahr abrufen
+     * Mannschaftsstatistiken für ein Jahr abrufen
      */
     public function get_participant_statistics($jahr = null) {
         if (!$jahr) $jahr = date('Y');
@@ -1640,7 +1640,7 @@ class FEU_Einsatz_Database {
     }
 
     /**
-     * Verteilung der Teilnehmerzahl pro Einsatz abrufen.
+     * Verteilung der Mannschaftsstärke pro Einsatz abrufen.
      *
      * @return array<int,array<string,int>>
      */
@@ -1745,7 +1745,7 @@ class FEU_Einsatz_Database {
     }
     
     /**
-     * Details eines bestimmten Teilnehmers abrufen (Einsätze)
+     * Details eines bestimmten Mannschaftsmitglieds abrufen (Einsätze)
      */
     public function get_participant_details($teilnehmer_id, $jahr = null) {
         if (!$jahr) $jahr = date('Y');
@@ -1774,7 +1774,7 @@ class FEU_Einsatz_Database {
     }
     
     /**
-     * Funktionen-Statistik eines bestimmten Teilnehmers
+     * Funktionen-Statistik eines bestimmten Mannschaftsmitglieds
      */
     public function get_participant_function_stats($teilnehmer_id, $jahr = null) {
         if (!$jahr) $jahr = date('Y');
@@ -2103,7 +2103,7 @@ class FEU_Einsatz_Database {
             AND pm.meta_value = '1'
         ", $jahr));
         
-        // Gesamtanzahl Teilnehmer (die in diesem Jahr aktiv waren)
+        // Gesamtanzahl aktiver Mannschaftsmitglieder (die in diesem Jahr aktiv waren)
         $total_teilnehmer_aktiv = $this->wpdb->get_var($this->wpdb->prepare("
             SELECT COUNT(DISTINCT s.teilnehmer_id)
             FROM {$this->table_stats} s
@@ -2117,7 +2117,7 @@ class FEU_Einsatz_Database {
             AND report.meta_value = '1'
         ", $jahr));
         
-        // Gesamtanzahl aller Teilnehmer
+        // Gesamtanzahl aller Mannschaftsmitglieder
         $total_teilnehmer_alle = $this->wpdb->get_var("SELECT COUNT(*) FROM {$this->table_participants}");
         
         // Include reports without participants in the denominator.
@@ -2568,7 +2568,7 @@ class FEU_Einsatz_Database {
     }
     
     /**
-     * Einsatz-Teilnehmer abrufen
+     * Einsatz-Mannschaftsmitglieder abrufen
      */
     public function get_einsatz_teilnehmer($post_id) {
         return get_post_meta($post_id, '_feu_einsatz_teilnehmer', true);
