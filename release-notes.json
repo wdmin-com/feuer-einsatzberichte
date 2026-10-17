@@ -1,6 +1,19 @@
 {
   "releases": [
     {
+      "version": "3.3.1",
+      "date": "2026-10-17",
+      "title": "Einheitliche Karten in allen Einstellungen",
+      "summary": "Alle Einstellungsbereiche sind klar als Karten gegliedert; Einsatzstichworte werden vollständig ohne inneres Scrollfenster angezeigt.",
+      "changes": [
+        "Einstellungen: Jede Inhaltsgruppe erhält eine eigenständige weiße Karte mit Kopfbereich, Rahmen, konsistenten Innenabständen und ruhiger Trennung zum Seitenhintergrund.",
+        "Kompatibilität: Noch nicht auf die neue Abschnittsstruktur umgestellte Reiter wie Funktionen, Einsatzstichworte, Kräfte vor Ort, Zugriff und Shortcodes verwenden eine einheitliche Kartenfläche.",
+        "Einsatzstichworte: Die Auswahlliste zeigt alle verfügbaren Einträge in einem responsiven Raster; das unnötige innere Scrollfenster wurde entfernt.",
+        "Navigation: Die überflüssige senkrechte Trennlinie rechts neben dem Einstellungsmenü wurde entfernt.",
+        "Qualität: Ein automatischer Oberflächentest schützt Kartenlayout, Navigation und die vollständig sichtbare Einsatzstichwort-Liste vor Rückschritten."
+      ]
+    },
+    {
       "version": "3.3.0",
       "date": "2026-10-17",
       "title": "Korrektes Mannschaft-Ranking und einheitliche Mannschaftssprache",

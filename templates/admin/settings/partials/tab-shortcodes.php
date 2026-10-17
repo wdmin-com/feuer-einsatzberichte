@@ -6,7 +6,7 @@ if (!defined('ABSPATH')) {
 /** @var string $active_tab */
 ?>
 
-<div id="tab-shortcodes" class="feu-einsatz-tab-content" <?php if ('shortcodes' !== $active_tab) : ?>style="display:none"<?php endif; ?>>
+<div id="tab-shortcodes" class="feu-einsatz-tab-content feu-admin-settings-panel--card" <?php if ('shortcodes' !== $active_tab) : ?>style="display:none"<?php endif; ?>>
 
     <div class="feu-admin-settings-section">
         <div class="feu-admin-settings-section-header">
