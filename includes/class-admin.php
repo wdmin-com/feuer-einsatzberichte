@@ -5168,7 +5168,19 @@ class FEU_Einsatz_Admin {
         $scheduled_for = time() + max(0, $delay_seconds);
 
         wp_clear_scheduled_hook(self::BACKGROUND_GEOCODE_HOOK, [$post_id]);
-        wp_schedule_single_event($scheduled_for, self::BACKGROUND_GEOCODE_HOOK, [$post_id]);
+        if (!wp_schedule_single_event($scheduled_for, self::BACKGROUND_GEOCODE_HOOK, [$post_id])) {
+            $existing_event = wp_next_scheduled(self::BACKGROUND_GEOCODE_HOOK, [$post_id]);
+            if (!$existing_event) {
+                $this->update_generated_map_status($post_id, 'error', [
+                    'stage' => 'geocode',
+                    'message' => __('Die Adressprüfung konnte nicht im Hintergrund eingeplant werden. Bitte erneut versuchen oder WP-Cron prüfen.', 'feuer-einsatzberichte'),
+                    'scheduled_for' => 0,
+                    'reason' => 'cron_schedule_failed',
+                ]);
+                return 0;
+            }
+            $scheduled_for = (int) $existing_event;
+        }
         $this->update_generated_map_status(
             $post_id,
             'queued',
@@ -5223,7 +5235,21 @@ class FEU_Einsatz_Admin {
         $scheduled_for = $now + $this->get_generated_map_recovery_delay_seconds();
 
         wp_clear_scheduled_hook(self::GENERATED_MAP_BACKGROUND_HOOK, [$post_id]);
-        wp_schedule_single_event($scheduled_for, self::GENERATED_MAP_BACKGROUND_HOOK, [$post_id]);
+        if (!wp_schedule_single_event($scheduled_for, self::GENERATED_MAP_BACKGROUND_HOOK, [$post_id])) {
+            $existing_event = wp_next_scheduled(self::GENERATED_MAP_BACKGROUND_HOOK, [$post_id]);
+            if (!$existing_event) {
+                $queue_payload['recovery_attempts'] = $attempts + 1;
+                update_post_meta($post_id, self::GENERATED_MAP_QUEUE_META, $queue_payload);
+                $this->update_generated_map_status($post_id, 'error', [
+                    'stage' => 'map',
+                    'message' => __('Die Karten-Generierung konnte nicht erneut eingeplant werden. Bitte WP-Cron prüfen.', 'feuer-einsatzberichte'),
+                    'scheduled_for' => 0,
+                    'reason' => 'cron_schedule_failed',
+                ]);
+                return -1;
+            }
+            $scheduled_for = (int) $existing_event;
+        }
 
         $queue_payload['queued_at'] = isset($queue_payload['queued_at']) ? absint($queue_payload['queued_at']) : $now;
         $queue_payload['scheduled_for'] = $scheduled_for;
@@ -5274,6 +5300,10 @@ class FEU_Einsatz_Admin {
         $publish_hold = get_post_meta($post_id, self::GENERATED_MAP_PUBLISH_HOLD_META, true);
         $status_key = !empty($status_payload['status']) ? sanitize_key((string) $status_payload['status']) : '';
         $stage = !empty($status_payload['stage']) ? sanitize_key((string) $status_payload['stage']) : '';
+
+        if ('error' === $status_key && 'cron_schedule_failed' === ($status_payload['reason'] ?? '')) {
+            return false;
+        }
 
         if ('' === $street) {
             return false;
@@ -5963,7 +5993,20 @@ class FEU_Einsatz_Admin {
         ]);
 
         wp_clear_scheduled_hook(self::GENERATED_MAP_BACKGROUND_HOOK, [$post_id]);
-        wp_schedule_single_event($scheduled_for, self::GENERATED_MAP_BACKGROUND_HOOK, [$post_id]);
+        if (!wp_schedule_single_event($scheduled_for, self::GENERATED_MAP_BACKGROUND_HOOK, [$post_id])) {
+            $existing_event = wp_next_scheduled(self::GENERATED_MAP_BACKGROUND_HOOK, [$post_id]);
+            if (!$existing_event) {
+                delete_post_meta($post_id, self::GENERATED_MAP_QUEUE_META);
+                $this->update_generated_map_status($post_id, 'error', [
+                    'stage' => 'map',
+                    'message' => __('Das Kartenbild konnte nicht im Hintergrund eingeplant werden. Bitte erneut generieren oder WP-Cron prüfen.', 'feuer-einsatzberichte'),
+                    'scheduled_for' => 0,
+                    'reason' => 'cron_schedule_failed',
+                ]);
+                return false;
+            }
+            $scheduled_for = (int) $existing_event;
+        }
         $this->update_generated_map_status(
             $post_id,
             'queued',

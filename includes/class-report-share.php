@@ -125,6 +125,14 @@ class FEU_Einsatz_Report_Share {
             . $filename;
     }
 
+    private static function has_share_card_cache_file(string $path): bool {
+        if ('' === $path) {
+            return false;
+        }
+        clearstatcache(true, $path);
+        return is_file($path) && is_readable($path) && filesize($path) > 0;
+    }
+
     public function invalidate_share_card_cache(int $post_id): void {
         $post_id = absint($post_id);
 
@@ -180,6 +188,8 @@ class FEU_Einsatz_Report_Share {
 
         if (wp_schedule_single_event(time() + 15, self::BACKGROUND_GENERATION_HOOK, [$post_id])) {
             update_post_meta($post_id, '_feu_einsatz_share_card_job', ['status' => 'queued', 'updated_at' => time()]);
+        } else {
+            update_post_meta($post_id, '_feu_einsatz_share_card_job', ['status' => 'error', 'updated_at' => time()]);
         }
     }
 
@@ -208,7 +218,7 @@ class FEU_Einsatz_Report_Share {
         $data = $this->build_public_share_card_data($post);
         $revision = $this->build_share_card_cache_revision($post, $data);
         $path = $this->get_share_card_cache_path($post_id, $revision);
-        if ('' !== $path && is_readable($path)) {
+        if (self::has_share_card_cache_file($path)) {
             return ['status' => 'ready', 'message' => __('Vorschaubild ist bereit', 'feuer-einsatzberichte')];
         }
         $job = get_post_meta($post_id, '_feu_einsatz_share_card_job', true);
@@ -237,7 +247,7 @@ class FEU_Einsatz_Report_Share {
         update_post_meta($post_id, '_feu_einsatz_share_card_job', ['status' => 'processing', 'updated_at' => time()]);
         try {
             $path = $this->generate_share_card_cache($post);
-            $status = '' !== $path && is_readable($path) ? 'ready' : 'error';
+            $status = self::has_share_card_cache_file($path) ? 'ready' : 'error';
         } catch (Throwable $error) {
             $status = 'error';
             error_log('[Feuer-Einsatzberichte] Share card generation failed for report ' . $post_id . ': ' . $error->getMessage());
@@ -259,7 +269,7 @@ class FEU_Einsatz_Report_Share {
             return '';
         }
 
-        if (file_exists($cached) && is_readable($cached)) {
+        if (self::has_share_card_cache_file($cached)) {
             return $cached;
         }
 
@@ -278,7 +288,7 @@ class FEU_Einsatz_Report_Share {
         $written = imagepng($canvas, $cached, 8);
         imagedestroy($canvas);
 
-        if (!$written) {
+        if (!$written || !self::has_share_card_cache_file($cached)) {
             return '';
         }
 
@@ -423,7 +433,7 @@ class FEU_Einsatz_Report_Share {
 
         $cached = $this->get_share_card_cache_path($post_id, $cache_revision);
 
-        if ('' !== $cached && file_exists($cached) && is_readable($cached)) {
+        if (self::has_share_card_cache_file($cached)) {
             header('Content-Type: image/png');
             header('Cache-Control: public, max-age=3600');
             if ($expires_at > 0) {
@@ -438,7 +448,7 @@ class FEU_Einsatz_Report_Share {
 
         $cached = $this->generate_share_card_cache($post);
 
-        if ('' === $cached || !is_readable($cached)) {
+        if (!self::has_share_card_cache_file($cached)) {
             wp_die(esc_html__('Share-Karte konnte nicht erzeugt werden.', 'feuer-einsatzberichte'), '', ['response' => 500]);
         }
 

@@ -1,6 +1,19 @@
 {
   "releases": [
     {
+      "version": "3.2.98",
+      "date": "2026-10-17",
+      "title": "Zuverlässige Hintergrundaufträge und Share-Bilder",
+      "summary": "Fehlgeschlagene WP-Cron-Aufträge werden als Fehler angezeigt; leere Share-Bilder werden automatisch neu erzeugt.",
+      "changes": [
+        "Kartenbilder: Schlägt das Einplanen der Hintergrund-Generierung fehl, zeigt der Bericht einen Fehler statt einer nicht existierenden Warteschlange. Die manuelle Neugenerierung bleibt möglich.",
+        "Adressprüfung: Auch ein abgewiesener Geocoding-Auftrag wird sofort als Fehler angezeigt; die Oberfläche behauptet nicht mehr, dass eine Prüfung geplant sei.",
+        "Wiederherstellung: Ein fehlgeschlagener erneuter Planungsversuch meldet einen Fehler statt eines fiktiven Ausführungszeitpunkts.",
+        "Share-Bilder: Leere Cache-Dateien gelten nicht mehr als fertige PNG-Bilder und werden bei der nächsten Anforderung neu generiert. Fehler beim Einplanen der Hintergrundaufgabe erhalten einen sichtbaren Status.",
+        "Qualität: Ein WordPress-Integrationstest simuliert abgewiesene Cron-Aufträge und ein beschädigtes Share-Bild."
+      ]
+    },
+    {
       "version": "3.2.97",
       "date": "2026-10-13",
       "title": "Zuverlässigere Karten- und Bildvorschau",
