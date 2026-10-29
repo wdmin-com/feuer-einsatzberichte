@@ -491,6 +491,7 @@
 
     function showReady(runtime) {
         var fallback = runtime.querySelector('.feu-einsatz-map-runtime-fallback');
+        var retryButton = runtime.querySelector('[data-feu-map-action="activate"]');
 
         runtime.classList.add('is-ready');
         runtime.classList.remove('has-error');
@@ -500,6 +501,9 @@
         // over an already initialized Leaflet map.
         if (fallback) {
             fallback.hidden = true;
+        }
+        if (retryButton) {
+            retryButton.hidden = true;
         }
     }
 
@@ -520,8 +524,12 @@
         var cachedPreview = fallback.querySelector('.feu-einsatz-map-static-preview');
         if (cachedPreview) {
             var loadError = fallback.querySelector('[data-feu-map-load-error]');
+            var retryButton = fallback.querySelector('[data-feu-map-action="activate"]');
             if (loadError) {
                 loadError.hidden = false;
+            }
+            if (retryButton) {
+                retryButton.hidden = false;
             }
             return;
         }
@@ -819,12 +827,16 @@
 
     function activateMap(runtime) {
         var button = runtime.querySelector('[data-feu-map-action="activate"], [data-feu-map-action="allow"]');
+        var retryButton = runtime.querySelector('[data-feu-map-action="activate"]');
         var loadError = runtime.querySelector('[data-feu-map-load-error]');
         if (loadError) {
             loadError.hidden = true;
         }
         if (button) {
             button.disabled = true;
+        }
+        if (retryButton) {
+            retryButton.hidden = true;
         }
         loadLeafletOnDemand().then(function () {
             try {
@@ -891,6 +903,7 @@
 
         runtimes.forEach(function (runtime) {
             var displayMode = String(runtime.getAttribute('data-map-display-mode') || 'live');
+            var privacyMode = String(runtime.getAttribute('data-map-privacy-mode') || 'always');
             var liveAvailable = runtime.getAttribute('data-map-live-available') === '1';
 
             if (displayMode !== 'live') {
@@ -902,6 +915,11 @@
             }
 
             initMapConsent(runtime);
+
+            if (privacyMode === 'always') {
+                runtime.setAttribute('data-map-enabled', '1');
+                activateMap(runtime);
+            }
         });
     }
 

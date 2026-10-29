@@ -35,6 +35,8 @@ jobs:
           node tests/setup-wizard-client.test.cjs
           node tests/mannschaft-copy.test.cjs
           node tests/settings-ui.test.cjs
+          node tests/public-map-direct-load.test.cjs
+          node tests/public-map-tile-fallback.test.cjs
 
   wordpress-integration:
     name: WordPress activation smoke test

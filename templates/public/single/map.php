@@ -174,8 +174,8 @@ if ($show_live_map) {
             <?php else : ?>
                 <div class="feu-einsatz-map-static-preview"><?php echo $preview_markup; ?></div>
                 <?php if ($show_live_map) : ?>
-                    <button type="button" class="feu-einsatz-map-activate" data-feu-map-action="activate">
-                        <?php esc_html_e('Interaktive Karte laden', 'feuer-einsatzberichte'); ?>
+                    <button type="button" class="feu-einsatz-map-activate" data-feu-map-action="activate" hidden>
+                        <?php esc_html_e('Interaktive Karte erneut laden', 'feuer-einsatzberichte'); ?>
                     </button>
                     <p class="feu-einsatz-map-load-error" data-feu-map-load-error hidden>
                         <?php esc_html_e('Die interaktive Karte konnte nicht geladen werden. Die gespeicherte Karte bleibt verfügbar.', 'feuer-einsatzberichte'); ?>

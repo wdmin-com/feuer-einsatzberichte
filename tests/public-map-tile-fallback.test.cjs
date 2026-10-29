@@ -5,7 +5,7 @@ const vm = require('node:vm');
 
 const source = fs.readFileSync(path.join(__dirname, '../assets/public/js/public-script.js'), 'utf8');
 
-async function runMapScenario(tileSucceeds) {
+async function runMapScenario(tileSucceeds, privacyMode) {
     const appended = [];
     const tileEvents = {};
     const listeners = {};
@@ -28,7 +28,11 @@ async function runMapScenario(tileSucceeds) {
         classList,
         setAttribute() {},
         getAttribute(name) {
-            return { 'data-map-display-mode': 'live', 'data-map-live-available': '1' }[name] || '';
+            return {
+                'data-map-display-mode': 'live',
+                'data-map-privacy-mode': privacyMode,
+                'data-map-live-available': '1'
+            }[name] || '';
         },
         querySelector(selector) {
             if (selector.includes('[data-feu-map-action="activate"]')) { return button; }
@@ -77,8 +81,12 @@ async function runMapScenario(tileSucceeds) {
     };
 
     vm.runInNewContext(source, { document: documentStub, window: windowStub, Promise, navigator: {} });
-    assert.equal(appended.length, 0);
-    listeners.click();
+    if (privacyMode === 'always') {
+        assert.equal(appended.length, 2, 'Direct-load mode must start Leaflet automatically.');
+    } else {
+        assert.equal(appended.length, 0, 'Consent mode must wait for the visitor.');
+        listeners.click();
+    }
     assert.equal(appended.length, 2);
 
     windowStub.L = {
@@ -105,7 +113,11 @@ async function runMapScenario(tileSucceeds) {
     assert.equal(error.hidden, tileSucceeds);
 }
 
-Promise.all([runMapScenario(true), runMapScenario(false)]).then(() => {
+Promise.all([
+    runMapScenario(true, 'always'),
+    runMapScenario(false, 'always'),
+    runMapScenario(true, 'consent_hide')
+]).then(() => {
     console.log('Cached map remains visible until tiles succeed and survives tile failures.');
 }).catch((error) => {
     console.error(error);
