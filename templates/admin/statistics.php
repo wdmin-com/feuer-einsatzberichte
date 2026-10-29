@@ -787,7 +787,7 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
 
                 <?php if ($is_presentation_enabled('participants')): ?>
                 <?php $slide_number++; ?>
-                <section class="feu-einsatz-presentation-slide<?php echo 1 === $slide_number ? ' is-active' : ''; ?>" data-feu-presentation-slide="<?php echo esc_attr((string) $slide_number); ?>">
+                <section class="feu-einsatz-presentation-slide<?php echo 1 === $slide_number ? ' is-active' : ''; ?>" data-feu-presentation-slide="<?php echo esc_attr((string) $slide_number); ?>" data-feu-presentation-kind="participants">
                     <?php $render_slide_background('participants'); ?>
                     <h2><span class="ti ti-users-group" aria-hidden="true"></span><?php echo esc_html(sprintf(__('Mannschaft · %d Mitglieder', 'feuer-einsatzberichte'), $participant_count)); ?></h2>
                     <div class="feu-einsatz-presentation-participant-summary">
@@ -797,15 +797,16 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
                                     <?php if (!isset($top_three[$winner_index])) { continue; } ?>
                                     <?php $participant = $top_three[$winner_index]; ?>
                                     <?php $rank = $winner_index + 1; ?>
+                                    <?php $presentation_percent = FEU_Einsatz_Template_Helpers::participant_participation_percent($participant->gesamt_einsaetze, $total_calls); ?>
                                     <p class="feu-einsatz-presentation-podium-rank-<?php echo esc_attr((string) $rank); ?>">
-                                        <span class="feu-einsatz-presentation-podium-trophy"><i class="ti ti-trophy" aria-hidden="true"></i></span>
-                                        <strong><?php echo esc_html(sprintf(__('%d. Platz', 'feuer-einsatzberichte'), $rank)); ?></strong>
-                                        <span><?php echo esc_html(FEU_Einsatz_Template_Helpers::format_participant_name($participant->vorname, $participant->nachname)); ?></span>
-                                        <em><?php echo esc_html((string) (int) $participant->gesamt_einsaetze); ?> <?php esc_html_e('Einsätze', 'feuer-einsatzberichte'); ?></em>
-                                        <?php $presentation_percent = FEU_Einsatz_Template_Helpers::participant_participation_percent($participant->gesamt_einsaetze, $total_calls); ?>
+                                        <span class="feu-einsatz-presentation-podium-head">
+                                            <span class="feu-einsatz-presentation-podium-trophy"><i class="ti ti-trophy" aria-hidden="true"></i></span>
+                                            <strong><?php echo esc_html(sprintf(__('%d. Platz', 'feuer-einsatzberichte'), $rank)); ?></strong>
+                                        </span>
+                                        <span class="feu-einsatz-presentation-participant-name"><?php echo esc_html(FEU_Einsatz_Template_Helpers::format_participant_name($participant->vorname, $participant->nachname)); ?></span>
                                         <small class="feu-einsatz-presentation-participation <?php echo FEU_Einsatz_Template_Helpers::participant_below_minimum($participant->gesamt_einsaetze, $total_calls, $minimum_participation) ? 'is-below-minimum' : ''; ?>">
                                             <span class="feu-einsatz-presentation-participation-value"><?php echo esc_html(number_format_i18n($presentation_percent, 1)); ?> %</span>
-                                            <span class="feu-einsatz-presentation-participation-context"><?php echo esc_html(sprintf(__('%1$d von %2$d Einsätzen', 'feuer-einsatzberichte'), (int) $participant->gesamt_einsaetze, $total_calls)); ?></span>
+                                            <span class="feu-einsatz-presentation-participation-context"><?php echo esc_html(sprintf(__('%1$d / %2$d Einsätze', 'feuer-einsatzberichte'), (int) $participant->gesamt_einsaetze, $total_calls)); ?></span>
                                         </small>
                                     </p>
                                 <?php endforeach; ?>
@@ -813,18 +814,24 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
                         <?php endif; ?>
                     </div>
                     <?php if (count($participants) > 3): ?>
-                        <div class="feu-einsatz-presentation-participant-list">
-                            <?php foreach (array_slice($participants, 3) as $participant_index => $participant): ?>
-                                <p>
-                                    <span><?php echo esc_html((string) ($participant_index + 4) . '. ' . FEU_Einsatz_Template_Helpers::format_participant_name($participant->vorname, $participant->nachname)); ?></span>
-                                    <strong><?php echo esc_html((string) (int) $participant->gesamt_einsaetze); ?></strong>
-                                    <?php $presentation_percent = FEU_Einsatz_Template_Helpers::participant_participation_percent($participant->gesamt_einsaetze, $total_calls); ?>
-                                    <small class="feu-einsatz-presentation-participation <?php echo FEU_Einsatz_Template_Helpers::participant_below_minimum($participant->gesamt_einsaetze, $total_calls, $minimum_participation) ? 'is-below-minimum' : ''; ?>">
-                                        <span class="feu-einsatz-presentation-participation-value"><?php echo esc_html(number_format_i18n($presentation_percent, 1)); ?> %</span>
-                                        <span class="feu-einsatz-presentation-participation-context"><?php echo esc_html(sprintf(__('%1$d von %2$d', 'feuer-einsatzberichte'), (int) $participant->gesamt_einsaetze, $total_calls)); ?></span>
-                                    </small>
-                                </p>
-                            <?php endforeach; ?>
+                        <div class="feu-einsatz-presentation-participant-list-block">
+                            <div class="feu-einsatz-presentation-participant-list-head">
+                                <h3><?php esc_html_e('Weitere Platzierungen', 'feuer-einsatzberichte'); ?></h3>
+                                <span><?php echo esc_html(sprintf(_n('%d Mitglied', '%d Mitglieder', count($participants) - 3, 'feuer-einsatzberichte'), count($participants) - 3)); ?></span>
+                            </div>
+                            <div class="feu-einsatz-presentation-participant-list">
+                                <?php foreach (array_slice($participants, 3) as $participant_index => $participant): ?>
+                                    <p>
+                                        <span class="feu-einsatz-presentation-participant-rank"><?php echo esc_html((string) ($participant_index + 4)); ?></span>
+                                        <span class="feu-einsatz-presentation-participant-name"><?php echo esc_html(FEU_Einsatz_Template_Helpers::format_participant_name($participant->vorname, $participant->nachname)); ?></span>
+                                        <?php $presentation_percent = FEU_Einsatz_Template_Helpers::participant_participation_percent($participant->gesamt_einsaetze, $total_calls); ?>
+                                        <small class="feu-einsatz-presentation-participation <?php echo FEU_Einsatz_Template_Helpers::participant_below_minimum($participant->gesamt_einsaetze, $total_calls, $minimum_participation) ? 'is-below-minimum' : ''; ?>">
+                                            <span class="feu-einsatz-presentation-participation-context"><?php echo esc_html(sprintf(__('%1$d / %2$d', 'feuer-einsatzberichte'), (int) $participant->gesamt_einsaetze, $total_calls)); ?></span>
+                                            <span class="feu-einsatz-presentation-participation-value"><?php echo esc_html(number_format_i18n($presentation_percent, 1)); ?> %</span>
+                                        </small>
+                                    </p>
+                                <?php endforeach; ?>
+                            </div>
                         </div>
                     <?php endif; ?>
                 </section>

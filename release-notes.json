@@ -1,6 +1,20 @@
 {
   "releases": [
     {
+      "version": "3.3.3",
+      "date": "2026-10-29",
+      "title": "Kompakte Mannschaftspräsentation mit klarer Rangfolge",
+      "summary": "Die Präsentationsseite der Mannschaft reduziert doppelte Angaben, verkleinert das Siegerpodest und ordnet weitere Platzierungen in einer luftigeren responsiven Übersicht.",
+      "changes": [
+        "Präsentation: Die drei Podestkarten sind niedriger, ruhiger gestaltet und verwenden eine klare Reihenfolge aus Platz, Name und Beteiligung.",
+        "Informationsdichte: Doppelte Einsatzangaben wurden entfernt; Prozentwert und Verhältnis erscheinen kompakt in einer gemeinsamen Zeile.",
+        "Mannschaftsliste: Weitere Platzierungen nutzen auf großen Bildschirmen vier Spalten mit deutlicheren horizontalen und vertikalen Abständen.",
+        "Lesbarkeit: Namen werden nicht mehr erzwungen in Großbuchstaben dargestellt; Platznummer, Name und Beteiligung sind visuell klar getrennt.",
+        "Responsivität: Die Übersicht wechselt kontrolliert auf drei, zwei und eine Spalte; auf kleinen Bildschirmen bleibt die Präsentationsseite scrollbar.",
+        "Qualität: Ein automatisierter Oberflächentest schützt die kompakte Podiumstruktur, Abstände und responsiven Raster vor Rückschritten."
+      ]
+    },
+    {
       "version": "3.3.2",
       "date": "2026-10-29",
       "title": "Live-Karte wird im Direktmodus automatisch geladen",
