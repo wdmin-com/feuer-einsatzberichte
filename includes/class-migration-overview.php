@@ -162,7 +162,8 @@ final class FEU_Einsatz_Migration_Overview {
             }
             $id = (int) $post_id;
             if (!in_array($id, $processed, true) || !get_post($id)
-                || get_permalink($id) !== ($before['url'] ?? '')) {
+                || ('publish' === (string) ($before['status'] ?? 'publish')
+                    && get_permalink($id) !== ($before['url'] ?? ''))) {
                 return false;
             }
             $current = wp_get_object_terms($id, FEU_Einsatz_Report_Taxonomy::TAXONOMY, ['fields' => 'ids']);
