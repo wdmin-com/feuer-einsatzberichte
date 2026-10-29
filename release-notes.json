@@ -1,6 +1,19 @@
 {
   "releases": [
     {
+      "version": "3.3.2",
+      "date": "2026-10-29",
+      "title": "Live-Karte wird im Direktmodus automatisch geladen",
+      "summary": "Der Modus „Karte direkt laden“ startet Leaflet wieder automatisch, während das gespeicherte Kartenbild bis zur erfolgreichen Kartenanzeige sichtbar bleibt.",
+      "changes": [
+        "Einzelbeitrag: Bei der Einstellung „Karte direkt laden“ startet die interaktive Karte ohne zusätzlichen Klick.",
+        "Ladeverhalten: Das lokal gespeicherte Kartenbild bleibt während des Ladens sichtbar und wird erst nach dem ersten erfolgreich geladenen OpenStreetMap-Kartenausschnitt ausgeblendet.",
+        "Fehlerbehandlung: Schlägt Leaflet oder das Nachladen der Kartenkacheln fehl, bleibt das Kartenbild erhalten und eine Schaltfläche für einen erneuten Versuch erscheint.",
+        "Datenschutz: Die Zustimmungsmodi laden weiterhin keine externen Kartendaten, bevor der Besucher die Karte ausdrücklich freigibt.",
+        "Qualität: Automatische Direktladung, manuelle Zustimmung, erfolgreicher Kachelabruf und Fehler-Fallback werden durch Browser-Tests geprüft."
+      ]
+    },
+    {
       "version": "3.3.1",
       "date": "2026-10-17",
       "title": "Einheitliche Karten in allen Einstellungen",
