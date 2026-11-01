@@ -82,6 +82,18 @@ $update_guide_path = FEU_EINSATZ_PLUGIN_DIR . 'docs/UPDATE_HOSTING_AND_GITHUB.md
 $docs_directory = FEU_EINSATZ_PLUGIN_DIR . 'docs';
 $templates_directory = FEU_EINSATZ_PLUGIN_DIR . 'templates';
 
+$expected_manifest_url = 'https://github.com/wdmin-com/feuer-einsatzberichte/releases/latest/download/update-manifest.json';
+if ($expected_manifest_url !== FEU_Einsatz_Updater::get_default_manifest_url()) {
+    fwrite(STDERR, "::error title=Release updater integration test::The default manifest is not served by the latest GitHub release.\n");
+    exit(1);
+}
+
+$expected_package_url = 'https://github.com/wdmin-com/feuer-einsatzberichte/releases/download/v' . FEU_EINSATZ_VERSION . '/feuer-einsatzberichte-' . FEU_EINSATZ_VERSION . '.zip';
+if ($expected_package_url !== FEU_Einsatz_Updater::build_package_url()) {
+    fwrite(STDERR, "::error title=Release updater integration test::The version package URL does not match the GitHub release asset.\n");
+    exit(1);
+}
+
 ob_start();
 include FEU_EINSATZ_PLUGIN_DIR . 'templates/admin/settings/partials/tab-manifest.php';
 $html = (string) ob_get_clean();
