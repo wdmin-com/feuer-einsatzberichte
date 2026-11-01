@@ -265,17 +265,17 @@ Copy-Item -LiteralPath $demoBundlePath -Destination (Join-Path $snapshotDir $dem
 
 $packageHash = Get-FileHashHex -Path $versionZipPath
 $today = Get-Date -Format 'yyyy-MM-dd'
-$baseDownloadUrl = 'https://wdmin.com/plugins/feuer-einsatzberichte/release'
+$baseDownloadUrl = "https://github.com/wdmin-com/feuer-einsatzberichte/releases/download/v$version"
 
 $manifest.last_updated = $today
 $manifest.package_hash = $packageHash
 $manifest.package_hash_algorithm = 'sha256'
-$manifest.download_url = "$baseDownloadUrl/$version/$versionZipName"
+$manifest.download_url = "$baseDownloadUrl/$versionZipName"
 Write-JsonFile -Path $manifestPath -Data $manifest
 
 $versionManifest = Read-JsonFile -Path $manifestPath
 $latestManifest = Read-JsonFile -Path $manifestPath
-$latestManifest.download_url = "$baseDownloadUrl/latest/$pluginSlug-latest.zip"
+$latestManifest.download_url = "$baseDownloadUrl/$versionZipName"
 
 Write-JsonFile -Path (Join-Path $versionDir 'update-manifest.json') -Data $versionManifest
 Write-JsonFile -Path (Join-Path $latestDir 'update-manifest.json') -Data $latestManifest

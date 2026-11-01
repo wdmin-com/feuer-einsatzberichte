@@ -22,9 +22,8 @@ WordPress plugin for fire department incident reports with:
 This repository stores the plugin source code.
 Production updates are served from:
 
-- `https://wdmin.com/plugins/feuer-einsatzberichte/release/latest/update-manifest.json`
-- `https://wdmin.com/plugins/feuer-einsatzberichte/release/<version>/feuer-einsatzberichte-<version>.zip`
-- `https://wdmin.com/plugins/feuer-einsatzberichte/release/latest/feuer-einsatzberichte-latest.zip`
+- `https://github.com/wdmin-com/feuer-einsatzberichte/releases/latest/download/update-manifest.json`
+- `https://github.com/wdmin-com/feuer-einsatzberichte/releases/download/v<version>/feuer-einsatzberichte-<version>.zip`
 
 ## Important folders
 
@@ -40,7 +39,7 @@ Production updates are served from:
 1. Bump plugin version.
 2. Update `update-manifest.json` and `release-notes.json`.
 3. Build the release ZIP.
-4. Upload or mirror the generated `release/<version>/` and `release/latest/` folders to `wdmin.com/plugins/feuer-einsatzberichte/release/`.
+4. Publish the generated plugin ZIP, `update-manifest.json` and `release-notes.json` as assets of the matching GitHub release. The updater follows the latest GitHub release and verifies the package SHA-256 before installation.
 5. Create GitHub tag/release for source tracking.
 
 The release ZIP is built with normalized `/` archive paths and neutral ZIP attributes so WordPress updates on Linux hosts do not depend on Windows-style archive metadata.

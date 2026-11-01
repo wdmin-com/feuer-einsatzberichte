@@ -10,7 +10,8 @@ class FEU_Einsatz_Updater {
     const PACKAGE_HASH_ALGORITHM = 'sha256';
     const PLUGIN_SLUG = 'feuer-einsatzberichte';
     const DEFAULT_PROJECT_URL = 'https://wdmin.com/plugins/feuer-einsatzberichte/';
-    const DEFAULT_RELEASE_BASE_URL = 'https://wdmin.com/plugins/feuer-einsatzberichte/release/';
+    const DEFAULT_RELEASE_BASE_URL = 'https://github.com/wdmin-com/feuer-einsatzberichte/releases/';
+    const LEGACY_DEFAULT_MANIFEST_URL = 'https://wdmin.com/plugins/feuer-einsatzberichte/release/latest/update-manifest.json';
 
     public function __construct() {
         $this->maybe_initialize_manifest_url();
@@ -47,7 +48,16 @@ class FEU_Einsatz_Updater {
     }
 
     public static function build_release_directory_url($segment) {
-        return trailingslashit(self::get_release_base_url()) . self::sanitize_release_segment($segment) . '/';
+        $segment = rawurldecode(self::sanitize_release_segment($segment));
+        $base_url = trailingslashit(self::get_release_base_url());
+
+        if ('latest' === strtolower($segment)) {
+            return $base_url . 'latest/download/';
+        }
+
+        $tag = 0 === strpos($segment, 'v') ? $segment : 'v' . $segment;
+
+        return $base_url . 'download/' . rawurlencode($tag) . '/';
     }
 
     public static function build_release_manifest_url($channel = 'latest') {
@@ -127,6 +137,7 @@ class FEU_Einsatz_Updater {
 
     private static function get_allowed_hosts() {
         return [
+            'github.com',
             'wdmin.com',
             'www.wdmin.com',
         ];
@@ -138,6 +149,11 @@ class FEU_Einsatz_Updater {
 
     private function maybe_initialize_manifest_url() {
         $current = (string) get_option('feu_einsatz_update_manifest_url', '');
+
+        if ('' === trim($current) || self::LEGACY_DEFAULT_MANIFEST_URL === untrailingslashit(trim($current))) {
+            $current = self::get_default_manifest_url();
+        }
+
         $sanitized = self::sanitize_manifest_url($current);
 
         if ($current !== $sanitized) {
@@ -200,7 +216,10 @@ class FEU_Einsatz_Updater {
         $parts = wp_parse_url($package_url);
         $path = isset($parts['path']) ? (string) $parts['path'] : '';
 
-        if (!preg_match('#/release/[^/]+/[^/]+\.zip$#', $path)) {
+        $is_legacy_release = (bool) preg_match('#/release/[^/]+/[^/]+\.zip$#', $path);
+        $is_github_release = (bool) preg_match('#/releases/download/[^/]+/[^/]+\.zip$#', $path);
+
+        if (!$is_legacy_release && !$is_github_release) {
             return false;
         }
 

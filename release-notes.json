@@ -1,6 +1,21 @@
 {
   "releases": [
     {
+      "version": "3.3.4",
+      "date": "2026-11-01",
+      "title": "Zuverlässiger GitHub-Updatekanal für Kartenkorrekturen",
+      "summary": "Der Plugin-Updater bezieht Manifest und geprüfte Installationspakete direkt aus den veröffentlichten GitHub-Releases, nachdem der bisherige wdmin.com-Kanal auf einer alten Version stehen geblieben war.",
+      "changes": [
+        "Fehlerursache: Der bisherige öffentliche Updatekanal lieferte weiterhin Version 3.2.27; dadurch blieb die Website trotz neuer GitHub-Releases auf altem Karten-Code.",
+        "Updater: Das aktuelle Manifest wird aus dem jeweils neuesten GitHub-Release geladen.",
+        "Pakete: Installationsdateien verwenden feste, versionsgebundene GitHub-Release-URLs statt eines veralteten Hosting-Verzeichnisses.",
+        "Migration: Installationen mit der bisherigen Standard-Manifest-URL wechseln nach der Aktualisierung automatisch auf den neuen Kanal.",
+        "Sicherheit: Die bestehende SHA-256-Prüfung bleibt aktiv und lädt das zugehörige Manifest aus demselben GitHub-Release wie das ZIP-Paket.",
+        "Live-Karte: Die bereits in 3.3.2 implementierte automatische Karteninitialisierung erreicht damit zuverlässig aktualisierte Installationen.",
+        "Qualität: Quell- und WordPress-Integrationstests prüfen Manifest-, Paket- und Migrations-URLs des neuen Releasekanals."
+      ]
+    },
+    {
       "version": "3.3.3",
       "date": "2026-10-29",
       "title": "Kompakte Mannschaftspräsentation mit klarer Rangfolge",
