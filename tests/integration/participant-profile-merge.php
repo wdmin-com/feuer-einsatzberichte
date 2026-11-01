@@ -21,7 +21,7 @@ try {
         'vorname' => 'Max',
         'nachname' => 'Muster',
         'rank_title' => 'Brandmeister',
-        'default_functions' => ['Atemschutz'],
+        'default_functions' => ['ATF'],
     ]);
     if ($primary_id < 1 || $duplicate_id < 1) {
         throw new RuntimeException('Participant merge fixtures could not be created.');
@@ -55,7 +55,7 @@ try {
         [['id' => $duplicate_id, 'funktion' => 'Mannschaft']],
         [
             ['id' => $primary_id, 'funktion' => 'Mannschaft'],
-            ['id' => $duplicate_id, 'funktion' => 'Atemschutz'],
+            ['id' => $duplicate_id, 'funktion' => 'ATF'],
         ],
     ];
     foreach ($report_ids as $index => $report_id) {
@@ -95,7 +95,7 @@ try {
             $third_function = (string) $row->funktion;
         }
     }
-    if ('Atemschutz' !== $third_function) {
+    if ('ATF' !== $third_function) {
         throw new RuntimeException('The more specific duplicate assignment function was not preserved.');
     }
 
