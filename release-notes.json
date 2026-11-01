@@ -1,6 +1,20 @@
 {
   "releases": [
     {
+      "version": "3.3.7",
+      "date": "2026-11-02",
+      "title": "Profilzusammenführung nur noch bei Bedarf sichtbar",
+      "summary": "Auch die selten benötigte Zusammenführung doppelter Mannschaftsprofile ist jetzt standardmäßig geschlossen und stört den täglichen Mannschaftsüberblick nicht mehr.",
+      "changes": [
+        "Mannschaftsverwaltung: Der Bereich „Mannschaftsprofile zusammenführen“ wird nicht mehr dauerhaft vollständig angezeigt.",
+        "Bedienung: Eine kompakte Schaltfläche öffnet die Profilzusammenführung nur bei ausdrücklichem Bedarf.",
+        "Konsistenz: Synchronisierung und Profilzusammenführung verwenden denselben ruhigen, zugänglichen Disclosure-Aufbau.",
+        "Rückmeldung: Nach einer erfolgreichen oder fehlgeschlagenen Zusammenführung öffnet sich der Bereich automatisch, damit das Ergebnis direkt nachvollziehbar bleibt.",
+        "Responsivität: Die kompakte Schaltfläche und der geöffnete Arbeitsbereich bleiben auf Desktop und Mobilgeräten konsistent bedienbar.",
+        "Qualität: Ein automatisierter Test verhindert, dass die Profilzusammenführung künftig wieder dauerhaft geöffnet dargestellt wird."
+      ]
+    },
+    {
       "version": "3.3.6",
       "date": "2026-11-02",
       "title": "Ruhige Mannschaft-Synchronisierung mit kontrollierter Trennung",

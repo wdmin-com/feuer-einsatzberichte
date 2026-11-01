@@ -65,6 +65,7 @@ $sync_panel_open = isset($_GET['feu_mannschaft_synced'])
     || isset($_GET['feu_mannschaft_connected'])
     || isset($_GET['feu_mannschaft_disconnected'])
     || isset($_GET['feu_mannschaft_allowed']);
+$merge_panel_open = isset($_GET['feu_mannschaft_merged']);
 
 if (!function_exists('feu_einsatz_render_default_function_selects')) {
     function feu_einsatz_render_default_function_selects($all_functions, $selected = []) {
@@ -257,6 +258,17 @@ if (!function_exists('feu_einsatz_render_default_function_selects')) {
     </details>
 
     <?php if (count($merge_participant_rows) > 1) : ?>
+        <details class="feu-einsatz-mannschaft-sync feu-einsatz-profile-merge-disclosure" <?php echo $merge_panel_open ? 'open' : ''; ?>>
+            <summary class="feu-einsatz-mannschaft-sync-toggle">
+                <span class="feu-einsatz-mannschaft-sync-toggle-icon ti ti-user-check" aria-hidden="true"></span>
+                <span class="feu-einsatz-mannschaft-sync-toggle-copy">
+                    <strong><?php esc_html_e('Mannschaftsprofile zusammenführen', 'feuer-einsatzberichte'); ?></strong>
+                    <small><?php esc_html_e('Nur öffnen, wenn dieselbe Person doppelt angelegt wurde.', 'feuer-einsatzberichte'); ?></small>
+                </span>
+                <span class="feu-einsatz-mannschaft-sync-toggle-status is-neutral"><?php esc_html_e('Optional', 'feuer-einsatzberichte'); ?></span>
+                <span class="feu-einsatz-mannschaft-sync-toggle-chevron ti ti-chevron-down" aria-hidden="true"></span>
+            </summary>
+            <div class="feu-einsatz-mannschaft-sync-body">
         <section class="feu-einsatz-profile-merge-card" aria-labelledby="feu-einsatz-profile-merge-title">
             <div class="feu-einsatz-profile-merge-head">
                 <div>
@@ -315,6 +327,8 @@ if (!function_exists('feu_einsatz_render_default_function_selects')) {
                 </div>
             </form>
         </section>
+            </div>
+        </details>
     <?php endif; ?>
 
     <div class="feu-admin-stat-grid feu-admin-stat-grid--compact">

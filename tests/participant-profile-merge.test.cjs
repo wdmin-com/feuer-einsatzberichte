@@ -19,6 +19,8 @@ assert.match(integration, /\], true\);/, 'Manual connection of differing names m
 assert.match(admin, /admin_post_feu_einsatz_merge_participant_profiles/, 'The merge action must be registered.');
 assert.match(admin, /check_admin_referer\('feu_einsatz_merge_participant_profiles'\)/, 'The merge action must verify its nonce.');
 assert.match(template, /Mannschaftsprofile zusammenführen/, 'The participant screen must expose the merge workflow.');
+assert.match(template, /<details class="feu-einsatz-mannschaft-sync feu-einsatz-profile-merge-disclosure"/, 'The merge workflow must stay collapsed until explicitly opened.');
+assert.match(template, /\$merge_panel_open = isset\(\$_GET\['feu_mannschaft_merged'\]\)/, 'The merge panel should reopen after showing its result.');
 assert.match(template, /feu_einsatz_confirm_profile_merge/, 'The destructive merge must require explicit confirmation.');
 assert.match(template, /feu_einsatz_keep_primary_name/, 'The user must be able to keep the primary display name.');
 assert.match(styles, /\.feu-einsatz-profile-merge-grid/, 'The merge workflow must have a responsive layout.');

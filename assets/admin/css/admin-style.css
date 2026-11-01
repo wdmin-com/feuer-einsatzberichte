@@ -11565,6 +11565,7 @@ body .feu-einsatz-detail-panel[hidden] {
 .feu-einsatz-mannschaft-sync-toggle-copy strong { font-size: 15px; }
 .feu-einsatz-mannschaft-sync-toggle-copy small { color: #60788c; font-weight: 400; }
 .feu-einsatz-mannschaft-sync-toggle-status { padding: 5px 10px; border-radius: 999px; background: #e7f6ed; color: #087647; font-size: 12px; font-weight: 700; }
+.feu-einsatz-mannschaft-sync-toggle-status.is-neutral { background: #eef3f7; color: #526779; }
 .feu-einsatz-mannschaft-sync-toggle-chevron { transition: transform .18s ease; }
 .feu-einsatz-mannschaft-sync[open] .feu-einsatz-mannschaft-sync-toggle-chevron { transform: rotate(180deg); }
 .feu-einsatz-mannschaft-sync-body { padding: 22px; border-top: 1px solid #e6edf3; }
@@ -11596,6 +11597,14 @@ body .feu-einsatz-detail-panel[hidden] {
 }
 
 /* Explicit participant identity merge for Feuer-Mannschaft duplicates. */
+.feu-einsatz-profile-merge-disclosure .feu-einsatz-profile-merge-card {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+}
+
 .feu-einsatz-profile-merge-card {
     margin: 18px 0;
     padding: 24px;
