@@ -14,6 +14,7 @@ final class FEU_Einsatz_Mannschaft_Integration {
 
     public const PROVIDER_OPTION = 'feu_einsatz_participant_provider';
     public const PROVIDER_VALUE = 'mannschaft';
+    public const IGNORED_PROFILES_OPTION = 'feu_einsatz_mannschaft_ignored_profile_ids';
     private const PROFILE_META = '_feuer_mannschaft_profile';
     private const META_PREFIX = '_feuer_mannschaft_';
 
@@ -59,6 +60,7 @@ final class FEU_Einsatz_Mannschaft_Integration {
 
         $preview = $this->preview_sync();
         $review_ids = [];
+        $ignored_ids = $this->get_ignored_profile_ids();
         foreach ($preview['rows'] as $row) {
             if ('review' === $row['status']) {
                 $review_ids[] = (int) $row['profile']['id'];
@@ -66,7 +68,7 @@ final class FEU_Einsatz_Mannschaft_Integration {
         }
         $synced = 0;
         foreach (array_map('absint', (array) $member_ids) as $member_id) {
-            if (in_array($member_id, $review_ids, true)) {
+            if (in_array($member_id, $review_ids, true) || in_array($member_id, $ignored_ids, true)) {
                 continue;
             }
             if (false !== $this->sync_member($member_id)) {
@@ -81,7 +83,7 @@ final class FEU_Einsatz_Mannschaft_Integration {
     }
 
     public function sync_member(int $member_id) {
-        if (!self::is_available() || $member_id < 1 || '1' !== (string) get_post_meta($member_id, self::PROFILE_META, true)) {
+        if (!self::is_available() || $member_id < 1 || $this->is_profile_ignored($member_id) || '1' !== (string) get_post_meta($member_id, self::PROFILE_META, true)) {
             return false;
         }
 
@@ -131,7 +133,7 @@ final class FEU_Einsatz_Mannschaft_Integration {
      */
     public function preview_sync(): array {
         $result = [
-            'counts' => ['update' => 0, 'connect' => 0, 'create' => 0, 'review' => 0],
+            'counts' => ['update' => 0, 'connect' => 0, 'create' => 0, 'review' => 0, 'ignored' => 0],
             'rows' => [],
         ];
         if (!self::is_available()) {
@@ -140,6 +142,16 @@ final class FEU_Einsatz_Mannschaft_Integration {
 
         $participants = $this->db->get_participants(['include_archived' => true, 'include_deleted' => false]);
         foreach ($this->get_profiles() as $profile) {
+            if ($this->is_profile_ignored((int) $profile['id'])) {
+                $result['counts']['ignored']++;
+                $result['rows'][] = [
+                    'status' => 'ignored',
+                    'profile' => $profile,
+                    'participant' => null,
+                    'local_name' => '',
+                ];
+                continue;
+            }
             $linked = null;
             $exact = null;
             $suggestion = null;
@@ -226,12 +238,64 @@ final class FEU_Einsatz_Mannschaft_Integration {
 
         $primary_image_id = (int) get_post_thumbnail_id($member_id);
 
-        return $this->db->map_existing_participant_identity_to_external(self::PROVIDER_VALUE, $member_id, $participant_id, [
+        $connected = $this->db->map_existing_participant_identity_to_external(self::PROVIDER_VALUE, $member_id, $participant_id, [
             'vorname' => get_post_meta($member_id, self::META_PREFIX . 'first_name', true),
             'nachname' => get_post_meta($member_id, self::META_PREFIX . 'last_name', true),
             'job_title' => get_post_meta($member_id, self::META_PREFIX . 'job_title', true),
             'rank_title' => get_post_meta($member_id, self::META_PREFIX . 'rank', true),
             'primary_image_id' => $primary_image_id,
         ], true);
+        if (false !== $connected) {
+            $this->allow_profile_sync($member_id);
+        }
+
+        return $connected;
+    }
+
+    /** @return array<int,int> */
+    public function get_ignored_profile_ids(): array {
+        return array_values(array_unique(array_filter(array_map(
+            'absint',
+            (array) get_option(self::IGNORED_PROFILES_OPTION, [])
+        ))));
+    }
+
+    public function is_profile_ignored(int $member_id): bool {
+        return in_array(absint($member_id), $this->get_ignored_profile_ids(), true);
+    }
+
+    /**
+     * Disconnects a local profile and suppresses automatic reconnection during
+     * later manual sync runs. No local participant data is removed.
+     */
+    public function disconnect_participant(int $participant_id): bool {
+        $participant = $this->db->get_participant($participant_id);
+        if (!$participant || self::PROVIDER_VALUE !== (string) ($participant->external_provider ?? '') || (int) ($participant->external_id ?? 0) < 1) {
+            return false;
+        }
+
+        $member_id = (int) $participant->external_id;
+        if (!$this->db->disconnect_external_participant($participant_id, self::PROVIDER_VALUE)) {
+            return false;
+        }
+
+        $ignored = $this->get_ignored_profile_ids();
+        $ignored[] = $member_id;
+        update_option(self::IGNORED_PROFILES_OPTION, array_values(array_unique(array_map('absint', $ignored))), false);
+        $this->db->invalidate_statistics_dashboard_cache();
+        return true;
+    }
+
+    public function allow_profile_sync(int $member_id): bool {
+        $member_id = absint($member_id);
+        if ($member_id < 1) {
+            return false;
+        }
+        $ignored = array_values(array_filter(
+            $this->get_ignored_profile_ids(),
+            static fn($ignored_id) => (int) $ignored_id !== $member_id
+        ));
+        update_option(self::IGNORED_PROFILES_OPTION, $ignored, false);
+        return true;
     }
 }

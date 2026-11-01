@@ -8,10 +8,19 @@ const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 
 test('Mannschaft synchronization has a read-only preview and isolates ambiguous names', () => {
     const integration = read('includes/class-mannschaft-integration.php');
+    const database = read('includes/class-database.php');
+    const admin = read('includes/class-admin.php');
     const template = read('templates/admin/participants.php');
     assert.match(integration, /function preview_sync\(\): array/);
     assert.match(integration, /'review' => 0/);
     assert.match(integration, /in_array\(\$member_id, \$review_ids, true\)/);
+    assert.match(integration, /function disconnect_participant\(int \$participant_id\): bool/);
+    assert.match(integration, /IGNORED_PROFILES_OPTION/);
+    assert.match(database, /function disconnect_external_participant\(/);
+    assert.match(admin, /admin_post_feu_einsatz_disconnect_mannschaft_profile/);
+    assert.match(template, /<details class="feu-einsatz-mannschaft-sync"/);
+    assert.match(template, /Verbindung lösen/);
+    assert.match(template, /Wieder zulassen/);
     assert.match(template, /Synchronisierungsvorschau/);
     assert.match(template, /Zuordnung bestätigen/);
 });

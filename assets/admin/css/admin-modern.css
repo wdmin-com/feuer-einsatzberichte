@@ -1039,7 +1039,15 @@ body.feu-admin-ui--modern-shell .feu-einsatz-participant-table--compact {
 }
 
 body.feu-admin-ui--modern-shell .feu-einsatz-participant-table--compact .feu-einsatz-participant-member-column {
-    width: 42%;
+    width: 27%;
+}
+
+body.feu-admin-ui--modern-shell .feu-einsatz-participant-table--compact .feu-einsatz-participant-rank-column {
+    width: 15%;
+}
+
+body.feu-admin-ui--modern-shell .feu-einsatz-participant-table--compact .feu-einsatz-participant-position-column {
+    width: 17%;
 }
 
 body.feu-admin-ui--modern-shell .feu-einsatz-participant-table--compact .feu-einsatz-participant-actions-column {
@@ -1133,6 +1141,30 @@ body.feu-admin-ui--modern-shell .feu-einsatz-participant-source::before {
     content: "·";
     margin-right: 7px;
     color: #9aa9b7;
+}
+
+body.feu-admin-ui--modern-shell .feu-einsatz-participant-detail-cell {
+    overflow: hidden;
+}
+
+body.feu-admin-ui--modern-shell .feu-einsatz-participant-detail-label {
+    display: none;
+}
+
+body.feu-admin-ui--modern-shell .feu-einsatz-participant-detail-value {
+    display: block;
+    overflow: hidden;
+    color: #29465d;
+    font-size: 11px;
+    font-weight: 650;
+    line-height: 1.35;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+body.feu-admin-ui--modern-shell .feu-einsatz-participant-detail-empty {
+    color: #a4b0bb;
+    font-size: 13px;
 }
 
 body.feu-admin-ui--modern-shell .feu-einsatz-participant-table--compact .feu-einsatz-default-function-tags {
@@ -1306,6 +1338,27 @@ body.feu-admin-ui--modern-shell .feu-einsatz-participant-table--compact .feu-ein
 
     body.feu-admin-ui--modern-shell .feu-einsatz-participant-table--compact td::before {
         display: none;
+    }
+
+    body.feu-admin-ui--modern-shell .feu-einsatz-participant-table--compact .feu-einsatz-participant-detail-cell {
+        display: grid;
+        grid-template-columns: minmax(90px, 32%) minmax(0, 1fr);
+        gap: 12px;
+        align-items: baseline;
+    }
+
+    body.feu-admin-ui--modern-shell .feu-einsatz-participant-detail-label {
+        display: block;
+        color: #718294;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+    }
+
+    body.feu-admin-ui--modern-shell .feu-einsatz-participant-detail-value {
+        font-size: 12px;
+        white-space: normal;
     }
 
     body.feu-admin-ui--modern-shell .feu-einsatz-participant-table--compact .feu-einsatz-table-actions {

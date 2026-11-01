@@ -1,6 +1,23 @@
 {
   "releases": [
     {
+      "version": "3.3.6",
+      "date": "2026-11-02",
+      "title": "Ruhige Mannschaft-Synchronisierung mit kontrollierter Trennung",
+      "summary": "Die Feuer-Mannschaft-Integration tritt im Tagesgeschäft in den Hintergrund, lässt sich bei Bedarf gezielt öffnen und ermöglicht das sichere Lösen sowie Wiederzulassen einzelner Verbindungen.",
+      "changes": [
+        "Mannschaftsverwaltung: Die umfangreichen Synchronisierungsfunktionen sind standardmäßig in einer kompakten, zugänglichen Schaltfläche zusammengefasst und belegen nicht länger dauerhaft den oberen Seitenbereich.",
+        "Bedienung: Vorschau, manueller Start, Namenszuordnung, verbundene Profile und ausgeschlossene Profile erscheinen gemeinsam in einer klar gegliederten Bedarfspanel.",
+        "Verbindungen: Einzelne Feuer-Mannschaft-Zuordnungen können sicher gelöst werden, ohne lokale Profile, Fotos, Einsätze, Funktionen oder Statistiken zu löschen.",
+        "Schutz vor Wiederverknüpfung: Gelöste externe Profile werden bei späteren manuellen Synchronisierungen übersprungen und erst über „Wieder zulassen“ erneut freigegeben.",
+        "Nachvollziehbarkeit: Das Lösen einer Verbindung ist mit Rechteprüfung, Nonce-Schutz, Bestätigung, Statusmeldung und technischem Protokolleintrag abgesichert.",
+        "Mannschaftsliste: Dienstgrad und Position aus Feuer-Mannschaft werden als eigene kompakte Spalten neben dem Mitglied angezeigt.",
+        "Leere Werte: Fehlende Angaben zu Dienstgrad oder Position erscheinen als neutraler Platzhalter statt als fehlerhaft wirkende leere Tabellenfläche.",
+        "Responsivität: Die zusätzlichen Profildaten bleiben auf großen Bildschirmen platzsparend und wechseln auf mobilen Geräten in eine beschriftete, gut lesbare Darstellung.",
+        "Qualität: Quell- und WordPress-Integrationstests prüfen Trennung, Ausschluss, erneute Freigabe, historische Zuordnungen sowie die neuen Tabellenfelder."
+      ]
+    },
+    {
       "version": "3.3.5",
       "date": "2026-11-02",
       "title": "Kontrollierte Mannschaftsdaten, Medienprüfung und automatischer Cache-Aufbau",

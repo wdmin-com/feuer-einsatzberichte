@@ -9,6 +9,7 @@ $db = Feuer_Einsatzberichte_Core::get_instance()->get_db();
 $primary_id = 0;
 $duplicate_id = 0;
 $report_ids = [];
+$previous_ignored_profiles = get_option(FEU_Einsatz_Mannschaft_Integration::IGNORED_PROFILES_OPTION, null);
 
 try {
     $primary_id = (int) $db->save_participant(0, [
@@ -118,6 +119,23 @@ try {
         || 'Gerätewart' !== $primary_after_sync->job_title || 'Oberbrandmeister' !== $primary_after_sync->rank_title) {
         throw new RuntimeException('Future synchronization ignored the local name lock or failed to refresh non-name identity fields.');
     }
+
+    $integration = Feuer_Einsatzberichte_Core::get_instance()->get_mannschaft_integration();
+    if (!$integration->disconnect_participant($primary_id)) {
+        throw new RuntimeException('The Feuer-Mannschaft connection could not be disconnected.');
+    }
+    $primary_after_disconnect = $db->get_participant($primary_id);
+    if ('' !== (string) $primary_after_disconnect->external_provider || 0 !== (int) $primary_after_disconnect->external_id
+        || 'Maximilian' !== $primary_after_disconnect->vorname || !in_array(987654, $integration->get_ignored_profile_ids(), true)) {
+        throw new RuntimeException('Disconnecting changed local profile data or failed to suppress automatic reconnection.');
+    }
+    $meta_after_disconnect = get_post_meta($report_ids[2], '_feu_einsatz_teilnehmer', true);
+    if (!is_array($meta_after_disconnect) || $primary_id !== (int) ($meta_after_disconnect[0]['id'] ?? 0)) {
+        throw new RuntimeException('Disconnecting removed a historic report assignment.');
+    }
+    if (!$integration->allow_profile_sync(987654) || in_array(987654, $integration->get_ignored_profile_ids(), true)) {
+        throw new RuntimeException('An excluded Feuer-Mannschaft profile could not be enabled again.');
+    }
 } finally {
     foreach ($report_ids as $report_id) {
         $db->save_participant_stats($report_id, []);
@@ -128,6 +146,11 @@ try {
         if ($participant_id > 0) {
             $wpdb->delete($db->get_participant_table_name(), ['id' => $participant_id], ['%d']);
         }
+    }
+    if (null === $previous_ignored_profiles) {
+        delete_option(FEU_Einsatz_Mannschaft_Integration::IGNORED_PROFILES_OPTION);
+    } else {
+        update_option(FEU_Einsatz_Mannschaft_Integration::IGNORED_PROFILES_OPTION, $previous_ignored_profiles, false);
     }
     $db->invalidate_statistics_dashboard_cache();
 }

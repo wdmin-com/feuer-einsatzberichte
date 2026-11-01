@@ -486,6 +486,8 @@ class FEU_Einsatz_Admin {
         add_action('admin_post_feu_einsatz_save_mannschaft_source', [$this, 'handle_mannschaft_source_save']);
         add_action('admin_post_feu_einsatz_sync_mannschaft_participants', [$this, 'handle_mannschaft_participant_sync']);
         add_action('admin_post_feu_einsatz_connect_mannschaft_profile', [$this, 'handle_mannschaft_profile_connection']);
+        add_action('admin_post_feu_einsatz_disconnect_mannschaft_profile', [$this, 'handle_mannschaft_profile_disconnect']);
+        add_action('admin_post_feu_einsatz_allow_mannschaft_profile', [$this, 'handle_mannschaft_profile_allow']);
         add_action('admin_post_feu_einsatz_merge_participant_profiles', [$this, 'handle_mannschaft_profile_merge']);
         add_action('admin_post_feu_einsatz_share_image',              [$this->report_share, 'handle_share_image_download']);
         add_action('admin_post_feu_einsatz_share_image_public',         [$this->report_share, 'handle_public_share_image_request']);
@@ -10248,6 +10250,53 @@ class FEU_Einsatz_Admin {
             admin_url('admin.php?page=feu-einsatz-teilnehmer')
         );
         wp_safe_redirect($redirect_url);
+        exit;
+    }
+
+    public function handle_mannschaft_profile_disconnect(): void {
+        if (!self::current_user_can_access_plugin_section('participants') || !current_user_can('manage_options')) {
+            wp_die(esc_html__('Keine Berechtigung.', 'feuer-einsatzberichte'));
+        }
+
+        $participant_id = absint($_POST['feu_einsatz_participant_id'] ?? 0);
+        check_admin_referer('feu_einsatz_disconnect_mannschaft_profile_' . $participant_id);
+        $disconnected = Feuer_Einsatzberichte_Core::get_instance()
+            ->get_mannschaft_integration()
+            ->disconnect_participant($participant_id);
+
+        if ($disconnected) {
+            FEU_Einsatz_Logger::log(
+                'participant_external_profile_disconnected',
+                'participant',
+                $participant_id,
+                __('Feuer-Mannschaft-Verbindung gelöst', 'feuer-einsatzberichte')
+            );
+        }
+
+        wp_safe_redirect(add_query_arg(
+            'feu_mannschaft_disconnected',
+            $disconnected ? '1' : '0',
+            admin_url('admin.php?page=feu-einsatz-teilnehmer')
+        ));
+        exit;
+    }
+
+    public function handle_mannschaft_profile_allow(): void {
+        if (!self::current_user_can_access_plugin_section('participants') || !current_user_can('manage_options')) {
+            wp_die(esc_html__('Keine Berechtigung.', 'feuer-einsatzberichte'));
+        }
+
+        $profile_id = absint($_POST['feu_einsatz_mannschaft_profile_id'] ?? 0);
+        check_admin_referer('feu_einsatz_allow_mannschaft_profile_' . $profile_id);
+        $allowed = Feuer_Einsatzberichte_Core::get_instance()
+            ->get_mannschaft_integration()
+            ->allow_profile_sync($profile_id);
+
+        wp_safe_redirect(add_query_arg(
+            'feu_mannschaft_allowed',
+            $allowed ? '1' : '0',
+            admin_url('admin.php?page=feu-einsatz-teilnehmer')
+        ));
         exit;
     }
 

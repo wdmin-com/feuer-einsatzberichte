@@ -1667,6 +1667,40 @@ class FEU_Einsatz_Database {
             ? false
             : $participant_id;
     }
+
+    /**
+     * Removes only the external identity mapping from a local participant.
+     * Historic reports, statistics and all local profile fields stay intact.
+     */
+    public function disconnect_external_participant($participant_id, $provider = '') {
+        $participant_id = absint($participant_id);
+        $provider = sanitize_key((string) $provider);
+        $participant = $this->get_participant($participant_id);
+
+        if (!$participant || !empty($participant->is_deleted)) {
+            return false;
+        }
+        if ('' !== $provider && $provider !== sanitize_key((string) $participant->external_provider)) {
+            return false;
+        }
+        if ('' === (string) $participant->external_provider || (int) $participant->external_id < 1) {
+            return false;
+        }
+
+        $updated = $this->wpdb->update(
+            $this->table_participants,
+            [
+                'external_provider' => '',
+                'external_id' => 0,
+                'external_name_locked' => 0,
+            ],
+            ['id' => $participant_id],
+            ['%s', '%d', '%d'],
+            ['%d']
+        );
+
+        return false === $updated ? false : true;
+    }
     
     /**
      * Mannschaftsmitglied löschen
