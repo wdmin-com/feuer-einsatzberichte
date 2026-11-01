@@ -29,6 +29,71 @@ $retention_cutoff = $retention_years > 0 ? strtotime('-' . $retention_years . ' 
             <?php endforeach; ?>
         </section>
         <p class="description"><?php echo esc_html(sprintf(__('Übersicht über die letzten %d Berichte. Fehler werden pro Aufgabe isoliert; andere Berichte laufen weiter.', 'feuer-einsatzberichte'), (int) $status_overview['sample_size'])); ?></p>
+        <section class="feu-einsatz-operations-panel feu-einsatz-integrity-panel">
+            <div class="feu-einsatz-operations-panel-heading">
+                <div>
+                    <h2><?php esc_html_e('Bildintegrität', 'feuer-einsatzberichte'); ?></h2>
+                    <p><?php esc_html_e('Die tägliche Hintergrundprüfung kontrolliert Kartenbilder, Share-Bilder, Originalfotos und geschützte Varianten.', 'feuer-einsatzberichte'); ?></p>
+                </div>
+                <?php if (current_user_can('manage_options')) : ?>
+                    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                        <input type="hidden" name="action" value="feu_einsatz_run_image_integrity" />
+                        <?php wp_nonce_field('feu_einsatz_run_image_integrity'); ?>
+                        <button type="submit" class="button"><?php esc_html_e('Jetzt prüfen', 'feuer-einsatzberichte'); ?></button>
+                    </form>
+                <?php endif; ?>
+            </div>
+            <div class="feu-einsatz-integrity-summary">
+                <strong><?php echo esc_html(sprintf(__('%d Probleme', 'feuer-einsatzberichte'), (int) ($image_integrity['issue_count'] ?? 0))); ?></strong>
+                <span><?php echo esc_html(sprintf(__('%1$d Berichte · %2$d Dateien geprüft', 'feuer-einsatzberichte'), (int) ($image_integrity['reports'] ?? 0), (int) ($image_integrity['files'] ?? 0))); ?></span>
+                <?php if (!empty($image_integrity['warm_queued'])) : ?><span><?php echo esc_html(sprintf(__('%d Cache-Aufgaben eingeplant', 'feuer-einsatzberichte'), (int) $image_integrity['warm_queued'])); ?></span><?php endif; ?>
+                <?php if (!empty($image_integrity['checked_at'])) : ?><span><?php echo esc_html(sprintf(__('Letzte Prüfung: %s', 'feuer-einsatzberichte'), wp_date(get_option('date_format') . ' ' . get_option('time_format'), (int) $image_integrity['checked_at']))); ?></span><?php endif; ?>
+            </div>
+            <?php if (!empty($image_integrity['issues'])) : ?>
+                <div class="feu-einsatz-integrity-issues">
+                    <?php foreach (array_slice($image_integrity['issues'], 0, 8) as $issue) : ?>
+                        <a href="<?php echo esc_url($this->get_edit_url((int) $issue['post_id'])); ?>"><span>#<?php echo esc_html((string) $issue['post_id']); ?></span> <?php echo esc_html($issue['message']); ?></a>
+                    <?php endforeach; ?>
+                </div>
+            <?php elseif (!empty($image_integrity['checked_at'])) : ?>
+                <p class="feu-einsatz-operations-empty"><?php esc_html_e('Alle geprüften Bilddateien sind intakt.', 'feuer-einsatzberichte'); ?></p>
+            <?php else : ?>
+                <p class="feu-einsatz-operations-empty"><?php esc_html_e('Die erste automatische Prüfung ist eingeplant.', 'feuer-einsatzberichte'); ?></p>
+            <?php endif; ?>
+        </section>
+        <?php if (current_user_can('manage_options') && '' !== $diagnostic_report) : ?>
+            <section class="feu-einsatz-operations-panel feu-einsatz-diagnostic-panel">
+                <div class="feu-einsatz-operations-panel-heading">
+                    <div>
+                        <h2><?php esc_html_e('Technische Diagnose', 'feuer-einsatzberichte'); ?></h2>
+                        <p><?php esc_html_e('Erstellt eine datenschutzfreundliche Systemübersicht ohne Namen, Adressen, Berichtstexte oder Bildinhalte.', 'feuer-einsatzberichte'); ?></p>
+                    </div>
+                    <button type="button" class="button" data-feu-copy-diagnostic><?php esc_html_e('Diagnose kopieren', 'feuer-einsatzberichte'); ?></button>
+                </div>
+                <textarea data-feu-diagnostic-source class="screen-reader-text" readonly><?php echo esc_textarea($diagnostic_report); ?></textarea>
+                <p class="feu-einsatz-diagnostic-status" data-feu-diagnostic-status role="status" aria-live="polite"></p>
+            </section>
+            <script>
+            (function() {
+                var button = document.querySelector('[data-feu-copy-diagnostic]');
+                var source = document.querySelector('[data-feu-diagnostic-source]');
+                var status = document.querySelector('[data-feu-diagnostic-status]');
+                if (!button || !source) return;
+                button.addEventListener('click', function() {
+                    var copied = function() {
+                        if (status) status.textContent = <?php echo wp_json_encode(__('Diagnose wurde in die Zwischenablage kopiert.', 'feuer-einsatzberichte')); ?>;
+                    };
+                    if (navigator.clipboard && window.isSecureContext) {
+                        navigator.clipboard.writeText(source.value).then(copied).catch(function() {
+                            source.classList.remove('screen-reader-text'); source.select(); document.execCommand('copy'); source.classList.add('screen-reader-text'); copied();
+                        });
+                        return;
+                    }
+                    source.classList.remove('screen-reader-text'); source.select(); document.execCommand('copy'); source.classList.add('screen-reader-text'); copied();
+                });
+            }());
+            </script>
+        <?php endif; ?>
         <section class="feu-einsatz-operations-panel">
             <div class="feu-einsatz-operations-panel-heading"><div><h2><?php esc_html_e('Hintergrundaufgaben', 'feuer-einsatzberichte'); ?></h2><p><?php esc_html_e('Kartenbild, Link-Vorschaubild und geschützte Fotos werden unabhängig voneinander verarbeitet.', 'feuer-einsatzberichte'); ?></p></div></div>
             <?php if (!$status_overview['items']) : ?>

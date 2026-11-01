@@ -36,7 +36,7 @@ $presentation_setting_options = [
     'welcome' => ['page' => 1, 'title' => __('Willkommen', 'feuer-einsatzberichte'), 'blocks' => [__('Logo aus Einstellungen', 'feuer-einsatzberichte')]],
     'overview' => ['page' => 2, 'title' => __('Übersicht', 'feuer-einsatzberichte'), 'blocks' => [__('Einsätze', 'feuer-einsatzberichte'), __('Stärkster Monat', 'feuer-einsatzberichte'), __('Top-Einsatzstichwort', 'feuer-einsatzberichte')]],
     'categories' => ['page' => 3, 'title' => __('Einsatzstichworte', 'feuer-einsatzberichte'), 'blocks' => [__('Einsatzstichwort-Balken', 'feuer-einsatzberichte'), __('Einsatzstichwort-Anteile', 'feuer-einsatzberichte')]],
-    'calendar' => ['page' => 4, 'title' => __('Kalender', 'feuer-einsatzberichte'), 'blocks' => [__('Beliebte Wochentage', 'feuer-einsatzberichte'), __('Stärkste Tage', 'feuer-einsatzberichte'), __('Monatsverteilung', 'feuer-einsatzberichte')]],
+    'calendar' => ['page' => 4, 'title' => __('Kalender', 'feuer-einsatzberichte'), 'blocks' => [__('Einsätze nach Wochentag', 'feuer-einsatzberichte'), __('Stärkste Tage', 'feuer-einsatzberichte'), __('Monatsverteilung', 'feuer-einsatzberichte')]],
     'activity_map' => ['page' => 5, 'title' => __('Aktivitätskarte', 'feuer-einsatzberichte'), 'blocks' => [__('Live-Karte', 'feuer-einsatzberichte')]],
     'participants' => ['page' => 6, 'title' => __('Mannschaft', 'feuer-einsatzberichte'), 'blocks' => [__('Top 3 Mitglieder', 'feuer-einsatzberichte'), __('Mannschaftsliste', 'feuer-einsatzberichte')]],
 ];
@@ -709,7 +709,7 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
                     </div>
                     <div class="feu-einsatz-presentation-overview-lists">
                         <div>
-                            <h3><?php esc_html_e('Häufigste Wochentage', 'feuer-einsatzberichte'); ?></h3>
+                            <h3><?php esc_html_e('Einsätze nach Wochentag', 'feuer-einsatzberichte'); ?></h3>
                             <?php foreach (array_slice($top_weekdays, 0, 3) as $weekday): ?>
                                 <p><span><?php echo esc_html((string) ($weekday['label'] ?? '')); ?></span><strong><?php echo esc_html((string) ($weekday['count'] ?? 0)); ?></strong></p>
                             <?php endforeach; ?>
@@ -748,7 +748,7 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
                     <h2><span class="ti ti-calendar-stats" aria-hidden="true"></span><?php esc_html_e('Kalender', 'feuer-einsatzberichte'); ?></h2>
                     <div class="feu-einsatz-presentation-calendar-grid">
                         <div>
-                            <h3><?php esc_html_e('Beliebte Wochentage', 'feuer-einsatzberichte'); ?></h3>
+                            <h3><?php esc_html_e('Einsätze nach Wochentag', 'feuer-einsatzberichte'); ?></h3>
                             <?php foreach ($top_weekdays as $weekday): ?>
                                 <p><span><?php echo esc_html((string) ($weekday['label'] ?? '')); ?></span><strong><?php echo esc_html((string) ($weekday['count'] ?? 0)); ?></strong></p>
                             <?php endforeach; ?>
@@ -1028,8 +1028,8 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
         <div class="feu-einsatz-admindek-card feu-einsatz-admindek-card--weekdays">
             <div class="feu-einsatz-admindek-card-head">
                 <div>
-                    <span><i class="ti ti-calendar-week"></i><?php esc_html_e('Häufigste Wochentage', 'feuer-einsatzberichte'); ?></span>
-                    <h2><?php esc_html_e('Top Wochentage', 'feuer-einsatzberichte'); ?></h2>
+                    <span><i class="ti ti-calendar-week"></i><?php esc_html_e('Wochentagsverteilung', 'feuer-einsatzberichte'); ?></span>
+                    <h2><?php esc_html_e('Einsätze nach Wochentag', 'feuer-einsatzberichte'); ?></h2>
                 </div>
             </div>
             <div class="feu-einsatz-admindek-progress-list">
@@ -1288,7 +1288,7 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
 
             <div class="feu-einsatz-calendar-insights">
                 <div class="feu-einsatz-insight-card">
-                    <h3><?php esc_html_e('Häufigste Wochentage', 'feuer-einsatzberichte'); ?></h3>
+                    <h3><?php esc_html_e('Einsätze nach Wochentag', 'feuer-einsatzberichte'); ?></h3>
                     <?php if (empty($top_weekdays)): ?>
                         <p class="description"><?php esc_html_e('Noch keine Tagesdaten für dieses Jahr.', 'feuer-einsatzberichte'); ?></p>
                     <?php else: ?>
@@ -3561,7 +3561,7 @@ document.addEventListener('DOMContentLoaded', function() {
             pdf.addPage();
             drawPdfHeader(pdf, 'Zeitmuster und Aktivitaetszonen', exportSubtitle);
             drawPdfDailyTimelineChart(pdf, 14, 34, 182, 66, 'Einsätze pro Tag', 'Tagesverlauf über das gesamte Jahr', dailyTimelineSeries);
-            drawPdfListCard(pdf, 14, 108, 88, 48, 'Häufigste Wochentage', weekdayItems);
+            drawPdfListCard(pdf, 14, 108, 88, 48, 'Einsätze nach Wochentag', weekdayItems);
             drawPdfListCard(pdf, 108, 108, 88, 48, 'Spitzen-Tage', peakDayItems);
             addCanvasBlock(
                 pdf,

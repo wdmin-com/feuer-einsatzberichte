@@ -531,14 +531,14 @@ class FEU_Einsatz_Ajax_Handler {
         $districts = isset($_POST['districts']) ? wp_unslash($_POST['districts']) : [];
 
         if ('' === trim($street)) {
-            wp_send_json_error(['message' => __('Bitte eine Strasse eingeben.', 'feuer-einsatzberichte')], 400);
+            wp_send_json_error(['message' => __('Bitte eine Straße eingeben.', 'feuer-einsatzberichte')], 400);
             return;
         }
 
         $result = $this->db->save_street_registry_entry($id, $street, $postcode, $city, $districts);
 
         if (false === $result) {
-            wp_send_json_error(['message' => __('Strasse konnte nicht gespeichert werden. Ein identischer Eintrag existiert eventuell bereits.', 'feuer-einsatzberichte')], 500);
+            wp_send_json_error(['message' => __('Straße konnte nicht gespeichert werden. Ein identischer Eintrag existiert eventuell bereits.', 'feuer-einsatzberichte')], 500);
             return;
         }
 
@@ -564,12 +564,12 @@ class FEU_Einsatz_Ajax_Handler {
         }
 
         if ($this->db->count_posts_using_street_registry_entry($id) > 0) {
-            wp_send_json_error(['message' => __('Diese Strasse wird bereits in Einsatzberichten verwendet und kann deshalb nicht geloescht werden.', 'feuer-einsatzberichte')], 409);
+            wp_send_json_error(['message' => __('Diese Straße wird bereits in Einsatzberichten verwendet und kann deshalb nicht gelöscht werden.', 'feuer-einsatzberichte')], 409);
             return;
         }
 
         if (!$this->db->delete_street_registry_entry($id)) {
-            wp_send_json_error(['message' => __('Strasse konnte nicht geloescht werden.', 'feuer-einsatzberichte')], 500);
+            wp_send_json_error(['message' => __('Straße konnte nicht gelöscht werden.', 'feuer-einsatzberichte')], 500);
             return;
         }
 
@@ -635,7 +635,7 @@ class FEU_Einsatz_Ajax_Handler {
         }
 
         if ('' === $participant['vorname'] || '' === $participant['nachname']) {
-            wp_send_json_error(['message' => __('Bitte alle Felder ausfuellen', 'feuer-einsatzberichte')], 400);
+            wp_send_json_error(['message' => __('Bitte alle Felder ausfüllen', 'feuer-einsatzberichte')], 400);
             return;
         }
 
@@ -784,7 +784,7 @@ class FEU_Einsatz_Ajax_Handler {
             return;
         }
 
-        wp_send_json_error(['message' => __('Status konnte nicht geaendert werden', 'feuer-einsatzberichte')], 500);
+        wp_send_json_error(['message' => __('Status konnte nicht geändert werden', 'feuer-einsatzberichte')], 500);
     }
 
     public function feu_einsatz_delete_participant() {
@@ -939,7 +939,7 @@ class FEU_Einsatz_Ajax_Handler {
             return;
         }
 
-        wp_send_json_error(['message' => __('Status konnte nicht geaendert werden', 'feuer-einsatzberichte')], 500);
+        wp_send_json_error(['message' => __('Status konnte nicht geändert werden', 'feuer-einsatzberichte')], 500);
     }
 
     public function feu_einsatz_toggle_organization_archive() {
@@ -977,6 +977,6 @@ class FEU_Einsatz_Ajax_Handler {
             return;
         }
 
-        wp_send_json_error(['message' => __('Status konnte nicht geaendert werden', 'feuer-einsatzberichte')], 500);
+        wp_send_json_error(['message' => __('Status konnte nicht geändert werden', 'feuer-einsatzberichte')], 500);
     }
 }

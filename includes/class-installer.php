@@ -5,7 +5,7 @@ if (!defined('ABSPATH')) {
 
 class FEU_Einsatz_Installer {
 
-    const SCHEMA_VERSION = '2026-07-03-1';
+    const SCHEMA_VERSION = '2026-11-01-1';
 
     public static function get_default_functions() {
         return [
@@ -285,6 +285,8 @@ class FEU_Einsatz_Installer {
     }
     
     public static function deactivate() {
+        wp_unschedule_hook('feu_einsatz_daily_image_integrity');
+        wp_unschedule_hook('feu_einsatz_warm_report_cache');
         flush_rewrite_rules();
     }
     
@@ -339,6 +341,7 @@ class FEU_Einsatz_Installer {
             default_functions longtext NULL,
             external_provider varchar(40) DEFAULT '',
             external_id bigint(20) unsigned DEFAULT 0,
+            external_name_locked tinyint(1) DEFAULT 0,
             is_archived tinyint(1) DEFAULT 0,
             is_deleted tinyint(1) DEFAULT 0,
             created_at datetime DEFAULT CURRENT_TIMESTAMP,

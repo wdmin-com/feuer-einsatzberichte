@@ -57,8 +57,18 @@ final class FEU_Einsatz_Mannschaft_Integration {
             'no_found_rows' => true,
         ]);
 
+        $preview = $this->preview_sync();
+        $review_ids = [];
+        foreach ($preview['rows'] as $row) {
+            if ('review' === $row['status']) {
+                $review_ids[] = (int) $row['profile']['id'];
+            }
+        }
         $synced = 0;
         foreach (array_map('absint', (array) $member_ids) as $member_id) {
+            if (in_array($member_id, $review_ids, true)) {
+                continue;
+            }
             if (false !== $this->sync_member($member_id)) {
                 $synced++;
             }
@@ -67,7 +77,7 @@ final class FEU_Einsatz_Mannschaft_Integration {
         $this->db->invalidate_statistics_dashboard_cache();
         update_option('feu_einsatz_mannschaft_last_sync', current_time('mysql'), false);
 
-        return ['synced' => $synced, 'skipped' => false];
+        return ['synced' => $synced, 'skipped' => false, 'review' => count($review_ids)];
     }
 
     public function sync_member(int $member_id) {
@@ -109,13 +119,100 @@ final class FEU_Einsatz_Mannschaft_Integration {
 
         $profiles = [];
         foreach (array_map('absint', (array) $ids) as $id) {
-            $profiles[] = [
-                'id' => $id,
-                'name' => trim((string) get_post_meta($id, self::META_PREFIX . 'first_name', true) . ' ' . (string) get_post_meta($id, self::META_PREFIX . 'last_name', true)),
-            ];
+            $profiles[] = $this->get_profile_identity($id);
         }
 
         return array_values(array_filter($profiles, static fn($profile) => '' !== $profile['name']));
+    }
+
+    /**
+     * Build a read-only plan before a manual synchronization changes data.
+     * Ambiguous names are never linked automatically.
+     */
+    public function preview_sync(): array {
+        $result = [
+            'counts' => ['update' => 0, 'connect' => 0, 'create' => 0, 'review' => 0],
+            'rows' => [],
+        ];
+        if (!self::is_available()) {
+            return $result;
+        }
+
+        $participants = $this->db->get_participants(['include_archived' => true, 'include_deleted' => false]);
+        foreach ($this->get_profiles() as $profile) {
+            $linked = null;
+            $exact = null;
+            $suggestion = null;
+            foreach ($participants as $participant) {
+                if (self::PROVIDER_VALUE === (string) ($participant->external_provider ?? '') && (int) ($participant->external_id ?? 0) === (int) $profile['id']) {
+                    $linked = $participant;
+                    break;
+                }
+                if (!empty($participant->external_id)) {
+                    continue;
+                }
+                $local_first = $this->normalize_name((string) $participant->vorname);
+                $local_last = $this->normalize_name((string) $participant->nachname);
+                if ($local_first === $profile['normalized_first'] && $local_last === $profile['normalized_last']) {
+                    $exact = $participant;
+                } elseif (!$suggestion && $this->is_name_suggestion($local_first, $local_last, $profile['normalized_first'], $profile['normalized_last'])) {
+                    $suggestion = $participant;
+                }
+            }
+
+            if ($linked) {
+                $status = 'update';
+                $participant = $linked;
+            } elseif ($exact) {
+                $status = 'connect';
+                $participant = $exact;
+            } elseif ($suggestion) {
+                $status = 'review';
+                $participant = $suggestion;
+            } else {
+                $status = 'create';
+                $participant = null;
+            }
+            $result['counts'][$status]++;
+            $result['rows'][] = [
+                'status' => $status,
+                'profile' => $profile,
+                'participant' => $participant,
+                'local_name' => $participant ? trim((string) $participant->vorname . ' ' . (string) $participant->nachname) : '',
+            ];
+        }
+        return $result;
+    }
+
+    private function get_profile_identity(int $id): array {
+        $first = trim((string) get_post_meta($id, self::META_PREFIX . 'first_name', true));
+        $last = trim((string) get_post_meta($id, self::META_PREFIX . 'last_name', true));
+        return [
+            'id' => $id,
+            'name' => trim($first . ' ' . $last),
+            'first_name' => $first,
+            'last_name' => $last,
+            'job_title' => trim((string) get_post_meta($id, self::META_PREFIX . 'job_title', true)),
+            'rank_title' => trim((string) get_post_meta($id, self::META_PREFIX . 'rank', true)),
+            'primary_image_id' => (int) get_post_thumbnail_id($id),
+            'normalized_first' => $this->normalize_name($first),
+            'normalized_last' => $this->normalize_name($last),
+        ];
+    }
+
+    private function normalize_name(string $name): string {
+        $name = strtolower(remove_accents(trim($name)));
+        return preg_replace('/[^a-z0-9]+/u', '', $name) ?: '';
+    }
+
+    private function is_name_suggestion(string $local_first, string $local_last, string $remote_first, string $remote_last): bool {
+        if ('' === $local_first || '' === $local_last || '' === $remote_first || '' === $remote_last) {
+            return false;
+        }
+        $same_initial = $local_first[0] === $remote_first[0];
+        $last_related = strlen($local_last) >= 4 && strlen($remote_last) >= 4
+            && (str_starts_with($local_last, $remote_last) || str_starts_with($remote_last, $local_last));
+        return $same_initial && $last_related;
     }
 
     public function connect_existing_participant(int $participant_id, int $member_id) {
@@ -135,6 +232,6 @@ final class FEU_Einsatz_Mannschaft_Integration {
             'job_title' => get_post_meta($member_id, self::META_PREFIX . 'job_title', true),
             'rank_title' => get_post_meta($member_id, self::META_PREFIX . 'rank', true),
             'primary_image_id' => $primary_image_id,
-        ]);
+        ], true);
     }
 }

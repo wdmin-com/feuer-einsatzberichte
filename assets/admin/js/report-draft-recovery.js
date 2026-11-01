@@ -18,6 +18,10 @@
     var maxAge = 24 * 60 * 60 * 1000;
     var submitting = false;
     var restoring = false;
+    var saveIndicator = document.querySelector('[data-feu-save-indicator]');
+    var saveIndicatorText = saveIndicator ? saveIndicator.querySelector('[data-feu-save-indicator-text]') : null;
+    var autosaveTimer = 0;
+    var existingReport = form.dataset.feuExisting === '1';
     var ignored = /^(?:action|post_id|feu_einsatz_report_status|.*_nonce|_wp_http_referer|feu_einsatz_is_einsatzbericht)$/;
 
     function editor() { return window.tinymce && window.tinymce.get ? window.tinymce.get(content.id) : null; }
@@ -70,6 +74,21 @@
         };
     }
     function serialized(value) { return JSON.stringify(value); }
+    function formatTime() {
+        return new Intl.DateTimeFormat(document.documentElement.lang || 'de-DE', { hour: '2-digit', minute: '2-digit' }).format(new Date());
+    }
+    function setSaveIndicator(state, withTime) {
+        if (!saveIndicator || !saveIndicatorText) return;
+        var labels = {
+            idle: saveIndicator.dataset.labelIdle || 'Noch nicht gespeichert',
+            saved: saveIndicator.dataset.labelSaved || 'Gespeichert',
+            dirty: saveIndicator.dataset.labelDirty || 'Nicht gespeicherte Änderungen',
+            autosaved: saveIndicator.dataset.labelAutosaved || 'Automatisch gesichert',
+            error: saveIndicator.dataset.labelError || 'Speichern fehlgeschlagen'
+        };
+        saveIndicator.className = 'feu-einsatz-save-indicator is-' + state;
+        saveIndicatorText.textContent = labels[state] + (withTime ? ' · ' + formatTime() : '');
+    }
     function migrateCategoryNames(saved) {
         var categories = saved.fields && saved.fields['post_category[]'];
         if (!Array.isArray(categories)) return;
@@ -103,12 +122,27 @@
         }
     }
     var initial;
-    function save() {
+    function save(silent) {
         if (restoring) return;
         var current = snapshot();
-        if (serialized(current) === serialized(initial)) { storage.removeItem(key); return; }
-        try { storage.setItem(key, serialized({ savedAt: Date.now(), snapshot: current })); }
-        catch (error) { /* Storage quota must not block editing. */ }
+        if (serialized(current) === serialized(initial)) {
+            storage.removeItem(key);
+            if (!silent) setSaveIndicator(existingReport ? 'saved' : 'idle', existingReport);
+            return;
+        }
+        try {
+            storage.setItem(key, serialized({ savedAt: Date.now(), snapshot: current }));
+            if (!silent) setSaveIndicator('autosaved', true);
+        } catch (error) {
+            setSaveIndicator('error', false);
+        }
+    }
+    function queueAutosave() {
+        if (restoring) return;
+        save(true);
+        setSaveIndicator('dirty', false);
+        if (typeof window.clearTimeout === 'function') window.clearTimeout(autosaveTimer);
+        autosaveTimer = window.setTimeout(save, 900);
     }
     function pickerClick(selector, id) {
         var button = all(selector).find(function (item) { return item.getAttribute('data-id') === String(id); });
@@ -341,11 +375,11 @@
         showWarnings();
     }
 
-    form.addEventListener('input', save);
-    form.addEventListener('change', save);
-    form.addEventListener('click', function () { window.setTimeout(save, 0); });
+    form.addEventListener('input', queueAutosave);
+    form.addEventListener('change', queueAutosave);
+    form.addEventListener('click', function () { window.setTimeout(queueAutosave, 0); });
     document.addEventListener('tinymce-editor-init', function (event, activeEditor) {
-        if (activeEditor && activeEditor.id === content.id) activeEditor.on('change keyup input', save);
+        if (activeEditor && activeEditor.id === content.id) activeEditor.on('change keyup input', queueAutosave);
     });
     window.setInterval(save, 5000);
     form.addEventListener('submit', function (event) { if (!event.defaultPrevented) { save(); submitting = true; } });

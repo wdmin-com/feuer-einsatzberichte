@@ -44,6 +44,12 @@ try {
     if (!isset($health['status'], $health['test']) || 'feu_einsatz_schedule' !== $health['test']) {
         throw new RuntimeException('Site Health test is unavailable.');
     }
+    $diagnostic = $center->build_diagnostic_report();
+    if (false === strpos($diagnostic, 'Feuer-Einsatzberichte Diagnose')
+        || false === strpos($diagnostic, 'Cache ready:')
+        || false !== strpos($diagnostic, 'Operations queue CI report')) {
+        throw new RuntimeException('Privacy-safe operations diagnostic is incomplete or contains report content.');
+    }
 } finally {
     unset($_GET['ops_tab'], $_GET['report_status']);
     wp_delete_post($post_id, true);

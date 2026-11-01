@@ -1838,10 +1838,13 @@ class FEU_Einsatz_Backup_Manager {
                 'gallery_ids' => wp_json_encode($gallery_ids),
                 'primary_image_id' => $primary_image_id,
                 'default_functions' => isset($row['default_functions']) ? $row['default_functions'] : '',
+                'external_provider' => isset($row['external_provider']) ? sanitize_key($row['external_provider']) : '',
+                'external_id' => isset($row['external_id']) ? absint($row['external_id']) : 0,
+                'external_name_locked' => !empty($row['external_name_locked']) ? 1 : 0,
                 'is_archived' => !empty($row['is_archived']) ? 1 : 0,
                 'is_deleted' => !empty($row['is_deleted']) ? 1 : 0,
                 'created_at' => isset($row['created_at']) ? $row['created_at'] : current_time('mysql'),
-            ], ['%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%d', '%s', '%d', '%d', '%s']);
+            ], ['%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%d', '%s', '%s', '%d', '%d', '%d', '%d', '%s']);
         }
     }
 

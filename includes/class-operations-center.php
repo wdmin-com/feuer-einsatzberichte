@@ -7,10 +7,12 @@ if (!defined('ABSPATH')) {
 class FEU_Einsatz_Operations_Center {
     private FEU_Einsatz_Admin $admin;
     private FEU_Einsatz_Database $db;
+    private FEU_Einsatz_Maintenance_Service $maintenance;
 
-    public function __construct(FEU_Einsatz_Admin $admin, FEU_Einsatz_Database $db) {
+    public function __construct(FEU_Einsatz_Admin $admin, FEU_Einsatz_Database $db, FEU_Einsatz_Maintenance_Service $maintenance) {
         $this->admin = $admin;
         $this->db = $db;
+        $this->maintenance = $maintenance;
         add_action('admin_init', [$this, 'redirect_legacy_page']);
         add_action('admin_post_feu_einsatz_retry_job', [$this, 'handle_retry_job']);
         add_action('admin_post_feu_einsatz_participant_data', [$this, 'handle_participant_data']);
@@ -130,6 +132,20 @@ class FEU_Einsatz_Operations_Center {
             ];
         }
 
+        $warm = get_post_meta($post_id, '_feu_einsatz_cache_warm_job', true);
+        $warm_status = is_array($warm) ? sanitize_key((string) ($warm['status'] ?? '')) : '';
+        if (in_array($warm_status, ['queued', 'processing', 'error'], true)) {
+            $jobs[] = [
+                'kind' => 'cache',
+                'status' => $warm_status,
+                'label' => __('Cache-Aufbau', 'feuer-einsatzberichte'),
+                'message' => 'error' === $warm_status
+                    ? __('Cache konnte nicht vollständig vorbereitet werden.', 'feuer-einsatzberichte')
+                    : __('Seite, Übersicht und Medien werden vorbereitet.', 'feuer-einsatzberichte'),
+                'retryable' => 'error' === $warm_status,
+            ];
+        }
+
         return $jobs;
     }
 
@@ -197,6 +213,8 @@ class FEU_Einsatz_Operations_Center {
             wp_die(esc_html__('Keine Berechtigung', 'feuer-einsatzberichte'));
         }
         $status_overview = 'status' === $tab ? $this->get_status_overview() : [];
+        $image_integrity = 'status' === $tab ? $this->maintenance->get_image_integrity_state() : [];
+        $diagnostic_report = 'status' === $tab && current_user_can('manage_options') ? $this->build_diagnostic_report() : '';
         $queue_status = isset($_GET['report_status']) ? sanitize_key(wp_unslash($_GET['report_status'])) : 'pending';
         if (!in_array($queue_status, ['pending', 'draft', 'future', 'publish', 'all'], true)) {
             $queue_status = 'pending';
@@ -208,6 +226,117 @@ class FEU_Einsatz_Operations_Center {
         $privacy_search = 'privacy' === $tab && isset($_GET['s']) ? sanitize_text_field(wp_unslash($_GET['s'])) : '';
         $participants = 'privacy' === $tab ? $this->get_privacy_participants($page, $privacy_search) : ['items' => [], 'total' => 0];
         include FEU_EINSATZ_PLUGIN_DIR . 'templates/admin/operations-center.php';
+    }
+
+    /** Build a privacy-safe support snapshot without report or participant content. */
+    public function build_diagnostic_report(): string {
+        global $wpdb;
+        $upload = wp_upload_dir();
+        $integrity = $this->maintenance->get_image_integrity_state();
+        $cache_status = $this->get_cache_warm_status_counts();
+        $tables = [
+            'participants' => $this->db->get_participant_table_name(),
+            'statistics' => $this->db->get_participant_statistics_table_name(),
+            'statistics_cache' => $this->db->get_statistics_cache_table_name(),
+            'organizations' => $this->db->get_organization_table_name(),
+            'street_registry' => $this->db->get_street_registry_table_name(),
+            'archives' => $this->db->get_archive_table_name(),
+            'logs' => $this->db->get_log_table_name(),
+        ];
+        $lines = [
+            'Feuer-Einsatzberichte Diagnose',
+            'Generated: ' . wp_date('Y-m-d H:i:s T'),
+            'Plugin: ' . FEU_EINSATZ_VERSION,
+            'WordPress: ' . get_bloginfo('version'),
+            'PHP: ' . PHP_VERSION,
+            'MySQL: ' . $wpdb->db_version(),
+            'Multisite: ' . (is_multisite() ? 'yes' : 'no'),
+            'WP-Cron disabled: ' . (defined('DISABLE_WP_CRON') && DISABLE_WP_CRON ? 'yes' : 'no'),
+            'Next image audit: ' . $this->format_cron_timestamp(wp_next_scheduled(FEU_Einsatz_Maintenance_Service::IMAGE_AUDIT_HOOK)),
+            'Next cache warm-up: ' . $this->format_cron_timestamp($this->find_next_cron_hook(FEU_Einsatz_Maintenance_Service::CACHE_WARM_HOOK)),
+            '',
+            '[Directories]',
+            'Uploads available: ' . (empty($upload['error']) ? 'yes' : 'no'),
+            'Uploads readable: ' . (!empty($upload['basedir']) && is_readable($upload['basedir']) ? 'yes' : 'no'),
+            'Uploads writable: ' . (!empty($upload['basedir']) && wp_is_writable($upload['basedir']) ? 'yes' : 'no'),
+            'Map directory writable: ' . $this->directory_status(trailingslashit((string) ($upload['basedir'] ?? '')) . 'feuer-einsatzberichte'),
+            'Share directory writable: ' . $this->directory_status(trailingslashit((string) ($upload['basedir'] ?? '')) . 'feuer-einsatzberichte/share-cards'),
+            'Watermark directory writable: ' . $this->directory_status(trailingslashit((string) ($upload['basedir'] ?? '')) . FEU_Einsatz_Image_Protection::OUTPUT_DIRECTORY),
+            '',
+            '[Tables]',
+        ];
+        foreach ($tables as $label => $table) {
+            $exists = (string) $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table)) === (string) $table;
+            $lines[] = $label . ': ' . ($exists ? 'ok' : 'missing');
+        }
+        $lines = array_merge($lines, [
+            '',
+            '[Image integrity]',
+            'Checked: ' . (!empty($integrity['checked_at']) ? wp_date('Y-m-d H:i:s T', (int) $integrity['checked_at']) : 'never'),
+            'Reports: ' . (int) ($integrity['reports'] ?? 0),
+            'Files: ' . (int) ($integrity['files'] ?? 0),
+            'Issues: ' . (int) ($integrity['issue_count'] ?? 0),
+            'Warm-up queued: ' . (int) ($integrity['warm_queued'] ?? 0),
+            'Cache ready: ' . (int) ($cache_status['ready'] ?? 0),
+            'Cache queued/processing: ' . (int) (($cache_status['queued'] ?? 0) + ($cache_status['processing'] ?? 0)),
+            'Cache errors: ' . (int) ($cache_status['error'] ?? 0),
+            'Overview cache revision: ' . sanitize_text_field((string) get_option('feu_einsatz_overview_cache_revision', 'not-set')),
+            '',
+            '[Recent background error types]',
+        ]);
+        $error_types = [];
+        foreach ((array) $this->db->get_logs(['limit' => 50]) as $log) {
+            $action = sanitize_key((string) ($log->action_type ?? ''));
+            if ('' !== $action && preg_match('/(?:error|fail|cron|cache|map|share)/', $action)) {
+                $error_types[] = (string) ($log->created_at ?? '') . ' · ' . $action;
+            }
+            if (count($error_types) >= 10) {
+                break;
+            }
+        }
+        $lines = array_merge($lines, $error_types ?: ['none']);
+        $lines[] = '';
+        $lines[] = 'Privacy: no names, addresses, report content, URLs or image data included.';
+        return implode("\n", $lines);
+    }
+
+    private function format_cron_timestamp($timestamp): string {
+        return $timestamp ? wp_date('Y-m-d H:i:s T', (int) $timestamp) : 'not scheduled';
+    }
+
+    private function find_next_cron_hook(string $hook): int {
+        $next = 0;
+        foreach ((array) _get_cron_array() as $timestamp => $events) {
+            if (isset($events[$hook]) && (!$next || (int) $timestamp < $next)) {
+                $next = (int) $timestamp;
+            }
+        }
+        return $next;
+    }
+
+    private function get_cache_warm_status_counts(): array {
+        $counts = ['ready' => 0, 'queued' => 0, 'processing' => 0, 'error' => 0];
+        $ids = get_posts([
+            'post_type' => FEU_Einsatz_Report_Post_Type::readable_post_types(),
+            'post_status' => ['publish', 'future', 'draft', 'pending'],
+            'posts_per_page' => 250,
+            'fields' => 'ids',
+            'no_found_rows' => true,
+            'meta_query' => [['key' => FEU_Einsatz_Report_Post_Type::MARKER_META, 'value' => '1']],
+        ]);
+        foreach (array_map('absint', (array) $ids) as $post_id) {
+            $job = get_post_meta($post_id, '_feu_einsatz_cache_warm_job', true);
+            $status = is_array($job) ? sanitize_key((string) ($job['status'] ?? '')) : '';
+            if (isset($counts[$status])) {
+                $counts[$status]++;
+            }
+        }
+        return $counts;
+    }
+
+    private function directory_status(string $path): string {
+        $target = is_dir($path) ? $path : dirname($path);
+        return is_dir($target) && wp_is_writable($target) ? 'yes' : 'no';
     }
 
     public function handle_retry_job(): void {
@@ -226,6 +355,9 @@ class FEU_Einsatz_Operations_Center {
             $ids = array_filter(array_map('absint', (array) get_post_meta($post_id, '_feu_einsatz_gallery', true)));
             FEU_Einsatz_Image_Protection::retry_attachment_cache($ids);
             $queued = (bool) $ids;
+        } elseif ('cache' === $kind) {
+            wp_clear_scheduled_hook(FEU_Einsatz_Maintenance_Service::CACHE_WARM_HOOK, [$post_id]);
+            $queued = (bool) wp_schedule_single_event(time() + 5, FEU_Einsatz_Maintenance_Service::CACHE_WARM_HOOK, [$post_id]);
         }
         wp_safe_redirect(add_query_arg(
             ['page' => 'feuer-einsatzberichte', 'ops_tab' => 'status', 'job_result' => $queued ? 'queued' : 'failed'],
@@ -280,7 +412,7 @@ class FEU_Einsatz_Operations_Center {
             'job_title' => '', 'entry_date' => '', 'rank_title' => '',
             'member_function' => '', 'education' => '', 'description' => '',
             'category_ids' => '[]', 'gallery_ids' => '[]', 'primary_image_id' => 0,
-            'default_functions' => '[]', 'external_id' => 0, 'is_archived' => 1,
+            'default_functions' => '[]', 'external_id' => 0, 'external_name_locked' => 0, 'is_archived' => 1,
         ], ['id' => $participant_id]);
         if (false === $updated) {
             wp_die(esc_html__('Anonymisierung fehlgeschlagen.', 'feuer-einsatzberichte'));

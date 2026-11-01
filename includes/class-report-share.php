@@ -236,6 +236,22 @@ class FEU_Einsatz_Report_Share {
         return ['status' => 'missing', 'message' => __('Vorschaubild fehlt', 'feuer-einsatzberichte')];
     }
 
+    /** Inspect the current generated card as an actual decodable image file. */
+    public function inspect_share_card_integrity(int $post_id): array {
+        if ('generated' !== $this->get_social_share_settings()['image_mode'] || 'publish' !== get_post_status($post_id)) {
+            return ['status' => 'not_required', 'path' => ''];
+        }
+        $post = get_post($post_id);
+        if (!$post instanceof WP_Post) {
+            return ['status' => 'missing', 'path' => ''];
+        }
+        $data = $this->build_public_share_card_data($post);
+        $path = $this->get_share_card_cache_path($post_id, $this->build_share_card_cache_revision($post, $data));
+        clearstatcache(true, $path);
+        $valid = self::has_share_card_cache_file($path) && false !== @getimagesize($path);
+        return ['status' => $valid ? 'ready' : (is_file($path) ? 'corrupt' : 'missing'), 'path' => $path];
+    }
+
     public function handle_background_share_card_generation($post_id): void {
         $post_id = absint($post_id);
         $post = $post_id ? get_post($post_id) : null;

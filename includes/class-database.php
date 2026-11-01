@@ -570,6 +570,7 @@ class FEU_Einsatz_Database {
             'default_functions' => "ALTER TABLE {$this->table_participants} ADD COLUMN default_functions LONGTEXT NULL AFTER primary_image_id",
             'external_provider' => "ALTER TABLE {$this->table_participants} ADD COLUMN external_provider varchar(40) DEFAULT '' AFTER default_functions",
             'external_id' => "ALTER TABLE {$this->table_participants} ADD COLUMN external_id bigint(20) unsigned DEFAULT 0 AFTER external_provider",
+            'external_name_locked' => "ALTER TABLE {$this->table_participants} ADD COLUMN external_name_locked tinyint(1) DEFAULT 0 AFTER external_id",
             'is_archived' => "ALTER TABLE {$this->table_participants} ADD COLUMN is_archived tinyint(1) DEFAULT 0 AFTER default_functions",
             'is_deleted' => "ALTER TABLE {$this->table_participants} ADD COLUMN is_deleted tinyint(1) DEFAULT 0 AFTER is_archived",
         ];
@@ -930,6 +931,7 @@ class FEU_Einsatz_Database {
         $participant->default_functions = $default_functions;
         $participant->external_provider = isset($participant->external_provider) ? (string) $participant->external_provider : '';
         $participant->external_id = isset($participant->external_id) ? absint($participant->external_id) : 0;
+        $participant->external_name_locked = !empty($participant->external_name_locked) ? 1 : 0;
         $participant->is_archived = !empty($participant->is_archived) ? 1 : 0;
         $participant->is_deleted = !empty($participant->is_deleted) ? 1 : 0;
         $participant->usage_count = isset($participant->usage_count) ? (int) $participant->usage_count : 0;
@@ -988,11 +990,15 @@ class FEU_Einsatz_Database {
             gallery_ids longtext NULL,
             primary_image_id int(11) DEFAULT 0,
             default_functions longtext NULL,
+            external_provider varchar(40) DEFAULT '',
+            external_id bigint(20) unsigned DEFAULT 0,
+            external_name_locked tinyint(1) DEFAULT 0,
             is_archived tinyint(1) DEFAULT 0,
             is_deleted tinyint(1) DEFAULT 0,
             created_at datetime DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
-            KEY archived_order (is_archived, sort_order)
+            KEY archived_order (is_archived, sort_order),
+            KEY external_participant (external_provider, external_id)
         ) $charset_collate;";
         
         $sql2 = "CREATE TABLE IF NOT EXISTS {$this->table_stats} (
@@ -1329,14 +1335,14 @@ class FEU_Einsatz_Database {
             ));
         }
 
-        return $this->save_external_participant_identity($provider, $external_id, $participant_id, $identity);
+        return $this->save_external_participant_identity($provider, $external_id, $participant_id, $identity, false);
     }
 
     /**
      * Links a selected local participant to Mannschaft and imports only the
      * fields permitted by the manual synchronization contract.
      */
-    public function map_existing_participant_identity_to_external($provider, $external_id, $participant_id, array $identity) {
+    public function map_existing_participant_identity_to_external($provider, $external_id, $participant_id, array $identity, $keep_local_name = false) {
         $provider = sanitize_key($provider);
         $external_id = absint($external_id);
         $participant_id = absint($participant_id);
@@ -1355,7 +1361,7 @@ class FEU_Einsatz_Database {
             return false;
         }
 
-        return $this->save_external_participant_identity($provider, $external_id, $participant_id, $identity);
+        return $this->save_external_participant_identity($provider, $external_id, $participant_id, $identity, (bool) $keep_local_name);
     }
 
     private function normalize_external_participant_identity(array $identity): array {
@@ -1368,11 +1374,13 @@ class FEU_Einsatz_Database {
         ];
     }
 
-    private function save_external_participant_identity($provider, $external_id, $participant_id, array $identity) {
+    private function save_external_participant_identity($provider, $external_id, $participant_id, array $identity, $keep_local_name = false) {
         $existing = $participant_id > 0 ? $this->get_participant($participant_id) : null;
+        $name_locked = $existing && !empty($existing->external_name_locked);
+        $preserve_local_name = $existing && ($name_locked || $keep_local_name);
         $data = [
-            'vorname' => $identity['vorname'],
-            'nachname' => $identity['nachname'],
+            'vorname' => $preserve_local_name ? (string) $existing->vorname : $identity['vorname'],
+            'nachname' => $preserve_local_name ? (string) $existing->nachname : $identity['nachname'],
             'job_title' => $identity['job_title'],
             'rank_title' => $identity['rank_title'],
             // A missing source photo must never erase a locally selected one.
@@ -1408,13 +1416,213 @@ class FEU_Einsatz_Database {
 
         $updated = $this->wpdb->update(
             $this->table_participants,
-            ['external_provider' => $provider, 'external_id' => $external_id],
+            [
+                'external_provider' => $provider,
+                'external_id' => $external_id,
+                'external_name_locked' => ($name_locked || $keep_local_name) ? 1 : 0,
+            ],
             ['id' => $id],
-            ['%s', '%d'],
+            ['%s', '%d', '%d'],
             ['%d']
         );
 
         return false === $updated ? false : $id;
+    }
+
+    /**
+     * Combines two local profiles without losing report assignments.
+     *
+     * The primary ID remains stable. Statistics and serialized report meta are
+     * moved from the duplicate to the primary profile and duplicate assignments
+     * on the same report are collapsed into one row.
+     *
+     * @return array<string,int>|WP_Error
+     */
+    public function merge_participant_profiles($primary_id, $duplicate_id, $keep_primary_name = true) {
+        $primary_id = absint($primary_id);
+        $duplicate_id = absint($duplicate_id);
+
+        if ($primary_id < 1 || $duplicate_id < 1 || $primary_id === $duplicate_id) {
+            return new WP_Error('same_profile', __('Bitte wählen Sie zwei unterschiedliche Mannschaftsprofile.', 'feuer-einsatzberichte'));
+        }
+
+        $primary = $this->get_participant($primary_id);
+        $duplicate = $this->get_participant($duplicate_id);
+        if (!$primary || !$duplicate || !empty($primary->is_deleted) || !empty($duplicate->is_deleted)) {
+            return new WP_Error('participant_missing', __('Mindestens eines der ausgewählten Mannschaftsprofile ist nicht mehr verfügbar.', 'feuer-einsatzberichte'));
+        }
+
+        $primary_has_external = '' !== (string) $primary->external_provider && (int) $primary->external_id > 0;
+        $duplicate_has_external = '' !== (string) $duplicate->external_provider && (int) $duplicate->external_id > 0;
+        if ($primary_has_external && $duplicate_has_external
+            && ((string) $primary->external_provider !== (string) $duplicate->external_provider
+                || (int) $primary->external_id !== (int) $duplicate->external_id)) {
+            return new WP_Error('conflicting_external_identity', __('Beide Profile sind bereits mit unterschiedlichen externen Profilen verbunden und können nicht automatisch zusammengeführt werden.', 'feuer-einsatzberichte'));
+        }
+
+        $external_provider = $primary_has_external ? (string) $primary->external_provider : (string) $duplicate->external_provider;
+        $external_id = $primary_has_external ? (int) $primary->external_id : (int) $duplicate->external_id;
+        $merged_data = [
+            'vorname' => $keep_primary_name || '' === trim((string) $duplicate->vorname) ? (string) $primary->vorname : (string) $duplicate->vorname,
+            'nachname' => $keep_primary_name || '' === trim((string) $duplicate->nachname) ? (string) $primary->nachname : (string) $duplicate->nachname,
+            'job_title' => '' !== trim((string) $primary->job_title) ? (string) $primary->job_title : (string) $duplicate->job_title,
+            'entry_date' => '' !== trim((string) $primary->entry_date) ? (string) $primary->entry_date : (string) $duplicate->entry_date,
+            'rank_title' => '' !== trim((string) $primary->rank_title) ? (string) $primary->rank_title : (string) $duplicate->rank_title,
+            'member_function' => '' !== trim((string) $primary->member_function) ? (string) $primary->member_function : (string) $duplicate->member_function,
+            'education' => '' !== trim((string) $primary->education) ? (string) $primary->education : (string) $duplicate->education,
+            'description' => '' !== trim((string) $primary->description) ? (string) $primary->description : (string) $duplicate->description,
+            'sort_order' => (int) $primary->sort_order,
+            'category_ids' => array_values(array_unique(array_merge((array) $primary->category_ids, (array) $duplicate->category_ids))),
+            'gallery_ids' => array_values(array_unique(array_merge((array) $primary->gallery_ids, (array) $duplicate->gallery_ids))),
+            'primary_image_id' => (int) $primary->primary_image_id > 0 ? (int) $primary->primary_image_id : (int) $duplicate->primary_image_id,
+            'default_functions' => array_values(array_unique(array_filter(array_merge((array) $primary->default_functions, (array) $duplicate->default_functions)))),
+            'is_archived' => (int) $primary->is_archived,
+            'is_deleted' => 0,
+        ];
+
+        $this->wpdb->query('START TRANSACTION');
+        $moved_assignments = 0;
+        $collapsed_assignments = 0;
+        $updated_reports = 0;
+
+        try {
+            if (false === $this->save_participant($primary_id, $merged_data)) {
+                throw new RuntimeException('primary_profile_update_failed');
+            }
+
+            $external_update = $this->wpdb->update(
+                $this->table_participants,
+                [
+                    'external_provider' => sanitize_key($external_provider),
+                    'external_id' => absint($external_id),
+                    'external_name_locked' => $external_id > 0 && $keep_primary_name ? 1 : 0,
+                ],
+                ['id' => $primary_id],
+                ['%s', '%d', '%d'],
+                ['%d']
+            );
+            if (false === $external_update) {
+                throw new RuntimeException('external_identity_update_failed');
+            }
+
+            $duplicate_stats = $this->wpdb->get_results($this->wpdb->prepare(
+                "SELECT id, post_id, funktion FROM {$this->table_stats} WHERE teilnehmer_id = %d ORDER BY id ASC",
+                $duplicate_id
+            ));
+
+            foreach ((array) $duplicate_stats as $duplicate_stat) {
+                $primary_stat = $this->wpdb->get_row($this->wpdb->prepare(
+                    "SELECT id, funktion FROM {$this->table_stats} WHERE post_id = %d AND teilnehmer_id = %d LIMIT 1",
+                    (int) $duplicate_stat->post_id,
+                    $primary_id
+                ));
+
+                if ($primary_stat) {
+                    $preferred_function = $this->prefer_participant_function((string) $primary_stat->funktion, (string) $duplicate_stat->funktion);
+                    if ($preferred_function !== (string) $primary_stat->funktion) {
+                        if (false === $this->wpdb->update($this->table_stats, ['funktion' => $preferred_function], ['id' => (int) $primary_stat->id], ['%s'], ['%d'])) {
+                            throw new RuntimeException('assignment_function_update_failed');
+                        }
+                    }
+                    if (false === $this->wpdb->delete($this->table_stats, ['id' => (int) $duplicate_stat->id], ['%d'])) {
+                        throw new RuntimeException('duplicate_assignment_delete_failed');
+                    }
+                    $collapsed_assignments++;
+                } else {
+                    if (false === $this->wpdb->update($this->table_stats, ['teilnehmer_id' => $primary_id], ['id' => (int) $duplicate_stat->id], ['%d'], ['%d'])) {
+                        throw new RuntimeException('assignment_move_failed');
+                    }
+                    $moved_assignments++;
+                }
+            }
+
+            $report_ids = $this->wpdb->get_col($this->wpdb->prepare(
+                "SELECT post_id FROM {$this->wpdb->postmeta} WHERE meta_key = %s",
+                '_feu_einsatz_teilnehmer'
+            ));
+            foreach (array_map('absint', (array) $report_ids) as $report_id) {
+                $assignments = get_post_meta($report_id, '_feu_einsatz_teilnehmer', true);
+                if (!is_array($assignments)) {
+                    continue;
+                }
+
+                $changed = false;
+                $normalized = [];
+                foreach ($assignments as $assignment) {
+                    if (!is_array($assignment) || empty($assignment['id'])) {
+                        continue;
+                    }
+                    $assignment_id = absint($assignment['id']);
+                    if ($assignment_id === $duplicate_id) {
+                        $assignment_id = $primary_id;
+                        $changed = true;
+                    }
+                    $assignment['id'] = $assignment_id;
+                    if (isset($normalized[$assignment_id])) {
+                        $normalized[$assignment_id]['funktion'] = $this->prefer_participant_function(
+                            (string) ($normalized[$assignment_id]['funktion'] ?? ''),
+                            (string) ($assignment['funktion'] ?? '')
+                        );
+                        $changed = true;
+                    } else {
+                        $normalized[$assignment_id] = $assignment;
+                    }
+                }
+                if ($changed) {
+                    if (false === update_post_meta($report_id, '_feu_einsatz_teilnehmer', array_values($normalized))) {
+                        throw new RuntimeException('report_assignment_meta_update_failed');
+                    }
+                    $updated_reports++;
+                }
+            }
+
+            $duplicate_update = $this->wpdb->update(
+                $this->table_participants,
+                [
+                    'external_provider' => '',
+                    'external_id' => 0,
+                    'external_name_locked' => 0,
+                    'is_archived' => 1,
+                    'is_deleted' => 1,
+                ],
+                ['id' => $duplicate_id],
+                ['%s', '%d', '%d', '%d', '%d'],
+                ['%d']
+            );
+            if (false === $duplicate_update) {
+                throw new RuntimeException('duplicate_profile_archive_failed');
+            }
+
+            if (false === $this->rebuild_all_statistics()) {
+                throw new RuntimeException('statistics_rebuild_failed');
+            }
+            if (false === $this->wpdb->query('COMMIT')) {
+                throw new RuntimeException('profile_merge_commit_failed');
+            }
+        } catch (Throwable $error) {
+            $this->wpdb->query('ROLLBACK');
+            return new WP_Error('merge_failed', __('Die Profile konnten nicht vollständig zusammengeführt werden. Es wurden keine Änderungen gespeichert.', 'feuer-einsatzberichte'));
+        }
+
+        $this->invalidate_statistics_dashboard_cache();
+
+        return [
+            'primary_id' => $primary_id,
+            'duplicate_id' => $duplicate_id,
+            'moved_assignments' => $moved_assignments,
+            'collapsed_assignments' => $collapsed_assignments,
+            'updated_reports' => $updated_reports,
+        ];
+    }
+
+    private function prefer_participant_function($current, $candidate) {
+        $current = sanitize_text_field((string) $current);
+        $candidate = sanitize_text_field((string) $candidate);
+        $generic = ['', 'Mannschaft', 'Keine Funktion'];
+
+        return in_array($current, $generic, true) && !in_array($candidate, $generic, true)
+            ? $candidate
+            : $current;
     }
 
     /**

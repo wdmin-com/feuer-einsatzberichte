@@ -486,6 +486,7 @@ class FEU_Einsatz_Admin {
         add_action('admin_post_feu_einsatz_save_mannschaft_source', [$this, 'handle_mannschaft_source_save']);
         add_action('admin_post_feu_einsatz_sync_mannschaft_participants', [$this, 'handle_mannschaft_participant_sync']);
         add_action('admin_post_feu_einsatz_connect_mannschaft_profile', [$this, 'handle_mannschaft_profile_connection']);
+        add_action('admin_post_feu_einsatz_merge_participant_profiles', [$this, 'handle_mannschaft_profile_merge']);
         add_action('admin_post_feu_einsatz_share_image',              [$this->report_share, 'handle_share_image_download']);
         add_action('admin_post_feu_einsatz_share_image_public',         [$this->report_share, 'handle_public_share_image_request']);
         add_action('admin_post_nopriv_feu_einsatz_share_image_public',  [$this->report_share, 'handle_public_share_image_request']);
@@ -10218,8 +10219,10 @@ class FEU_Einsatz_Admin {
             ->get_mannschaft_integration()
             ->sync_all();
         $redirect_url = add_query_arg(
-            'feu_mannschaft_synced',
-            empty($result['skipped']) ? absint($result['synced'] ?? 0) : 0,
+            [
+                'feu_mannschaft_synced' => empty($result['skipped']) ? absint($result['synced'] ?? 0) : 0,
+                'feu_mannschaft_review' => absint($result['review'] ?? 0),
+            ],
             admin_url('admin.php?page=feu-einsatz-teilnehmer')
         );
         wp_safe_redirect($redirect_url);
@@ -10245,6 +10248,46 @@ class FEU_Einsatz_Admin {
             admin_url('admin.php?page=feu-einsatz-teilnehmer')
         );
         wp_safe_redirect($redirect_url);
+        exit;
+    }
+
+    public function handle_mannschaft_profile_merge(): void {
+        if (!self::current_user_can_access_plugin_section('participants') || !current_user_can('manage_options')) {
+            wp_die(esc_html__('Keine Berechtigung.', 'feuer-einsatzberichte'));
+        }
+        check_admin_referer('feu_einsatz_merge_participant_profiles');
+
+        $primary_id = absint($_POST['feu_einsatz_primary_participant_id'] ?? 0);
+        $duplicate_id = absint($_POST['feu_einsatz_duplicate_participant_id'] ?? 0);
+        $confirmed = '1' === (string) ($_POST['feu_einsatz_confirm_profile_merge'] ?? '');
+        $keep_primary_name = '1' === (string) ($_POST['feu_einsatz_keep_primary_name'] ?? '');
+
+        $result = $confirmed
+            ? $this->db->merge_participant_profiles($primary_id, $duplicate_id, $keep_primary_name)
+            : new WP_Error('confirmation_missing', __('Die Zusammenführung wurde nicht bestätigt.', 'feuer-einsatzberichte'));
+
+        $redirect_args = ['feu_mannschaft_merged' => is_wp_error($result) ? '0' : '1'];
+        if (is_wp_error($result)) {
+            $redirect_args['feu_mannschaft_merge_error'] = sanitize_key($result->get_error_code());
+        } else {
+            $redirect_args['feu_mannschaft_merge_reports'] = absint($result['updated_reports'] ?? 0);
+            $redirect_args['feu_mannschaft_merge_assignments'] = absint(($result['moved_assignments'] ?? 0) + ($result['collapsed_assignments'] ?? 0));
+            FEU_Einsatz_Logger::log(
+                'participant_profiles_merged',
+                'participant',
+                $primary_id,
+                __('Mannschaftsprofile zusammengeführt', 'feuer-einsatzberichte'),
+                [
+                    'duplicate_id' => $duplicate_id,
+                    'updated_reports' => absint($result['updated_reports'] ?? 0),
+                    'moved_assignments' => absint($result['moved_assignments'] ?? 0),
+                    'collapsed_assignments' => absint($result['collapsed_assignments'] ?? 0),
+                    'kept_primary_name' => $keep_primary_name ? 1 : 0,
+                ]
+            );
+        }
+
+        wp_safe_redirect(add_query_arg($redirect_args, admin_url('admin.php?page=feu-einsatz-teilnehmer')));
         exit;
     }
 

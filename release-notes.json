@@ -1,6 +1,26 @@
 {
   "releases": [
     {
+      "version": "3.3.5",
+      "date": "2026-11-02",
+      "title": "Kontrollierte Mannschaftsdaten, Medienprüfung und automatischer Cache-Aufbau",
+      "summary": "Die neue Wartungsebene kontrolliert Mannschafts-Synchronisierung, Bilddateien und Cache-Aufbau im Hintergrund; zugleich werden Redaktion, Statistik und Mannschaftsverwaltung kompakter und sicherer bedienbar.",
+      "changes": [
+        "Mannschaft-Synchronisierung: Eine Vorschau zeigt Aktualisierungen, sichere Verknüpfungen, neue Profile und prüfpflichtige Namensabweichungen vor dem manuellen Start.",
+        "Identitäten: Abweichend benannte Profile können kontrolliert verbunden oder transaktional zusammengeführt werden; Einsatz- und Statistikzuordnungen bleiben erhalten.",
+        "Sicherheit: Ähnliche Namen werden nicht automatisch als neue Person übernommen, sondern bis zur ausdrücklichen Bestätigung isoliert.",
+        "Bildintegrität: Eine tägliche Hintergrundprüfung kontrolliert Kartenbilder, Share-Karten, Originalfotos und geschützte Wasserzeichenvarianten; Ergebnisse erscheinen in der Arbeitszentrale.",
+        "Cache: Veröffentlichte oder geänderte Berichte planen automatisch einen nicht blockierenden Cache-Aufbau für Einzelansicht, Übersicht, Karte, Share-Bild und geschützte Fotos ein.",
+        "Arbeitszentrale: Fehler bleiben pro Aufgabe isoliert; Bildprüfung, Cache-Zustand und Wiederholungsaktionen sind zentral sichtbar.",
+        "Diagnose: Die Schaltfläche „Diagnose kopieren“ sammelt Versionen, Cron-, Tabellen-, Verzeichnis-, Medien- und Cache-Status ohne Namen, Adressen, Berichtsinhalte, URLs oder Bilddaten.",
+        "Berichtseditor: Ein dezenter Status unterscheidet gespeicherte, ungespeicherte, automatisch gesicherte und fehlgeschlagene Änderungen.",
+        "Mannschaftsverwaltung: Kompakte Zeilen, schnelle Statusfilter und eine rückgängig machbare Archivierung reduzieren Fehlbedienungen; endgültiges Entfernen bleibt im Zusatzmenü bestätigt.",
+        "Statistik: Die missverständlichen Bezeichnungen „Beliebte Wochentage“, „Häufigste Wochentage“ und „Top Wochentage“ wurden in Oberfläche, Präsentation und PDF durch „Einsätze nach Wochentag“ ersetzt.",
+        "Produktseite: Die mitgelieferte Index-Seite wurde auf den aktuellen Funktionsumfang, die neue Mannschaftsverwaltung und den professionellen Betriebsstatus aktualisiert.",
+        "Sprache und Qualität: Weitere alte Umschreibungen deutscher Sonderzeichen wurden bereinigt; neue Quell- und WordPress-Integrationstests schützen Synchronisierung, Profilzusammenführung, Wartung und Diagnose."
+      ]
+    },
+    {
       "version": "3.3.4",
       "date": "2026-11-01",
       "title": "Zuverlässiger GitHub-Updatekanal für Kartenkorrekturen",

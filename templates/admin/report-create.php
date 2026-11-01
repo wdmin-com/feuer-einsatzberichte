@@ -12,9 +12,9 @@ $form_nonce_name = $is_edit_mode ? 'feu_einsatz_update_report_nonce' : 'feu_eins
 $page_title = $is_edit_mode ? __('Einsatzbericht bearbeiten', 'feuer-einsatzberichte') : __('Neuen Einsatzbericht erstellen', 'feuer-einsatzberichte');
 $page_description = $is_edit_mode
     ? __('Diese Seite bearbeitet den Einsatzbericht komplett innerhalb des Plugins. Der normale WordPress-Editor bleibt nur noch ein Fallback.', 'feuer-einsatzberichte')
-    : __('Diese Seite ist nur fuer Einsatzberichte gedacht. Normale News-Beitraege bleiben dadurch im regulaeren WordPress-Editor ohne einsatzspezifische Felder.', 'feuer-einsatzberichte');
-$submit_secondary_label = $is_edit_mode ? __('Aenderungen als Entwurf speichern', 'feuer-einsatzberichte') : __('Als Entwurf speichern', 'feuer-einsatzberichte');
-$submit_primary_label = $is_edit_mode ? __('Aenderungen veroeffentlichen', 'feuer-einsatzberichte') : __('Bericht veroeffentlichen', 'feuer-einsatzberichte');
+    : __('Diese Seite ist nur für Einsatzberichte gedacht. Normale News-Beiträge bleiben dadurch im regulären WordPress-Editor ohne einsatzspezifische Felder.', 'feuer-einsatzberichte');
+$submit_secondary_label = $is_edit_mode ? __('Änderungen als Entwurf speichern', 'feuer-einsatzberichte') : __('Als Entwurf speichern', 'feuer-einsatzberichte');
+$submit_primary_label = $is_edit_mode ? __('Änderungen veröffentlichen', 'feuer-einsatzberichte') : __('Bericht veröffentlichen', 'feuer-einsatzberichte');
 $can_publish_report = current_user_can('publish_posts');
 if (!$can_publish_report) {
     $submit_primary_label = __('Zur Prüfung einreichen', 'feuer-einsatzberichte');
@@ -98,7 +98,7 @@ if ('publish' === $current_post_status) {
         </div>
         <div class="feu-einsatz-admin-hero-meta">
             <span class="feu-einsatz-admin-hero-badge"><?php echo esc_html($is_edit_mode ? __('Bearbeitungsmodus', 'feuer-einsatzberichte') : __('Erstellungsmodus', 'feuer-einsatzberichte')); ?></span>
-            <span class="feu-einsatz-admin-hero-path"><?php echo esc_html($is_edit_mode ? __('Aenderungen sind erst nach dem Speichern sichtbar.', 'feuer-einsatzberichte') : __('Alle Angaben koennen vor dem Speichern kontrolliert werden.', 'feuer-einsatzberichte')); ?></span>
+            <span class="feu-einsatz-admin-hero-path"><?php echo esc_html($is_edit_mode ? __('Änderungen sind erst nach dem Speichern sichtbar.', 'feuer-einsatzberichte') : __('Alle Angaben können vor dem Speichern kontrolliert werden.', 'feuer-einsatzberichte')); ?></span>
         </div>
     </div>
 
@@ -122,7 +122,7 @@ if ('publish' === $current_post_status) {
                     </a>
                 <?php endif; ?>
                 <a class="button" href="<?php echo esc_url(admin_url('admin.php?page=feu-einsatz-neuer-bericht')); ?>">
-                    <?php _e('Naechsten Einsatzbericht erstellen', 'feuer-einsatzberichte'); ?>
+                    <?php _e('Nächsten Einsatzbericht erstellen', 'feuer-einsatzberichte'); ?>
                 </a>
             </p>
         </div>
@@ -155,7 +155,7 @@ if ('publish' === $current_post_status) {
     </nav>
 
     <div id="feu-einsatz-report-validation-notice" class="notice notice-error feu-einsatz-report-validation-notice" role="alert" hidden>
-        <p><strong><?php _e('Pflichtfelder pruefen', 'feuer-einsatzberichte'); ?></strong></p>
+        <p><strong><?php _e('Pflichtfelder prüfen', 'feuer-einsatzberichte'); ?></strong></p>
         <ul class="feu-einsatz-report-validation-list"></ul>
     </div>
 
@@ -170,7 +170,7 @@ if ('publish' === $current_post_status) {
         <p><button type="button" class="button" data-feu-draft-recovery-warning-dismiss><?php esc_html_e('Hinweis schließen', 'feuer-einsatzberichte'); ?></button></p>
     </div>
 
-    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="feu-einsatz-report-create-form" data-feu-report-id="<?php echo esc_attr((int) $post->ID); ?>" data-feu-user-id="<?php echo esc_attr(get_current_user_id()); ?>" data-feu-current-status="<?php echo esc_attr($current_post_status); ?>" data-feu-saved="<?php echo !empty($success_notice['message']) ? '1' : '0'; ?>" novalidate>
+    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="feu-einsatz-report-create-form" data-feu-report-id="<?php echo esc_attr((int) $post->ID); ?>" data-feu-user-id="<?php echo esc_attr(get_current_user_id()); ?>" data-feu-current-status="<?php echo esc_attr($current_post_status); ?>" data-feu-existing="<?php echo $is_edit_mode ? '1' : '0'; ?>" data-feu-saved="<?php echo !empty($success_notice['message']) ? '1' : '0'; ?>" novalidate>
         <input type="hidden" name="action" value="<?php echo esc_attr($form_action_name); ?>" />
         <?php wp_nonce_field($form_nonce_action, $form_nonce_name); ?>
         <?php if ($is_edit_mode) : ?>
@@ -384,7 +384,7 @@ if ('publish' === $current_post_status) {
                     </div>
                     <div class="inside">
                         <?php if (empty($report_categories)) : ?>
-                            <p class="description"><?php _e('Keine Einsatzstichworte verfuegbar. Lege zuerst passende Kategorien in WordPress an oder waehle sie in den Plugin-Einstellungen aus.', 'feuer-einsatzberichte'); ?></p>
+                            <p class="description"><?php _e('Keine Einsatzstichworte verfügbar. Legen Sie zuerst passende Kategorien in WordPress an oder wählen Sie sie in den Plugin-Einstellungen aus.', 'feuer-einsatzberichte'); ?></p>
                         <?php else : ?>
                             <?php if (!empty($inactive_selected_category_ids)) : ?>
                                 <p class="description"><?php esc_html_e('Einige bisherige Einsatzstichworte sind in den aktuellen Einstellungen deaktiviert. Sie bleiben für diesen Bericht erhalten, solange sie ausgewählt sind.', 'feuer-einsatzberichte'); ?></p>
@@ -433,7 +433,7 @@ if ('publish' === $current_post_status) {
                                 <?php endif; ?>
                             </div>
                             <p id="feu-einsatz-category-validation-status" class="feu-einsatz-field-error feu-einsatz-category-error" data-feu-category-error aria-live="polite" hidden>
-                                <?php _e('Bitte waehle mindestens ein Einsatzstichwort aus.', 'feuer-einsatzberichte'); ?>
+                                <?php _e('Bitte wählen Sie mindestens ein Einsatzstichwort aus.', 'feuer-einsatzberichte'); ?>
                             </p>
                             <?php if (!$is_edit_mode || (FEU_Einsatz_Report_Post_Type::POST_TYPE === $post->post_type && !$has_fixed_public_url)) : ?>
                                 <p class="feu-einsatz-field">
@@ -499,6 +499,17 @@ if ('publish' === $current_post_status) {
                             <?php if (!$has_fixed_public_url) : ?><p class="description"><?php esc_html_e('Die endgültige URL wird beim Speichern von WordPress festgelegt.', 'feuer-einsatzberichte'); ?></p><?php endif; ?>
                             <button type="submit" name="feu_einsatz_report_status" value="<?php echo $can_publish_report ? 'publish' : 'pending'; ?>" class="button button-primary" data-feu-review-confirm><?php echo esc_html($can_publish_report ? __('Veröffentlichung bestätigen', 'feuer-einsatzberichte') : __('Zur Prüfung einreichen', 'feuer-einsatzberichte')); ?></button>
                         </section>
+                        <div class="feu-einsatz-save-indicator <?php echo $is_edit_mode ? 'is-saved' : 'is-idle'; ?>"
+                             data-feu-save-indicator
+                             data-label-idle="<?php echo esc_attr__('Noch nicht gespeichert', 'feuer-einsatzberichte'); ?>"
+                             data-label-saved="<?php echo esc_attr__('Gespeichert', 'feuer-einsatzberichte'); ?>"
+                             data-label-dirty="<?php echo esc_attr__('Nicht gespeicherte Änderungen', 'feuer-einsatzberichte'); ?>"
+                             data-label-autosaved="<?php echo esc_attr__('Automatisch gesichert', 'feuer-einsatzberichte'); ?>"
+                             data-label-error="<?php echo esc_attr__('Speichern fehlgeschlagen', 'feuer-einsatzberichte'); ?>"
+                             role="status" aria-live="polite">
+                            <span class="feu-einsatz-save-indicator-dot" aria-hidden="true"></span>
+                            <span data-feu-save-indicator-text><?php echo $is_edit_mode ? esc_html__('Gespeichert', 'feuer-einsatzberichte') . ' · ' . esc_html(wp_date(get_option('time_format'))) : esc_html__('Noch nicht gespeichert', 'feuer-einsatzberichte'); ?></span>
+                        </div>
                         <p class="feu-einsatz-report-status-actions">
                             <button type="submit" name="feu_einsatz_report_status" value="draft" class="button button-secondary">
                                 <?php echo esc_html($submit_secondary_label); ?>

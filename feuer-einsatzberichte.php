@@ -3,7 +3,7 @@
  * Plugin Name: Feuer-Einsatzberichte
  * Plugin URI: https://wdmin.com/plugins/feuer-einsatzberichte/
  * Description: Feuer-Einsatzberichte mit Einsatzverwaltung, Karten, Statistik und Archivierung
- * Version: 3.3.4
+ * Version: 3.3.5
  * Update URI: https://wdmin.com/plugins/feuer-einsatzberichte/
  * Requires at least: 7.1
  * Requires PHP: 8.1
@@ -23,7 +23,7 @@ if (!defined('ABSPATH')) {
 // FEU_Einsatz_* remains available as a legacy alias layer.
 // -------------------------------------------------------------------------
 
-define('FEU_EINSATZ_VERSION', '3.3.4');
+define('FEU_EINSATZ_VERSION', '3.3.5');
 define('FEU_EINSATZ_PLUGIN_FILE', __FILE__);
 define('FEU_EINSATZ_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('FEU_EINSATZ_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -138,6 +138,7 @@ final class Feuer_Einsatzberichte_Core {
     private FEU_Einsatz_Logger $logger;
     private FEU_Einsatz_Backup_Manager $backup;
     private FEU_Einsatz_Mannschaft_Integration $mannschaft_integration;
+    private ?FEU_Einsatz_Maintenance_Service $maintenance_service = null;
 
     public function get_db(): FEU_Einsatz_Database { return $this->db; }
     public function get_admin(): ?FEU_Einsatz_Admin { return $this->admin; }
@@ -147,6 +148,7 @@ final class Feuer_Einsatzberichte_Core {
     public function get_logger(): FEU_Einsatz_Logger { return $this->logger; }
     public function get_backup(): FEU_Einsatz_Backup_Manager { return $this->backup; }
     public function get_mannschaft_integration(): FEU_Einsatz_Mannschaft_Integration { return $this->mannschaft_integration; }
+    public function get_maintenance_service(): ?FEU_Einsatz_Maintenance_Service { return $this->maintenance_service; }
 
     public static function get_instance(): self {
         if (null === self::$instance) {
@@ -214,8 +216,10 @@ final class Feuer_Einsatzberichte_Core {
         if ($load_admin_context) {
             require_once FEU_EINSATZ_PLUGIN_DIR . 'includes/class-admin.php';
             $this->admin = new FEU_Einsatz_Admin($this->db);
+            require_once FEU_EINSATZ_PLUGIN_DIR . 'includes/class-maintenance-service.php';
+            $this->maintenance_service = new FEU_Einsatz_Maintenance_Service($this->admin);
             require_once FEU_EINSATZ_PLUGIN_DIR . 'includes/class-operations-center.php';
-            $this->admin->set_operations_center(new FEU_Einsatz_Operations_Center($this->admin, $this->db));
+            $this->admin->set_operations_center(new FEU_Einsatz_Operations_Center($this->admin, $this->db, $this->maintenance_service));
         }
 
         require_once FEU_EINSATZ_PLUGIN_DIR . 'includes/class-public.php';
