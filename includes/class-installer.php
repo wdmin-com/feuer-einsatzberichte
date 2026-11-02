@@ -285,8 +285,21 @@ class FEU_Einsatz_Installer {
     }
     
     public static function deactivate() {
-        wp_unschedule_hook('feu_einsatz_daily_image_integrity');
-        wp_unschedule_hook('feu_einsatz_warm_report_cache');
+        // Remove recurring and single background jobs. Leaving single jobs in
+        // the cron array causes stale geocoding, map and media work to run
+        // unexpectedly after the plugin is activated again.
+        foreach ([
+            'feu_einsatz_daily_image_integrity',
+            'feu_einsatz_warm_report_cache',
+            'feu_einsatz_generate_map_preview_background',
+            'feu_einsatz_background_geocode',
+            'feu_einsatz_prime_watermark_cache',
+            'feu_einsatz_generate_share_card_background',
+            'feu_einsatz_prime_public_map',
+            'feu_einsatz_prime_public_station',
+        ] as $hook) {
+            wp_unschedule_hook($hook);
+        }
         flush_rewrite_rules();
     }
     
@@ -899,6 +912,17 @@ class FEU_Einsatz_Installer {
     public static function update() {
         $current_version = get_option('feu_einsatz_version', '0.0.0');
         $schema_version = get_option('feu_einsatz_schema_version', '');
+
+        // This method runs on plugins_loaded. A current installation must not
+        // scan options or query the organizations table on every public page.
+        // All maintenance below is versioned and therefore only belongs to an
+        // actual plugin/schema upgrade.
+        if (
+            self::SCHEMA_VERSION === $schema_version
+            && version_compare((string) $current_version, FEU_EINSATZ_VERSION, '>=')
+        ) {
+            return;
+        }
 
         self::set_default_options();
         delete_option('feu_einsatz_single_preloader_css');

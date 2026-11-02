@@ -16,7 +16,7 @@ if (isset($active_tab) && 'medien' !== (string) $active_tab) {
             <div class="feu-admin-settings-surface-head">
                 <div>
                     <h2><?php esc_html_e('Medien und Wasserzeichen', 'feuer-einsatzberichte'); ?></h2>
-                    <p class="description"><?php esc_html_e('Wasserzeichen fuer Galerie-Fotos, Text und Logo zentral pflegen.', 'feuer-einsatzberichte'); ?></p>
+                    <p class="description"><?php esc_html_e('Wasserzeichen für Galerie-Fotos, Text und Logo zentral pflegen.', 'feuer-einsatzberichte'); ?></p>
                 </div>
             </div>
 
@@ -63,13 +63,13 @@ if (isset($active_tab) && 'medien' !== (string) $active_tab) {
                                      alt=""
                                      class="feu-einsatz-watermark-preview-image" />
                             <?php else : ?>
-                                <div class="feu-einsatz-watermark-placeholder"><?php esc_html_e('Noch kein Wasserzeichen-Bild ausgewaehlt.', 'feuer-einsatzberichte'); ?></div>
+                                <div class="feu-einsatz-watermark-placeholder"><?php esc_html_e('Noch kein Wasserzeichen-Bild ausgewählt.', 'feuer-einsatzberichte'); ?></div>
                             <?php endif; ?>
                         </div>
 
                         <div class="feu-admin-settings-action-stack">
                             <button type="button" class="button" id="feu-einsatz-watermark-image-select">
-                                <?php esc_html_e('Wasserzeichen-Bild waehlen', 'feuer-einsatzberichte'); ?>
+                                <?php esc_html_e('Wasserzeichen-Bild wählen', 'feuer-einsatzberichte'); ?>
                             </button>
                             <button type="button"
                                     class="button"
@@ -96,11 +96,11 @@ if (isset($active_tab) && 'medien' !== (string) $active_tab) {
                            step="1"
                            class="small-text" />
                     <strong><?php esc_html_e('Prozent', 'feuer-einsatzberichte'); ?></strong>
-                    <small><?php esc_html_e('Je hoeher der Wert, desto sichtbarer liegt das Wasserzeichen ueber dem Foto.', 'feuer-einsatzberichte'); ?></small>
+                    <small><?php esc_html_e('Je höher der Wert, desto sichtbarer liegt das Wasserzeichen über dem Foto.', 'feuer-einsatzberichte'); ?></small>
                 </label>
 
                 <label class="feu-admin-settings-range-card">
-                    <span><?php esc_html_e('Groesse des Bild-Wasserzeichens', 'feuer-einsatzberichte'); ?></span>
+                    <span><?php esc_html_e('Größe des Bild-Wasserzeichens', 'feuer-einsatzberichte'); ?></span>
                     <input type="number"
                            id="feu_einsatz_photo_watermark_scale"
                            name="feu_einsatz_photo_watermark_scale"
@@ -110,7 +110,7 @@ if (isset($active_tab) && 'medien' !== (string) $active_tab) {
                            step="1"
                            class="small-text" />
                     <strong><?php esc_html_e('Prozent', 'feuer-einsatzberichte'); ?></strong>
-                    <small><?php esc_html_e('Beschreibt, wie viel der Bildbreite bzw. Bildhoehe das Wasserzeichen maximal einnehmen darf.', 'feuer-einsatzberichte'); ?></small>
+                    <small><?php esc_html_e('Beschreibt, wie viel der Bildbreite bzw. Bildhöhe das Wasserzeichen maximal einnehmen darf.', 'feuer-einsatzberichte'); ?></small>
                 </label>
             </div>
         </section>

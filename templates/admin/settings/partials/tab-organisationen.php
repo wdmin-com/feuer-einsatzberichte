@@ -27,11 +27,11 @@ if (!isset($active_tab) || 'organisationen' !== (string) $active_tab) {
                 <input type="text"
                        id="feu-einsatz-new-organization"
                        class="regular-text"
-                       placeholder="<?php _e('Organisationsname', 'feuer-einsatzberichte'); ?>" />
+                       placeholder="<?php esc_attr_e('Organisationsname', 'feuer-einsatzberichte'); ?>" />
                 <input type="url"
                        id="feu-einsatz-new-organization-link"
                        class="regular-text"
-                       placeholder="<?php _e('Link zum Beschreibungspost (optional)', 'feuer-einsatzberichte'); ?>" />
+                       placeholder="<?php esc_attr_e('Link zum Beschreibungspost (optional)', 'feuer-einsatzberichte'); ?>" />
                 <label for="feu-einsatz-new-organization-color" class="screen-reader-text"><?php _e('Farbe', 'feuer-einsatzberichte'); ?></label>
                 <input type="color"
                        id="feu-einsatz-new-organization-color"

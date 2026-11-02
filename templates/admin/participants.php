@@ -369,8 +369,8 @@ if (!function_exists('feu_einsatz_render_default_function_selects')) {
                 <p class="description"><?php esc_html_e('Suche, Foto, Status, Dienstgrad, Position und Standardfunktionen direkt im Überblick.', 'feuer-einsatzberichte'); ?></p>
             </div>
             <div class="feu-admin-toolbar-search">
-                <span class="ti ti-search"></span>
-                <input type="search" id="feu-einsatz-search-participant" placeholder="<?php esc_attr_e('Mitglieder suchen...', 'feuer-einsatzberichte'); ?>" />
+                <span class="ti ti-search" aria-hidden="true"></span>
+                <input type="search" id="feu-einsatz-search-participant" aria-label="<?php esc_attr_e('Mannschaftsmitglieder suchen', 'feuer-einsatzberichte'); ?>" placeholder="<?php esc_attr_e('Mitglieder suchen...', 'feuer-einsatzberichte'); ?>" />
             </div>
         </div>
         <div class="feu-einsatz-participant-filters" role="group" aria-label="<?php echo esc_attr__('Mannschaft filtern', 'feuer-einsatzberichte'); ?>">
@@ -468,6 +468,7 @@ if (!function_exists('feu_einsatz_render_default_function_selects')) {
                                 <td data-label="<?php echo esc_attr__('Aktionen', 'feuer-einsatzberichte'); ?>" class="feu-einsatz-table-actions">
                                     <div class="feu-einsatz-participant-row-actions">
                                         <button
+                                            type="button"
                                             class="button button-small feu-einsatz-edit-participant feu-einsatz-participant-edit-button"
                                             data-id="<?php echo esc_attr($person->id); ?>"
                                             data-vorname="<?php echo esc_attr($person->vorname); ?>"
@@ -577,6 +578,7 @@ if (!function_exists('feu_einsatz_render_default_function_selects')) {
                                     <td data-label="<?php echo esc_attr__('Aktionen', 'feuer-einsatzberichte'); ?>" class="feu-einsatz-table-actions">
                                         <div class="feu-einsatz-participant-row-actions">
                                             <button
+                                                type="button"
                                                 class="button button-small feu-einsatz-edit-participant feu-einsatz-participant-edit-button"
                                                 data-id="<?php echo esc_attr($person->id); ?>"
                                                 data-vorname="<?php echo esc_attr($person->vorname); ?>"

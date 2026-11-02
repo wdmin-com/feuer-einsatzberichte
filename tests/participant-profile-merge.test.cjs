@@ -12,6 +12,7 @@ const styles = fs.readFileSync(path.join(root, 'assets', 'admin', 'css', 'admin-
 assert.match(database, /function merge_participant_profiles\(/, 'Database must provide an explicit profile merge operation.');
 assert.match(database, /START TRANSACTION/, 'Profile merging must be transactional.');
 assert.match(database, /ROLLBACK/, 'A partial merge must be rolled back.');
+assert.match(database, /clean_post_cache\(\$report_id\)/, 'A rolled-back merge must discard stale report meta from the runtime cache.');
 assert.match(database, /_feu_einsatz_teilnehmer/, 'Serialized report assignments must be migrated.');
 assert.match(database, /prefer_participant_function/, 'Duplicate assignments must retain the more specific function.');
 assert.match(database, /external_name_locked/, 'The selected local name must survive later external synchronization.');

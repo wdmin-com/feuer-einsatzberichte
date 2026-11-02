@@ -2101,6 +2101,11 @@ class FEU_Einsatz_Backup_Manager {
                 $wpdb->query('COMMIT');
             } catch (Throwable $error) {
                 $wpdb->query('ROLLBACK');
+                // WordPress object caches are not transactional. Discard any
+                // options, posts and metadata cached while the failed restore
+                // was running so the current request cannot expose rolled-back
+                // values.
+                wp_cache_flush();
 
                 return new WP_Error(
                     'archive_restore_failed',

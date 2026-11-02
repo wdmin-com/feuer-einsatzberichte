@@ -30,7 +30,7 @@ if (!defined('ABSPATH')) {
 
             <label class="feu-admin-settings-field">
                 <span><?php _e('Link zum Beschreibungspost', 'feuer-einsatzberichte'); ?></span>
-                <input type="url" id="edit_org_post_link" class="regular-text" placeholder="<?php _e('https://example.de/post-oder-seite', 'feuer-einsatzberichte'); ?>" />
+                <input type="url" id="edit_org_post_link" class="regular-text" placeholder="<?php esc_attr_e('https://example.de/post-oder-seite', 'feuer-einsatzberichte'); ?>" />
             </label>
 
             <p class="submit">

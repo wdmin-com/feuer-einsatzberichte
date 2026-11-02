@@ -897,7 +897,7 @@ class FEU_Einsatz_Ajax_Handler {
             : [];
 
         if (empty($organization_ids)) {
-            wp_send_json_error(['message' => __('Keine Organisationen uebergeben.', 'feuer-einsatzberichte')], 400);
+            wp_send_json_error(['message' => __('Keine Organisationen übergeben.', 'feuer-einsatzberichte')], 400);
             return;
         }
 

@@ -36,7 +36,7 @@ if (!isset($active_tab) || 'funktionen' !== (string) $active_tab) {
                        name="feu_einsatz_functions[]"
                        value="<?php echo esc_attr($function); ?>"
                        class="regular-text"
-                       placeholder="<?php _e('Funktion eingeben', 'feuer-einsatzberichte'); ?>" />
+                       placeholder="<?php esc_attr_e('Funktion eingeben', 'feuer-einsatzberichte'); ?>" />
                 <div class="feu-einsatz-function-actions">
                     <button type="button" class="button feu-einsatz-move-function-up" aria-label="<?php esc_attr_e('Nach oben verschieben', 'feuer-einsatzberichte'); ?>">
                         <span class="feu-einsatz-button-icon" aria-hidden="true">↑</span>

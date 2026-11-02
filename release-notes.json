@@ -1,6 +1,22 @@
 {
   "releases": [
     {
+      "version": "3.3.8",
+      "date": "2026-11-02",
+      "title": "Schnellerer Plugin-Start und zuverlässige Hintergrundprozesse",
+      "summary": "Der technische Audit reduziert die Last auf öffentlichen Seiten, räumt sämtliche Hintergrundaufgaben kontrolliert auf und schützt Speichern, Profilzusammenführung sowie Archivwiederherstellung vor seltenen Fehlerzuständen.",
+      "changes": [
+        "Performance: Bei einer aktuellen Plugin- und Datenbankschema-Version beendet sich der Installer sofort; wiederholte Optionsprüfungen und ein SQL-Scan der Organisationen entfallen auf normalen Seitenaufrufen.",
+        "Hintergrundaufgaben: Bei der Deaktivierung werden jetzt alle Plugin-Aufgaben für Bildprüfung, Cache-Aufbau, Karten, Geocoding, Wasserzeichen, Share-Karten und öffentliche Karten-Caches entfernt.",
+        "Berichtseditor: Temporär deaktivierte save_post-Verarbeitung wird über try/finally in jedem Fall wiederhergestellt, auch wenn ein fremder WordPress-Filter eine Ausnahme auslöst.",
+        "Mannschaftsdaten: Schlägt eine transaktionale Profilzusammenführung fehl, werden zusätzlich die nichttransaktionalen WordPress-Metadaten-Caches bereinigt.",
+        "Archive: Nach einem fehlgeschlagenen Restore werden Datenbankänderungen zurückgerollt und WordPress-Objekt-Caches verworfen, damit keine zurückgerollten Werte im laufenden Request sichtbar bleiben.",
+        "Bedienung: Bearbeiten-Schaltflächen in der Mannschaftsverwaltung können keine Formulare mehr unbeabsichtigt absenden; die Mannschaftssuche besitzt eine zugängliche Beschriftung.",
+        "Einstellungen: Attributtexte werden korrekt kontextbezogen ausgegeben und die Medien-/Wasserzeichen-Texte verwenden professionelle deutsche Schreibweisen.",
+        "Qualität: Neue automatische Prüfungen sichern den schnellen Installer-Pfad, vollständige Cron-Bereinigung, Wiederherstellung interner Hooks und Cache-Konsistenz nach Transaktionsfehlern ab."
+      ]
+    },
+    {
       "version": "3.3.7",
       "date": "2026-11-02",
       "title": "Profilzusammenführung nur noch bei Bedarf sichtbar",

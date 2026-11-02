@@ -1484,6 +1484,7 @@ class FEU_Einsatz_Database {
         $moved_assignments = 0;
         $collapsed_assignments = 0;
         $updated_reports = 0;
+        $updated_report_ids = [];
 
         try {
             if (false === $this->save_participant($primary_id, $merged_data)) {
@@ -1572,6 +1573,7 @@ class FEU_Einsatz_Database {
                     if (false === update_post_meta($report_id, '_feu_einsatz_teilnehmer', array_values($normalized))) {
                         throw new RuntimeException('report_assignment_meta_update_failed');
                     }
+                    $updated_report_ids[] = $report_id;
                     $updated_reports++;
                 }
             }
@@ -1601,6 +1603,12 @@ class FEU_Einsatz_Database {
             }
         } catch (Throwable $error) {
             $this->wpdb->query('ROLLBACK');
+            // update_post_meta() updates the runtime object cache immediately.
+            // A SQL rollback does not revert that cache, so discard affected
+            // entries before anything in the request reads stale merged data.
+            foreach (array_unique(array_map('absint', $updated_report_ids)) as $report_id) {
+                clean_post_cache($report_id);
+            }
             return new WP_Error('merge_failed', __('Die Profile konnten nicht vollständig zusammengeführt werden. Es wurden keine Änderungen gespeichert.', 'feuer-einsatzberichte'));
         }
 

@@ -44,6 +44,9 @@ jobs:
           node tests/plugin-index-page.test.cjs
           node tests/maintenance-features.test.cjs
           node tests/operational-polish.test.cjs
+          node tests/installer-runtime-hardening.test.cjs
+          node tests/save-hook-resilience.test.cjs
+          node tests/transaction-cache-resilience.test.cjs
 
   wordpress-integration:
     name: WordPress activation smoke test

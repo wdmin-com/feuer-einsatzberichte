@@ -4315,15 +4315,16 @@ class FEU_Einsatz_Admin {
         }
 
         remove_action('save_post', [$this, 'save_post_data'], 10);
-
-        wp_update_post([
-            'ID' => $post_id,
-            'post_status' => $target_status,
-            'post_date' => $target_date,
-            'post_date_gmt' => get_gmt_from_date($target_date),
-        ]);
-
-        add_action('save_post', [$this, 'save_post_data'], 10, 3);
+        try {
+            wp_update_post([
+                'ID' => $post_id,
+                'post_status' => $target_status,
+                'post_date' => $target_date,
+                'post_date_gmt' => get_gmt_from_date($target_date),
+            ]);
+        } finally {
+            add_action('save_post', [$this, 'save_post_data'], 10, 3);
+        }
     }
 
     private function get_and_save_coordinates($post_id, $strasse, $plz = '', $stadt = 'Hamburg', $hausnummer = '') {
@@ -5086,8 +5087,11 @@ class FEU_Einsatz_Admin {
         }
 
         remove_action('save_post', [$this, 'save_post_data'], 10);
-        $result = wp_update_post($postarr, true);
-        add_action('save_post', [$this, 'save_post_data'], 10, 3);
+        try {
+            $result = wp_update_post($postarr, true);
+        } finally {
+            add_action('save_post', [$this, 'save_post_data'], 10, 3);
+        }
 
         if (is_wp_error($result)) {
             FEU_Einsatz_Logger::log_runtime_error(
@@ -9739,8 +9743,11 @@ class FEU_Einsatz_Admin {
         }
 
         remove_action('save_post', [$this, 'save_post_data'], 10);
-        $post_id = wp_insert_post($postarr, true);
-        add_action('save_post', [$this, 'save_post_data'], 10, 3);
+        try {
+            $post_id = wp_insert_post($postarr, true);
+        } finally {
+            add_action('save_post', [$this, 'save_post_data'], 10, 3);
+        }
 
         if (is_wp_error($post_id)) {
             FEU_Einsatz_Logger::log_runtime_error(
@@ -9990,8 +9997,11 @@ class FEU_Einsatz_Admin {
         }
 
         remove_action('save_post', [$this, 'save_post_data'], 10);
-        $updated_post_id = wp_update_post($postarr, true);
-        add_action('save_post', [$this, 'save_post_data'], 10, 3);
+        try {
+            $updated_post_id = wp_update_post($postarr, true);
+        } finally {
+            add_action('save_post', [$this, 'save_post_data'], 10, 3);
+        }
 
         if (is_wp_error($updated_post_id)) {
             FEU_Einsatz_Logger::log_runtime_error(
