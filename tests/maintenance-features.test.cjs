@@ -31,7 +31,12 @@ test('daily image audit validates files and is visible in the existing operation
     assert.match(service, /feu_einsatz_daily_image_integrity/);
     assert.match(service, /getimagesize/);
     assert.match(service, /inspect_share_card_integrity/);
+    assert.match(service, /get_generated_map_admin_status/);
+    assert.match(service, /privacy_hidden/);
+    assert.match(service, /pending_count/);
+    assert.match(service, /issue_counts/);
     assert.match(operations, /Bildintegrität/);
+    assert.match(operations, /Keine tatsächlichen Probleme/);
     assert.match(operations, /feu_einsatz_run_image_integrity/);
 });
 

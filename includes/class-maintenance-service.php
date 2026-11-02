@@ -92,6 +92,8 @@ final class FEU_Einsatz_Maintenance_Service {
         $issues = [];
         $checked_files = 0;
         $warm_queued = 0;
+        $pending_count = 0;
+        $not_required_count = 0;
         foreach (array_map('absint', (array) $report_ids) as $index => $post_id) {
             $warm = get_post_meta($post_id, '_feu_einsatz_cache_warm_job', true);
             $warm_time = is_array($warm) ? (int) ($warm['updated_at'] ?? 0) : 0;
@@ -103,21 +105,39 @@ final class FEU_Einsatz_Maintenance_Service {
                     $warm_queued++;
                 }
             }
-            $map_path = trim((string) get_post_meta($post_id, '_feu_einsatz_generated_map_preview_file', true));
-            if ('' !== $map_path) {
+            $map_status = $this->admin->get_generated_map_admin_status($post_id);
+            $map_status_key = sanitize_key((string) ($map_status['status'] ?? ''));
+            $map_required = 1 === (int) get_option('feu_einsatz_auto_map_image', 1)
+                && 'privacy_hidden' !== $map_status_key;
+            if (!$map_required) {
+                $not_required_count++;
+            } elseif ('ready' === $map_status_key) {
                 $checked_files++;
-                if (!$this->is_valid_image($map_path)) {
-                    $issues[] = $this->issue($post_id, 'map', __('Kartenbild fehlt oder ist beschädigt.', 'feuer-einsatzberichte'));
-                }
-            } elseif (1 === (int) get_option('feu_einsatz_auto_map_image', 1)) {
+            } elseif (in_array($map_status_key, ['queued', 'processing'], true)) {
+                $pending_count++;
+            } else {
                 $issues[] = $this->issue($post_id, 'map', __('Kartenbild fehlt.', 'feuer-einsatzberichte'));
             }
 
             $share = $this->admin->get_report_share()->inspect_share_card_integrity($post_id);
-            if (in_array((string) ($share['status'] ?? ''), ['missing', 'corrupt'], true)) {
+            $share_status = sanitize_key((string) ($share['status'] ?? ''));
+            if ('ready' === $share_status) {
+                $checked_files++;
+            } elseif ('corrupt' === $share_status) {
+                $checked_files++;
                 $issues[] = $this->issue($post_id, 'share', 'corrupt' === ($share['status'] ?? '')
                     ? __('Link-Vorschaubild ist beschädigt.', 'feuer-einsatzberichte')
                     : __('Link-Vorschaubild fehlt.', 'feuer-einsatzberichte'));
+            } elseif ('missing' === $share_status) {
+                $share_job = $this->admin->get_report_share()->get_share_card_job_status($post_id);
+                $share_job_status = sanitize_key((string) ($share_job['status'] ?? ''));
+                if (in_array($share_job_status, ['queued', 'processing'], true)) {
+                    $pending_count++;
+                } else {
+                    $issues[] = $this->issue($post_id, 'share', __('Link-Vorschaubild fehlt.', 'feuer-einsatzberichte'));
+                }
+            } else {
+                $not_required_count++;
             }
 
             foreach (array_values(array_filter(array_map('absint', (array) get_post_meta($post_id, '_feu_einsatz_gallery', true)))) as $attachment_id) {
@@ -129,11 +149,22 @@ final class FEU_Einsatz_Maintenance_Service {
                 }
                 if (FEU_Einsatz_Image_Protection::is_image_watermark_enabled()) {
                     $watermark = FEU_Einsatz_Image_Protection::get_attachment_job_status($attachment_id);
-                    if (in_array((string) ($watermark['status'] ?? ''), ['missing', 'error'], true)) {
+                    $watermark_status = sanitize_key((string) ($watermark['status'] ?? ''));
+                    if ('ready' === $watermark_status) {
+                        // Both the full and medium protected variants were validated.
+                        $checked_files += 2;
+                    } elseif (in_array($watermark_status, ['queued', 'processing'], true)) {
+                        $pending_count++;
+                    } elseif (in_array($watermark_status, ['missing', 'error'], true)) {
                         $issues[] = $this->issue($post_id, 'watermark', sprintf(__('Geschützte Fotovariante #%d fehlt.', 'feuer-einsatzberichte'), $attachment_id));
                     }
                 }
             }
+        }
+        $issue_counts = [];
+        foreach ($issues as $issue) {
+            $kind = sanitize_key((string) ($issue['kind'] ?? 'other')) ?: 'other';
+            $issue_counts[$kind] = ($issue_counts[$kind] ?? 0) + 1;
         }
         $state = [
             'checked_at' => time(),
@@ -141,6 +172,9 @@ final class FEU_Einsatz_Maintenance_Service {
             'files' => $checked_files,
             'issues' => array_slice($issues, 0, 100),
             'issue_count' => count($issues),
+            'issue_counts' => $issue_counts,
+            'pending_count' => $pending_count,
+            'not_required_count' => $not_required_count,
             'warm_queued' => $warm_queued,
         ];
         update_option(self::IMAGE_AUDIT_OPTION, $state, false);

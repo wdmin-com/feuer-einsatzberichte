@@ -44,13 +44,34 @@ $retention_cutoff = $retention_years > 0 ? strtotime('-' . $retention_years . ' 
                 <?php endif; ?>
             </div>
             <div class="feu-einsatz-integrity-summary">
-                <strong><?php echo esc_html(sprintf(__('%d Probleme', 'feuer-einsatzberichte'), (int) ($image_integrity['issue_count'] ?? 0))); ?></strong>
+                <?php $integrity_issue_count = (int) ($image_integrity['issue_count'] ?? 0); ?>
+                <strong><?php echo esc_html($integrity_issue_count > 0
+                    ? sprintf(_n('%d tatsächliches Problem', '%d tatsächliche Probleme', $integrity_issue_count, 'feuer-einsatzberichte'), $integrity_issue_count)
+                    : __('Keine tatsächlichen Probleme', 'feuer-einsatzberichte')); ?></strong>
                 <span><?php echo esc_html(sprintf(__('%1$d Berichte · %2$d Dateien geprüft', 'feuer-einsatzberichte'), (int) ($image_integrity['reports'] ?? 0), (int) ($image_integrity['files'] ?? 0))); ?></span>
+                <?php if (!empty($image_integrity['pending_count'])) : ?><span><?php echo esc_html(sprintf(__('%d Bildaufgaben werden noch verarbeitet', 'feuer-einsatzberichte'), (int) $image_integrity['pending_count'])); ?></span><?php endif; ?>
+                <?php if (!empty($image_integrity['not_required_count'])) : ?><span><?php echo esc_html(sprintf(__('%d Prüfungen laut Konfiguration nicht erforderlich', 'feuer-einsatzberichte'), (int) $image_integrity['not_required_count'])); ?></span><?php endif; ?>
                 <?php if (!empty($image_integrity['warm_queued'])) : ?><span><?php echo esc_html(sprintf(__('%d Cache-Aufgaben eingeplant', 'feuer-einsatzberichte'), (int) $image_integrity['warm_queued'])); ?></span><?php endif; ?>
                 <?php if (!empty($image_integrity['checked_at'])) : ?><span><?php echo esc_html(sprintf(__('Letzte Prüfung: %s', 'feuer-einsatzberichte'), wp_date(get_option('date_format') . ' ' . get_option('time_format'), (int) $image_integrity['checked_at']))); ?></span><?php endif; ?>
             </div>
             <?php if (!empty($image_integrity['issues'])) : ?>
                 <div class="feu-einsatz-integrity-issues">
+                    <?php
+                    $integrity_kind_labels = [
+                        'map' => __('Kartenbilder', 'feuer-einsatzberichte'),
+                        'share' => __('Link-Vorschaubilder', 'feuer-einsatzberichte'),
+                        'photo' => __('Originalfotos', 'feuer-einsatzberichte'),
+                        'watermark' => __('Wasserzeichen-Varianten', 'feuer-einsatzberichte'),
+                    ];
+                    ?>
+                    <div class="feu-einsatz-integrity-breakdown" aria-label="<?php esc_attr_e('Probleme nach Bildtyp', 'feuer-einsatzberichte'); ?>">
+                    <?php
+                    foreach ((array) ($image_integrity['issue_counts'] ?? []) as $kind => $count) :
+                        if ((int) $count < 1) continue;
+                    ?>
+                        <span><strong><?php echo esc_html($integrity_kind_labels[$kind] ?? ucfirst((string) $kind)); ?>:</strong> <?php echo esc_html((string) (int) $count); ?></span>
+                    <?php endforeach; ?>
+                    </div>
                     <?php foreach (array_slice($image_integrity['issues'], 0, 8) as $issue) : ?>
                         <a href="<?php echo esc_url($this->get_edit_url((int) $issue['post_id'])); ?>"><span>#<?php echo esc_html((string) $issue['post_id']); ?></span> <?php echo esc_html($issue['message']); ?></a>
                     <?php endforeach; ?>

@@ -1,6 +1,22 @@
 {
   "releases": [
     {
+      "version": "3.3.9",
+      "date": "2026-11-02",
+      "title": "Korrekte Bilddiagnose ohne Fehlalarme",
+      "summary": "Die Bildintegritätsprüfung erkennt vorhandene Kartenbilder jetzt über dieselben Datei-, URL- und Attachment-Fallbacks wie die öffentliche Ausgabe und trennt echte Schäden, laufende Aufgaben und nicht erforderliche Varianten.",
+      "changes": [
+        "Bilddiagnose: Kartenbilder werden über dieselbe zentrale Statusermittlung wie im Frontend und in der Verwaltung geprüft; vorhandene WordPress-Attachments sowie aktuelle Upload-URLs werden zuverlässig erkannt.",
+        "Fehlalarme: Ein vorhandenes Kartenbild wird nicht länger pro Einsatzbericht zusätzlich als fehlend gezählt, nur weil der ältere direkte Dateipfad nicht gespeichert ist.",
+        "Datenschutz und Konfiguration: Bewusst deaktivierte Kartenbilder sowie datenschutzbedingt ausgeblendete Karten gelten als nicht erforderlich statt als Fehler.",
+        "Hintergrundaufgaben: Wartende oder gerade verarbeitete Karten-, Share- und Wasserzeichen-Aufgaben erscheinen als ausstehend und erhöhen nicht die Zahl tatsächlicher Probleme.",
+        "Dateizählung: Die Prüfung berücksichtigt aufgelöste Kartenbilder, fertige Link-Vorschaubilder und geschützte Wasserzeichenvarianten konsistent.",
+        "Arbeitszentrale: Die Bildintegrität unterscheidet jetzt tatsächliche Probleme, laufende Aufgaben und nicht erforderliche Varianten; vorhandene Fehler werden zusätzlich nach Bildtyp aufgeschlüsselt.",
+        "Diagnosebericht: Kartenbilder, Link-Vorschaubilder, Originalfotos und Wasserzeichenvarianten erhalten eigene Fehlerzähler, damit Supportfälle sofort eingegrenzt werden können.",
+        "Qualität: Ein WordPress-Integrationstest sichert den häufigen Fall ab, dass ein Kartenbild ausschließlich als Attachment hinterlegt ist."
+      ]
+    },
+    {
       "version": "3.3.8",
       "date": "2026-11-02",
       "title": "Schnellerer Plugin-Start und zuverlässige Hintergrundprozesse",
