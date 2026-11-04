@@ -112,11 +112,13 @@ try {
         'nachname' => 'Muster',
         'job_title' => 'Gerätewart',
         'rank_title' => 'Oberbrandmeister',
+        'member_function' => 'Gruppenführer, Maschinist',
         'primary_image_id' => 0,
     ]);
     $primary_after_sync = $db->get_participant($primary_id);
     if ($primary_id !== (int) $synced || 'Maximilian' !== $primary_after_sync->vorname || 'Mustermann' !== $primary_after_sync->nachname
-        || 'Gerätewart' !== $primary_after_sync->job_title || 'Oberbrandmeister' !== $primary_after_sync->rank_title) {
+        || 'Gerätewart' !== $primary_after_sync->job_title || 'Oberbrandmeister' !== $primary_after_sync->rank_title
+        || 'Gruppenführer, Maschinist' !== $primary_after_sync->member_function) {
         throw new RuntimeException('Future synchronization ignored the local name lock or failed to refresh non-name identity fields.');
     }
 

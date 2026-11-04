@@ -94,6 +94,7 @@ final class FEU_Einsatz_Mannschaft_Integration {
             'nachname' => get_post_meta($member_id, self::META_PREFIX . 'last_name', true),
             'job_title' => get_post_meta($member_id, self::META_PREFIX . 'job_title', true),
             'rank_title' => get_post_meta($member_id, self::META_PREFIX . 'rank', true),
+            'member_function' => $this->get_member_functions($member_id),
             'primary_image_id' => $primary_image_id,
         ]);
     }
@@ -206,6 +207,7 @@ final class FEU_Einsatz_Mannschaft_Integration {
             'last_name' => $last,
             'job_title' => trim((string) get_post_meta($id, self::META_PREFIX . 'job_title', true)),
             'rank_title' => trim((string) get_post_meta($id, self::META_PREFIX . 'rank', true)),
+            'member_function' => $this->get_member_functions($id),
             'primary_image_id' => (int) get_post_thumbnail_id($id),
             'normalized_first' => $this->normalize_name($first),
             'normalized_last' => $this->normalize_name($last),
@@ -243,6 +245,7 @@ final class FEU_Einsatz_Mannschaft_Integration {
             'nachname' => get_post_meta($member_id, self::META_PREFIX . 'last_name', true),
             'job_title' => get_post_meta($member_id, self::META_PREFIX . 'job_title', true),
             'rank_title' => get_post_meta($member_id, self::META_PREFIX . 'rank', true),
+            'member_function' => $this->get_member_functions($member_id),
             'primary_image_id' => $primary_image_id,
         ], true);
         if (false !== $connected) {
@@ -250,6 +253,26 @@ final class FEU_Einsatz_Mannschaft_Integration {
         }
 
         return $connected;
+    }
+
+    /**
+     * Feuer-Mannschaft stores Funktion as a multi-value profile field. Keep
+     * the local projection readable while accepting legacy scalar values.
+     */
+    private function get_member_functions(int $member_id): string {
+        $raw = get_post_meta($member_id, self::META_PREFIX . 'function', true);
+        $functions = [];
+        foreach ((array) $raw as $function) {
+            if (!is_scalar($function)) {
+                continue;
+            }
+            $function = sanitize_text_field((string) $function);
+            if ('' !== trim($function)) {
+                $functions[] = trim($function);
+            }
+        }
+
+        return implode(', ', array_values(array_unique($functions)));
     }
 
     /** @return array<int,int> */

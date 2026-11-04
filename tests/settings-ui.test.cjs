@@ -4,6 +4,8 @@ const path = require('node:path');
 
 const projectRoot = path.resolve(__dirname, '..');
 const css = fs.readFileSync(path.join(projectRoot, 'assets/admin/css/apple-admin-system.css'), 'utf8');
+const workspaceCss = fs.readFileSync(path.join(projectRoot, 'assets/admin/css/apple-workspace.css'), 'utf8');
+const functionsMarkup = fs.readFileSync(path.join(projectRoot, 'templates/admin/settings/partials/tab-funktionen.php'), 'utf8');
 
 function declarations(selector) {
     const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -27,5 +29,12 @@ for (const partial of ['tab-funktionen.php', 'tab-kategorien.php', 'tab-organisa
     const markup = fs.readFileSync(path.join(projectRoot, 'templates/admin/settings/partials', partial), 'utf8');
     assert.match(markup, /feu-admin-settings-panel--card/, `${partial} must use the settings card fallback.`);
 }
+
+assert.match(functionsMarkup, /feu-einsatz-functions-editor/, 'Functions must use one grouped editor instead of nested cards.');
+assert.match(functionsMarkup, /feu-einsatz-functions-list-head/, 'The flat function editor needs a clear list header.');
+assert.match(functionsMarkup, /aria-label="<\?php echo esc_attr\(sprintf\(__\('Funktion „%s“ entfernen'/, 'Remove controls need function-specific accessible names.');
+assert.match(workspaceCss, /\.feu-einsatz-functions-editor[\s\S]*?overflow:\s*hidden;[\s\S]*?border:\s*1px solid/, 'Functions must share a single bounded surface.');
+assert.match(workspaceCss, /\.feu-einsatz-function-item[\s\S]*?border:\s*0;[\s\S]*?border-bottom:/, 'Individual functions must render as flat divided rows.');
+assert.match(workspaceCss, /\.feu-einsatz-function-actions \.feu-einsatz-remove-function[\s\S]*?width:\s*40px;/, 'The repeated remove action must remain compact and icon-only.');
 
 console.log('Settings cards, navigation and Einsatzstichworte list styles are consistent.');

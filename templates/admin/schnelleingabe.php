@@ -53,7 +53,7 @@ $street_suggestions = FEU_Einsatz_Template_Helpers::get_street_suggestions();
             <div class="feu-se-success-icon" aria-hidden="true">&#10003;</div>
             <div class="feu-se-success-copy">
                 <h1 class="feu-se-success-title"><?php esc_html_e('Einsatz gespeichert', 'feuer-einsatzberichte'); ?></h1>
-                <p class="feu-se-success-text"><?php esc_html_e('Der Einsatzbericht wurde angelegt und kann jetzt weiterbearbeitet oder direkt geoeffnet werden.', 'feuer-einsatzberichte'); ?></p>
+                <p class="feu-se-success-text"><?php esc_html_e('Der Einsatzbericht wurde angelegt und kann jetzt weiterbearbeitet oder direkt geöffnet werden.', 'feuer-einsatzberichte'); ?></p>
             </div>
             <div class="feu-se-success-actions">
                 <a href="<?php echo esc_url(admin_url('admin.php?page=feu-einsatz-schnelleingabe')); ?>" class="feu-se-btn feu-se-btn--primary">
@@ -140,7 +140,7 @@ $street_suggestions = FEU_Einsatz_Template_Helpers::get_street_suggestions();
             <?php if (empty($categories)) : ?>
                 <p class="feu-se-hint"><?php esc_html_e('Es sind noch keine Einsatzstichworte konfiguriert.', 'feuer-einsatzberichte'); ?></p>
             <?php else : ?>
-                <div class="feu-se-chip-group" role="group" aria-label="<?php esc_attr_e('Einsatzarten auswaehlen', 'feuer-einsatzberichte'); ?>">
+                <div class="feu-se-chip-group" role="group" aria-label="<?php esc_attr_e('Einsatzarten auswählen', 'feuer-einsatzberichte'); ?>">
                     <?php foreach ($categories as $category) : ?>
                         <label class="feu-se-chip">
                             <input

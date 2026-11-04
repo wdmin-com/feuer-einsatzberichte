@@ -751,7 +751,7 @@
                 galleryFrame = mediaApi({
                     title: 'Fotos für Einsatzbericht auswählen',
                     button: {
-                        text: 'Fotos uebernehmen'
+                        text: 'Fotos übernehmen'
                     },
                     library: {
                         type: 'image'
@@ -842,7 +842,7 @@
 
             if (!watermarkFrame) {
                 watermarkFrame = mediaApi({
-                    title: 'Wasserzeichen-Bild auswaehlen',
+                    title: 'Wasserzeichen-Bild auswählen',
                     button: {
                         text: 'Bild verwenden'
                     },
@@ -892,7 +892,7 @@
 
             if (!areaStationLogoFrame) {
                 areaStationLogoFrame = mediaApi({
-                    title: 'Feuerwehr-Logo auswaehlen',
+                    title: 'Feuerwehr-Logo auswählen',
                     button: {
                         text: 'Logo verwenden'
                     },
@@ -2075,7 +2075,7 @@
                     }
 
                     if (!responseJson && status === 'timeout') {
-                        errorMessage = 'Zeitueberschreitung - Der Server antwortet nicht';
+                        errorMessage = 'Zeitüberschreitung – der Server antwortet nicht';
                     } else if (!responseJson && status === 'error' && error) {
                         errorMessage = 'Serverfehler: ' + error;
                     }

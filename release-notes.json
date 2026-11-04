@@ -1,6 +1,24 @@
 {
   "releases": [
     {
+      "version": "3.3.13",
+      "date": "2026-11-04",
+      "title": "Kompakte Redaktion und korrekte Mannschaftsfunktionen",
+      "summary": "Der Berichtseditor nutzt den verfügbaren Platz gezielter, die Mannschaftsverwaltung synchronisiert jetzt die tatsächliche Funktion aus Feuer-Mannschaft und der Funktionskatalog in den Einstellungen erhält eine ruhige, flache Bearbeitungsoberfläche ohne verschachtelte Karten.",
+      "changes": [
+        "Berichtseditor: Stadt, Stadtteil, Datum und Uhrzeit stehen auf Desktop in einer kompakten gemeinsamen Zeile; Tablet und Smartphone erhalten kontrollierte Zwei- beziehungsweise Einspaltenlayouts.",
+        "Stadtteil: Lange Werte bleiben innerhalb des verfügbaren Feldes und sind zusätzlich vollständig über die native Feldinformation erreichbar.",
+        "Mannschaft: Die bisherige Spalte Position heißt jetzt Funktion und zeigt das dedizierte, synchronisierte Funktionsfeld aus Feuer-Mannschaft.",
+        "Synchronisierung: Mehrere Feuer-Mannschaft-Funktionen werden normalisiert, ohne Dubletten zusammengeführt und bei manueller sowie bestehender Profilverknüpfung zuverlässig aktualisiert.",
+        "Mannschaftsmodal: Die Schließen-Schaltfläche besitzt einen deutlich sichtbaren, fokussierbaren 44-Pixel-Bedienbereich.",
+        "Einstellungen: Funktionen werden als flache, getrennte Zeilen in einer gemeinsamen Oberfläche dargestellt statt als Eingabefelder in mehrfach verschachtelten Karten.",
+        "Alle Berichte: Suche, Status, Jahr, Datumsgrenzen und Sortierung verwenden gleich breite Spalten, identische 44-Pixel-Felder und kontrollierte responsive Umbrüche.",
+        "Bedienung: Wiederholte Entfernen-Aktionen sind kompakter, besitzen jedoch weiterhin eindeutige Beschriftungen für Screenreader und Tastaturbedienung.",
+        "Sprache: Weitere sichtbare Verwaltungs-, Karten-, Share- und Medienmeldungen verwenden korrekte deutsche Umlaute und professionelle Formulierungen.",
+        "Qualität: Neue Regressionstests sichern Funktionssynchronisierung, kompaktes Editorlayout, responsive Darstellung, flache Einstellungszeilen und zugängliche Aktionsschaltflächen; alle 40 automatischen Prüfungen bestehen."
+      ]
+    },
+    {
       "version": "3.3.12",
       "date": "2026-11-04",
       "title": "Browser-geprüfter Hotfix für Dashboard und Berichtsübersicht",

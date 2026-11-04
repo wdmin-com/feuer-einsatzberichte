@@ -598,7 +598,7 @@ class FEU_Einsatz_Report_Share {
             $preview_image_url  = $this->build_share_image_endpoint_url($post_id, false);
             $download_image_url = $this->build_share_image_endpoint_url($post_id, true);
             $image_notice       = $background_image_url
-                ? __('Die Share-Karte verwendet das eingestellte Hintergrundbild und blendet die freigegebenen Einsatzdaten darueber ein.', 'feuer-einsatzberichte')
+                ? __('Die Share-Karte verwendet das eingestellte Hintergrundbild und blendet die freigegebenen Einsatzdaten darüber ein.', 'feuer-einsatzberichte')
                 : __('Die Share-Karte verwendet mangels eigenem Hintergrund zuerst das Beitragsbild des Einsatzberichts und sonst einen neutralen Farbverlauf.', 'feuer-einsatzberichte');
         } else {
             $generated_share_preview_url = $this->build_share_image_endpoint_url($post_id, false);

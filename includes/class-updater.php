@@ -402,7 +402,7 @@ class FEU_Einsatz_Updater {
         if (!$manifest) {
             return new WP_Error(
                 'feu_einsatz_update_manifest_mismatch',
-                __('Das Update-Paket stimmt nicht mit dem freigegebenen Manifest ueberein.', 'feuer-einsatzberichte')
+                __('Das Update-Paket stimmt nicht mit dem freigegebenen Manifest überein.', 'feuer-einsatzberichte')
             );
         }
 

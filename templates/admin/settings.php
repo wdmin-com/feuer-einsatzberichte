@@ -1901,8 +1901,8 @@ jQuery(document).ready(function($) {
             '<button type="button" class="button feu-einsatz-move-function-down" aria-label="' + texts.moveDown + '">' +
             '<span class="feu-einsatz-button-icon" aria-hidden="true">↓</span>' +
             '</button>' +
-            '<button type="button" class="button feu-einsatz-remove-function">' +
-            '<span class="feu-einsatz-button-icon" aria-hidden="true">×</span> ' + texts.remove +
+            '<button type="button" class="button feu-einsatz-remove-function" aria-label="' + texts.remove + '" title="' + texts.remove + '">' +
+            '<span class="feu-einsatz-button-icon" aria-hidden="true">×</span>' +
             '</button>' +
             '</div>';
     }
@@ -2202,7 +2202,7 @@ jQuery(document).ready(function($) {
 
     $('#feu-einsatz-add-function').on('click', function() {
         var template = '<div class="feu-einsatz-function-item">' +
-            '<input type="text" name="feu_einsatz_functions[]" value="" class="regular-text" placeholder="' + texts.functionPlaceholder + '" /> ' +
+            '<input type="text" name="feu_einsatz_functions[]" value="" class="regular-text" aria-label="' + texts.functionPlaceholder + '" placeholder="' + texts.functionPlaceholder + '" /> ' +
             buildFunctionActionButtons() +
             '</div>';
 

@@ -87,7 +87,7 @@ if ($social_share_background_url) {
                 <div class="feu-admin-settings-fieldset">
                     <div class="feu-admin-settings-fieldset-head">
                         <h3><?php esc_html_e('Netzwerke', 'feuer-einsatzberichte'); ?></h3>
-                        <p class="description"><?php esc_html_e('Nur veroeffentlichte Einsatzberichte zeigen diese Buttons im Frontend an.', 'feuer-einsatzberichte'); ?></p>
+                        <p class="description"><?php esc_html_e('Nur veröffentlichte Einsatzberichte zeigen diese Buttons im Frontend an.', 'feuer-einsatzberichte'); ?></p>
                     </div>
 
                     <div class="feu-admin-settings-check-grid">
@@ -179,7 +179,7 @@ if ($social_share_background_url) {
                                     <?php endif; ?>
                                 </div>
                                 <div class="feu-einsatz-watermark-actions">
-                                    <button type="button" class="button" id="feu-einsatz-social-share-image-select"><?php esc_html_e('Hintergrundbild waehlen', 'feuer-einsatzberichte'); ?></button>
+                                    <button type="button" class="button" id="feu-einsatz-social-share-image-select"><?php esc_html_e('Hintergrundbild wählen', 'feuer-einsatzberichte'); ?></button>
                                     <button type="button" class="button" id="feu-einsatz-social-share-image-remove" <?php echo $social_share_background_url ? '' : 'hidden'; ?>><?php esc_html_e('Bild entfernen', 'feuer-einsatzberichte'); ?></button>
                                 </div>
                             </div>
@@ -197,7 +197,7 @@ if ($social_share_background_url) {
                                     <?php endif; ?>
                                 </div>
                                 <div class="feu-einsatz-watermark-actions">
-                                    <button type="button" class="button" id="feu-einsatz-social-share-logo-select"><?php esc_html_e('Logo waehlen', 'feuer-einsatzberichte'); ?></button>
+                                    <button type="button" class="button" id="feu-einsatz-social-share-logo-select"><?php esc_html_e('Logo wählen', 'feuer-einsatzberichte'); ?></button>
                                     <button type="button" class="button" id="feu-einsatz-social-share-logo-remove" <?php echo $social_share_logo_url ? '' : 'hidden'; ?>><?php esc_html_e('Logo entfernen', 'feuer-einsatzberichte'); ?></button>
                                 </div>
                             </div>

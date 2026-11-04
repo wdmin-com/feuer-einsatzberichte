@@ -1046,8 +1046,34 @@ body.feu-admin-ui--modern-shell .feu-einsatz-participant-table--compact .feu-ein
     width: 15%;
 }
 
-body.feu-admin-ui--modern-shell .feu-einsatz-participant-table--compact .feu-einsatz-participant-position-column {
+body.feu-admin-ui--modern-shell .feu-einsatz-participant-table--compact .feu-einsatz-participant-function-column {
     width: 17%;
+}
+
+body.feu-admin-ui--modern-shell .feu-einsatz-modal-close--icon {
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+    display: inline-grid;
+    place-items: center;
+    padding: 0;
+    border: 1px solid #cbd8e3;
+    border-radius: 50%;
+    color: #294b64;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(15, 39, 58, .08);
+    cursor: pointer;
+    font-size: 22px;
+    line-height: 1;
+}
+
+body.feu-admin-ui--modern-shell .feu-einsatz-modal-close--icon:hover,
+body.feu-admin-ui--modern-shell .feu-einsatz-modal-close--icon:focus-visible {
+    border-color: #6f9fbe;
+    color: #075f98;
+    background: #eef7fd;
+    outline: 3px solid rgba(0, 113, 227, .22);
+    outline-offset: 2px;
 }
 
 body.feu-admin-ui--modern-shell .feu-einsatz-participant-table--compact .feu-einsatz-participant-actions-column {

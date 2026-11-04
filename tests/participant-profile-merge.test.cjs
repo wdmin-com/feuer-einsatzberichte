@@ -16,7 +16,10 @@ assert.match(database, /clean_post_cache\(\$report_id\)/, 'A rolled-back merge m
 assert.match(database, /_feu_einsatz_teilnehmer/, 'Serialized report assignments must be migrated.');
 assert.match(database, /prefer_participant_function/, 'Duplicate assignments must retain the more specific function.');
 assert.match(database, /external_name_locked/, 'The selected local name must survive later external synchronization.');
+assert.match(database, /'member_function'\s*=>\s*sanitize_text_field\(\$identity\['member_function'\]/, 'External Mannschaft functions must be normalized by the synchronization contract.');
 assert.match(integration, /\], true\);/, 'Manual connection of differing names must preserve the local name.');
+assert.match(integration, /META_PREFIX\s*\.\s*'function'/, 'Synchronization must read the dedicated Feuer-Mannschaft function field.');
+assert.match(integration, /get_member_functions\(int \$member_id\): string/, 'Multi-value Mannschaft functions must be converted to a stable display value.');
 assert.match(admin, /admin_post_feu_einsatz_merge_participant_profiles/, 'The merge action must be registered.');
 assert.match(admin, /check_admin_referer\('feu_einsatz_merge_participant_profiles'\)/, 'The merge action must verify its nonce.');
 assert.match(template, /Mannschaftsprofile zusammenführen/, 'The participant screen must expose the merge workflow.');

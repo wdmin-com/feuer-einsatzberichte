@@ -1370,6 +1370,7 @@ class FEU_Einsatz_Database {
             'nachname' => sanitize_text_field($identity['nachname'] ?? ''),
             'job_title' => sanitize_text_field($identity['job_title'] ?? ''),
             'rank_title' => sanitize_text_field($identity['rank_title'] ?? ''),
+            'member_function' => sanitize_text_field($identity['member_function'] ?? ''),
             'primary_image_id' => absint($identity['primary_image_id'] ?? 0),
         ];
     }
@@ -1383,6 +1384,7 @@ class FEU_Einsatz_Database {
             'nachname' => $preserve_local_name ? (string) $existing->nachname : $identity['nachname'],
             'job_title' => $identity['job_title'],
             'rank_title' => $identity['rank_title'],
+            'member_function' => $identity['member_function'],
             // A missing source photo must never erase a locally selected one.
             'primary_image_id' => $identity['primary_image_id'] > 0
                 ? $identity['primary_image_id']
@@ -1392,7 +1394,6 @@ class FEU_Einsatz_Database {
         if ($existing) {
             $data = array_merge([
                 'entry_date' => $existing->entry_date,
-                'member_function' => $existing->member_function,
                 'education' => $existing->education,
                 'description' => $existing->description,
                 'sort_order' => $existing->sort_order,

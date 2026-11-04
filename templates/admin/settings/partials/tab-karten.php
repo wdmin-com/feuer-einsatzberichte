@@ -546,7 +546,7 @@ $generated_map_rebuild_to = isset($generated_map_rebuild_to) ? (string) $generat
             <div class="feu-admin-settings-surface-head">
                 <div>
                     <h3><?php esc_html_e('Feuerwehrhaus und Einsatzgebiet', 'feuer-einsatzberichte'); ?></h3>
-                    <p class="description"><?php esc_html_e('Adresse, Logo und oeffentliche Einsatzgebiet-Seite werden hier zentral gepflegt.', 'feuer-einsatzberichte'); ?></p>
+                    <p class="description"><?php esc_html_e('Adresse, Logo und öffentliche Einsatzgebiet-Seite werden hier zentral gepflegt.', 'feuer-einsatzberichte'); ?></p>
                 </div>
             </div>
 
@@ -567,7 +567,7 @@ $generated_map_rebuild_to = isset($generated_map_rebuild_to) ? (string) $generat
                             />
                             <span class="feu-admin-settings-check-copy">
                                 <strong><?php esc_html_e('Seite aktivieren', 'feuer-einsatzberichte'); ?></strong>
-                                <small><?php esc_html_e('Die oeffentliche Seite Einsatzgebiet wird nur dort angezeigt, wo der Shortcode eingebunden wurde.', 'feuer-einsatzberichte'); ?></small>
+                                <small><?php esc_html_e('Die öffentliche Seite Einsatzgebiet wird nur dort angezeigt, wo der Shortcode eingebunden wurde.', 'feuer-einsatzberichte'); ?></small>
                             </span>
                         </label>
                         <label class="feu-admin-settings-check-card">
@@ -663,7 +663,7 @@ $generated_map_rebuild_to = isset($generated_map_rebuild_to) ? (string) $generat
                                 <?php endif; ?>
                             </div>
                             <div class="feu-einsatz-watermark-actions">
-                                <button type="button" class="button" id="feu-einsatz-area-station-logo-select"><?php esc_html_e('Logo auswaehlen', 'feuer-einsatzberichte'); ?></button>
+                                <button type="button" class="button" id="feu-einsatz-area-station-logo-select"><?php esc_html_e('Logo auswählen', 'feuer-einsatzberichte'); ?></button>
                                 <button type="button" class="button" id="feu-einsatz-area-station-logo-remove" <?php echo $area_station_logo_id ? '' : 'hidden'; ?>><?php esc_html_e('Logo entfernen', 'feuer-einsatzberichte'); ?></button>
                             </div>
                         </div>

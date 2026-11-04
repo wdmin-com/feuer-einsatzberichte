@@ -724,7 +724,7 @@ class FEU_Einsatz_Admin {
                 : __('Pflicht: mindestens ein Einsatzstichwort für Einsatzberichte aktivieren.', 'feuer-einsatzberichte'),
             $categories_ok ? 'ok' : 'missing',
             true,
-            __('Einsatzstichworte auswaehlen', 'feuer-einsatzberichte'),
+            __('Einsatzstichworte auswählen', 'feuer-einsatzberichte'),
             add_query_arg('tab', 'kategorien', $settings_url)
         );
 
@@ -966,7 +966,7 @@ class FEU_Einsatz_Admin {
 
         echo '<div class="notice notice-warning feu-einsatz-setup-notice">';
         echo '<p><strong>' . esc_html__('Ersteinrichtung erforderlich', 'feuer-einsatzberichte') . '</strong> ';
-        echo esc_html__('Damit Einsatzberichte, Karten und Teilen-Funktionen sauber arbeiten, muessen zuerst die Pflichtdaten gepflegt werden.', 'feuer-einsatzberichte') . '</p>';
+        echo esc_html__('Damit Einsatzberichte, Karten und Teilen-Funktionen sauber arbeiten, müssen zuerst die Pflichtdaten gepflegt werden.', 'feuer-einsatzberichte') . '</p>';
 
         if (!empty($missing_items)) {
             echo '<ul class="feu-einsatz-setup-notice-list">';
@@ -2585,7 +2585,7 @@ class FEU_Einsatz_Admin {
                         'time' => __('Uhrzeit', 'feuer-einsatzberichte'),
                         'timeInvalid' => __('Bitte gib eine Uhrzeit im Format HH:MM an.', 'feuer-einsatzberichte'),
                         'categoriesLabel' => __('Einsatzstichworte', 'feuer-einsatzberichte'),
-                        'categoryRequired' => __('Bitte waehle mindestens ein Einsatzstichwort aus.', 'feuer-einsatzberichte'),
+                        'categoryRequired' => __('Bitte wähle mindestens ein Einsatzstichwort aus.', 'feuer-einsatzberichte'),
                         'primaryCategoryLabel' => __('Hauptkategorie für die URL', 'feuer-einsatzberichte'),
                         'primaryCategoryRequired' => __('Bitte eines der ausgewählten Einsatzstichworte als Hauptkategorie wählen.', 'feuer-einsatzberichte'),
                     ],

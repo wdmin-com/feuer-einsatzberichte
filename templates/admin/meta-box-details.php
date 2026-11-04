@@ -261,20 +261,17 @@ $street_highlight_mode_label = 'full' === $street_highlight_mode
             </p>
         </div>
 
-        <div class="feu-einsatz-form-row feu-einsatz-form-grid feu-einsatz-form-grid--municipality">
-            <div class="feu-einsatz-field">
+        <div class="feu-einsatz-form-row feu-einsatz-form-grid feu-einsatz-form-grid--municipality-timing">
+            <div class="feu-einsatz-field feu-einsatz-field--city">
                 <label class="feu-einsatz-field-label" for="feu_einsatz_stadt"><?php esc_html_e('Stadt', 'feuer-einsatzberichte'); ?></label>
                 <input type="text" id="feu_einsatz_stadt" name="feu_einsatz_stadt" value="<?php echo esc_attr($stadt); ?>" class="widefat" placeholder="Hamburg" <?php echo 'address' === $map_location_mode ? 'required' : ''; ?> />
             </div>
-            <div class="feu-einsatz-field">
+            <div class="feu-einsatz-field feu-einsatz-field--district">
                 <label class="feu-einsatz-field-label" for="feu_einsatz_stadtteil"><?php esc_html_e('Stadtteil', 'feuer-einsatzberichte'); ?></label>
-                <input type="text" id="feu_einsatz_stadtteil" name="feu_einsatz_stadtteil" value="<?php echo esc_attr($stadtteil); ?>" class="widefat" placeholder="z.B. Lurup" autocomplete="address-level3" />
+                <input type="text" id="feu_einsatz_stadtteil" name="feu_einsatz_stadtteil" value="<?php echo esc_attr($stadtteil); ?>" class="widefat" placeholder="z.B. Lurup" autocomplete="address-level3" title="<?php echo esc_attr($stadtteil); ?>" />
                 <p class="description feu-einsatz-field-hint"><?php esc_html_e('Optional. Für Ortsangaben im Bericht; beeinflusst die Geokodierung nicht.', 'feuer-einsatzberichte'); ?></p>
             </div>
-        </div>
-
-        <div class="feu-einsatz-form-row feu-einsatz-form-grid feu-einsatz-form-grid--timing">
-            <div class="feu-einsatz-field">
+            <div class="feu-einsatz-field feu-einsatz-field--date">
                 <label class="feu-einsatz-field-label" for="feu_einsatz_datum">
                     <?php esc_html_e('Datum', 'feuer-einsatzberichte'); ?>
                 </label>
@@ -289,7 +286,7 @@ $street_highlight_mode_label = 'full' === $street_highlight_mode
                 />
             </div>
 
-            <div class="feu-einsatz-field feu-einsatz-field--compact">
+            <div class="feu-einsatz-field feu-einsatz-field--compact feu-einsatz-field--time">
                 <label class="feu-einsatz-field-label" for="feu_einsatz_uhrzeit">
                     <?php esc_html_e('Uhrzeit', 'feuer-einsatzberichte'); ?>
                 </label>

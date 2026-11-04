@@ -76,17 +76,14 @@ $status_labels = [
                 <?php endforeach; ?>
             </select>
         </label>
-        <fieldset class="feu-report-list-period">
-            <legend><?php esc_html_e('Zeitraum', 'feuer-einsatzberichte'); ?></legend>
-            <label>
-                <span><?php esc_html_e('Von', 'feuer-einsatzberichte'); ?></span>
-                <input type="date" name="report_date_from" value="<?php echo esc_attr($report_date_from); ?>" />
-            </label>
-            <label>
-                <span><?php esc_html_e('Bis', 'feuer-einsatzberichte'); ?></span>
-                <input type="date" name="report_date_to" value="<?php echo esc_attr($report_date_to); ?>" />
-            </label>
-        </fieldset>
+        <label class="feu-report-list-filter-date">
+            <span><?php esc_html_e('Zeitraum von', 'feuer-einsatzberichte'); ?></span>
+            <input type="date" name="report_date_from" value="<?php echo esc_attr($report_date_from); ?>" />
+        </label>
+        <label class="feu-report-list-filter-date">
+            <span><?php esc_html_e('Zeitraum bis', 'feuer-einsatzberichte'); ?></span>
+            <input type="date" name="report_date_to" value="<?php echo esc_attr($report_date_to); ?>" />
+        </label>
         <label class="feu-report-list-filter-order">
             <span><?php esc_html_e('Sortierung', 'feuer-einsatzberichte'); ?></span>
             <select name="report_order">
@@ -97,7 +94,7 @@ $status_labels = [
         <div class="feu-report-list-filter-actions">
             <button class="button button-primary" type="submit"><?php esc_html_e('Filter anwenden', 'feuer-einsatzberichte'); ?></button>
         <?php if ('' !== $report_search || 'all' !== $report_status || $report_year > 0 || '' !== $report_date_from || '' !== $report_date_to || 'asc' === $report_order) : ?>
-            <a href="<?php echo esc_url($report_list_url); ?>"><?php esc_html_e('Filter zurücksetzen', 'feuer-einsatzberichte'); ?></a>
+            <a class="button" href="<?php echo esc_url($report_list_url); ?>"><?php esc_html_e('Filter zurücksetzen', 'feuer-einsatzberichte'); ?></a>
         <?php endif; ?>
         </div>
     </form>

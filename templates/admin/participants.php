@@ -157,7 +157,7 @@ if (!function_exists('feu_einsatz_render_default_function_selects')) {
             <div class="feu-einsatz-mannschaft-sync-heading">
                 <div>
                     <h2><?php esc_html_e('Feuer-Mannschaft: manuelle Synchronisierung', 'feuer-einsatzberichte'); ?></h2>
-                    <p class="description"><?php esc_html_e('Importiert werden nur Vorname, Nachname, Dienstgrad/Position und Profilfoto. Funktionen, Ausbildung, lokale Akte, Archivstatus, Einsätze und Statistik werden nicht überschrieben.', 'feuer-einsatzberichte'); ?></p>
+                    <p class="description"><?php esc_html_e('Importiert werden nur Vorname, Nachname, Dienstgrad, Funktion und Profilfoto. Ausbildung, lokale Akte, Archivstatus, Einsätze und Statistik werden nicht überschrieben.', 'feuer-einsatzberichte'); ?></p>
                 </div>
                 <?php if ($mannschaft_available) : ?><a class="button" href="<?php echo esc_url(FEU_Einsatz_Mannschaft_Integration::get_management_url()); ?>"><?php esc_html_e('Feuer-Mannschaft öffnen', 'feuer-einsatzberichte'); ?></a><?php endif; ?>
             </div>
@@ -366,7 +366,7 @@ if (!function_exists('feu_einsatz_render_default_function_selects')) {
         <div class="feu-admin-card-header">
             <div>
                 <h2><?php esc_html_e('Mannschaftsmitglieder', 'feuer-einsatzberichte'); ?></h2>
-                <p class="description"><?php esc_html_e('Suche, Foto, Status, Dienstgrad, Position und Standardfunktionen direkt im Überblick.', 'feuer-einsatzberichte'); ?></p>
+                <p class="description"><?php esc_html_e('Suche, Foto, Status, Dienstgrad, synchronisierte Funktion und Standardfunktionen direkt im Überblick.', 'feuer-einsatzberichte'); ?></p>
             </div>
             <div class="feu-admin-toolbar-search">
                 <span class="ti ti-search" aria-hidden="true"></span>
@@ -394,7 +394,7 @@ if (!function_exists('feu_einsatz_render_default_function_selects')) {
                         <tr>
                             <th class="feu-einsatz-participant-member-column"><?php esc_html_e('Mitglied', 'feuer-einsatzberichte'); ?></th>
                             <th class="feu-einsatz-participant-rank-column"><?php esc_html_e('Dienstgrad', 'feuer-einsatzberichte'); ?></th>
-                            <th class="feu-einsatz-participant-position-column"><?php esc_html_e('Position', 'feuer-einsatzberichte'); ?></th>
+                            <th class="feu-einsatz-participant-function-column"><?php esc_html_e('Funktion', 'feuer-einsatzberichte'); ?></th>
                             <th><?php esc_html_e('Standardfunktionen', 'feuer-einsatzberichte'); ?></th>
                             <th class="feu-einsatz-participant-actions-column"><?php esc_html_e('Aktionen', 'feuer-einsatzberichte'); ?></th>
                         </tr>
@@ -446,10 +446,10 @@ if (!function_exists('feu_einsatz_render_default_function_selects')) {
                                         <span class="feu-einsatz-participant-detail-empty" aria-label="<?php esc_attr_e('Nicht hinterlegt', 'feuer-einsatzberichte'); ?>">—</span>
                                     <?php endif; ?>
                                 </td>
-                                <td data-label="<?php echo esc_attr__('Position', 'feuer-einsatzberichte'); ?>" class="feu-einsatz-participant-detail-cell">
-                                    <span class="feu-einsatz-participant-detail-label"><?php esc_html_e('Position', 'feuer-einsatzberichte'); ?></span>
-                                    <?php if ('' !== trim((string) $person->job_title)) : ?>
-                                        <strong class="feu-einsatz-participant-detail-value"><?php echo esc_html($person->job_title); ?></strong>
+                                <td data-label="<?php echo esc_attr__('Funktion', 'feuer-einsatzberichte'); ?>" class="feu-einsatz-participant-detail-cell">
+                                    <span class="feu-einsatz-participant-detail-label"><?php esc_html_e('Funktion', 'feuer-einsatzberichte'); ?></span>
+                                    <?php if ('' !== trim((string) $person->member_function)) : ?>
+                                        <strong class="feu-einsatz-participant-detail-value"><?php echo esc_html($person->member_function); ?></strong>
                                     <?php else : ?>
                                         <span class="feu-einsatz-participant-detail-empty" aria-label="<?php esc_attr_e('Nicht hinterlegt', 'feuer-einsatzberichte'); ?>">—</span>
                                     <?php endif; ?>
@@ -556,10 +556,10 @@ if (!function_exists('feu_einsatz_render_default_function_selects')) {
                                             <span class="feu-einsatz-participant-detail-empty" aria-label="<?php esc_attr_e('Nicht hinterlegt', 'feuer-einsatzberichte'); ?>">—</span>
                                         <?php endif; ?>
                                     </td>
-                                    <td data-label="<?php echo esc_attr__('Position', 'feuer-einsatzberichte'); ?>" class="feu-einsatz-participant-detail-cell">
-                                        <span class="feu-einsatz-participant-detail-label"><?php esc_html_e('Position', 'feuer-einsatzberichte'); ?></span>
-                                        <?php if ('' !== trim((string) $person->job_title)) : ?>
-                                            <strong class="feu-einsatz-participant-detail-value"><?php echo esc_html($person->job_title); ?></strong>
+                                    <td data-label="<?php echo esc_attr__('Funktion', 'feuer-einsatzberichte'); ?>" class="feu-einsatz-participant-detail-cell">
+                                        <span class="feu-einsatz-participant-detail-label"><?php esc_html_e('Funktion', 'feuer-einsatzberichte'); ?></span>
+                                        <?php if ('' !== trim((string) $person->member_function)) : ?>
+                                            <strong class="feu-einsatz-participant-detail-value"><?php echo esc_html($person->member_function); ?></strong>
                                         <?php else : ?>
                                             <span class="feu-einsatz-participant-detail-empty" aria-label="<?php esc_attr_e('Nicht hinterlegt', 'feuer-einsatzberichte'); ?>">—</span>
                                         <?php endif; ?>
@@ -1237,7 +1237,9 @@ jQuery(document).ready(function($) {
                 <h3 id="feu-einsatz-edit-participant-title"><?php esc_html_e('Mannschaftsmitglied bearbeiten', 'feuer-einsatzberichte'); ?></h3>
                 <p class="description" id="feu-einsatz-edit-status-text"><?php esc_html_e('Aktives Mannschaftsmitglied', 'feuer-einsatzberichte'); ?></p>
             </div>
-            <button type="button" class="button-link feu-einsatz-modal-close" aria-label="<?php echo esc_attr__('Schließen', 'feuer-einsatzberichte'); ?>">&times;</button>
+            <button type="button" class="feu-einsatz-modal-close feu-einsatz-modal-close--icon" aria-label="<?php echo esc_attr__('Dialog schließen', 'feuer-einsatzberichte'); ?>">
+                <span class="ti ti-x" aria-hidden="true"></span>
+            </button>
         </div>
 
         <form id="feu-einsatz-edit-participant-form" method="post" enctype="multipart/form-data" class="feu-einsatz-participant-modern-form">

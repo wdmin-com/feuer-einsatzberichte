@@ -155,7 +155,7 @@ if (!function_exists('feu_einsatz_render_function_options')) {
             return !in_array($function, $default_functions, true);
         }));
         ?>
-        <option value=""><?php _e('Funktion waehlen', 'feuer-einsatzberichte'); ?></option>
+        <option value=""><?php esc_html_e('Funktion wählen', 'feuer-einsatzberichte'); ?></option>
         <?php if (!empty($default_functions)) : ?>
             <optgroup label="<?php esc_attr_e('Standardfunktionen', 'feuer-einsatzberichte'); ?>">
                 <?php foreach ($default_functions as $funktion) : ?>
@@ -495,7 +495,7 @@ jQuery(document).ready(function($) {
             return defaultFunctions.indexOf(item) === -1;
         });
         selectedValue = resolveParticipantFunctionValue(participantId, selectedValue);
-        var html = '<option value=\"\"><?php echo esc_js(__('Funktion waehlen', 'feuer-einsatzberichte')); ?></option>';
+        var html = '<option value=\"\"><?php echo esc_js(__('Funktion wählen', 'feuer-einsatzberichte')); ?></option>';
 
         if (defaultFunctions.length) {
             html += '<optgroup label=\"<?php echo esc_js(__('Standardfunktionen', 'feuer-einsatzberichte')); ?>\">';

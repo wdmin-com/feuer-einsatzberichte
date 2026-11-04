@@ -23,7 +23,10 @@ test('report list sorts and filters by event date instead of modification date',
     assert.match(template, /name="report_date_to"/);
     assert.match(template, /Neueste Einsätze zuerst/);
     assert.match(template, /FEU_Einsatz_Template_Helpers::get_event_datetime/);
-    assert.match(styles, /feu-report-list-period/);
+    assert.match(template, /feu-report-list-filter-date/);
+    assert.match(styles, /grid-template-columns:repeat\(6,minmax\(0,1fr\)\)/);
+    assert.match(styles, /height:44px;min-height:44px/);
+    assert.doesNotMatch(styles, /feu-report-list-period/);
     assert.match(script, /yearFilter\.value = '0'/);
     assert.match(script, /field\.value = ''/);
 });

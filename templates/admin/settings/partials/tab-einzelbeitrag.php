@@ -61,7 +61,7 @@ $single_info_field_options = [
             <div class="feu-admin-settings-surface-head">
                 <div>
                     <h2><?php esc_html_e('Sichtbare Einsatzinformationen', 'feuer-einsatzberichte'); ?></h2>
-                    <p class="description"><?php esc_html_e('Waehlt aus, welche Metadaten oberhalb der Beschreibung sichtbar bleiben sollen.', 'feuer-einsatzberichte'); ?></p>
+                    <p class="description"><?php esc_html_e('Wählt aus, welche Metadaten oberhalb der Beschreibung sichtbar bleiben sollen.', 'feuer-einsatzberichte'); ?></p>
                 </div>
             </div>
 
