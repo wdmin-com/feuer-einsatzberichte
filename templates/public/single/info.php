@@ -21,7 +21,7 @@ if (!empty($display['single_desaturate_organizations'])) {
 
 <div class="<?php echo esc_attr('disabled' === $map_display_mode ? 'col-12' : 'col-12 col-lg-5'); ?> feu-einsatz-single-info-col d-flex">
     <div class="feu-einsatz-einsatz-info h-100">
-        <h1 class="feu-einsatz-single-heading"><?php echo esc_html($report['title'] ?? ''); ?></h1>
+        <h2 class="feu-einsatz-single-heading"><?php echo esc_html($report['title'] ?? ''); ?></h2>
 
         <div class="feu-einsatz-single-meta">
             <?php if (in_array('street', $info_fields, true) && !empty($report['street'])) : ?>

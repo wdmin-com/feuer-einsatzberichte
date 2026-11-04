@@ -16,19 +16,19 @@ if (!isset($active_tab) || 'strassenregister' !== (string) $active_tab) {
         <section class="feu-admin-settings-surface">
             <div class="feu-admin-settings-surface-head">
                 <div>
-                    <h2><?php esc_html_e('Strassenregister', 'feuer-einsatzberichte'); ?></h2>
+                    <h2><?php esc_html_e('Straßenregister', 'feuer-einsatzberichte'); ?></h2>
                     <p class="description"><?php esc_html_e('Hier pflegen Sie den lokalen Straßenbestand für Autocomplete, PLZ-/Orts-Vorschläge und schnelle Einsatzort-Erfassung.', 'feuer-einsatzberichte'); ?></p>
                 </div>
                 <div class="feu-einsatz-street-registry-head-meta">
                     <span class="feu-einsatz-badge"><span id="feu-einsatz-street-registry-count"><?php echo esc_html(count((array) $street_registry_entries)); ?></span> <?php esc_html_e('Register-Eintraege', 'feuer-einsatzberichte'); ?></span>
-                    <span class="feu-einsatz-badge"><span id="feu-einsatz-known-street-count"><?php echo esc_html(count((array) ($street_suggestion_records ?? []))); ?></span> <?php esc_html_e('Bekannte Strassen', 'feuer-einsatzberichte'); ?></span>
+                    <span class="feu-einsatz-badge"><span id="feu-einsatz-known-street-count"><?php echo esc_html(count((array) ($street_suggestion_records ?? []))); ?></span> <?php esc_html_e('Bekannte Straßen', 'feuer-einsatzberichte'); ?></span>
                 </div>
             </div>
 
             <div class="feu-admin-settings-form-grid feu-admin-settings-form-grid--2">
                 <div class="feu-admin-settings-fieldset">
                     <div class="feu-admin-settings-fieldset-head">
-                        <h3><?php esc_html_e('Eintrag hinzufuegen', 'feuer-einsatzberichte'); ?></h3>
+                        <h3><?php esc_html_e('Eintrag hinzufügen', 'feuer-einsatzberichte'); ?></h3>
                         <p class="description"><?php esc_html_e('Gleiche Straßennamen können mehrfach mit unterschiedlichen PLZ oder Orten gepflegt werden.', 'feuer-einsatzberichte'); ?></p>
                     </div>
 
@@ -70,7 +70,7 @@ if (!isset($active_tab) || 'strassenregister' !== (string) $active_tab) {
                     </div>
 
                     <p class="description feu-admin-settings-inline-note">
-                        <?php esc_html_e('Die Vorschlagslogik nutzt zuerst dieses Register und erweitert es zusaetzlich mit bereits verwendeten Strassen aus Einsatzberichten.', 'feuer-einsatzberichte'); ?>
+                        <?php esc_html_e('Die Vorschlagslogik nutzt zuerst dieses Register und erweitert es zusätzlich mit bereits verwendeten Straßen aus Einsatzberichten.', 'feuer-einsatzberichte'); ?>
                     </p>
                 </div>
 
@@ -82,7 +82,7 @@ if (!isset($active_tab) || 'strassenregister' !== (string) $active_tab) {
                     <div class="feu-admin-settings-check-grid">
                         <div class="feu-admin-settings-check-card">
                             <span class="feu-admin-settings-check-copy">
-                                <strong><?php esc_html_e('Mehrdeutige Strassen', 'feuer-einsatzberichte'); ?></strong>
+                                <strong><?php esc_html_e('Mehrdeutige Straßen', 'feuer-einsatzberichte'); ?></strong>
                                 <small><?php esc_html_e('Wenn eine Straße in mehreren PLZ-Bereichen vorkommt, legen Sie mehrere Einträge an. Die Vorschläge zeigen dann Straße / PLZ / Ort getrennt an.', 'feuer-einsatzberichte'); ?></small>
                             </span>
                         </div>
@@ -108,21 +108,21 @@ if (!isset($active_tab) || 'strassenregister' !== (string) $active_tab) {
                         type="search"
                         id="feu-einsatz-street-registry-search"
                         class="regular-text"
-                        placeholder="<?php esc_attr_e('Strassen, PLZ oder Orte filtern', 'feuer-einsatzberichte'); ?>"
+                        placeholder="<?php esc_attr_e('Straßen, PLZ oder Orte filtern', 'feuer-einsatzberichte'); ?>"
                     />
                 </div>
                 <div class="feu-einsatz-street-registry-section-head">
                     <h3><?php esc_html_e('Manuell gepflegte Register-Eintraege', 'feuer-einsatzberichte'); ?></h3>
-                    <p class="description"><?php esc_html_e('Diese Liste zeigt alle Strassen, die direkt in diesem Register gepflegt werden.', 'feuer-einsatzberichte'); ?></p>
+                    <p class="description"><?php esc_html_e('Diese Liste zeigt alle Straßen, die direkt in diesem Register gepflegt werden.', 'feuer-einsatzberichte'); ?></p>
                 </div>
                 <?php if (empty($street_registry_entries)) : ?>
-                    <p class="description feu-einsatz-street-registry-empty"><?php esc_html_e('Noch keine manuell gepflegten Strassen vorhanden.', 'feuer-einsatzberichte'); ?></p>
+                    <p class="description feu-einsatz-street-registry-empty"><?php esc_html_e('Noch keine manuell gepflegten Straßen vorhanden.', 'feuer-einsatzberichte'); ?></p>
                 <?php else : ?>
                     <table class="wp-list-table widefat striped feu-einsatz-street-registry-table">
                         <thead>
                             <tr>
                                 <th><?php esc_html_e('Straße / PLZ / Ort', 'feuer-einsatzberichte'); ?></th>
-                                <th><?php esc_html_e('Einsaetze', 'feuer-einsatzberichte'); ?></th>
+                                <th><?php esc_html_e('Einsätze', 'feuer-einsatzberichte'); ?></th>
                                 <th><?php esc_html_e('Aktion', 'feuer-einsatzberichte'); ?></th>
                             </tr>
                         </thead>
@@ -180,7 +180,7 @@ if (!isset($active_tab) || 'strassenregister' !== (string) $active_tab) {
                                             class="button button-small"
                                             href="<?php echo esc_url($street_report_url); ?>"
                                         >
-                                            <?php esc_html_e('Einsaetze ansehen', 'feuer-einsatzberichte'); ?>
+                                            <?php esc_html_e('Einsätze ansehen', 'feuer-einsatzberichte'); ?>
                                         </a>
                                         <button
                                             type="button"
@@ -198,7 +198,7 @@ if (!isset($active_tab) || 'strassenregister' !== (string) $active_tab) {
                 <?php endif; ?>
 
                 <div class="feu-einsatz-street-registry-section-head feu-einsatz-street-registry-section-head--secondary">
-                    <h3><?php esc_html_e('Alle bekannten Strassen', 'feuer-einsatzberichte'); ?></h3>
+                    <h3><?php esc_html_e('Alle bekannten Straßen', 'feuer-einsatzberichte'); ?></h3>
                     <p class="description"><?php esc_html_e('Diese Übersicht kombiniert das manuelle Register mit bereits verwendeten Straßen aus Einsatzberichten. Genau diese Daten nutzt auch das Autocomplete.', 'feuer-einsatzberichte'); ?></p>
                 </div>
 
@@ -245,7 +245,7 @@ if (!isset($active_tab) || 'strassenregister' !== (string) $active_tab) {
                                     <td><?php echo esc_html((string) max(0, (int) ($street_record['usage_count'] ?? 0))); ?></td>
                                     <td class="feu-einsatz-table-actions">
                                         <a class="button button-small" href="<?php echo esc_url($known_report_url); ?>">
-                                            <?php esc_html_e('Einsaetze ansehen', 'feuer-einsatzberichte'); ?>
+                                            <?php esc_html_e('Einsätze ansehen', 'feuer-einsatzberichte'); ?>
                                         </a>
                                     </td>
                                 </tr>

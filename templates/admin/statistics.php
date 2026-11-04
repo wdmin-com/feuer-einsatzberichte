@@ -702,7 +702,7 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
                         <div class="feu-einsatz-presentation-list-kpi">
                             <span><?php esc_html_e('Stärkster Monat', 'feuer-einsatzberichte'); ?></span>
                             <?php foreach ($top_months as $top_month): ?>
-                                <p><strong><?php echo esc_html($top_month['label'] ?: '-'); ?></strong><em><?php echo esc_html(sprintf(__('mit %d Einsätze', 'feuer-einsatzberichte'), (int) $top_month['count'])); ?></em></p>
+                                <p><strong><?php echo esc_html($top_month['label'] ?: '-'); ?></strong><em><?php echo esc_html(sprintf(_n('mit %d Einsatz', 'mit %d Einsätzen', (int) $top_month['count'], 'feuer-einsatzberichte'), (int) $top_month['count'])); ?></em></p>
                             <?php endforeach; ?>
                         </div>
                         <div><span><?php esc_html_e('Top-Einsatzstichwort', 'feuer-einsatzberichte'); ?></span><strong><?php echo esc_html($top_category_label); ?></strong></div>
@@ -731,7 +731,7 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
                     <h2><span class="ti ti-category" aria-hidden="true"></span><?php esc_html_e('Einsatzstichworte', 'feuer-einsatzberichte'); ?></h2>
                     <div class="feu-einsatz-presentation-category-grid">
                         <?php foreach ($category_rows as $category_row): ?>
-                            <div class="feu-einsatz-presentation-category-row" title="<?php echo esc_attr(sprintf('%s: %d Einsätze (%s%%)', $category_row['name'], (int) $category_row['count'], number_format_i18n((float) $category_row['percent'], 1))); ?>" style="--feu-category-color: <?php echo esc_attr($category_row['color']); ?>; --feu-category-percent: <?php echo esc_attr(number_format((float) $category_row['percent'], 2, '.', '')); ?>%;">
+                            <div class="feu-einsatz-presentation-category-row" title="<?php echo esc_attr(sprintf(_n('%1$s: %2$d Einsatz (%3$s%%)', '%1$s: %2$d Einsätze (%3$s%%)', (int) $category_row['count'], 'feuer-einsatzberichte'), $category_row['name'], (int) $category_row['count'], number_format_i18n((float) $category_row['percent'], 1))); ?>" style="--feu-category-color: <?php echo esc_attr($category_row['color']); ?>; --feu-category-percent: <?php echo esc_attr(number_format((float) $category_row['percent'], 2, '.', '')); ?>%;">
                                 <span><?php echo esc_html($category_row['name']); ?></span>
                                 <div aria-hidden="true"><em></em></div>
                                 <strong><?php echo esc_html((string) $category_row['count']); ?></strong>
@@ -765,7 +765,8 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
                             <?php $month_percent = $max_month_total > 0 ? (((int) $month_total / $max_month_total) * 100) : 0; ?>
                             <?php $month_label = (string) ($month_names[$month_index - 1] ?? ''); ?>
                             <?php $month_short = 3 === $month_index ? 'Mär' : substr($month_label, 0, 3); ?>
-                            <span title="<?php echo esc_attr($month_label . ': ' . (int) $month_total . ' Einsätze'); ?>" data-feu-stat-tooltip="<?php echo esc_attr($month_label . ': ' . (int) $month_total . ' Einsätze'); ?>" style="--feu-month-height: <?php echo esc_attr(number_format(max(6, $month_percent), 2, '.', '')); ?>%;"><b><?php echo esc_html((string) (int) $month_total); ?></b><em></em><strong><?php echo esc_html($month_short); ?></strong></span>
+                            <?php $month_tooltip = sprintf(_n('%1$s: %2$d Einsatz', '%1$s: %2$d Einsätze', (int) $month_total, 'feuer-einsatzberichte'), $month_label, (int) $month_total); ?>
+                            <span title="<?php echo esc_attr($month_tooltip); ?>" data-feu-stat-tooltip="<?php echo esc_attr($month_tooltip); ?>" style="--feu-month-height: <?php echo esc_attr(number_format(max(6, $month_percent), 2, '.', '')); ?>%;"><b><?php echo esc_html((string) (int) $month_total); ?></b><em></em><strong><?php echo esc_html($month_short); ?></strong></span>
                         <?php endforeach; ?>
                     </div>
                 </section>
@@ -1040,7 +1041,7 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
                 <?php $top_weekday_max = !empty($top_weekdays) ? max(array_map(static fn($entry) => (int) $entry['count'], $top_weekdays)) : 0; ?>
                 <?php foreach ($top_weekdays as $weekday_entry): ?>
                     <?php $weekday_percent = $top_weekday_max > 0 ? (((int) $weekday_entry['count'] / $top_weekday_max) * 100) : 0; ?>
-                    <div class="feu-einsatz-admindek-progress-row" title="<?php echo esc_attr((string) $weekday_entry['label'] . ': ' . (int) $weekday_entry['count'] . ' Einsätze'); ?>">
+                    <div class="feu-einsatz-admindek-progress-row" title="<?php echo esc_attr(sprintf(_n('%1$s: %2$d Einsatz', '%1$s: %2$d Einsätze', (int) $weekday_entry['count'], 'feuer-einsatzberichte'), (string) $weekday_entry['label'], (int) $weekday_entry['count'])); ?>">
                         <p><span><?php echo esc_html((string) $weekday_entry['label']); ?></span><strong><?php echo esc_html((string) (int) $weekday_entry['count']); ?></strong></p>
                         <em><i style="width: <?php echo esc_attr(number_format(max(4, $weekday_percent), 2, '.', '')); ?>%;"></i></em>
                     </div>
@@ -1059,7 +1060,7 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
                 <?php $peak_day_max = !empty($peak_days) ? max(array_map(static fn($entry) => (int) $entry['count'], $peak_days)) : 0; ?>
                 <?php foreach (array_slice($peak_days, 0, 4) as $peak_day): ?>
                     <?php $peak_percent = $peak_day_max > 0 ? (((int) $peak_day['count'] / $peak_day_max) * 100) : 0; ?>
-                    <div class="feu-einsatz-admindek-progress-row" title="<?php echo esc_attr((string) $peak_day['date'] . ': ' . (int) $peak_day['count'] . ' Einsätze'); ?>">
+                    <div class="feu-einsatz-admindek-progress-row" title="<?php echo esc_attr(sprintf(_n('%1$s: %2$d Einsatz', '%1$s: %2$d Einsätze', (int) $peak_day['count'], 'feuer-einsatzberichte'), (string) $peak_day['date'], (int) $peak_day['count'])); ?>">
                         <p><span><?php echo esc_html((string) $peak_day['date']); ?></span><strong><?php echo esc_html((string) (int) $peak_day['count']); ?></strong></p>
                         <em><i style="width: <?php echo esc_attr(number_format(max(4, $peak_percent), 2, '.', '')); ?>%;"></i></em>
                     </div>
@@ -1388,7 +1389,7 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
                                         $day_classes .= ' is-intense';
                                     }
                                     ?>
-                                    <div class="feu-einsatz-month-day <?php echo esc_attr($day_classes); ?>" <?php echo $style; ?> title="<?php echo esc_attr($day . '.' . $month_number . '.' . $jahr . ': ' . $count . ' Einsätze'); ?>">
+                                    <div class="feu-einsatz-month-day <?php echo esc_attr($day_classes); ?>" <?php echo $style; ?> title="<?php echo esc_attr(sprintf(_n('%1$s: %2$d Einsatz', '%1$s: %2$d Einsätze', $count, 'feuer-einsatzberichte'), $day . '.' . $month_number . '.' . $jahr, $count)); ?>">
                                         <span class="feu-einsatz-month-day-number"><?php echo esc_html($day); ?></span>
                                         <span class="feu-einsatz-month-day-count"><?php echo $count > 0 ? esc_html($count) : ''; ?></span>
                                     </div>
@@ -1983,7 +1984,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     tooltip: {
                         callbacks: {
                             label: function(context) {
-                                return context.raw + ' Einsätze';
+                                return context.raw + (Number(context.raw) === 1 ? ' Einsatz' : ' Einsätze');
                             }
                         }
                     }
@@ -2045,7 +2046,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     tooltip: {
                         callbacks: {
                             label: function(context) {
-                                return context.raw + ' Einsätze';
+                                return context.raw + (Number(context.raw) === 1 ? ' Einsatz' : ' Einsätze');
                             }
                         }
                     }
@@ -2155,7 +2156,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     tooltip: {
                         callbacks: {
                             label: function(context) {
-                                return context.dataset.label + ': ' + context.raw + ' Einsätze';
+                                return context.dataset.label + ': ' + context.raw + (Number(context.raw) === 1 ? ' Einsatz' : ' Einsätze');
                             }
                         }
                     }
@@ -2221,7 +2222,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         html += '<div class="feu-einsatz-distribution-summary-head">';
         html += '<strong>' + (dataset.label || '') + '</strong>';
-        html += '<span>' + (dataset.total_calls || 0) + ' Einsätze</span>';
+        var totalCalls = Number(dataset.total_calls || 0);
+        html += '<span>' + totalCalls + (totalCalls === 1 ? ' Einsatz' : ' Einsätze') + '</span>';
         html += '</div>';
 
         if (!dataset.labels || !dataset.labels.length) {
@@ -2237,7 +2239,7 @@ document.addEventListener('DOMContentLoaded', function() {
             html += '<div class="feu-einsatz-distribution-summary-item">';
             html += '<span>' + label + '</span>';
             html += '<strong>' + percentage + '%</strong>';
-            html += '<small>' + count + ' Einsätze</small>';
+            html += '<small>' + count + (Number(count) === 1 ? ' Einsatz' : ' Einsätze') + '</small>';
             html += '</div>';
         });
         html += '</div>';
@@ -2403,7 +2405,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 var percentage = context.raw || 0;
                                 var counts = context.dataset.counts || [];
                                 var count = counts[context.dataIndex] || 0;
-                                return context.label + ': ' + percentage + '% (' + count + ' Einsätze)';
+                                return context.label + ': ' + percentage + '% (' + count + (Number(count) === 1 ? ' Einsatz)' : ' Einsätze)');
                             }
                         }
                     }
@@ -2433,7 +2435,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         html += '<div class="feu-einsatz-distribution-summary-head">';
         html += '<strong>' + (dataset.label || '') + '</strong>';
-        html += '<span>' + (dataset.total_calls || 0) + ' Einsätze</span>';
+        var totalCalls = Number(dataset.total_calls || 0);
+        html += '<span>' + totalCalls + (totalCalls === 1 ? ' Einsatz' : ' Einsätze') + '</span>';
         html += '</div>';
 
         if (!dataset.labels || !dataset.labels.length) {
@@ -2449,7 +2452,7 @@ document.addEventListener('DOMContentLoaded', function() {
             html += '<div class="feu-einsatz-distribution-summary-item">';
             html += '<span>' + label + '</span>';
             html += '<strong>' + percentage + '%</strong>';
-            html += '<small>' + count + ' Einsätze</small>';
+            html += '<small>' + count + (Number(count) === 1 ? ' Einsatz' : ' Einsätze') + '</small>';
             html += '</div>';
         });
         html += '</div>';
@@ -3568,7 +3571,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             pdf.addPage();
             drawPdfHeader(pdf, 'Mannschaft-Ranking', exportSubtitle);
-            drawPdfHorizontalBarChart(pdf, 14, 34, 182, 104, 'Ranking-Grafik', 'Aktivste Mitglieder im ausgewaehlten Jahr', rankingItems, [10, 75, 120]);
+            drawPdfHorizontalBarChart(pdf, 14, 34, 182, 104, 'Ranking-Grafik', 'Aktivste Mitglieder im ausgewählten Jahr', rankingItems, [10, 75, 120]);
             drawPdfListCard(pdf, 14, 146, 182, 120, 'Top-Mitglieder', rankingListItems);
 
             addPdfFooters(pdf);
@@ -3621,7 +3624,7 @@ document.addEventListener('DOMContentLoaded', function() {
             + escapeHtml(participationPercent.toFixed(1).replace('.', ',')) + ' %</strong></div><small>Mindestbeteiligung ' + escapeHtml(minimumParticipation) + ' %</small></div>';
         html += '<div class="feu-einsatz-detail-summary-card"><span>Häufigste Funktion</span><strong>' + escapeHtml(summary.top_function || 'Keine wiederholte Funktion') + '</strong>';
         if (Number(summary.top_function_count) >= 2) {
-            html += '<small>' + escapeHtml(summary.top_function_count) + ' Einsätze</small>';
+            html += '<small>' + escapeHtml(summary.top_function_count) + (Number(summary.top_function_count) === 1 ? ' Einsatz' : ' Einsätze') + '</small>';
         }
         html += '</div>';
         html += '<div class="feu-einsatz-detail-summary-card"><span>Erster Einsatz</span><strong>' + escapeHtml(summary.first_einsatz_date || 'Keine Daten') + '</strong></div>';

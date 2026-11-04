@@ -122,7 +122,7 @@ $single_info_field_options = [
                            <?php checked($single_desaturate_organizations, 1); ?> />
                     <span class="feu-admin-settings-check-copy">
                         <strong><?php esc_html_e('Farben der Kräfte vor Ort entschärfen', 'feuer-einsatzberichte'); ?></strong>
-                        <small><?php esc_html_e('Die Organisationsfarben werden im Einzelbeitrag entsaettigt dargestellt.', 'feuer-einsatzberichte'); ?></small>
+                        <small><?php esc_html_e('Die Organisationsfarben werden im Einzelbeitrag entsättigt dargestellt.', 'feuer-einsatzberichte'); ?></small>
                     </span>
                 </label>
             </div>

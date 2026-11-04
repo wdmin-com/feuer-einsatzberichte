@@ -226,7 +226,7 @@ class FEU_Einsatz_Template_Helpers {
         return [
             'share' => [
                 'label' => __('System teilen', 'feuer-einsatzberichte'),
-                'description' => __('Verwendet die systemweite Teilen-Funktion des Geraets mit Bild, Text und Link, sofern der Browser dies unterstuetzt.', 'feuer-einsatzberichte'),
+                'description' => __('Verwendet die systemweite Teilen-Funktion des Geräts mit Bild, Text und Link, sofern der Browser dies unterstützt.', 'feuer-einsatzberichte'),
             ],
             'facebook' => [
                 'label' => __('Facebook', 'feuer-einsatzberichte'),
@@ -234,7 +234,7 @@ class FEU_Einsatz_Template_Helpers {
             ],
             'instagram' => [
                 'label' => __('Instagram', 'feuer-einsatzberichte'),
-                'description' => __('Verwendet die native Teilen-Funktion des Geraets mit dem vorbereiteten Share-Bild.', 'feuer-einsatzberichte'),
+                'description' => __('Verwendet die native Teilen-Funktion des Geräts mit dem vorbereiteten Share-Bild.', 'feuer-einsatzberichte'),
             ],
             'x' => [
                 'label' => __('X / Twitter', 'feuer-einsatzberichte'),
@@ -5673,7 +5673,7 @@ class FEU_Einsatz_Template_Helpers {
             ];
         } else {
             $items[] = [
-                'label' => __('Einsaetze', 'feuer-einsatzberichte'),
+                'label' => __('Einsätze', 'feuer-einsatzberichte'),
                 'url' => home_url('/'),
             ];
         }
@@ -6674,7 +6674,7 @@ class FEU_Einsatz_Template_Helpers {
         $context = self::build_overview_context_base($root_category, $selected_year, $paged, $posts_per_page);
 
         if (!$root_category) {
-            $context['warning'] = __('Kategorie "Einsaetze" wurde nicht gefunden.', 'feuer-einsatzberichte');
+            $context['warning'] = __('Kategorie „Einsätze“ wurde nicht gefunden.', 'feuer-einsatzberichte');
 
             $context_cache[$cache_key] = $context;
 

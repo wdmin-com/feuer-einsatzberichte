@@ -150,7 +150,7 @@ $street_highlight_mode_label = 'full' === $street_highlight_mode
     ? __('Ganze Straße', 'feuer-einsatzberichte')
     : ('radius' === $street_highlight_mode
         ? sprintf(__('%d m Radius', 'feuer-einsatzberichte'), (int) ($street_highlight_settings['radius_meters'] ?? 100))
-        : sprintf(__('%d m Strassenabschnitt', 'feuer-einsatzberichte'), (int) ($street_highlight_settings['length_meters'] ?? 100)));
+        : sprintf(__('%d m Straßenabschnitt', 'feuer-einsatzberichte'), (int) ($street_highlight_settings['length_meters'] ?? 100)));
 ?>
 
 <div class="feu-einsatz-meta-box<?php echo $use_modern_form ? ' feu-einsatz-meta-box--modern' : ''; ?>">
@@ -522,7 +522,7 @@ $street_highlight_mode_label = 'full' === $street_highlight_mode
                 </div>
                 <?php if ($generated_map_preview_url) : ?>
                     <p class="description feu-einsatz-inline-card-copy">
-                        <?php esc_html_e('Eine Karten-Vorschau ist zusaetzlich als Fallback gespeichert.', 'feuer-einsatzberichte'); ?>
+                        <?php esc_html_e('Eine Karten-Vorschau ist zusätzlich als Fallback gespeichert.', 'feuer-einsatzberichte'); ?>
                     </p>
                 <?php endif; ?>
                 <p class="feu-einsatz-report-status-actions">
@@ -589,7 +589,7 @@ $street_highlight_mode_label = 'full' === $street_highlight_mode
                         <h4 class="feu-einsatz-inline-card-title"><?php esc_html_e('Fotos zum Einsatz', 'feuer-einsatzberichte'); ?></h4>
                     <?php endif; ?>
                     <p class="description feu-einsatz-inline-card-copy">
-                        <?php esc_html_e('Die ausgewaehlten Bilder erscheinen im Bericht als Galerie.', 'feuer-einsatzberichte'); ?>
+                        <?php esc_html_e('Die ausgewählten Bilder erscheinen im Bericht als Galerie.', 'feuer-einsatzberichte'); ?>
                     </p>
                 </div>
             </div>

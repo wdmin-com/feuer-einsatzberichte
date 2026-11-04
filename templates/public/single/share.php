@@ -56,7 +56,7 @@ if (!empty($share_data['preview_image_url'])) {
         </span>
         <span class="feu-einsatz-single-share-summary-meta">
             <span class="feu-einsatz-single-share-badge"><?php echo esc_html($share_data['image_mode_label']); ?></span>
-            <span class="feu-einsatz-single-share-summary-toggle"><?php echo esc_html__('Oeffnen', 'feuer-einsatzberichte'); ?></span>
+            <span class="feu-einsatz-single-share-summary-toggle"><?php echo esc_html__('Öffnen', 'feuer-einsatzberichte'); ?></span>
         </span>
     </summary>
 
@@ -163,7 +163,7 @@ if (!empty($share_data['preview_image_url'])) {
                 <?php endif; ?>
 
                 <p class="feu-einsatz-single-share-footer-note">
-                    <?php echo esc_html__('Facebook, WhatsApp, Telegram, X und E-Mail oeffnen direkte Share-Dialoge. Instagram und System teilen nutzen die native Teilen-Funktion des Geraets und uebergeben das ausgewaehlte Share-Bild zusammen mit Text und Link, sofern der Browser dies unterstuetzt.', 'feuer-einsatzberichte'); ?>
+                    <?php echo esc_html__('Facebook, WhatsApp, Telegram, X und E-Mail öffnen direkte Share-Dialoge. Instagram und System teilen nutzen die native Teilen-Funktion des Geräts und übergeben das ausgewählte Share-Bild zusammen mit Text und Link, sofern der Browser dies unterstützt.', 'feuer-einsatzberichte'); ?>
                 </p>
             </div>
         </div>

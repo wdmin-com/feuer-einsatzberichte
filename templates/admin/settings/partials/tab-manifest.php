@@ -34,7 +34,7 @@ if ('' !== $remote_version) {
 $manifest_reference_items = [
     __('Pluginbeschreibung', 'feuer-einsatzberichte') => [
         'value' => FEU_Einsatz_Updater::get_project_url(),
-        'description' => __('Oeffentliche Informationsseite des Plugins ohne direkte Download-Schaltflaeche.', 'feuer-einsatzberichte'),
+        'description' => __('Öffentliche Informationsseite des Plugins ohne direkte Download-Schaltfläche.', 'feuer-einsatzberichte'),
     ],
     __('Autorenseite', 'feuer-einsatzberichte') => [
         'value' => 'https://wdmin.com/',

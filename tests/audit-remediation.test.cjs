@@ -35,13 +35,24 @@ test('editor navigation and statistics states are explicit', () => {
 test('plugin SEO is emitted before generic theme metadata and normalizes breadcrumbs', () => {
     const publicController = read('includes/class-public.php');
     const themeTemplate = read('templates/public/custom/custom_single_feuer-theme.php');
+    const reportInfo = read('templates/public/single/info.php');
     const publicCss = read('assets/public/css/public-style.css');
 
     assert.match(publicController, /render_social_share_meta_tags'\], -9999/);
     assert.match(publicController, /html_entity_decode\(wp_strip_all_tags/);
     assert.doesNotMatch(themeTemplate, /<h1>/);
     assert.match(themeTemplate, /<h2>/);
+    assert.doesNotMatch(reportInfo, /<h1/);
+    assert.match(reportInfo, /<h2 class="feu-einsatz-single-heading"/);
     assert.match(publicCss, /\.feu-einsatz-template-header h1,\s*\.feu-einsatz-template-header h2/);
+});
+
+test('statistics use grammatically correct singular and plural labels', () => {
+    const statistics = read('templates/admin/statistics.php');
+
+    assert.match(statistics, /_n\('mit %d Einsatz', 'mit %d Einsätzen'/);
+    assert.doesNotMatch(statistics, /mit %d Einsätze['"]/);
+    assert.doesNotMatch(statistics, /\+ ' Einsätze'/);
 });
 
 test('mobile statistics and settings navigation remain horizontal', () => {
@@ -70,7 +81,8 @@ test('dashboard map status and report actions stay consistent', () => {
 
     assert.match(adminController, /'map' === \$stage && in_array\(\$status_key, \['missing', 'queued', 'processing'\]/);
     assert.match(adminController, /'stage' => \$stage/);
-    assert.match(adminController, /\$this->get_edit_url\(\$post_id\)/);
+    assert.match(adminController, /\$this->get_internal_report_edit_url\(\$post_id\)/);
+    assert.doesNotMatch(adminController, /\$this->get_edit_url\(/);
     assert.match(adminController, /if \(!\$has_generated_map && \$map_is_public\)/);
     assert.match(adminController, /!in_array\(\$actual_status, \['queued', 'processing'\]/);
 });
@@ -90,9 +102,11 @@ test('report overview opens the plugin editor and avoids duplicate map jobs', ()
     const dashboard = read('templates/admin/dashboard.php');
     const reports = read('templates/admin/reports.php');
 
-    assert.match(dashboard, /\$this->get_edit_url\(\$_mq_id\)/);
+    assert.match(dashboard, /\$this->get_internal_report_edit_url\(\$_mq_id\)/);
     assert.match(dashboard, /!in_array\(\$_mq_actual_status, \['queued', 'processing'\]/);
-    assert.match(reports, /\$this->get_edit_url\(\$report_id\)/);
+    assert.match(reports, /\$this->get_internal_report_edit_url\(\$report_id\)/);
+    assert.doesNotMatch(dashboard, /\$this->get_edit_url\(/);
+    assert.doesNotMatch(reports, /\$this->get_edit_url\(/);
     assert.doesNotMatch(reports, /get_edit_post_link\(\$report_id\)/);
 });
 

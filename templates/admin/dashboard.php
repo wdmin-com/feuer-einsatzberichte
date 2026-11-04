@@ -80,14 +80,14 @@ $dashboard_url = admin_url('admin.php?page=feuer-einsatzberichte');
         <article class="feu-admin-stat-card">
             <div class="feu-admin-stat-icon"><span class="ti ti-alarm"></span></div>
             <div class="feu-admin-stat-content">
-                <span class="feu-admin-stat-label"><?php esc_html_e('Einsaetze gesamt', 'feuer-einsatzberichte'); ?></span>
+                <span class="feu-admin-stat-label"><?php esc_html_e('Einsätze gesamt', 'feuer-einsatzberichte'); ?></span>
                 <strong class="feu-admin-stat-value"><?php echo esc_html($total_einsaetze); ?></strong>
             </div>
         </article>
         <article class="feu-admin-stat-card">
             <div class="feu-admin-stat-icon"><span class="ti ti-calendar-stats"></span></div>
             <div class="feu-admin-stat-content">
-                <span class="feu-admin-stat-label"><?php echo esc_html(sprintf(__('Einsaetze %d', 'feuer-einsatzberichte'), $current_year)); ?></span>
+                <span class="feu-admin-stat-label"><?php echo esc_html(sprintf(__('Einsätze %d', 'feuer-einsatzberichte'), $current_year)); ?></span>
                 <strong class="feu-admin-stat-value"><?php echo esc_html($einsaetze_dieses_jahr_count); ?></strong>
             </div>
         </article>
@@ -139,13 +139,13 @@ $dashboard_url = admin_url('admin.php?page=feuer-einsatzberichte');
                 <div class="feu-einsatz-dashboard-mapqueue-item">
                     <div class="feu-einsatz-dashboard-mapqueue-main">
                         <div class="feu-einsatz-dashboard-mapqueue-head">
-                            <a class="feu-einsatz-dashboard-mapqueue-title" href="<?php echo esc_url($this->get_edit_url($_mq_id)); ?>"><?php echo esc_html(get_the_title($_mq_id)); ?></a>
+                            <a class="feu-einsatz-dashboard-mapqueue-title" href="<?php echo esc_url($this->get_internal_report_edit_url($_mq_id)); ?>"><?php echo esc_html(get_the_title($_mq_id)); ?></a>
                             <span class="feu-einsatz-dashboard-mapqueue-status feu-einsatz-dashboard-mapqueue-status--<?php echo esc_attr($_mq_bucket); ?>"><?php echo esc_html($_mq_label); ?></span>
                         </div>
                         <div class="feu-einsatz-dashboard-mapqueue-meta"><?php echo esc_html((string) ($_mq_st['message'] ?? '')); ?></div>
                     </div>
                     <div class="feu-einsatz-dashboard-mapqueue-actions">
-                        <a class="button button-secondary button-small" href="<?php echo esc_url($this->get_edit_url($_mq_id)); ?>"><?php esc_html_e('Bearbeiten', 'feuer-einsatzberichte'); ?></a>
+                        <a class="button button-secondary button-small" href="<?php echo esc_url($this->get_internal_report_edit_url($_mq_id)); ?>"><?php esc_html_e('Bearbeiten', 'feuer-einsatzberichte'); ?></a>
                         <?php if (!in_array($_mq_actual_status, ['queued', 'processing'], true)) : ?>
                             <form class="feu-einsatz-dashboard-inline-form" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
                                 <?php wp_nonce_field('feu_einsatz_generate_map_image_now_' . $_mq_id); ?>
@@ -229,7 +229,7 @@ $dashboard_url = admin_url('admin.php?page=feuer-einsatzberichte');
                                     </td>
                                     <td data-label="<?php echo esc_attr__('Aktionen', 'feuer-einsatzberichte'); ?>">
                                         <div class="feu-admin-inline-actions">
-                                            <a href="<?php echo esc_url($this->get_edit_url($einsatz_id)); ?>" class="button button-small">
+                                            <a href="<?php echo esc_url($this->get_internal_report_edit_url($einsatz_id)); ?>" class="button button-small">
                                                 <?php esc_html_e('Bearbeiten', 'feuer-einsatzberichte'); ?>
                                             </a>
                                             <a href="<?php echo esc_url(get_permalink($einsatz_id)); ?>" class="button button-small" target="_blank" rel="noopener noreferrer">

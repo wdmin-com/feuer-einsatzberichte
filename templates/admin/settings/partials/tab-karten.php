@@ -139,7 +139,7 @@ $generated_map_rebuild_to = isset($generated_map_rebuild_to) ? (string) $generat
                             />
                             <span class="feu-admin-settings-check-copy">
                                 <strong><?php esc_html_e('Feuerwehrhaus in Live-Karte', 'feuer-einsatzberichte'); ?></strong>
-                                <small><?php esc_html_e('Zeigt das Feuerwehrhaus zusaetzlich in der Live-Karte des Einsatzberichts an, ohne die Kartenbild-Generierung zu veraendern.', 'feuer-einsatzberichte'); ?></small>
+                                <small><?php esc_html_e('Zeigt das Feuerwehrhaus zusätzlich in der Live-Karte des Einsatzberichts an, ohne die Kartenbild-Generierung zu verändern.', 'feuer-einsatzberichte'); ?></small>
                             </span>
                         </label>
                     </div>
@@ -176,8 +176,8 @@ $generated_map_rebuild_to = isset($generated_map_rebuild_to) ? (string) $generat
                         <label class="feu-admin-settings-check-card feu-admin-settings-field--full">
                             <input type="checkbox" id="feu_einsatz_street_highlight_include_pedestrian" name="feu_einsatz_street_highlight_include_pedestrian" value="1" <?php checked(!empty($street_highlight_include_pedestrian)); ?> />
                             <span class="feu-admin-settings-check-copy">
-                                <strong><?php esc_html_e('Fussgaenger- und Sonderwege einbeziehen', 'feuer-einsatzberichte'); ?></strong>
-                                <small><?php esc_html_e('Zeigt auch zugeordnete Fussgaengerzonen, Wege und Abschnitte ohne Fahrbahn. Deaktivieren Sie dies nur, wenn ausschliesslich befahrbare Strassen erscheinen sollen.', 'feuer-einsatzberichte'); ?></small>
+                                <strong><?php esc_html_e('Fußgänger- und Sonderwege einbeziehen', 'feuer-einsatzberichte'); ?></strong>
+                                <small><?php esc_html_e('Zeigt auch zugeordnete Fußgängerzonen, Wege und Abschnitte ohne Fahrbahn. Deaktivieren Sie dies nur, wenn ausschließlich befahrbare Straßen erscheinen sollen.', 'feuer-einsatzberichte'); ?></small>
                             </span>
                         </label>
                     </div>
@@ -321,7 +321,7 @@ $generated_map_rebuild_to = isset($generated_map_rebuild_to) ? (string) $generat
                             </select>
                         </label>
                         <label class="feu-admin-settings-field">
-                            <span><?php esc_html_e('Position des Strassen-Labels', 'feuer-einsatzberichte'); ?></span>
+                            <span><?php esc_html_e('Position des Straßen-Labels', 'feuer-einsatzberichte'); ?></span>
                             <select id="feu_einsatz_map_preview_street_label_position" name="feu_einsatz_map_preview_street_label_position">
                                 <?php foreach ($map_preview_label_position_options as $position_key => $position_label) : ?>
                                     <option value="<?php echo esc_attr((string) $position_key); ?>" <?php selected($map_preview_street_label_position, (string) $position_key); ?>><?php echo esc_html((string) $position_label); ?></option>
@@ -340,14 +340,14 @@ $generated_map_rebuild_to = isset($generated_map_rebuild_to) ? (string) $generat
                                 <?php checked(1 === (int) ($map_preview_show_street_label ?? 1)); ?>
                             />
                             <span class="feu-admin-settings-check-copy">
-                                <strong><?php esc_html_e('Strassen-Label an der Markierung', 'feuer-einsatzberichte'); ?></strong>
+                                <strong><?php esc_html_e('Straßen-Label an der Markierung', 'feuer-einsatzberichte'); ?></strong>
                                 <small><?php esc_html_e('Blendet direkt an der markierten Straße ein zusätzliches Label ein.', 'feuer-einsatzberichte'); ?></small>
                             </span>
                         </label>
                     </div>
 
                     <label class="feu-admin-settings-field">
-                        <span><?php esc_html_e('Text vor dem Strassennamen', 'feuer-einsatzberichte'); ?></span>
+                        <span><?php esc_html_e('Text vor dem Straßennamen', 'feuer-einsatzberichte'); ?></span>
                         <input
                             type="text"
                             id="feu_einsatz_map_preview_street_label_prefix"
@@ -391,7 +391,7 @@ $generated_map_rebuild_to = isset($generated_map_rebuild_to) ? (string) $generat
                     </div>
 
                     <label class="feu-admin-settings-field">
-                        <span><?php esc_html_e('Stil des Strassen-Labels', 'feuer-einsatzberichte'); ?></span>
+                        <span><?php esc_html_e('Stil des Straßen-Labels', 'feuer-einsatzberichte'); ?></span>
                         <select id="feu_einsatz_map_label_style" name="feu_einsatz_map_label_style">
                             <option value="bubble" <?php selected('bubble', isset($map_label_style) ? (string) $map_label_style : 'bubble'); ?>><?php esc_html_e('Sprechblase', 'feuer-einsatzberichte'); ?></option>
                             <option value="badge" <?php selected('badge', isset($map_label_style) ? (string) $map_label_style : 'bubble'); ?>><?php esc_html_e('Badge', 'feuer-einsatzberichte'); ?></option>
@@ -407,7 +407,7 @@ $generated_map_rebuild_to = isset($generated_map_rebuild_to) ? (string) $generat
 
                     <div class="feu-admin-settings-form-grid feu-admin-settings-form-grid--2">
                         <label class="feu-admin-settings-field">
-                            <span><?php esc_html_e('Textfarbe des Strassen-Labels', 'feuer-einsatzberichte'); ?></span>
+                            <span><?php esc_html_e('Textfarbe des Straßen-Labels', 'feuer-einsatzberichte'); ?></span>
                             <input
                                 type="color"
                                 id="feu_einsatz_map_label_text_color"
@@ -416,7 +416,7 @@ $generated_map_rebuild_to = isset($generated_map_rebuild_to) ? (string) $generat
                             />
                         </label>
                         <label class="feu-admin-settings-field">
-                            <span><?php esc_html_e('Farbe der Strassenmarkierung', 'feuer-einsatzberichte'); ?></span>
+                            <span><?php esc_html_e('Farbe der Straßenmarkierung', 'feuer-einsatzberichte'); ?></span>
                             <input
                                 type="color"
                                 id="feu_einsatz_map_preview_highlight_color"
@@ -437,13 +437,13 @@ $generated_map_rebuild_to = isset($generated_map_rebuild_to) ? (string) $generat
                                     </option>
                                 <?php endforeach; ?>
                             </select>
-                            <small><?php esc_html_e('Wenn die bevorzugte Schrift auf dem Server fehlt, nutzt das Plugin automatisch die naechste verfuegbare Alternative.', 'feuer-einsatzberichte'); ?></small>
+                            <small><?php esc_html_e('Wenn die bevorzugte Schrift auf dem Server fehlt, nutzt das Plugin automatisch die nächste verfügbare Alternative.', 'feuer-einsatzberichte'); ?></small>
                         </label>
                     </div>
 
                     <div class="feu-admin-settings-range-grid">
                         <label class="feu-admin-settings-range-card">
-                            <span><?php esc_html_e('Staerke der Strassenmarkierung', 'feuer-einsatzberichte'); ?></span>
+                            <span><?php esc_html_e('Stärke der Straßenmarkierung', 'feuer-einsatzberichte'); ?></span>
                             <input
                                 type="range"
                                 id="feu_einsatz_map_preview_stroke_width"
@@ -458,7 +458,7 @@ $generated_map_rebuild_to = isset($generated_map_rebuild_to) ? (string) $generat
                     </div>
 
                     <div class="feu-admin-settings-fieldset-head" style="margin-top: 24px;">
-                        <h4><?php esc_html_e('Auswahl der Strassenmarkierung', 'feuer-einsatzberichte'); ?></h4>
+                        <h4><?php esc_html_e('Auswahl der Straßenmarkierung', 'feuer-einsatzberichte'); ?></h4>
                         <p class="description"><?php esc_html_e('Die Auswahl gilt identisch für Live-Karte, lokale Vorschau und automatisch erzeugtes Kartenbild.', 'feuer-einsatzberichte'); ?></p>
                     </div>
                     <div class="feu-admin-settings-form-grid feu-admin-settings-form-grid--2">
@@ -466,7 +466,7 @@ $generated_map_rebuild_to = isset($generated_map_rebuild_to) ? (string) $generat
                             <span><?php esc_html_e('Markierungsmodus', 'feuer-einsatzberichte'); ?></span>
                             <select id="feu_einsatz_street_highlight_mode" name="feu_einsatz_street_highlight_mode">
                                 <option value="full" <?php selected(($street_highlight_mode ?? 'full'), 'full'); ?>><?php esc_html_e('Ganze Straße anzeigen', 'feuer-einsatzberichte'); ?></option>
-                                <option value="length" <?php selected(($street_highlight_mode ?? 'full'), 'length'); ?>><?php esc_html_e('Strassenabschnitt um Einsatzort', 'feuer-einsatzberichte'); ?></option>
+                                <option value="length" <?php selected(($street_highlight_mode ?? 'full'), 'length'); ?>><?php esc_html_e('Straßenabschnitt um Einsatzort', 'feuer-einsatzberichte'); ?></option>
                                 <option value="radius" <?php selected(($street_highlight_mode ?? 'full'), 'radius'); ?>><?php esc_html_e('Radius um Einsatzort', 'feuer-einsatzberichte'); ?></option>
                             </select>
                         </label>
@@ -487,7 +487,7 @@ $generated_map_rebuild_to = isset($generated_map_rebuild_to) ? (string) $generat
             <div class="feu-admin-settings-fieldset feu-admin-settings-fieldset--preview">
                 <div class="feu-admin-settings-fieldset-head">
                     <h4><?php esc_html_e('Live-Vorschau Kartenbild', 'feuer-einsatzberichte'); ?></h4>
-                    <p class="description"><?php esc_html_e('Die Vorschau verwendet standardmaessig die Feuerwehrhaus-Adresse als Beispiel und zeigt live, wie Strassenmarkierung, Panel-Text und Attribution im Kartenbild aussehen.', 'feuer-einsatzberichte'); ?></p>
+                    <p class="description"><?php esc_html_e('Die Vorschau verwendet standardmäßig die Feuerwehrhaus-Adresse als Beispiel und zeigt live, wie Straßenmarkierung, Panel-Text und Attribution im Kartenbild aussehen.', 'feuer-einsatzberichte'); ?></p>
                     <?php if (empty($live_preview_geometry)) : ?>
                         <div class="notice notice-info inline">
                             <p><?php esc_html_e('Noch keine echte Straßen-Geometrie im lokalen Cache. Es wird bewusst keine künstliche Linie angezeigt.', 'feuer-einsatzberichte'); ?></p>
@@ -580,7 +580,7 @@ $generated_map_rebuild_to = isset($generated_map_rebuild_to) ? (string) $generat
                             />
                             <span class="feu-admin-settings-check-copy">
                                 <strong><?php esc_html_e('Einsatz-Zonen anzeigen', 'feuer-einsatzberichte'); ?></strong>
-                                <small><?php esc_html_e('Zeigt zusaetzlich Kreise mit Einsatzanzahl und Strassen beim Hover an.', 'feuer-einsatzberichte'); ?></small>
+                                <small><?php esc_html_e('Zeigt zusätzlich Kreise mit Einsatzanzahl und Straßen beim Hover an.', 'feuer-einsatzberichte'); ?></small>
                             </span>
                         </label>
                     </div>
@@ -699,21 +699,21 @@ $generated_map_rebuild_to = isset($generated_map_rebuild_to) ? (string) $generat
             <div class="feu-admin-settings-form-grid feu-admin-settings-form-grid--2">
                 <div class="feu-admin-settings-fieldset">
                     <div class="feu-admin-settings-fieldset-head">
-                        <h4><?php esc_html_e('Strassen-Cache', 'feuer-einsatzberichte'); ?></h4>
+                        <h4><?php esc_html_e('Straßen-Cache', 'feuer-einsatzberichte'); ?></h4>
                     </div>
 
                     <p class="feu-admin-settings-inline-note">
                         <?php
                         printf(
-                            esc_html__('Aktuell zwischengespeicherte Strassen: %d', 'feuer-einsatzberichte'),
+                            esc_html__('Aktuell zwischengespeicherte Straßen: %d', 'feuer-einsatzberichte'),
                             intval($street_cache_entries)
                         );
                         ?>
                     </p>
-                    <p class="description"><?php esc_html_e('Leert den gemeinsamen Strassen-Cache und alle zwischengespeicherten Geometrien in den Einsatzberichten. Danach werden Karten beim naechsten Aufruf neu aufgebaut.', 'feuer-einsatzberichte'); ?></p>
+                    <p class="description"><?php esc_html_e('Leert den gemeinsamen Straßen-Cache und alle zwischengespeicherten Geometrien in den Einsatzberichten. Danach werden Karten beim nächsten Aufruf neu aufgebaut.', 'feuer-einsatzberichte'); ?></p>
                     <div class="feu-admin-settings-action-stack">
                         <button type="submit" name="feu_einsatz_clear_street_cache" value="1" class="button">
-                            <?php esc_html_e('Strassen-Cache leeren', 'feuer-einsatzberichte'); ?>
+                            <?php esc_html_e('Straßen-Cache leeren', 'feuer-einsatzberichte'); ?>
                         </button>
                     </div>
                 </div>

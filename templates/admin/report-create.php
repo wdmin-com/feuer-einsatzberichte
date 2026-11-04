@@ -392,7 +392,7 @@ if ('publish' === $current_post_status) {
                             <?php endif; ?>
                             <div class="feu-einsatz-report-category-groups" data-feu-category-list role="group" aria-label="<?php esc_attr_e('Einsatzstichworte', 'feuer-einsatzberichte'); ?>" aria-describedby="feu-einsatz-category-validation-status">
                                 <div class="feu-einsatz-report-category-block">
-                                    <h3><?php esc_html_e('Hauefig genutzt', 'feuer-einsatzberichte'); ?></h3>
+                                    <h3><?php esc_html_e('Häufig genutzt', 'feuer-einsatzberichte'); ?></h3>
                                     <div class="feu-einsatz-report-category-list feu-einsatz-report-category-list--popular">
                                         <?php foreach ($popular_report_categories as $category) : ?>
                                             <?php $depth = count(get_ancestors($category->term_id, $report_category_taxonomy)); ?>

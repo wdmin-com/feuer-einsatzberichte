@@ -66,7 +66,7 @@ $street_suggestions = FEU_Einsatz_Template_Helpers::get_street_suggestions();
                 <?php endif; ?>
                 <?php if ('' !== $success_post_url) : ?>
                     <a href="<?php echo esc_url($success_post_url); ?>" class="feu-se-btn feu-se-btn--ghost" target="_blank" rel="noopener noreferrer">
-                        <?php esc_html_e('Beitrag oeffnen', 'feuer-einsatzberichte'); ?>
+                        <?php esc_html_e('Beitrag öffnen', 'feuer-einsatzberichte'); ?>
                     </a>
                 <?php endif; ?>
             </div>
@@ -339,7 +339,7 @@ $street_suggestions = FEU_Einsatz_Template_Helpers::get_street_suggestions();
             >
             <label for="feu-se-photo-input" class="feu-se-btn feu-se-btn--secondary feu-se-btn--icon">
                 <span aria-hidden="true">&#128247;</span>
-                <?php esc_html_e('Fotos hinzufuegen', 'feuer-einsatzberichte'); ?>
+                <?php esc_html_e('Fotos hinzufügen', 'feuer-einsatzberichte'); ?>
             </label>
 
             <div class="feu-se-photo-preview" data-feu-photo-preview hidden>
@@ -373,7 +373,7 @@ $street_suggestions = FEU_Einsatz_Template_Helpers::get_street_suggestions();
                 class="feu-se-btn feu-se-btn--primary feu-se-btn--full feu-se-btn--submit"
             >
                 <span class="feu-se-btn-text" data-feu-submit-text>
-                    <?php echo esc_html($can_publish ? __('Einsatz veroeffentlichen', 'feuer-einsatzberichte') : __('Einsatz speichern', 'feuer-einsatzberichte')); ?>
+                    <?php echo esc_html($can_publish ? __('Einsatz veröffentlichen', 'feuer-einsatzberichte') : __('Einsatz speichern', 'feuer-einsatzberichte')); ?>
                 </span>
                 <span class="feu-se-btn-spinner" data-feu-submit-spinner hidden></span>
             </button>

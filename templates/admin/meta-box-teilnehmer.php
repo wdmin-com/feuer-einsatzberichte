@@ -328,7 +328,7 @@ if (!function_exists('feu_einsatz_render_function_quick_actions')) {
                         </h3>
                     <?php endif; ?>
                     <p class="description">
-                        <?php _e('Organisationen direkt ueber die Schaltflaechen zu- oder abwaehlen.', 'feuer-einsatzberichte'); ?>
+                        <?php _e('Organisationen direkt über die Schaltflächen zu- oder abwählen.', 'feuer-einsatzberichte'); ?>
                     </p>
                 </div>
                 <span class="feu-einsatz-badge" id="feu-einsatz-organisation-count"><?php echo esc_html(count($selected_organization_ids)); ?></span>
@@ -398,7 +398,7 @@ if (!function_exists('feu_einsatz_render_function_quick_actions')) {
 
             <div id="feu-einsatz-organisation-inputs" class="feu-einsatz-hidden-inputs" hidden></div>
             <p class="description feu-einsatz-organization-order-hint">
-                <?php _e('Die Reihenfolge kann im ausgewaehlten Bereich mit den Pfeilen nach oben oder unten angepasst werden.', 'feuer-einsatzberichte'); ?>
+                <?php _e('Die Reihenfolge kann im ausgewählten Bereich mit den Pfeilen nach oben oder unten angepasst werden.', 'feuer-einsatzberichte'); ?>
             </p>
         </section>
     <?php endif; ?>

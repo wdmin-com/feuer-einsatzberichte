@@ -137,7 +137,7 @@ $status_labels = [
                     </div>
                     <div class="feu-report-list-main">
                         <div class="feu-report-list-heading">
-                            <h2><?php if ($can_edit) : ?><a href="<?php echo esc_url($this->get_edit_url($report_id)); ?>"><?php echo esc_html(get_the_title($report_id)); ?></a><?php else : ?><?php echo esc_html(get_the_title($report_id)); ?><?php endif; ?></h2>
+                            <h2><?php if ($can_edit) : ?><a href="<?php echo esc_url($this->get_internal_report_edit_url($report_id)); ?>"><?php echo esc_html(get_the_title($report_id)); ?></a><?php else : ?><?php echo esc_html(get_the_title($report_id)); ?><?php endif; ?></h2>
                             <span class="feu-report-list-post-status"><?php echo esc_html($report_status_object ? $report_status_object->label : $report->post_status); ?></span>
                         </div>
                         <p class="feu-report-list-meta"><?php echo esc_html('' !== $address ? $address : __('Ort nicht angegeben', 'feuer-einsatzberichte')); ?> · <?php echo esc_html(sprintf(__('Einsatz: %1$s%2$s', 'feuer-einsatzberichte'), (string) ($event_datetime['date'] ?? ''), !empty($event_datetime['time']) ? ' · ' . $event_datetime['time'] : '')); ?></p>
@@ -160,7 +160,7 @@ $status_labels = [
                                 <button type="submit" class="button button-primary"><?php echo esc_html('' !== $map_url ? __('Neu generieren', 'feuer-einsatzberichte') : __('Kartenbild generieren', 'feuer-einsatzberichte')); ?></button>
                             </form>
                         <?php endif; ?>
-                        <?php if ($can_edit) : ?><a class="button button-link" href="<?php echo esc_url($this->get_edit_url($report_id)); ?>"><?php esc_html_e('Bearbeiten', 'feuer-einsatzberichte'); ?></a><?php endif; ?>
+                        <?php if ($can_edit) : ?><a class="button button-link" href="<?php echo esc_url($this->get_internal_report_edit_url($report_id)); ?>"><?php esc_html_e('Bearbeiten', 'feuer-einsatzberichte'); ?></a><?php endif; ?>
                         <?php if ('publish' === $report->post_status) : ?><a class="button button-link" href="<?php echo esc_url(get_permalink($report_id)); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e('Auf Website ansehen', 'feuer-einsatzberichte'); ?></a><?php endif; ?>
                     </div>
                 </article>

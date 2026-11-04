@@ -687,7 +687,7 @@ class FEU_Einsatz_Admin {
                 : __('Pflicht: Straße, PLZ und Stadt des Feuerwehrhauses eintragen. Diese Daten werden für Karten, Live-Vorschau und Feuerwehrhaus-Markierung genutzt.', 'feuer-einsatzberichte'),
             $station_address_complete ? 'ok' : 'missing',
             true,
-            __('Karten-Einstellungen oeffnen', 'feuer-einsatzberichte'),
+            __('Karten-Einstellungen öffnen', 'feuer-einsatzberichte'),
             add_query_arg('tab', 'karten', $settings_url)
         );
 
@@ -852,7 +852,7 @@ class FEU_Einsatz_Admin {
                 : __('Empfohlen: aktive Netzwerke und Logo für Share-Karten prüfen.', 'feuer-einsatzberichte'),
             $share_ok && $share_logo_ok ? 'ok' : 'warning',
             false,
-            __('Share-Einstellungen oeffnen', 'feuer-einsatzberichte'),
+            __('Share-Einstellungen öffnen', 'feuer-einsatzberichte'),
             add_query_arg('tab', 'sozial', $settings_url)
         );
 
@@ -871,7 +871,7 @@ class FEU_Einsatz_Admin {
                 : __('Empfohlen: Wasserzeichen-Text setzen, damit Fotos eindeutig zugeordnet bleiben.', 'feuer-einsatzberichte'),
             '' !== $watermark_text ? 'ok' : 'warning',
             false,
-            __('Medien-Einstellungen oeffnen', 'feuer-einsatzberichte'),
+            __('Medien-Einstellungen öffnen', 'feuer-einsatzberichte'),
             add_query_arg('tab', 'medien', $settings_url)
         );
 
@@ -978,7 +978,7 @@ class FEU_Einsatz_Admin {
             echo '</ul>';
         }
 
-        echo '<p><a class="button button-primary" href="' . esc_url((string) $setup_status['settings_url']) . '">' . esc_html__('Einrichtung oeffnen', 'feuer-einsatzberichte') . '</a></p>';
+        echo '<p><a class="button button-primary" href="' . esc_url((string) $setup_status['settings_url']) . '">' . esc_html__('Einrichtung öffnen', 'feuer-einsatzberichte') . '</a></p>';
         echo '</div>';
     }
 
@@ -8992,13 +8992,13 @@ class FEU_Einsatz_Admin {
             echo '<div class="feu-einsatz-dashboard-mapqueue-item">';
             echo '<div class="feu-einsatz-dashboard-mapqueue-main">';
             echo '<div class="feu-einsatz-dashboard-mapqueue-head">';
-            echo '<a class="feu-einsatz-dashboard-mapqueue-title" href="' . esc_url($this->get_edit_url($post_id)) . '">' . esc_html(get_the_title($post_id)) . '</a>';
+            echo '<a class="feu-einsatz-dashboard-mapqueue-title" href="' . esc_url($this->get_internal_report_edit_url($post_id)) . '">' . esc_html(get_the_title($post_id)) . '</a>';
             echo '<span class="feu-einsatz-dashboard-mapqueue-status feu-einsatz-dashboard-mapqueue-status--' . esc_attr($status_key) . '">' . esc_html($status_label) . '</span>';
             echo '</div>';
             echo '<div class="feu-einsatz-dashboard-mapqueue-meta">' . esc_html((string) ($status['message'] ?? '')) . '</div>';
             echo '</div>';
             echo '<div class="feu-einsatz-dashboard-mapqueue-actions">';
-            echo '<a class="button button-secondary button-small" href="' . esc_url($this->get_edit_url($post_id)) . '">' . esc_html__('Bearbeiten', 'feuer-einsatzberichte') . '</a>';
+            echo '<a class="button button-secondary button-small" href="' . esc_url($this->get_internal_report_edit_url($post_id)) . '">' . esc_html__('Bearbeiten', 'feuer-einsatzberichte') . '</a>';
             if (!in_array($actual_status, ['queued', 'processing'], true)) {
                 echo '<form class="feu-einsatz-dashboard-inline-form" method="post" action="' . esc_url(admin_url('admin-post.php')) . '">';
                 wp_nonce_field('feu_einsatz_generate_map_image_now_' . $post_id);
@@ -9048,7 +9048,7 @@ class FEU_Einsatz_Admin {
             echo '<div class="feu-einsatz-dashboard-recent-item">';
             echo '<div class="feu-einsatz-dashboard-recent-top">';
             echo '<div>';
-            echo '<a class="feu-einsatz-dashboard-recent-title" href="' . esc_url($this->get_edit_url($report_id)) . '">' . esc_html($title) . '</a>';
+            echo '<a class="feu-einsatz-dashboard-recent-title" href="' . esc_url($this->get_internal_report_edit_url($report_id)) . '">' . esc_html($title) . '</a>';
             if ($date_label || $street) {
                 echo '<div class="feu-einsatz-dashboard-recent-meta">';
                 echo esc_html(trim($date_label . ($date_label && $street ? ' · ' : '') . $street));
@@ -9060,7 +9060,7 @@ class FEU_Einsatz_Admin {
             }
             echo '</div>';
             echo '<div class="feu-einsatz-dashboard-recent-actions">';
-            echo '<a class="button button-secondary button-small" href="' . esc_url($this->get_edit_url($report_id)) . '">' . esc_html__('Bearbeiten', 'feuer-einsatzberichte') . '</a>';
+            echo '<a class="button button-secondary button-small" href="' . esc_url($this->get_internal_report_edit_url($report_id)) . '">' . esc_html__('Bearbeiten', 'feuer-einsatzberichte') . '</a>';
             echo '<a class="button button-small" href="' . esc_url(get_permalink($report_id)) . '" target="_blank" rel="noopener noreferrer">' . esc_html__('Ansehen', 'feuer-einsatzberichte') . '</a>';
             if (!$has_generated_map && $map_is_public) {
                 echo '<form class="feu-einsatz-dashboard-inline-form" method="post" action="' . esc_url(admin_url('admin-post.php')) . '">';

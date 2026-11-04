@@ -1713,12 +1713,12 @@ jQuery(document).ready(function($) {
         deleteSuccess: <?php echo wp_json_encode(__('Organisation wurde gelöscht.', 'feuer-einsatzberichte')); ?>,
         deleteConfirm: <?php echo wp_json_encode(__('Sind Sie sicher, dass Sie diese Organisation löschen möchten?', 'feuer-einsatzberichte')); ?>,
         streetNameRequired: <?php echo wp_json_encode(__('Bitte zuerst eine Straße eingeben.', 'feuer-einsatzberichte')); ?>,
-        streetDeleteConfirm: <?php echo wp_json_encode(__('Diesen Strassen-Eintrag wirklich entfernen?', 'feuer-einsatzberichte')); ?>,
+        streetDeleteConfirm: <?php echo wp_json_encode(__('Diesen Straßen-Eintrag wirklich entfernen?', 'feuer-einsatzberichte')); ?>,
         streetAdd: <?php echo wp_json_encode(__('Straße hinzufügen', 'feuer-einsatzberichte')); ?>,
         streetSave: <?php echo wp_json_encode(__('Straße speichern', 'feuer-einsatzberichte')); ?>,
-        streetEditMode: <?php echo wp_json_encode(__('Strassen-Eintrag wird bearbeitet.', 'feuer-einsatzberichte')); ?>,
-        streetSaved: <?php echo wp_json_encode(__('Strassen-Eintrag wurde gespeichert.', 'feuer-einsatzberichte')); ?>,
-        streetDeleted: <?php echo wp_json_encode(__('Strassen-Eintrag wurde entfernt.', 'feuer-einsatzberichte')); ?>,
+        streetEditMode: <?php echo wp_json_encode(__('Straßen-Eintrag wird bearbeitet.', 'feuer-einsatzberichte')); ?>,
+        streetSaved: <?php echo wp_json_encode(__('Straßen-Eintrag wurde gespeichert.', 'feuer-einsatzberichte')); ?>,
+        streetDeleted: <?php echo wp_json_encode(__('Straßen-Eintrag wurde entfernt.', 'feuer-einsatzberichte')); ?>,
         streetInUse: <?php echo wp_json_encode(__('Diese Straße wird bereits in Einsatzberichten verwendet und kann nicht gelöscht werden.', 'feuer-einsatzberichte')); ?>,
         organizationOrderSaved: <?php echo wp_json_encode(__('Reihenfolge der Organisationen wurde gespeichert.', 'feuer-einsatzberichte')); ?>,
         factoryResetCodeRequired: <?php echo wp_json_encode(__('Bitte geben Sie den neu erzeugten 7-stelligen Sicherheitscode ein.', 'feuer-einsatzberichte')); ?>,
@@ -1959,7 +1959,7 @@ jQuery(document).ready(function($) {
             '<table class="wp-list-table widefat striped feu-einsatz-street-registry-table">' +
                 '<thead><tr>' +
                     '<th>Straße / PLZ / Ort</th>' +
-                    '<th>Einsaetze</th>' +
+                    '<th>Einsätze</th>' +
                     '<th>Aktion</th>' +
                 '</tr></thead>' +
                 '<tbody></tbody>' +
@@ -2013,7 +2013,7 @@ jQuery(document).ready(function($) {
                     '<button type="button" class="button button-small feu-einsatz-edit-street-registry-entry" data-id="' + id + '" data-street="' + escapeHtml(street) + '" data-postcode="' + escapeHtml(postcode) + '" data-city="' + escapeHtml(city) + '" data-districts="' + escapeHtml(districts.join(', ')) + '">' +
                         'Bearbeiten' +
                     '</button>' +
-                    '<a class="button button-small" href="' + escapeHtml(reportUrl) + '">Einsaetze ansehen</a>' +
+                    '<a class="button button-small" href="' + escapeHtml(reportUrl) + '">Einsätze ansehen</a>' +
                     '<button type="button" class="button button-small feu-einsatz-delete-street-registry-entry" data-id="' + id + '"' + (canDelete ? '' : ' disabled="disabled"') + '>' +
                         escapeHtml(canDelete ? texts.remove : 'In Benutzung') +
                     '</button>' +
@@ -2044,7 +2044,7 @@ jQuery(document).ready(function($) {
                 '</td>' +
                 '<td>' + Math.max(0, usageCount) + '</td>' +
                 '<td class="feu-einsatz-table-actions">' +
-                    '<a class="button button-small" href="' + escapeHtml(reportUrl) + '">Einsaetze ansehen</a>' +
+                    '<a class="button button-small" href="' + escapeHtml(reportUrl) + '">Einsätze ansehen</a>' +
                 '</td>' +
             '</tr>';
     }
@@ -2058,7 +2058,7 @@ jQuery(document).ready(function($) {
         if (registryEntries.length) {
             $manualTable.find('tbody').html(registryEntries.map(buildStreetRegistryRow).join(''));
         } else {
-            $manualTable.replaceWith('<p class="description feu-einsatz-street-registry-empty">Noch keine manuell gepflegten Strassen vorhanden.</p>');
+            $manualTable.replaceWith('<p class="description feu-einsatz-street-registry-empty">Noch keine manuell gepflegten Straßen vorhanden.</p>');
         }
 
         if (knownEntries.length) {
@@ -2120,7 +2120,7 @@ jQuery(document).ready(function($) {
         $table.find('tbody tr[data-street-registry-id="' + Number(id) + '"]').remove();
 
         if (!$table.find('tbody tr').length) {
-            $table.replaceWith('<p class="description feu-einsatz-street-registry-empty">Noch keine manuell gepflegten Strassen vorhanden.</p>');
+            $table.replaceWith('<p class="description feu-einsatz-street-registry-empty">Noch keine manuell gepflegten Straßen vorhanden.</p>');
         }
 
         applyStreetRegistrySearch();

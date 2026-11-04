@@ -1,6 +1,24 @@
 {
   "releases": [
     {
+      "version": "3.3.12",
+      "date": "2026-11-04",
+      "title": "Browser-geprüfter Hotfix für Dashboard und Berichtsübersicht",
+      "summary": "Der direkte Chrome-Audit der installierten Version behebt einen kritischen Methodenaufruf in Dashboard und Berichtsübersicht, korrigiert die öffentliche Überschriftenstruktur und räumt Grammatik sowie verbliebene technische Umschreibungen in sichtbaren Texten auf.",
+      "changes": [
+        "Kritischer Fehler: Dashboard und Alle Berichte verwenden wieder den vorhandenen internen Berichtseditor-Link; der Aufruf einer nicht vorhandenen Methode kann die Seiten nicht mehr abbrechen.",
+        "Regressionstest: Dashboard, Berichtsübersicht und serverseitige Dashboard-Widgets werden ausdrücklich auf veraltete get_edit_url-Aufrufe geprüft.",
+        "Live-Karte: Der Chrome-Test bestätigt die sofortige Karteninitialisierung für einen gültigen Einsatzort einschließlich Radius, Marker und OpenStreetMap-Attribution.",
+        "Adress-Cache: Eine unbekannte Hausnummer zeigt keine Koordinaten eines früheren Einsatzorts; stattdessen bleibt die Karte leer und erklärt die erforderliche Korrektur.",
+        "Öffentliche Seite: Der Berichtstitel innerhalb des Inhalts verwendet H2, sodass neben dem Theme-Seitentitel kein zweites H1 mehr entsteht.",
+        "Statistik: Singular und Plural werden in Übersicht, Präsentation, Tooltips, Diagrammen und Detailansichten korrekt als Einsatz, Einsätze beziehungsweise Einsätzen ausgegeben.",
+        "Redaktion: Schnelleingabe, Berichtseditor, Straßenregister, Karten-, Share- und Medienhinweise verwenden korrekte deutsche Umlaute und ß statt technischer Umschreibungen.",
+        "Mannschaft: Browsergeprüft sind kompakte Synchronisierungsbereiche, Dienstgrad und Position, Filter sowie die funktionierende Seitennavigation mit 20 Profilen pro Seite.",
+        "Präsentation: Alle sechs Folien, deaktivierte Randnavigation und die kompakte Mannschaftsübersicht wurden im Browser geprüft.",
+        "Qualität: 39 automatische Tests bestehen; zusätzliche Prüfungen sichern interne Editorlinks, Überschriftenhierarchie und grammatikalische Statistikbeschriftungen."
+      ]
+    },
+    {
       "version": "3.3.11",
       "date": "2026-11-04",
       "title": "Abgeschlossener Oberflächen- und Funktionsaudit",

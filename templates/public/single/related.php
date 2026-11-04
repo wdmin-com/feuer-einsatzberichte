@@ -14,7 +14,7 @@ $related_display = isset($related['display']) ? FEU_Einsatz_Template_Helpers::no
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
             <div>
                 <h2 class="h3 mb-1"><?php echo esc_html__('Weitere Einsatzberichte', 'feuer-einsatzberichte'); ?></h2>
-                <p class="text-muted mb-0"><?php echo esc_html__('Weitere Einsaetze aus unterschiedlichen Bereichen als schneller Blick in das Archiv.', 'feuer-einsatzberichte'); ?></p>
+                <p class="text-muted mb-0"><?php echo esc_html__('Weitere Einsätze aus unterschiedlichen Bereichen als schneller Blick in das Archiv.', 'feuer-einsatzberichte'); ?></p>
             </div>
         </div>
 

@@ -2110,7 +2110,7 @@ class FEU_Einsatz_Backup_Manager {
                 return new WP_Error(
                     'archive_restore_failed',
                     sprintf(
-                        __('Wiederherstellung fehlgeschlagen. Die Datenbank wurde zurueckgesetzt; die automatische Sicherung bleibt erhalten. %s', 'feuer-einsatzberichte'),
+                        __('Wiederherstellung fehlgeschlagen. Die Datenbank wurde zurückgesetzt; die automatische Sicherung bleibt erhalten. %s', 'feuer-einsatzberichte'),
                         $error->getMessage()
                     )
                 );

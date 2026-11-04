@@ -103,7 +103,7 @@ if (isset($active_tab) && 'allgemein' !== (string) $active_tab) {
                            <?php checked($overview_show_year_filter, 1); ?> />
                     <span class="feu-admin-settings-check-copy">
                         <strong><?php esc_html_e('Jahresfilter anzeigen', 'feuer-einsatzberichte'); ?></strong>
-                        <small><?php esc_html_e('Erlaubt auf der Uebersichtsseite die direkte Auswahl eines Jahres.', 'feuer-einsatzberichte'); ?></small>
+                        <small><?php esc_html_e('Erlaubt auf der Übersichtsseite die direkte Auswahl eines Jahres.', 'feuer-einsatzberichte'); ?></small>
                     </span>
                 </label>
             </div>
@@ -202,7 +202,7 @@ if (isset($active_tab) && 'allgemein' !== (string) $active_tab) {
                            <?php checked($single_desaturate_organizations, 1); ?> />
                     <span class="feu-admin-settings-check-copy">
                         <strong><?php esc_html_e('Farben der Kräfte vor Ort entschärfen', 'feuer-einsatzberichte'); ?></strong>
-                        <small><?php esc_html_e('Die Organisationsfarben werden im Einzelbeitrag entsaettigt dargestellt.', 'feuer-einsatzberichte'); ?></small>
+                        <small><?php esc_html_e('Die Organisationsfarben werden im Einzelbeitrag entsättigt dargestellt.', 'feuer-einsatzberichte'); ?></small>
                     </span>
                 </label>
             </div>
@@ -227,7 +227,7 @@ if (isset($active_tab) && 'allgemein' !== (string) $active_tab) {
                            max="50"
                            step="1"
                            class="small-text" />
-                    <small><?php esc_html_e('Sobald mehr Archive vorhanden sind, werden die aeltesten Sicherungen automatisch entfernt.', 'feuer-einsatzberichte'); ?></small>
+                    <small><?php esc_html_e('Sobald mehr Archive vorhanden sind, werden die ältesten Sicherungen automatisch entfernt.', 'feuer-einsatzberichte'); ?></small>
                 </label>
 
             </div>

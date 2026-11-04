@@ -55,7 +55,7 @@ if (!isset($active_tab) || 'funktionen' !== (string) $active_tab) {
 
     <button type="button" id="feu-einsatz-add-function" class="button">
         <span class="feu-einsatz-button-icon" aria-hidden="true">+</span>
-        <?php _e('Weitere Funktion hinzufuegen', 'feuer-einsatzberichte'); ?>
+        <?php _e('Weitere Funktion hinzufügen', 'feuer-einsatzberichte'); ?>
     </button>
 </div>
 

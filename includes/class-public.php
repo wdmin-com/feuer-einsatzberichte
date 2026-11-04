@@ -1712,7 +1712,7 @@ class FEU_Einsatz_Public {
         $public_strings = [
             'mapUnavailable' => __('Kartenansicht nicht verfügbar.', 'feuer-einsatzberichte'),
             'mapUnavailableHint' => __('Für diesen Einsatz sind noch keine ausreichenden Kartendaten gespeichert.', 'feuer-einsatzberichte'),
-            'pedestrianPartLabel' => __('Fussgaengerbereich', 'feuer-einsatzberichte'),
+            'pedestrianPartLabel' => __('Fußgängerbereich', 'feuer-einsatzberichte'),
             'streetFallback' => __('Straße', 'feuer-einsatzberichte'),
             'radiusLabel' => __('Feuerwehr-Einsatzbereich', 'feuer-einsatzberichte'),
             'mapConsentTitle' => __('Datenschutz-Hinweis', 'feuer-einsatzberichte'),
@@ -1726,9 +1726,9 @@ class FEU_Einsatz_Public {
             'mapUnavailable' => __('Einsatzgebiet-Karte nicht verfügbar.', 'feuer-einsatzberichte'),
             'mapUnavailableHint' => __('Bitte prüfen Sie die hinterlegten PLZ oder die Kartendaten.', 'feuer-einsatzberichte'),
             'callSingular' => __('Einsatz', 'feuer-einsatzberichte'),
-            'callPlural' => __('Einsaetze', 'feuer-einsatzberichte'),
-            'streetsLabel' => __('Strassen', 'feuer-einsatzberichte'),
-            'moreStreetsLabel' => __('weitere Strassen', 'feuer-einsatzberichte'),
+            'callPlural' => __('Einsätze', 'feuer-einsatzberichte'),
+            'streetsLabel' => __('Straßen', 'feuer-einsatzberichte'),
+            'moreStreetsLabel' => __('weitere Straßen', 'feuer-einsatzberichte'),
         ];
 
         wp_enqueue_style(

@@ -306,7 +306,7 @@ class FEU_Einsatz_Logger {
             'archive_deleted' => __('Archiv gelöscht', 'feuer-einsatzberichte'),
             'archive_pruned' => __('Archiv bereinigt', 'feuer-einsatzberichte'),
             'settings_saved' => __('Einstellungen gespeichert', 'feuer-einsatzberichte'),
-            'settings_cache_cleared' => __('Strassen-Cache geleert', 'feuer-einsatzberichte'),
+            'settings_cache_cleared' => __('Straßen-Cache geleert', 'feuer-einsatzberichte'),
             'data_purge_completed' => __('Daten dauerhaft gelöscht', 'feuer-einsatzberichte'),
             'update_check_refreshed' => __('Update-Prüfung aktualisiert', 'feuer-einsatzberichte'),
             'runtime_error' => __('Laufzeitfehler', 'feuer-einsatzberichte'),

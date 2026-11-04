@@ -1268,7 +1268,7 @@ jQuery(document).ready(function($) {
                             <button type="button" class="button button-secondary" id="feu-einsatz-remove-photo"><?php esc_html_e('Foto entfernen', 'feuer-einsatzberichte'); ?></button>
                         </div>
                         <div class="feu-einsatz-field">
-                            <label class="feu-einsatz-field-label" for="edit_participant_gallery"><?php esc_html_e('Weitere Bilder hinzufuegen', 'feuer-einsatzberichte'); ?></label>
+                            <label class="feu-einsatz-field-label" for="edit_participant_gallery"><?php esc_html_e('Weitere Bilder hinzufügen', 'feuer-einsatzberichte'); ?></label>
                             <input type="file" id="edit_participant_gallery" name="participant_gallery[]" class="regular-text" accept="image/*" multiple />
                             <p class="description feu-einsatz-field-hint">
                                 <?php esc_html_e('Bestehende Bilder bleiben erhalten, wenn kein neues Bild hochgeladen wird.', 'feuer-einsatzberichte'); ?>
