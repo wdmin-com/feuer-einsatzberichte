@@ -1078,7 +1078,7 @@ class FEU_Einsatz_Database {
     public function get_statistics_dashboard_data($jahr = null) {
         $jahr = absint($jahr ?: date('Y'));
         // V2 excludes non-report posts from participant counts. Do not reuse older cached rows.
-        $cache_key = self::STATISTICS_DASHBOARD_CACHE_PREFIX . 'v2_' . $jahr;
+        $cache_key = self::STATISTICS_DASHBOARD_CACHE_PREFIX . 'v3_' . $jahr;
         $cached = get_transient($cache_key);
 
         if (is_array($cached)) {
@@ -2367,8 +2367,9 @@ class FEU_Einsatz_Database {
             AND report.meta_value = '1'
         ", $jahr));
         
-        // Gesamtanzahl aller Mannschaftsmitglieder
-        $total_teilnehmer_alle = $this->wpdb->get_var("SELECT COUNT(*) FROM {$this->table_participants}");
+        // Gesamtanzahl aktuell geführter Mannschaftsprofile. Gelöschte und
+        // archivierte Datensätze dürfen allgemeine Summen nicht aufblähen.
+        $total_teilnehmer_alle = $this->wpdb->get_var("SELECT COUNT(*) FROM {$this->table_participants} WHERE is_deleted = 0 AND is_archived = 0");
         
         // Include reports without participants in the denominator.
         $avg_teilnehmer = $this->wpdb->get_var($this->wpdb->prepare("

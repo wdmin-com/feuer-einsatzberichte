@@ -1,6 +1,26 @@
 {
   "releases": [
     {
+      "version": "3.3.10",
+      "date": "2026-11-04",
+      "title": "Chronologische Berichtsliste und eindeutige Statistikwerte",
+      "summary": "Alle Berichte folgen jetzt zuverlässig dem Einsatzdatum und lassen sich nach Jahr oder Zeitraum filtern. Die Statistik trennt Jahreswerte sichtbar vom aktuellen Mannschaftsbestand und bereinigt die Gesamtzahl um archivierte, gelöschte und zusammengeführte Profile.",
+      "changes": [
+        "Alle Berichte: Die Standardsortierung verwendet das tatsächliche Einsatzdatum statt der technischen Änderungszeit des WordPress-Beitrags.",
+        "Datumsformate: Neue und migrierte Einsatzdaten in ISO- sowie deutschem Format werden chronologisch korrekt eingeordnet; fehlt ein Einsatzdatum, dient das Beitragsdatum als kontrollierter Fallback.",
+        "Filter: Berichte können nach Jahr oder über einen frei wählbaren Zeitraum von/bis eingegrenzt werden.",
+        "Sortierung: Anwender können zwischen neuesten und ältesten Einsätzen zuerst wechseln; Filter und Reihenfolge bleiben bei Seitenwechsel und Kartenaktionen erhalten.",
+        "Bedienung: Jahresauswahl und individueller Zeitraum schließen sich automatisch aus, damit keine widersprüchlichen Filter entstehen.",
+        "Berichtskarten: Die Liste zeigt jetzt ausdrücklich Datum und Uhrzeit des Einsatzes statt der technischen WordPress-Veröffentlichungszeit.",
+        "Statistik: Mitglieder gesamt bezeichnet wieder den aktuellen aktiven Mannschaftsbestand und schließt archivierte, gelöschte sowie nach einer Zusammenführung entfernte Dubletten aus.",
+        "Statistikkontext: Einsätze, Durchschnitt pro Einsatz und Einsatztage kennzeichnen sichtbar das ausgewählte Jahr; der Mannschaftswert ist als aktiver Bestand ausgewiesen.",
+        "PDF: Der Statistikexport verwendet dieselbe eindeutige Bezeichnung und denselben bereinigten Mannschaftswert wie die Verwaltungsansicht.",
+        "Cache: Eine neue Statistik-Cache-Revision verhindert, dass ältere, zu hohe Mannschaftssummen nach dem Update weiter angezeigt werden.",
+        "Responsivität: Die neue Filterleiste ordnet Suche, Status, Jahr, Zeitraum und Sortierung auf Desktop, Tablet und Smartphone übersichtlich an.",
+        "Qualität: Neue Quell- und WordPress-Integrationstests sichern Einsatzdatum-Sortierung, Jahresfilter, Filterbedienung und Mannschaftssummen ab."
+      ]
+    },
+    {
       "version": "3.3.9",
       "date": "2026-11-02",
       "title": "Korrekte Bilddiagnose ohne Fehlalarme",

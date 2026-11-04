@@ -8,10 +8,19 @@ $admin = Feuer_Einsatzberichte_Core::get_instance()->get_admin();
 $post_id = wp_insert_post([
     'post_type' => FEU_Einsatz_Report_Post_Type::POST_TYPE,
     'post_status' => 'draft',
-    'post_title' => 'CI Kartenbild Prüfung',
+    'post_title' => 'CI Kartenbild Prüfung NEU',
 ], true);
 if (is_wp_error($post_id)) {
     throw new RuntimeException($post_id->get_error_message());
+}
+$older_post_id = wp_insert_post([
+    'post_type' => FEU_Einsatz_Report_Post_Type::POST_TYPE,
+    'post_status' => 'draft',
+    'post_title' => 'CI Kartenbild Prüfung ALT',
+], true);
+if (is_wp_error($older_post_id)) {
+    wp_delete_post($post_id, true);
+    throw new RuntimeException($older_post_id->get_error_message());
 }
 
 $uploads = wp_upload_dir();
@@ -22,6 +31,9 @@ $attachment_id = 0;
 
 try {
     update_post_meta($post_id, FEU_Einsatz_Report_Post_Type::MARKER_META, '1');
+    update_post_meta($post_id, '_feu_einsatz_datum', '2024-12-20');
+    update_post_meta($older_post_id, FEU_Einsatz_Report_Post_Type::MARKER_META, '1');
+    update_post_meta($older_post_id, '_feu_einsatz_datum', '2023-01-10');
     update_post_meta($post_id, FEU_Einsatz_Template_Helpers::MAP_LOCATION_MODE_META, 'coordinates');
     update_post_meta($post_id, '_feu_einsatz_latitude', '53.53');
     update_post_meta($post_id, '_feu_einsatz_longitude', '10.03');
@@ -48,12 +60,26 @@ try {
     ob_start();
     $admin->render_reports();
     $html = ob_get_clean();
-    if (false === strpos($html, 'CI Kartenbild Prüfung')
+    $new_position = strpos($html, 'CI Kartenbild Prüfung NEU');
+    $old_position = strpos($html, 'CI Kartenbild Prüfung ALT');
+    if (false === $new_position
+        || false === $old_position
+        || $new_position > $old_position
         || false === strpos($html, 'Kartenbild ansehen')
         || false === strpos($html, 'Neu generieren')
-        || false === strpos($html, 'data-feu-map-dialog')) {
-        throw new RuntimeException('Compact report list has no map preview or regeneration action.');
+        || false === strpos($html, 'data-feu-map-dialog')
+        || false === strpos($html, 'name="report_year"')
+        || false === strpos($html, 'name="report_date_from"')) {
+        throw new RuntimeException('Compact report list has no event-date sorting, date filters, map preview or regeneration action.');
     }
+    $_GET['report_year'] = '2024';
+    ob_start();
+    $admin->render_reports();
+    $year_html = ob_get_clean();
+    if (false === strpos($year_html, 'CI Kartenbild Prüfung NEU') || false !== strpos($year_html, 'CI Kartenbild Prüfung ALT')) {
+        throw new RuntimeException('Report year filter did not isolate the selected event year.');
+    }
+    unset($_GET['report_year']);
     update_post_meta($post_id, '_feu_einsatz_strasse', 'CI Musterstraße');
     $_GET['feu_einsatz_street'] = 'CI Musterstraße';
     ob_start();
@@ -86,13 +112,14 @@ try {
         throw new RuntimeException('Report editor is no longer highlighted inside the plugin menu.');
     }
 } finally {
-    unset($_GET['report_search'], $_GET['feu_einsatz_street'], $_GET['page']);
+    unset($_GET['report_search'], $_GET['report_year'], $_GET['report_date_from'], $_GET['report_date_to'], $_GET['report_order'], $_GET['feu_einsatz_street'], $_GET['page']);
     if (is_file($file)) {
         unlink($file);
     }
     if ($attachment_id > 0 && !is_wp_error($attachment_id)) {
         wp_delete_attachment($attachment_id, true);
     }
+    wp_delete_post($older_post_id, true);
     wp_delete_post($post_id, true);
 }
 

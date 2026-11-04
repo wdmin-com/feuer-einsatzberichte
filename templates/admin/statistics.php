@@ -935,14 +935,16 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
                 <span class="stat-label"><?php esc_html_e('Einsätze', 'feuer-einsatzberichte'); ?></span>
             </div>
             <div class="stat-value" data-feu-count-up="<?php echo esc_attr((string) (int) ($total['total_einsaetze'] ?? 0)); ?>"><?php echo esc_html($total['total_einsaetze']); ?></div>
+            <span class="feu-einsatz-stat-scope"><?php echo esc_html(sprintf(__('Ausgewähltes Jahr: %d', 'feuer-einsatzberichte'), $jahr)); ?></span>
             <div class="feu-einsatz-stat-meter" aria-hidden="true"><span></span></div>
         </div>
-        <div class="stat-card feu-einsatz-stat-visual-card is-people" style="--feu-stat-progress: <?php echo esc_attr((string) min(100, max(0, (int) ($total['total_teilnehmer_alle'] ?? 0)))); ?>%;">
+        <div class="stat-card feu-einsatz-stat-visual-card is-people" style="--feu-stat-progress: <?php echo esc_attr((string) min(100, max(0, (int) ($total['total_teilnehmer_alle'] ?? 0)))); ?>%;" title="<?php esc_attr_e('Aktuelle Mannschaftsprofile ohne archivierte, gelöschte oder bereits zusammengeführte Dubletten.', 'feuer-einsatzberichte'); ?>">
             <div class="feu-einsatz-stat-card-top">
                 <span class="feu-einsatz-stat-icon ti ti-users"></span>
                 <span class="stat-label"><?php esc_html_e('Mitglieder gesamt', 'feuer-einsatzberichte'); ?></span>
             </div>
-            <div class="stat-value" data-feu-count-up="<?php echo esc_attr((string) (int) ($total['total_teilnehmer_alle'] ?? 0)); ?>"><?php echo esc_html($total['total_teilnehmer_alle']); ?></div>
+            <div class="stat-value" data-feu-count-up="<?php echo esc_attr((string) (int) ($total['total_teilnehmer_alle'] ?? 0)); ?>"><?php echo esc_html((string) (int) ($total['total_teilnehmer_alle'] ?? 0)); ?></div>
+            <span class="feu-einsatz-stat-scope"><?php esc_html_e('Aktiver Mannschaftsbestand', 'feuer-einsatzberichte'); ?></span>
             <div class="feu-einsatz-stat-meter" aria-hidden="true"><span></span></div>
         </div>
         <div class="stat-card feu-einsatz-stat-visual-card is-average" style="--feu-stat-progress: <?php echo esc_attr((string) min(100, max(0, ((float) ($total['avg_teilnehmer'] ?? 0)) * 10))); ?>%;">
@@ -951,14 +953,16 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
                 <span class="stat-label"><?php esc_html_e('Durchschnitt pro Einsatz', 'feuer-einsatzberichte'); ?></span>
             </div>
             <div class="stat-value" data-feu-count-up="<?php echo esc_attr((string) (float) ($total['avg_teilnehmer'] ?? 0)); ?>" data-feu-count-decimals="1"><?php echo esc_html($total['avg_teilnehmer']); ?></div>
+            <span class="feu-einsatz-stat-scope"><?php echo esc_html(sprintf(__('Ausgewähltes Jahr: %d', 'feuer-einsatzberichte'), $jahr)); ?></span>
             <div class="feu-einsatz-stat-meter" aria-hidden="true"><span></span></div>
         </div>
         <div class="stat-card feu-einsatz-stat-visual-card is-days" style="--feu-stat-progress: <?php echo esc_attr((string) min(100, max(0, ($active_day_count / 366) * 100))); ?>%;">
             <div class="feu-einsatz-stat-card-top">
                 <span class="feu-einsatz-stat-icon ti ti-calendar-stats"></span>
-                <span class="stat-label"><?php esc_html_e('Aktive Tage', 'feuer-einsatzberichte'); ?></span>
+                <span class="stat-label"><?php esc_html_e('Einsatztage', 'feuer-einsatzberichte'); ?></span>
             </div>
             <div class="stat-value" data-feu-count-up="<?php echo esc_attr((string) $active_day_count); ?>"><?php echo esc_html($active_day_count); ?></div>
+            <span class="feu-einsatz-stat-scope"><?php echo esc_html(sprintf(__('Ausgewähltes Jahr: %d', 'feuer-einsatzberichte'), $jahr)); ?></span>
             <div class="feu-einsatz-stat-meter" aria-hidden="true"><span></span></div>
         </div>
     </div>
@@ -3553,7 +3557,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             drawPdfHeader(pdf, 'Einsatzberichte Statistik', exportSubtitle);
             drawPdfStatCard(pdf, 14, 34, 88, 26, 'Einsätze', String(totalStats.total_einsaetze || 0), [10, 75, 120]);
-            drawPdfStatCard(pdf, 14, 66, 88, 26, 'Mitglieder gesamt', String(totalStats.total_teilnehmer_alle || 0), [214, 158, 46]);
+            drawPdfStatCard(pdf, 14, 66, 88, 26, 'Mitglieder gesamt (aktiver Bestand)', String(totalStats.total_teilnehmer_alle || 0), [214, 158, 46]);
             drawPdfStatCard(pdf, 108, 66, 88, 26, 'Durchschnittliche Mannschaftsstärke pro Einsatz', String(totalStats.avg_teilnehmer || 0), [197, 48, 48]);
             drawPdfHorizontalBarChart(pdf, 14, 102, 122, 92, 'Einsatzstichworte', 'Verteilung der Einsatzstichworte', categoryItems, [10, 75, 120]);
             drawPdfListCard(pdf, 142, 102, 54, 92, 'Highlights', categoryItems.map(function(item) { return item.label + ' - ' + item.value; }));

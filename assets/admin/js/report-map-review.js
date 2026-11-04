@@ -1,6 +1,29 @@
 (function () {
     'use strict';
 
+    var filterForm = document.querySelector('.feu-report-list-filters');
+    if (filterForm) {
+        var yearFilter = filterForm.querySelector('[name="report_year"]');
+        var dateFilters = filterForm.querySelectorAll('[name="report_date_from"], [name="report_date_to"]');
+
+        if (yearFilter) {
+            yearFilter.addEventListener('change', function () {
+                if ('0' !== yearFilter.value) {
+                    dateFilters.forEach(function (field) {
+                        field.value = '';
+                    });
+                }
+            });
+            dateFilters.forEach(function (field) {
+                field.addEventListener('change', function () {
+                    if (field.value) {
+                        yearFilter.value = '0';
+                    }
+                });
+            });
+        }
+    }
+
     var dialog = document.querySelector('[data-feu-map-dialog]');
     if (!dialog) {
         return;

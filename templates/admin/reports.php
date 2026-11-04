@@ -7,6 +7,10 @@ $report_list_url = admin_url('admin.php?page=feu-einsatz-berichte');
 $report_return_url = add_query_arg(array_filter([
     'report_search' => $report_search,
     'report_status' => 'all' !== $report_status ? $report_status : '',
+    'report_year' => $report_year > 0 ? $report_year : '',
+    'report_date_from' => $report_date_from,
+    'report_date_to' => $report_date_to,
+    'report_order' => 'asc' === $report_order ? 'asc' : '',
     'report_page' => $report_page > 1 ? $report_page : '',
     'feu_einsatz_street' => $street_filter,
     'feu_einsatz_postcode' => $postcode_filter,
@@ -63,10 +67,39 @@ $status_labels = [
                 <?php endforeach; ?>
             </select>
         </label>
-        <button class="button button-secondary" type="submit"><?php esc_html_e('Anzeigen', 'feuer-einsatzberichte'); ?></button>
-        <?php if ('' !== $report_search || 'all' !== $report_status) : ?>
+        <label class="feu-report-list-filter-year">
+            <span><?php esc_html_e('Jahr', 'feuer-einsatzberichte'); ?></span>
+            <select name="report_year">
+                <option value="0"><?php esc_html_e('Alle Jahre', 'feuer-einsatzberichte'); ?></option>
+                <?php foreach ($report_years as $year) : ?>
+                    <option value="<?php echo esc_attr((string) $year); ?>" <?php selected($report_year, $year); ?>><?php echo esc_html((string) $year); ?></option>
+                <?php endforeach; ?>
+            </select>
+        </label>
+        <fieldset class="feu-report-list-period">
+            <legend><?php esc_html_e('Zeitraum', 'feuer-einsatzberichte'); ?></legend>
+            <label>
+                <span><?php esc_html_e('Von', 'feuer-einsatzberichte'); ?></span>
+                <input type="date" name="report_date_from" value="<?php echo esc_attr($report_date_from); ?>" />
+            </label>
+            <label>
+                <span><?php esc_html_e('Bis', 'feuer-einsatzberichte'); ?></span>
+                <input type="date" name="report_date_to" value="<?php echo esc_attr($report_date_to); ?>" />
+            </label>
+        </fieldset>
+        <label class="feu-report-list-filter-order">
+            <span><?php esc_html_e('Sortierung', 'feuer-einsatzberichte'); ?></span>
+            <select name="report_order">
+                <option value="desc" <?php selected($report_order, 'desc'); ?>><?php esc_html_e('Neueste Einsätze zuerst', 'feuer-einsatzberichte'); ?></option>
+                <option value="asc" <?php selected($report_order, 'asc'); ?>><?php esc_html_e('Älteste Einsätze zuerst', 'feuer-einsatzberichte'); ?></option>
+            </select>
+        </label>
+        <div class="feu-report-list-filter-actions">
+            <button class="button button-primary" type="submit"><?php esc_html_e('Filter anwenden', 'feuer-einsatzberichte'); ?></button>
+        <?php if ('' !== $report_search || 'all' !== $report_status || $report_year > 0 || '' !== $report_date_from || '' !== $report_date_to || 'asc' === $report_order) : ?>
             <a href="<?php echo esc_url($report_list_url); ?>"><?php esc_html_e('Filter zurücksetzen', 'feuer-einsatzberichte'); ?></a>
         <?php endif; ?>
+        </div>
     </form>
 
     <div class="feu-report-list-count">
@@ -87,6 +120,7 @@ $status_labels = [
                 $postcode = trim((string) get_post_meta($report_id, '_feu_einsatz_plz', true));
                 $city = trim((string) get_post_meta($report_id, '_feu_einsatz_stadt', true));
                 $address = trim($street . ' ' . $house_number . ', ' . $postcode . ' ' . $city, ' ,');
+                $event_datetime = FEU_Einsatz_Template_Helpers::get_event_datetime($report_id);
                 $can_edit = current_user_can('edit_post', $report_id);
                 $can_generate = $can_edit && 'privacy_hidden' !== $status_key
                     && ('' !== $street || (is_numeric(get_post_meta($report_id, '_feu_einsatz_latitude', true)) && is_numeric(get_post_meta($report_id, '_feu_einsatz_longitude', true))));
@@ -106,7 +140,7 @@ $status_labels = [
                             <h2><?php if ($can_edit) : ?><a href="<?php echo esc_url(get_edit_post_link($report_id)); ?>"><?php echo esc_html(get_the_title($report_id)); ?></a><?php else : ?><?php echo esc_html(get_the_title($report_id)); ?><?php endif; ?></h2>
                             <span class="feu-report-list-post-status"><?php echo esc_html($report_status_object ? $report_status_object->label : $report->post_status); ?></span>
                         </div>
-                        <p class="feu-report-list-meta"><?php echo esc_html('' !== $address ? $address : __('Ort nicht angegeben', 'feuer-einsatzberichte')); ?> · <?php echo esc_html(get_the_date(get_option('date_format'), $report)); ?></p>
+                        <p class="feu-report-list-meta"><?php echo esc_html('' !== $address ? $address : __('Ort nicht angegeben', 'feuer-einsatzberichte')); ?> · <?php echo esc_html(sprintf(__('Einsatz: %1$s%2$s', 'feuer-einsatzberichte'), (string) ($event_datetime['date'] ?? ''), !empty($event_datetime['time']) ? ' · ' . $event_datetime['time'] : '')); ?></p>
                         <div class="feu-report-list-health">
                             <span class="feu-report-list-health-badge feu-report-list-health-badge--<?php echo esc_attr($status_key); ?>"><?php echo esc_html('' !== $map_url ? __('Kartenbild vorhanden', 'feuer-einsatzberichte') : ('privacy_hidden' === $status_key ? __('Karte deaktiviert', 'feuer-einsatzberichte') : __('Kartenbild fehlt', 'feuer-einsatzberichte'))); ?></span>
                             <span><?php echo esc_html((string) ($map_status['message'] ?? '')); ?></span>
@@ -145,7 +179,7 @@ $status_labels = [
             </nav>
         <?php endif; ?>
     <?php else : ?>
-        <div class="feu-report-list-empty"><?php esc_html_e('Keine Berichte gefunden. Suche oder Statusfilter anpassen.', 'feuer-einsatzberichte'); ?></div>
+        <div class="feu-report-list-empty"><?php esc_html_e('Keine Berichte gefunden. Suche, Status oder Zeitraum anpassen.', 'feuer-einsatzberichte'); ?></div>
     <?php endif; ?>
 
     <dialog class="feu-report-map-dialog" data-feu-map-dialog aria-label="<?php esc_attr_e('Kartenbild ansehen', 'feuer-einsatzberichte'); ?>">

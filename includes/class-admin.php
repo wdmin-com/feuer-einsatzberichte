@@ -510,6 +510,7 @@ class FEU_Einsatz_Admin {
         add_filter('parent_file', [$this, 'filter_admin_parent_file']);
         add_filter('submenu_file', [$this, 'filter_admin_submenu_file']);
         add_action('pre_get_posts', [$this, 'filter_admin_post_list']);
+        add_filter('posts_clauses', [$this, 'filter_report_list_query_clauses'], 10, 2);
         add_action('wp_ajax_feu_einsatz_generate_map_image', [$this, 'ajax_generate_map_image']);
         add_action('wp_ajax_feu_einsatz_preview_street_highlight', [$this, 'ajax_preview_street_highlight']);
         add_action('wp_ajax_feu_einsatz_review_report_url', [$this, 'ajax_review_report_url']);
@@ -2177,6 +2178,48 @@ class FEU_Einsatz_Admin {
 
             $query->set('meta_query', $meta_query);
         }
+    }
+
+    public function filter_report_list_query_clauses($clauses, $query) {
+        if ('1' !== (string) $query->get('feu_einsatz_report_list')) {
+            return $clauses;
+        }
+
+        global $wpdb;
+
+        $event_date_alias = 'feu_report_event_date';
+        if (false === strpos((string) $clauses['join'], $event_date_alias)) {
+            $clauses['join'] .= " LEFT JOIN (
+                SELECT post_id, MAX(meta_value) AS meta_value
+                FROM {$wpdb->postmeta}
+                WHERE meta_key = '_feu_einsatz_datum'
+                GROUP BY post_id
+            ) AS {$event_date_alias} ON ({$wpdb->posts}.ID = {$event_date_alias}.post_id)";
+        }
+
+        $event_date_sql = "CASE
+            WHEN {$event_date_alias}.meta_value REGEXP '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+                THEN STR_TO_DATE({$event_date_alias}.meta_value, '%Y-%m-%d')
+            WHEN {$event_date_alias}.meta_value REGEXP '^[0-9]{2}\\.[0-9]{2}\\.[0-9]{4}$'
+                THEN STR_TO_DATE({$event_date_alias}.meta_value, '%d.%m.%Y')
+            ELSE DATE({$wpdb->posts}.post_date)
+        END";
+        $date_from = (string) $query->get('feu_einsatz_date_from');
+        $date_to = (string) $query->get('feu_einsatz_date_to');
+
+        if ('' !== $date_from) {
+            $prepared_date_from = $wpdb->prepare('%s', $date_from);
+            $clauses['where'] .= " AND ({$event_date_sql}) >= {$prepared_date_from}";
+        }
+        if ('' !== $date_to) {
+            $prepared_date_to = $wpdb->prepare('%s', $date_to);
+            $clauses['where'] .= " AND ({$event_date_sql}) <= {$prepared_date_to}";
+        }
+
+        $direction = 'ASC' === strtoupper((string) $query->get('feu_einsatz_date_order')) ? 'ASC' : 'DESC';
+        $clauses['orderby'] = "{$event_date_sql} {$direction}, {$wpdb->posts}.post_date {$direction}, {$wpdb->posts}.ID {$direction}";
+
+        return $clauses;
     }
 
     public function guard_report_post_type_screen($screen): void {
@@ -10167,6 +10210,33 @@ class FEU_Einsatz_Admin {
             $report_status = 'all';
         }
         $report_page = isset($_GET['report_page']) ? max(1, absint(wp_unslash($_GET['report_page']))) : 1;
+        $report_year = isset($_GET['report_year']) ? absint(wp_unslash($_GET['report_year'])) : 0;
+        if ($report_year < 1900 || $report_year > 9999) {
+            $report_year = 0;
+        }
+        $normalize_filter_date = static function ($value): string {
+            $value = trim(sanitize_text_field(wp_unslash((string) $value)));
+            if (!preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $value, $matches)) {
+                return '';
+            }
+            return checkdate((int) $matches[2], (int) $matches[3], (int) $matches[1]) ? $value : '';
+        };
+        $report_date_from = isset($_GET['report_date_from']) ? $normalize_filter_date($_GET['report_date_from']) : '';
+        $report_date_to = isset($_GET['report_date_to']) ? $normalize_filter_date($_GET['report_date_to']) : '';
+        if ('' !== $report_date_from || '' !== $report_date_to) {
+            $report_year = 0;
+        }
+        if ('' !== $report_date_from && '' !== $report_date_to && $report_date_from > $report_date_to) {
+            [$report_date_from, $report_date_to] = [$report_date_to, $report_date_from];
+        }
+        $report_order = isset($_GET['report_order']) && 'asc' === sanitize_key(wp_unslash($_GET['report_order'])) ? 'asc' : 'desc';
+        $query_date_from = $report_year > 0 ? sprintf('%04d-01-01', $report_year) : $report_date_from;
+        $query_date_to = $report_year > 0 ? sprintf('%04d-12-31', $report_year) : $report_date_to;
+        $report_years = $this->get_report_list_available_years();
+        if ($report_year > 0 && !in_array($report_year, $report_years, true)) {
+            $report_years[] = $report_year;
+            rsort($report_years, SORT_NUMERIC);
+        }
         $street_filter = isset($_GET['feu_einsatz_street']) ? trim(sanitize_text_field(wp_unslash($_GET['feu_einsatz_street']))) : '';
         $postcode_filter = isset($_GET['feu_einsatz_postcode']) ? preg_replace('/\D+/', '', (string) wp_unslash($_GET['feu_einsatz_postcode'])) : '';
         $city_filter = isset($_GET['feu_einsatz_city']) ? trim(sanitize_text_field(wp_unslash($_GET['feu_einsatz_city']))) : '';
@@ -10187,13 +10257,51 @@ class FEU_Einsatz_Admin {
             'posts_per_page' => 20,
             'paged' => $report_page,
             's' => $report_search,
-            'orderby' => 'modified',
-            'order' => 'DESC',
             'meta_query' => $meta_query,
+            'feu_einsatz_report_list' => '1',
+            'feu_einsatz_date_from' => $query_date_from,
+            'feu_einsatz_date_to' => $query_date_to,
+            'feu_einsatz_date_order' => $report_order,
         ]);
 
         include FEU_EINSATZ_PLUGIN_DIR . 'templates/admin/reports.php';
         wp_reset_postdata();
+    }
+
+    private function get_report_list_available_years(): array {
+        global $wpdb;
+
+        $post_types = array_values(array_filter(array_map('sanitize_key', FEU_Einsatz_Report_Post_Type::readable_post_types())));
+        if ([] === $post_types) {
+            return [];
+        }
+
+        $placeholders = implode(', ', array_fill(0, count($post_types), '%s'));
+        $event_date_sql = "CASE
+            WHEN event_date.meta_value REGEXP '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+                THEN STR_TO_DATE(event_date.meta_value, '%%Y-%%m-%%d')
+            WHEN event_date.meta_value REGEXP '^[0-9]{2}\\.[0-9]{2}\\.[0-9]{4}$'
+                THEN STR_TO_DATE(event_date.meta_value, '%%d.%%m.%%Y')
+            ELSE DATE(p.post_date)
+        END";
+        $sql = "SELECT DISTINCT YEAR({$event_date_sql})
+            FROM {$wpdb->posts} p
+            INNER JOIN {$wpdb->postmeta} marker
+                ON marker.post_id = p.ID
+                AND marker.meta_key = '_feu_einsatz_einsatzbericht'
+                AND marker.meta_value = '1'
+            LEFT JOIN (
+                SELECT post_id, MAX(meta_value) AS meta_value
+                FROM {$wpdb->postmeta}
+                WHERE meta_key = '_feu_einsatz_datum'
+                GROUP BY post_id
+            ) event_date ON event_date.post_id = p.ID
+            WHERE p.post_type IN ({$placeholders})
+                AND p.post_status NOT IN ('trash', 'auto-draft')
+            ORDER BY 1 DESC";
+        $years = $wpdb->get_col($wpdb->prepare($sql, ...$post_types));
+
+        return array_values(array_filter(array_map('absint', (array) $years)));
     }
 
     public function render_participants() {
