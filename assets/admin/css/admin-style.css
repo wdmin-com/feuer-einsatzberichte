@@ -8988,6 +8988,43 @@
     padding: 5px 10px !important;
 }
 
+.feu-einsatz-report-create-page .feu-einsatz-organization-chip {
+    gap: 7px;
+    border-color: #cbd5e1 !important;
+    background: #fff !important;
+    color: #334155 !important;
+    box-shadow: none;
+}
+
+.feu-einsatz-organization-chip-swatch {
+    width: 9px;
+    height: 9px;
+    flex: 0 0 9px;
+    border-radius: 999px;
+    background: var(--feu-einsatz-toggle-color, #0a4b78);
+}
+
+.feu-einsatz-report-create-page .feu-einsatz-organization-chip.is-active {
+    border-color: #0a4b78 !important;
+    background: #eaf4fb !important;
+    color: #0a3d62 !important;
+    box-shadow: inset 0 0 0 1px rgba(10, 75, 120, 0.08);
+}
+
+.feu-einsatz-report-create-page .feu-einsatz-organization-chip.is-active::after {
+    content: "✓";
+    color: #087443;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.feu-einsatz-report-create-page .feu-einsatz-participant-chip-card.is-active {
+    border-color: #0a4b78 !important;
+    background: #eaf4fb !important;
+    color: #0f172a !important;
+    box-shadow: inset 3px 0 0 #0a4b78;
+}
+
 .feu-einsatz-report-create-page .feu-einsatz-meta-section--organizations #feu-einsatz-organisation-list {
     display: grid;
     gap: 8px;
@@ -9045,6 +9082,148 @@
     padding: 0 !important;
 }
 
+.feu-einsatz-report-create-page .feu-einsatz-move-item,
+.feu-einsatz-report-create-page .feu-einsatz-org-delete {
+    min-width: 36px;
+    width: 36px;
+    height: 36px;
+    border-color: #cbd5e1;
+    background: #fff;
+    color: #334155;
+}
+
+.feu-einsatz-report-create-page .feu-einsatz-move-item:hover:not(:disabled),
+.feu-einsatz-report-create-page .feu-einsatz-move-item:focus-visible {
+    border-color: #0a4b78;
+    background: #f0f7fc;
+    color: #0a4b78;
+}
+
+.feu-einsatz-report-create-page .feu-einsatz-move-item:disabled {
+    opacity: 0.38;
+    cursor: not-allowed;
+}
+
+.feu-einsatz-order-arrow {
+    display: block;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1;
+    transform: translateY(-1px);
+}
+
+/* Selected Mannschaft members use one readable work row instead of nested cards. */
+.feu-einsatz-meta-section--participants #feu-einsatz-teilnehmer-list {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+}
+
+.feu-einsatz-meta-section--participants #feu-einsatz-teilnehmer-list .feu-einsatz-participant-row--compact {
+    padding: 9px 10px;
+    border-radius: 6px;
+    background: #fff;
+}
+
+.feu-einsatz-meta-section--participants .feu-einsatz-pr-layout {
+    display: grid;
+    grid-template-columns: 40px minmax(170px, 1fr) minmax(170px, 230px) minmax(150px, 1fr) 38px;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.feu-einsatz-meta-section--participants .feu-einsatz-pr-avatar,
+.feu-einsatz-meta-section--participants .feu-einsatz-pr-avatar .feu-einsatz-person-avatar {
+    width: 40px;
+    height: 40px;
+}
+
+.feu-einsatz-meta-section--participants .feu-einsatz-pr-function .feu-einsatz-function-select,
+.feu-einsatz-meta-section--participants .feu-einsatz-pr-delete {
+    min-height: 38px;
+    height: 38px;
+}
+
+.feu-einsatz-meta-section--participants .feu-einsatz-pr-delete {
+    width: 38px;
+    min-width: 38px;
+    border-color: #fecaca;
+    color: #b42318;
+    background: #fff;
+    font-size: 15px;
+}
+
+.feu-einsatz-meta-section--participants .feu-einsatz-pr-delete:hover,
+.feu-einsatz-meta-section--participants .feu-einsatz-pr-delete:focus-visible {
+    border-color: #ef4444;
+    background: #fef2f2;
+    color: #991b1b;
+}
+
+.feu-einsatz-meta-section--participants .feu-einsatz-function-quick-button.button.is-active {
+    border-color: #0a4b78;
+    background: #eaf4fb;
+    color: #0a4b78;
+    box-shadow: inset 0 0 0 1px rgba(10, 75, 120, 0.08);
+}
+
+.feu-einsatz-map-regenerate-button {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+}
+
+.feu-einsatz-map-regenerate-button .dashicons {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    font-size: 18px;
+    line-height: 18px;
+}
+
+.feu-einsatz-house-number-suggestions {
+    display: grid;
+    gap: 8px;
+    margin-top: 8px;
+    padding: 10px;
+    border: 1px solid #bfdbfe;
+    border-radius: 6px;
+    background: #f0f7fc;
+}
+
+.feu-einsatz-house-number-suggestions[hidden] {
+    display: none !important;
+}
+
+.feu-einsatz-house-number-suggestions > strong {
+    color: #0f172a;
+    font-size: 12px;
+}
+
+.feu-einsatz-house-number-suggestion-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.feu-einsatz-house-number-suggestion.button {
+    min-height: 32px;
+    height: 32px;
+    padding: 0 10px;
+    border-color: #9ec5fe;
+    background: #fff;
+    color: #0a4b78;
+    font-weight: 700;
+}
+
+.feu-einsatz-house-number-suggestions p {
+    margin: 0;
+    color: #64748b;
+    font-size: 11px;
+    line-height: 1.4;
+}
+
 .feu-einsatz-function-item {
     gap: 12px;
     align-items: center;
@@ -9059,6 +9238,21 @@
 }
 
 @media (max-width: 782px) {
+    .feu-einsatz-meta-section--participants .feu-einsatz-pr-layout {
+        grid-template-columns: 40px minmax(0, 1fr) 38px;
+        align-items: center;
+    }
+
+    .feu-einsatz-meta-section--participants .feu-einsatz-pr-function,
+    .feu-einsatz-meta-section--participants .feu-einsatz-pr-presets {
+        grid-column: 1 / -1;
+    }
+
+    .feu-einsatz-meta-section--participants .feu-einsatz-pr-delete {
+        grid-column: 3;
+        grid-row: 1;
+    }
+
     .feu-einsatz-organization-row {
         align-items: flex-start;
         flex-wrap: wrap;
@@ -9135,6 +9329,15 @@
 
 .feu-einsatz-report-create-page .feu-einsatz-map-generation-status--error .dashicons {
     color: #dc2626;
+}
+
+.feu-einsatz-report-create-page .feu-einsatz-map-generation-status--warning {
+    border-color: #fcd34d;
+    background: #fffbeb;
+}
+
+.feu-einsatz-report-create-page .feu-einsatz-map-generation-status--warning .dashicons {
+    color: #b45309;
 }
 
 .feu-einsatz-report-create-page .feu-einsatz-map-generation-status--ready {

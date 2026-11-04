@@ -40,6 +40,18 @@ test('daily image audit validates files and is visible in the existing operation
     assert.match(operations, /feu_einsatz_run_image_integrity/);
 });
 
+test('map status distinguishes a retained thumbnail from a failed full-size refresh', () => {
+    const admin = read('includes/class-admin.php');
+    const template = read('templates/admin/meta-box-details.php');
+    const styles = read('assets/admin/css/admin-style.css');
+    assert.match(admin, /function has_generated_map_thumbnail_fallback\(/);
+    assert.match(admin, /Ein vorhandenes Kartenbild bleibt sichtbar/);
+    assert.match(admin, /'has_thumbnail_fallback' => \$has_thumbnail_fallback/);
+    assert.match(admin, /\$visual_status = 'error' === \$status && \$has_thumbnail_fallback \? 'warning' : \$status/);
+    assert.match(template, /dashicons-warning/);
+    assert.match(styles, /map-generation-status--warning/);
+});
+
 test('published reports queue an asynchronous cache warm-up', () => {
     const service = read('includes/class-maintenance-service.php');
     assert.match(service, /add_action\('save_post'.*queue_report_cache_warm/);

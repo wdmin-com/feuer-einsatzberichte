@@ -3483,6 +3483,99 @@ class FEU_Einsatz_Admin {
         return FEU_Einsatz_Template_Helpers::request_geocoded_address_data($strasse, $plz, $stadt, $hausnummer);
     }
 
+    private function request_street_house_number_suggestions($street, $postcode, $city, $coordinates, $requested_number = '') {
+        $street = FEU_Einsatz_Template_Helpers::strip_house_number_from_street(sanitize_text_field((string) $street));
+        $postcode = preg_replace('/\D+/', '', (string) $postcode);
+        $city = sanitize_text_field((string) $city);
+
+        if (
+            '' === $street
+            || !preg_match('/^\d{5}$/', $postcode)
+            || !is_array($coordinates)
+            || !isset($coordinates['lat'], $coordinates['lng'])
+            || !is_numeric($coordinates['lat'])
+            || !is_numeric($coordinates['lng'])
+        ) {
+            return [];
+        }
+
+        $cache_key = 'feu_einsatz_house_numbers_v1_' . md5(wp_json_encode([$street, $postcode, $city]));
+        $cached = get_transient($cache_key);
+
+        if (is_array($cached)) {
+            $house_numbers = $cached;
+        } else {
+            $query_parts = [];
+
+            foreach (array_slice($this->get_street_query_candidates($street), 0, 3) as $candidate) {
+                $pattern = preg_quote((string) $candidate, '/');
+                $pattern = str_replace(['\\', '"'], ['\\\\', '\\"'], $pattern);
+
+                if ('' !== $pattern) {
+                    $query_parts[] = 'nwr["addr:housenumber"]["addr:street"~"^' . $pattern . '$",i](around:2200,'
+                        . (float) $coordinates['lat'] . ',' . (float) $coordinates['lng'] . ');';
+                }
+            }
+
+            if (empty($query_parts)) {
+                return [];
+            }
+
+            $response = wp_safe_remote_post(
+                self::OVERPASS_API_URL,
+                array_merge(
+                    $this->get_map_remote_request_args(12),
+                    ['body' => ['data' => '[out:json][timeout:12];(' . implode('', $query_parts) . ');out tags 160;']]
+                )
+            );
+            $payload = $this->decode_map_json_response($response);
+            $house_numbers = [];
+
+            foreach ((array) ($payload['elements'] ?? []) as $element) {
+                $element_postcode = isset($element['tags']['addr:postcode'])
+                    ? preg_replace('/\D+/', '', (string) $element['tags']['addr:postcode'])
+                    : '';
+                if ('' !== $element_postcode && $postcode !== $element_postcode) {
+                    continue;
+                }
+
+                $house_number = isset($element['tags']['addr:housenumber'])
+                    ? sanitize_text_field((string) $element['tags']['addr:housenumber'])
+                    : '';
+
+                if ('' === $house_number || strlen($house_number) > 20) {
+                    continue;
+                }
+
+                $normalized = strtolower(remove_accents((string) preg_replace('/\s+/', '', $house_number)));
+                if ('' !== $normalized) {
+                    $house_numbers[$normalized] = $house_number;
+                }
+            }
+
+            $house_numbers = array_values($house_numbers);
+            usort($house_numbers, 'strnatcasecmp');
+            set_transient($cache_key, $house_numbers, 12 * HOUR_IN_SECONDS);
+        }
+
+        $requested_numeric = (int) preg_replace('/\D+/', '', (string) $requested_number);
+        if ($requested_numeric > 0) {
+            usort($house_numbers, static function($left, $right) use ($requested_numeric) {
+                $left_distance = abs(((int) preg_replace('/\D+/', '', (string) $left)) - $requested_numeric);
+                $right_distance = abs(((int) preg_replace('/\D+/', '', (string) $right)) - $requested_numeric);
+
+                return $left_distance === $right_distance
+                    ? strnatcasecmp((string) $left, (string) $right)
+                    : $left_distance <=> $right_distance;
+            });
+        }
+
+        $house_numbers = array_slice($house_numbers, 0, 18);
+        usort($house_numbers, 'strnatcasecmp');
+
+        return $house_numbers;
+    }
+
     private function request_street_geometry_data($strasse, $coordinates, $plz = '', $stadt = 'Hamburg') {
         if (
             '' === trim((string) $strasse)
@@ -4926,6 +5019,39 @@ class FEU_Einsatz_Admin {
         return $post_id > 0 && '' !== FEU_Einsatz_Template_Helpers::get_generated_map_preview_public_url($post_id);
     }
 
+    private function has_generated_map_thumbnail_fallback($post_id) {
+        $post_id = absint($post_id);
+
+        if (!$post_id) {
+            return false;
+        }
+
+        $attachment_id = $this->get_generated_map_thumbnail_id($post_id);
+
+        if (!$attachment_id || $attachment_id !== (int) get_post_thumbnail_id($post_id)) {
+            return false;
+        }
+
+        $attached_file = (string) get_attached_file($attachment_id);
+
+        if ('' !== $attached_file && is_file($attached_file) && is_readable($attached_file) && filesize($attached_file) > 0) {
+            return true;
+        }
+
+        $metadata = wp_get_attachment_metadata($attachment_id);
+        $thumbnail_file = is_array($metadata) && !empty($metadata['sizes']['thumbnail']['file'])
+            ? (string) $metadata['sizes']['thumbnail']['file']
+            : '';
+
+        if ('' === $thumbnail_file || '' === $attached_file) {
+            return false;
+        }
+
+        $thumbnail_path = trailingslashit(dirname($attached_file)) . wp_basename($thumbnail_file);
+
+        return is_file($thumbnail_path) && is_readable($thumbnail_path) && filesize($thumbnail_path) > 0;
+    }
+
     private function has_current_generated_map_signature($post_id, $strasse, $plz = '', $stadt = 'Hamburg') {
         $post_id = absint($post_id);
         $expected_signature = $this->build_generated_map_signature($strasse, $plz, $stadt, $post_id);
@@ -5407,6 +5533,7 @@ class FEU_Einsatz_Admin {
         $status_payload = $this->get_generated_map_status_payload($post_id);
         $lock_active = $this->is_generated_map_process_locked($post_id);
         $has_generated_asset = $this->has_generated_map_asset($post_id);
+        $has_thumbnail_fallback = !$has_generated_asset && $this->has_generated_map_thumbnail_fallback($post_id);
         $scheduled_for = 0;
         $status = 'idle';
         $message = '';
@@ -5493,6 +5620,10 @@ class FEU_Einsatz_Admin {
             $message = __('Adresse wird gerade im Hintergrund vorbereitet.', 'feuer-einsatzberichte');
         }
 
+        if ('error' === $status && $has_thumbnail_fallback) {
+            $message = __('Ein vorhandenes Kartenbild bleibt sichtbar. Die letzte Aktualisierung konnte jedoch nicht abgeschlossen werden. Bitte erneut generieren.', 'feuer-einsatzberichte');
+        }
+
         if ('ready' === $status && !$has_generated_asset) {
             $status = 'missing';
             $message = __('Kartenbild-Datei fehlt. Bitte erneut generieren.', 'feuer-einsatzberichte');
@@ -5508,11 +5639,14 @@ class FEU_Einsatz_Admin {
             $message = trim($message . ' ' . __('Der Bericht wird erst nach erfolgreicher Kartenbild-Generierung veröffentlicht.', 'feuer-einsatzberichte'));
         }
 
+        $visual_status = 'error' === $status && $has_thumbnail_fallback ? 'warning' : $status;
+
         return [
             'status' => $status,
             'stage' => $stage,
-            'class_name' => 'feu-einsatz-map-generation-status feu-einsatz-map-generation-status--' . $status,
+            'class_name' => 'feu-einsatz-map-generation-status feu-einsatz-map-generation-status--' . $visual_status,
             'message' => trim($message),
+            'has_thumbnail_fallback' => $has_thumbnail_fallback,
             'scheduled_for' => $scheduled_for,
             'scheduled_for_display' => $scheduled_for > 0
                 ? wp_date(get_option('date_format') . ' ' . get_option('time_format'), $scheduled_for)
@@ -10740,8 +10874,18 @@ class FEU_Einsatz_Admin {
                 $street_only_preview = true;
             }
             if ('' !== $requested_house_number && $street_only_preview) {
+                $house_number_suggestions = $this->request_street_house_number_suggestions(
+                    $street,
+                    $postcode,
+                    $city,
+                    $geocoded,
+                    $house_number
+                );
                 wp_send_json_error([
-                    'message' => __('Die Hausnummer konnte nicht bestätigt werden. Die Karte bleibt leer, damit kein anderer Einsatzort angezeigt wird. Bitte Hausnummer prüfen oder genaue Koordinaten wählen.', 'feuer-einsatzberichte'),
+                    'message' => !empty($house_number_suggestions)
+                        ? __('Die Hausnummer konnte nicht bestätigt werden. Wählen Sie unten eine in OpenStreetMap gefundene Hausnummer oder verwenden Sie genaue Koordinaten.', 'feuer-einsatzberichte')
+                        : __('Die Hausnummer konnte nicht bestätigt werden. Die Karte bleibt leer, damit kein anderer Einsatzort angezeigt wird. Bitte Hausnummer prüfen oder genaue Koordinaten wählen.', 'feuer-einsatzberichte'),
+                    'house_numbers' => $house_number_suggestions,
                 ], 422);
             }
             if ($street_only_preview) {

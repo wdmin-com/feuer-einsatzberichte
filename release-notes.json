@@ -1,6 +1,24 @@
 {
   "releases": [
     {
+      "version": "3.3.14",
+      "date": "2026-11-04",
+      "title": "Zuverlässiger Kartenstatus und kompakte Einsatzredaktion",
+      "summary": "Der Berichtseditor unterscheidet jetzt ein vorhandenes Kartenbild von einer fehlgeschlagenen Aktualisierung, ordnet Mannschaft und Kräfte vor Ort in ruhigen Arbeitszeilen und unterstützt bei nicht bestätigten Hausnummern mit kontrollierten OpenStreetMap-Vorschlägen.",
+      "changes": [
+        "Kartenstatus: Eine erhaltene Karten-Miniatur wird nicht mehr mit der falschen Aussage „Kartenbild konnte nicht erstellt werden“ kombiniert; eine fehlgeschlagene Vollbild-Aktualisierung erscheint als präzise gelbe Warnung.",
+        "Kartenaktion: Die Schaltfläche „Kartenbild neu generieren“ besitzt eine korrekt ausgerichtete Bildaktualisierungs-Ikone, getrennten Beschriftungstext und eine sprachlich korrigierte Bestätigung.",
+        "Hausnummernprüfung: Kann eine eingegebene Hausnummer nicht bestätigt werden, zeigt der Editor bis zu 18 passende, in OpenStreetMap vorhandene Nummern derselben Straße zur bewussten Auswahl an.",
+        "Adresssicherheit: Vorschläge werden nach Straße, Postleitzahl und Entfernung eingegrenzt; es wird weiterhin niemals automatisch ein anderer Einsatzort auf der Karte übernommen.",
+        "Performance: Gefundene Hausnummern werden zwölf Stunden lokal zwischengespeichert, damit wiederholte Korrekturen den Kartendienst nicht unnötig belasten.",
+        "Mannschaft: Ausgewählte Mitglieder erscheinen als kompakte horizontale Arbeitszeilen mit Foto, Name, Standardinformation, Einsatzfunktion, Schnellfunktionen und gleich hoher Entfernen-Schaltfläche.",
+        "Auswahlzustände: Markierte Mannschaftsmitglieder und Organisationen verwenden ruhige, kontrastreiche Zustände statt überlagerter oder missverständlicher Hervorhebungen.",
+        "Kräfte vor Ort: Reihenfolge, Farbindikator, Aufwärts-/Abwärtsbewegung und Entfernen-Aktion sind optisch vereinheitlicht; nicht verfügbare Bewegungen werden eindeutig deaktiviert.",
+        "Barrierefreiheit: Funktionsauswahl, Reihenfolge und Entfernen-Aktionen besitzen eindeutige Beschriftungen, sichtbare Fokuszustände und konsistente Bediengrößen.",
+        "Qualität: Neue Regressionstests sichern Kartenstatus, Bildaktion, kompakte Mannschaftszeilen, Organisationsreihenfolge und Hausnummernvorschläge; alle 45 automatischen Prüfungen bestehen."
+      ]
+    },
+    {
       "version": "3.3.13",
       "date": "2026-11-04",
       "title": "Kompakte Redaktion und korrekte Mannschaftsfunktionen",

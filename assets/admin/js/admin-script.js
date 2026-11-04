@@ -698,7 +698,7 @@
 
         $(document).on('click', '#feu-einsatz-regenerate-map-image', function (event) {
             event.preventDefault();
-            if (confirm('Moechten Sie das Kartenbild wirklich neu generieren? Das alte Bild wird ersetzt.')) {
+            if (confirm('Möchten Sie das Kartenbild wirklich neu generieren? Das alte Bild wird ersetzt.')) {
                 generateMapImage($(this));
             }
         });
@@ -2100,6 +2100,8 @@
             var $areaStatus = $('[data-feu-map-area-status]');
             var $areaClear = $('[data-feu-map-area-clear]');
             var $inputGuidance = $('[data-feu-map-input-guidance]');
+            var $houseNumberSuggestions = $('[data-feu-house-number-suggestions]');
+            var $houseNumberSuggestionList = $('[data-feu-house-number-suggestion-list]');
             var timer = null;
             var request = null;
             var map = null;
@@ -2110,6 +2112,33 @@
             if (!$preview.length || !$canvas.length || !window.feu_einsatz_ajax) {
                 return;
             }
+
+            var renderHouseNumberSuggestions = function (houseNumbers) {
+                var numbers = Array.isArray(houseNumbers) ? houseNumbers.filter(Boolean) : [];
+
+                if (!$houseNumberSuggestions.length || !$houseNumberSuggestionList.length || !numbers.length) {
+                    $houseNumberSuggestionList.empty();
+                    $houseNumberSuggestions.prop('hidden', true);
+                    return;
+                }
+
+                $houseNumberSuggestionList.empty();
+                numbers.forEach(function (number) {
+                    $('<button type="button" class="button feu-einsatz-house-number-suggestion"></button>')
+                        .text(String(number))
+                        .attr('data-house-number', String(number))
+                        .appendTo($houseNumberSuggestionList);
+                });
+                $houseNumberSuggestions.prop('hidden', false);
+            };
+
+            $(document).on('click', '.feu-einsatz-house-number-suggestion', function () {
+                $('#feu_einsatz_hausnummer')
+                    .val(String($(this).attr('data-house-number') || ''))
+                    .trigger('input')
+                    .trigger('change')
+                    .trigger('focus');
+            });
 
             var labelForMode = function (mode, length, radius) {
                 if (mode === 'radius') {
@@ -2497,6 +2526,7 @@
                     }
 
                     if (response && response.success && response.data) {
+                        renderHouseNumberSuggestions([]);
                         var previewData = $.extend({ location_mode: details.locationMode }, response.data);
                         var rendered = false;
                         try {
@@ -2533,7 +2563,9 @@
                     if (status === 'abort' || readRequiredDetails().addressKey !== details.addressKey) {
                         return;
                     }
-                    var serverMessage = xhr && xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message;
+                    var responseData = xhr && xhr.responseJSON && xhr.responseJSON.data ? xhr.responseJSON.data : {};
+                    var serverMessage = responseData.message;
+                    renderHouseNumberSuggestions(responseData.house_numbers || []);
                     showPreviewError(serverMessage || 'Kartenvorschau ist momentan nicht verfügbar. Bitte Eingabe oder Kartenverbindung prüfen.');
                 }).always(function () {
                     if (request === activeRequest) {
@@ -2544,6 +2576,7 @@
             };
 
             $('#feu_einsatz_strasse, #feu_einsatz_hausnummer, #feu_einsatz_plz, #feu_einsatz_stadt, #feu_einsatz_datum, #feu_einsatz_uhrzeit, #feu_einsatz_latitude, #feu_einsatz_longitude, #feu_einsatz_map_highlight_override, #feu_einsatz_map_highlight_length_meters, #feu_einsatz_map_highlight_radius_meters, #feu_einsatz_map_extra_streets, input[name="feu_einsatz_map_location_mode"]').on('input change', function () {
+                renderHouseNumberSuggestions([]);
                 syncMapProfileControls();
                 var details = readRequiredDetails();
                 updateInputGuidance(details);

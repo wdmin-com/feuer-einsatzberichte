@@ -211,6 +211,11 @@ $street_highlight_mode_label = 'full' === $street_highlight_mode
                     class="widefat"
                     placeholder="z.B. 12a"
                 />
+                <div class="feu-einsatz-house-number-suggestions" data-feu-house-number-suggestions hidden>
+                    <strong><?php esc_html_e('Gefundene Hausnummern dieser Straße', 'feuer-einsatzberichte'); ?></strong>
+                    <div class="feu-einsatz-house-number-suggestion-list" data-feu-house-number-suggestion-list></div>
+                    <p><?php esc_html_e('Quelle: OpenStreetMap. Die Liste kann unvollständig sein; bitte den Einsatzort weiterhin prüfen.', 'feuer-einsatzberichte'); ?></p>
+                </div>
                 <p class="description feu-einsatz-field-hint">
                     <?php esc_html_e('Optional. Die Hausnummer wird intern verwendet, aber nicht öffentlich auf Kartenbildern gezeigt.', 'feuer-einsatzberichte'); ?>
                 </p>
@@ -482,7 +487,7 @@ $street_highlight_mode_label = 'full' === $street_highlight_mode
                 && in_array(($generated_map_status['status'] ?? 'idle'), ['queued', 'processing', 'error', 'privacy_hidden'], true)
             ) : ?>
                 <div class="<?php echo esc_attr($generated_map_status['class_name']); ?>">
-                    <span class="dashicons dashicons-update-alt" aria-hidden="true"></span>
+                    <span class="dashicons <?php echo !empty($generated_map_status['has_thumbnail_fallback']) ? 'dashicons-warning' : 'dashicons-update-alt'; ?>" aria-hidden="true"></span>
                     <div class="feu-einsatz-map-generation-status-copy">
                         <strong><?php esc_html_e('Hintergrund-Status', 'feuer-einsatzberichte'); ?></strong>
                         <p><?php echo esc_html($generated_map_status['message']); ?></p>
@@ -523,9 +528,9 @@ $street_highlight_mode_label = 'full' === $street_highlight_mode
                     </p>
                 <?php endif; ?>
                 <p class="feu-einsatz-report-status-actions">
-                    <button type="button" id="feu-einsatz-regenerate-map-image" class="button button-secondary">
-                        <span class="dashicons dashicons-update"></span>
-                        <?php esc_html_e('Kartenbild neu generieren', 'feuer-einsatzberichte'); ?>
+                    <button type="button" id="feu-einsatz-regenerate-map-image" class="button button-secondary feu-einsatz-map-regenerate-button">
+                        <span class="dashicons dashicons-image-rotate" aria-hidden="true"></span>
+                        <span><?php esc_html_e('Kartenbild neu generieren', 'feuer-einsatzberichte'); ?></span>
                     </button>
                     <?php if ($has_generated_map_asset) : ?>
                         <button
@@ -552,9 +557,9 @@ $street_highlight_mode_label = 'full' === $street_highlight_mode
                     </div>
                 </div>
                 <p class="feu-einsatz-report-status-actions">
-                    <button type="button" id="feu-einsatz-regenerate-map-image" class="button button-secondary">
-                        <span class="dashicons dashicons-update"></span>
-                        <?php esc_html_e('Kartenbild neu generieren', 'feuer-einsatzberichte'); ?>
+                    <button type="button" id="feu-einsatz-regenerate-map-image" class="button button-secondary feu-einsatz-map-regenerate-button">
+                        <span class="dashicons dashicons-image-rotate" aria-hidden="true"></span>
+                        <span><?php esc_html_e('Kartenbild neu generieren', 'feuer-einsatzberichte'); ?></span>
                     </button>
                     <?php if ($has_generated_map_asset || $generated_map_thumbnail_id > 0) : ?>
                         <button

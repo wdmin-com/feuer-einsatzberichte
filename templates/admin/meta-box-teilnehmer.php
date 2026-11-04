@@ -283,7 +283,10 @@ if (!function_exists('feu_einsatz_render_function_quick_actions')) {
                                    class="feu-einsatz-participant-id-field"
                                    name="feu_einsatz_teilnehmer[<?php echo esc_attr($index); ?>][id]"
                                    value="<?php echo esc_attr($participant_id); ?>" />
-                            <div class="feu-einsatz-pr-top">
+                            <div class="feu-einsatz-pr-layout">
+                                <div class="feu-einsatz-pr-avatar">
+                                    <?php echo feu_einsatz_get_participant_avatar_markup($participant, 40); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                                </div>
                                 <div class="feu-einsatz-pr-copy">
                                     <div class="feu-einsatz-pr-name">
                                         <span class="feu-einsatz-item-number"><?php echo esc_html($index + 1); ?>.</span>
@@ -294,9 +297,12 @@ if (!function_exists('feu_einsatz_render_function_quick_actions')) {
                                     </span>
                                 </div>
                                 <div class="feu-einsatz-pr-function">
-                                    <select name="feu_einsatz_teilnehmer[<?php echo esc_attr($index); ?>][funktion]" class="feu-einsatz-function-select form-select">
+                                    <select name="feu_einsatz_teilnehmer[<?php echo esc_attr($index); ?>][funktion]" class="feu-einsatz-function-select form-select" aria-label="<?php echo esc_attr(sprintf(__('Funktion im Einsatz für %s', 'feuer-einsatzberichte'), $participant_name)); ?>">
                                         <?php feu_einsatz_render_function_options($funktionen, $default_functions, $selected_function, $default_participant_function); ?>
                                     </select>
+                                </div>
+                                <div class="feu-einsatz-pr-presets">
+                                    <?php feu_einsatz_render_function_quick_actions($default_functions, $selected_function); ?>
                                 </div>
                                 <button type="button"
                                         class="button feu-einsatz-remove-item feu-einsatz-pr-delete"
@@ -305,9 +311,6 @@ if (!function_exists('feu_einsatz_render_function_quick_actions')) {
                                         aria-label="<?php esc_attr_e('Mitglied entfernen', 'feuer-einsatzberichte'); ?>">
                                     &#x2715;
                                 </button>
-                            </div>
-                            <div class="feu-einsatz-pr-presets">
-                                <?php feu_einsatz_render_function_quick_actions($default_functions, $selected_function); ?>
                             </div>
                         </div>
                     <?php endforeach; ?>
@@ -355,7 +358,8 @@ if (!function_exists('feu_einsatz_render_function_quick_actions')) {
                             style="--feu-einsatz-toggle-color: <?php echo esc_attr($organization_color); ?>;"
                             aria-pressed="<?php echo $is_selected ? 'true' : 'false'; ?>"
                             <?php disabled($is_locked); ?>>
-                        <?php echo esc_html($label); ?>
+                        <span class="feu-einsatz-organization-chip-swatch" aria-hidden="true"></span>
+                        <span><?php echo esc_html($label); ?></span>
                     </button>
                 <?php endforeach; ?>
             </div>
@@ -382,10 +386,10 @@ if (!function_exists('feu_einsatz_render_function_quick_actions')) {
                             </div>
                             <div class="feu-einsatz-organization-actions">
                                 <button type="button" class="button feu-einsatz-move-item feu-einsatz-move-up" data-type="organisation" aria-label="<?php esc_attr_e('Nach oben verschieben', 'feuer-einsatzberichte'); ?>">
-                                    <span class="dashicons dashicons-arrow-up-alt2"></span>
+                                    <span class="feu-einsatz-order-arrow" aria-hidden="true">↑</span>
                                 </button>
                                 <button type="button" class="button feu-einsatz-move-item feu-einsatz-move-down" data-type="organisation" aria-label="<?php esc_attr_e('Nach unten verschieben', 'feuer-einsatzberichte'); ?>">
-                                    <span class="dashicons dashicons-arrow-down-alt2"></span>
+                                    <span class="feu-einsatz-order-arrow" aria-hidden="true">↓</span>
                                 </button>
                                 <button type="button" class="button feu-einsatz-remove-item feu-einsatz-org-delete" data-type="organisation" data-id="<?php echo esc_attr((int) $organization_id); ?>" aria-label="<?php esc_attr_e('Organisation entfernen', 'feuer-einsatzberichte'); ?>">
                                     &#x2715;
@@ -580,7 +584,8 @@ jQuery(document).ready(function($) {
         var $row = $('<div class=\"feu-einsatz-list-item feu-einsatz-participant-row feu-einsatz-participant-row--compact\" data-id=\"' + escapeHtml(participant.id) + '\"></div>');
         $row.append('<input type=\"hidden\" class=\"feu-einsatz-participant-id-field\" value=\"' + escapeHtml(participant.id) + '\" />');
         $row.append(
-            '<div class=\"feu-einsatz-pr-top\">' +
+            '<div class=\"feu-einsatz-pr-layout\">' +
+                '<div class=\"feu-einsatz-pr-avatar\">' + (participant.avatarHtml || '') + '</div>' +
                 '<div class=\"feu-einsatz-pr-copy\">' +
                     '<div class=\"feu-einsatz-pr-name\">' +
                         '<span class=\"feu-einsatz-item-number\"></span>' +
@@ -589,14 +594,12 @@ jQuery(document).ready(function($) {
                     '<span class=\"feu-einsatz-pr-copy-meta\">' + escapeHtml(buildParticipantMeta(participant)) + '</span>' +
                 '</div>' +
                 '<div class=\"feu-einsatz-pr-function\">' +
-                    '<select class=\"feu-einsatz-function-select form-select\"></select>' +
+                    '<select class=\"feu-einsatz-function-select form-select\" aria-label=\"' + escapeHtml(participantRoleLabel + ': ' + participant.name) + '\"></select>' +
+                '</div>' +
+                '<div class=\"feu-einsatz-pr-presets\">' +
+                    buildFunctionQuickActions(participant.id, selectedFunction || '') +
                 '</div>' +
                 '<button type=\"button\" class=\"button feu-einsatz-remove-item feu-einsatz-pr-delete\" data-type=\"teilnehmer\" data-id=\"' + escapeHtml(participant.id) + '\" aria-label=\"' + escapeHtml(participantRemoveLabel) + '\">&#x2715;</button>' +
-            '</div>'
-        );
-        $row.append(
-            '<div class=\"feu-einsatz-pr-presets\">' +
-                buildFunctionQuickActions(participant.id, selectedFunction || '') +
             '</div>'
         );
         $row.find('.feu-einsatz-function-select').html(buildFunctionOptions(participant.id, selectedFunction || ''));
@@ -726,10 +729,10 @@ jQuery(document).ready(function($) {
                 '</div>' +
                 '<div class=\"feu-einsatz-organization-actions\">' +
                     '<button type=\"button\" class=\"button feu-einsatz-move-item feu-einsatz-move-up\" data-type=\"organisation\" aria-label=\"' + escapeHtml(organizationMoveUpLabel) + '\">' +
-                        '<span class=\"dashicons dashicons-arrow-up-alt2\"></span>' +
+                        '<span class=\"feu-einsatz-order-arrow\" aria-hidden=\"true\">↑</span>' +
                     '</button>' +
                     '<button type=\"button\" class=\"button feu-einsatz-move-item feu-einsatz-move-down\" data-type=\"organisation\" aria-label=\"' + escapeHtml(organizationMoveDownLabel) + '\">' +
-                        '<span class=\"dashicons dashicons-arrow-down-alt2\"></span>' +
+                        '<span class=\"feu-einsatz-order-arrow\" aria-hidden=\"true\">↓</span>' +
                     '</button>' +
                     '<button type=\"button\" class=\"button feu-einsatz-remove-item feu-einsatz-org-delete\" data-type=\"organisation\" data-id=\"' + escapeHtml(organization.id) + '\" aria-label=\"' + escapeHtml(organizationRemoveLabel) + '\">&#x2715;</button>' +
                 '</div>' +

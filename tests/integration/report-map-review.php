@@ -28,6 +28,7 @@ $file = trailingslashit($uploads['basedir']) . 'feu-map-review-' . $post_id . '.
 $url = trailingslashit($uploads['baseurl']) . 'feu-map-review-' . $post_id . '.png';
 $has_asset = new ReflectionMethod(FEU_Einsatz_Admin::class, 'has_generated_map_asset');
 $attachment_id = 0;
+$thumbnail_file = '';
 
 try {
     update_post_meta($post_id, FEU_Einsatz_Report_Post_Type::MARKER_META, '1');
@@ -106,6 +107,40 @@ try {
         throw new RuntimeException('A generated attachment record without its file was reported ready.');
     }
 
+    $thumbnail_file = trailingslashit($uploads['basedir']) . 'feu-map-review-' . $post_id . '-150x150.png';
+    if (false === file_put_contents($thumbnail_file, $png)) {
+        throw new RuntimeException('Could not write retained thumbnail fixture.');
+    }
+    update_attached_file($attachment_id, $file);
+    update_post_meta($attachment_id, '_feu_einsatz_generated_map_preview', '1');
+    wp_update_attachment_metadata($attachment_id, [
+        'width' => 1,
+        'height' => 1,
+        'file' => wp_basename($file),
+        'sizes' => [
+            'thumbnail' => [
+                'file' => wp_basename($thumbnail_file),
+                'width' => 1,
+                'height' => 1,
+                'mime-type' => 'image/png',
+            ],
+        ],
+    ]);
+    set_post_thumbnail($post_id, $attachment_id);
+    update_post_meta($post_id, '_feu_einsatz_generated_map_status', [
+        'status' => 'error',
+        'stage' => 'map',
+        'message' => 'Kartenbild konnte nicht manuell erstellt werden.',
+    ]);
+    $retained_thumbnail_status = $admin->get_generated_map_admin_status($post_id);
+    if ('error' !== ($retained_thumbnail_status['status'] ?? '')
+        || false === strpos((string) ($retained_thumbnail_status['class_name'] ?? ''), '--warning')
+        || empty($retained_thumbnail_status['has_thumbnail_fallback'])
+        || false === strpos((string) ($retained_thumbnail_status['message'] ?? ''), 'vorhandenes Kartenbild')) {
+        throw new RuntimeException('A retained map thumbnail was not distinguished from a fully missing image.');
+    }
+    unlink($thumbnail_file);
+
     $_GET['page'] = 'feu-einsatz-bericht-bearbeiten';
     if ('feuer-einsatzberichte' !== $admin->filter_admin_parent_file('edit.php')
         || 'feu-einsatz-berichte' !== $admin->filter_admin_submenu_file('')) {
@@ -115,6 +150,9 @@ try {
     unset($_GET['report_search'], $_GET['report_year'], $_GET['report_date_from'], $_GET['report_date_to'], $_GET['report_order'], $_GET['feu_einsatz_street'], $_GET['page']);
     if (is_file($file)) {
         unlink($file);
+    }
+    if ('' !== $thumbnail_file && is_file($thumbnail_file)) {
+        unlink($thumbnail_file);
     }
     if ($attachment_id > 0 && !is_wp_error($attachment_id)) {
         wp_delete_attachment($attachment_id, true);
