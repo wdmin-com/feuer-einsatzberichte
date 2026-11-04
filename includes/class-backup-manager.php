@@ -2316,7 +2316,7 @@ class FEU_Einsatz_Backup_Manager {
                 'archive_deleted',
                 'archive',
                 $archive_id,
-                __('Archiv geloescht', 'feuer-einsatzberichte'),
+                __('Archiv gelöscht', 'feuer-einsatzberichte'),
                 ['filename' => $archive->filename]
             );
         }

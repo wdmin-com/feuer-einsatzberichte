@@ -38,7 +38,7 @@ $street_suggestions = FEU_Einsatz_Template_Helpers::get_street_suggestions();
         <a
             href="<?php echo esc_url(admin_url('admin.php?page=feuer-einsatzberichte')); ?>"
             class="feu-se-back"
-            aria-label="<?php esc_attr_e('Zurueck zum Plugin-Dashboard', 'feuer-einsatzberichte'); ?>"
+            aria-label="<?php esc_attr_e('Zurück zum Plugin-Dashboard', 'feuer-einsatzberichte'); ?>"
         >
             &lsaquo;
         </a>
@@ -161,7 +161,7 @@ $street_suggestions = FEU_Einsatz_Template_Helpers::get_street_suggestions();
             <h2 class="feu-se-block-title"><?php esc_html_e('Wo', 'feuer-einsatzberichte'); ?></h2>
             <div class="feu-se-field">
                 <label class="feu-se-label" for="feu-se-street">
-                    <?php esc_html_e('Strasse', 'feuer-einsatzberichte'); ?>
+                    <?php esc_html_e('Straße', 'feuer-einsatzberichte'); ?>
                     <span class="feu-se-required">*</span>
                 </label>
                     <input
@@ -280,7 +280,7 @@ $street_suggestions = FEU_Einsatz_Template_Helpers::get_street_suggestions();
                                 <select
                                     name="feu_einsatz_teilnehmer_funktion[<?php echo esc_attr($participant_id); ?>]"
                                     class="feu-se-select feu-se-func-select"
-                                    aria-label="<?php echo esc_attr(sprintf(__('Funktion fuer %s', 'feuer-einsatzberichte'), $participant_name)); ?>"
+                                    aria-label="<?php echo esc_attr(sprintf(__('Funktion für %s', 'feuer-einsatzberichte'), $participant_name)); ?>"
                                 >
                                     <option value=""><?php esc_html_e('Keine Funktion', 'feuer-einsatzberichte'); ?></option>
                                     <?php foreach ($functions as $function_name) : ?>
@@ -301,8 +301,8 @@ $street_suggestions = FEU_Einsatz_Template_Helpers::get_street_suggestions();
 
         <?php if (!empty($organizations)) : ?>
             <section class="feu-se-block">
-                <h2 class="feu-se-block-title"><?php esc_html_e('Kraefte vor Ort', 'feuer-einsatzberichte'); ?></h2>
-                <div class="feu-se-chip-group feu-se-chip-group--orgs" role="group" aria-label="<?php esc_attr_e('Kraefte vor Ort auswaehlen', 'feuer-einsatzberichte'); ?>">
+                <h2 class="feu-se-block-title"><?php esc_html_e('Kräfte vor Ort', 'feuer-einsatzberichte'); ?></h2>
+                <div class="feu-se-chip-group feu-se-chip-group--orgs" role="group" aria-label="<?php esc_attr_e('Kräfte vor Ort auswählen', 'feuer-einsatzberichte'); ?>">
                     <?php foreach ($organizations as $organization) : ?>
                         <?php if (!empty($organization->is_archived)) { continue; } ?>
                         <label class="feu-se-chip feu-se-chip--org" style="--org-color: <?php echo esc_attr($organization->color ?? '#0a4b78'); ?>">
@@ -353,7 +353,7 @@ $street_suggestions = FEU_Einsatz_Template_Helpers::get_street_suggestions();
                 <?php esc_html_e('Titel', 'feuer-einsatzberichte'); ?>
                 <span class="feu-se-optional-badge"><?php esc_html_e('optional', 'feuer-einsatzberichte'); ?></span>
             </h2>
-            <p class="feu-se-hint"><?php esc_html_e('Wenn das Feld leer bleibt, erzeugt das Plugin den Titel automatisch aus Einsatzart und Strasse.', 'feuer-einsatzberichte'); ?></p>
+            <p class="feu-se-hint"><?php esc_html_e('Wenn das Feld leer bleibt, erzeugt das Plugin den Titel automatisch aus Einsatzart und Straße.', 'feuer-einsatzberichte'); ?></p>
             <input
                 type="text"
                 id="feu-se-title"

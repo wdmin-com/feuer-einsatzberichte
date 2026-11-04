@@ -144,8 +144,9 @@ if ('publish' === $current_post_status) {
         <a class="feu-einsatz-report-section-link" href="#feu-einsatz-report-box-details"><?php esc_html_e('Einsatzdetails', 'feuer-einsatzberichte'); ?></a>
         <a class="feu-einsatz-report-section-link" href="#feu-einsatz-report-section-basics"><?php esc_html_e('Grunddaten', 'feuer-einsatzberichte'); ?></a>
         <a class="feu-einsatz-report-section-link" href="#feu-einsatz-report-box-teilnehmer"><?php esc_html_e('Mannschaft', 'feuer-einsatzberichte'); ?></a>
-        <a class="feu-einsatz-report-section-link" href="#feu-einsatz-report-box-kraefte"><?php esc_html_e('Kraefte vor Ort', 'feuer-einsatzberichte'); ?></a>
-        <a class="feu-einsatz-report-section-link" href="#feu-einsatz-report-box-map"><?php esc_html_e('Kartenbild', 'feuer-einsatzberichte'); ?></a>
+        <a class="feu-einsatz-report-section-link" href="#feu-einsatz-report-box-kraefte"><?php esc_html_e('Kräfte vor Ort', 'feuer-einsatzberichte'); ?></a>
+        <a class="feu-einsatz-report-section-link" href="#feu-einsatz-live-map-preview"><?php esc_html_e('Live-Karte', 'feuer-einsatzberichte'); ?></a>
+        <a class="feu-einsatz-report-section-link" href="#feu-einsatz-report-box-map"><?php esc_html_e('Kartendarstellung', 'feuer-einsatzberichte'); ?></a>
         <a class="feu-einsatz-report-section-link" href="#feu-einsatz-report-box-photos"><?php esc_html_e('Fotos', 'feuer-einsatzberichte'); ?></a>
         <?php if ($comments_feature_enabled) : ?>
             <a class="feu-einsatz-report-section-link" href="#feu-einsatz-report-box-comments"><?php esc_html_e('Kommentare', 'feuer-einsatzberichte'); ?></a>
@@ -267,7 +268,7 @@ if ('publish' === $current_post_status) {
 
                 <div class="postbox feu-einsatz-form-section" id="feu-einsatz-report-box-kraefte">
                     <div class="postbox-header">
-                        <h2 class="hndle"><?php _e('Kraefte vor Ort', 'feuer-einsatzberichte'); ?></h2>
+                        <h2 class="hndle"><?php _e('Kräfte vor Ort', 'feuer-einsatzberichte'); ?></h2>
                     </div>
                     <div class="inside">
                         <?php
@@ -504,7 +505,7 @@ if ('publish' === $current_post_status) {
                              data-label-idle="<?php echo esc_attr__('Noch nicht gespeichert', 'feuer-einsatzberichte'); ?>"
                              data-label-saved="<?php echo esc_attr__('Gespeichert', 'feuer-einsatzberichte'); ?>"
                              data-label-dirty="<?php echo esc_attr__('Nicht gespeicherte Änderungen', 'feuer-einsatzberichte'); ?>"
-                             data-label-autosaved="<?php echo esc_attr__('Automatisch gesichert', 'feuer-einsatzberichte'); ?>"
+                             data-label-autosaved="<?php echo esc_attr__('Automatisch gesichert (im Browser)', 'feuer-einsatzberichte'); ?>"
                              data-label-error="<?php echo esc_attr__('Speichern fehlgeschlagen', 'feuer-einsatzberichte'); ?>"
                              role="status" aria-live="polite">
                             <span class="feu-einsatz-save-indicator-dot" aria-hidden="true"></span>

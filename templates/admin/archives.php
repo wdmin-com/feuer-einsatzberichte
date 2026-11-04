@@ -55,9 +55,9 @@ if (!empty($_GET['archive_deleted'])) {
                 <?php wp_nonce_field('feu_einsatz_create_archive'); ?>
                 <p>
                     <label for="feu_einsatz_archive_label"><strong><?php esc_html_e('Bezeichnung', 'feuer-einsatzberichte'); ?></strong></label><br />
-                    <input type="text" class="regular-text" id="feu_einsatz_archive_label" name="feu_einsatz_archive_label" placeholder="<?php esc_attr_e('z.B. Stand vor grossem Update', 'feuer-einsatzberichte'); ?>" />
+                    <input type="text" class="regular-text" id="feu_einsatz_archive_label" name="feu_einsatz_archive_label" placeholder="<?php esc_attr_e('z. B. Stand vor großem Update', 'feuer-einsatzberichte'); ?>" />
                 </p>
-                <p class="description"><?php echo esc_html(sprintf(__('Es werden maximal %d Archive aufbewahrt. Aeltere Dateien werden automatisch entfernt.', 'feuer-einsatzberichte'), $retention_limit)); ?></p>
+                <p class="description"><?php echo esc_html(sprintf(__('Es werden maximal %d Archive aufbewahrt. Ältere Dateien werden automatisch entfernt.', 'feuer-einsatzberichte'), $retention_limit)); ?></p>
                 <p><button type="submit" class="button button-primary"><?php esc_html_e('Archiv erstellen', 'feuer-einsatzberichte'); ?></button></p>
             </form>
         </section>
@@ -125,7 +125,7 @@ if (!empty($_GET['archive_deleted'])) {
                                     <div class="feu-einsatz-archive-summary">
                                         <span><?php echo esc_html(sprintf(__('Berichte: %d', 'feuer-einsatzberichte'), isset($summary['reports']) ? (int) $summary['reports'] : 0)); ?></span>
                                         <span><?php echo esc_html(sprintf(__('Kommentare: %d', 'feuer-einsatzberichte'), isset($summary['comments']) ? (int) $summary['comments'] : 0)); ?></span>
-                                        <span><?php echo esc_html(sprintf(__('Anhaenge: %d', 'feuer-einsatzberichte'), isset($summary['attachments']) ? (int) $summary['attachments'] : 0)); ?></span>
+                                        <span><?php echo esc_html(sprintf(__('Anhänge: %d', 'feuer-einsatzberichte'), isset($summary['attachments']) ? (int) $summary['attachments'] : 0)); ?></span>
                                         <span><?php echo esc_html(sprintf(__('Statistik-Cache: %d', 'feuer-einsatzberichte'), isset($summary['statistics_cache']) ? (int) $summary['statistics_cache'] : 0)); ?></span>
                                         <span><?php echo esc_html(sprintf(__('Logs: %d', 'feuer-einsatzberichte'), isset($summary['logs']) ? (int) $summary['logs'] : 0)); ?></span>
                                     </div>
@@ -137,8 +137,8 @@ if (!empty($_GET['archive_deleted'])) {
                                     <a class="button" href="<?php echo esc_url(wp_nonce_url(admin_url('admin-post.php?action=feu_einsatz_restore_archive&archive_id=' . (int) $archive->id), 'feu_einsatz_restore_archive')); ?>" onclick="return confirm('<?php echo esc_js(__('Dieses Archiv ersetzt die aktuellen Plugin-Daten. Wirklich fortfahren?', 'feuer-einsatzberichte')); ?>');">
                                         <?php esc_html_e('Wiederherstellen', 'feuer-einsatzberichte'); ?>
                                     </a>
-                                    <a class="button" href="<?php echo esc_url(wp_nonce_url(admin_url('admin-post.php?action=feu_einsatz_delete_archive&archive_id=' . (int) $archive->id), 'feu_einsatz_delete_archive')); ?>" onclick="return confirm('<?php echo esc_js(__('Archiv wirklich loeschen?', 'feuer-einsatzberichte')); ?>');">
-                                        <?php esc_html_e('Loeschen', 'feuer-einsatzberichte'); ?>
+                                    <a class="button" href="<?php echo esc_url(wp_nonce_url(admin_url('admin-post.php?action=feu_einsatz_delete_archive&archive_id=' . (int) $archive->id), 'feu_einsatz_delete_archive')); ?>" onclick="return confirm('<?php echo esc_js(__('Archiv wirklich löschen?', 'feuer-einsatzberichte')); ?>');">
+                                        <?php esc_html_e('Löschen', 'feuer-einsatzberichte'); ?>
                                     </a>
                                 </td>
                             </tr>

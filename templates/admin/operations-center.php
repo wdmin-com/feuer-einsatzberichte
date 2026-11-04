@@ -120,31 +120,47 @@ $retention_cutoff = $retention_years > 0 ? strtotime('-' . $retention_years . ' 
             <?php if (!$status_overview['items']) : ?>
                 <p class="feu-einsatz-operations-empty"><?php esc_html_e('Noch keine Aufgaben für die letzten Berichte vorhanden.', 'feuer-einsatzberichte'); ?></p>
             <?php endif; ?>
+            <?php
+            $background_tasks = array_values((array) $status_overview['items']);
+            $visible_background_tasks = array_slice($background_tasks, 0, 6);
+            $additional_background_tasks = array_slice($background_tasks, 6);
+            $render_background_task = function ($entry) {
+                $report = $entry['post'];
+                ?>
+                <article class="feu-einsatz-operations-report">
+                    <div class="feu-einsatz-operations-report-heading"><h3><a href="<?php echo esc_url($this->get_edit_url((int) $report->ID)); ?>"><?php echo esc_html(get_the_title($report)); ?></a></h3><span>#<?php echo esc_html((string) $report->ID); ?></span></div>
+                    <div class="feu-einsatz-operations-jobs">
+                        <?php foreach ($entry['jobs'] as $job) : ?>
+                            <div class="feu-einsatz-operations-job">
+                                <span class="feu-einsatz-operations-job-state is-<?php echo esc_attr($job['status']); ?>"><?php echo esc_html($job['label']); ?></span>
+                                <span><?php echo esc_html($job['message']); ?></span>
+                                <?php if ($job['retryable'] && current_user_can('edit_post', (int) $report->ID)) : ?>
+                                    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                                        <input type="hidden" name="action" value="feu_einsatz_retry_job" />
+                                        <input type="hidden" name="post_id" value="<?php echo esc_attr((string) $report->ID); ?>" />
+                                        <input type="hidden" name="job" value="<?php echo esc_attr($job['kind']); ?>" />
+                                        <?php wp_nonce_field('feu_einsatz_retry_job_' . (int) $report->ID . '_' . $job['kind']); ?>
+                                        <button type="submit" class="button button-small"><?php esc_html_e('Erneut versuchen', 'feuer-einsatzberichte'); ?></button>
+                                    </form>
+                                <?php endif; ?>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </article>
+                <?php
+            };
+            ?>
             <div class="feu-einsatz-operations-task-list">
-                <?php foreach ($status_overview['items'] as $entry) : ?>
-                    <?php $report = $entry['post']; ?>
-                    <article class="feu-einsatz-operations-report">
-                        <div class="feu-einsatz-operations-report-heading"><h3><a href="<?php echo esc_url($this->get_edit_url((int) $report->ID)); ?>"><?php echo esc_html(get_the_title($report)); ?></a></h3><span>#<?php echo esc_html((string) $report->ID); ?></span></div>
-                        <div class="feu-einsatz-operations-jobs">
-                            <?php foreach ($entry['jobs'] as $job) : ?>
-                                <div class="feu-einsatz-operations-job">
-                                    <span class="feu-einsatz-operations-job-state is-<?php echo esc_attr($job['status']); ?>"><?php echo esc_html($job['label']); ?></span>
-                                    <span><?php echo esc_html($job['message']); ?></span>
-                                    <?php if ($job['retryable'] && current_user_can('edit_post', (int) $report->ID)) : ?>
-                                        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
-                                            <input type="hidden" name="action" value="feu_einsatz_retry_job" />
-                                            <input type="hidden" name="post_id" value="<?php echo esc_attr((string) $report->ID); ?>" />
-                                            <input type="hidden" name="job" value="<?php echo esc_attr($job['kind']); ?>" />
-                                            <?php wp_nonce_field('feu_einsatz_retry_job_' . (int) $report->ID . '_' . $job['kind']); ?>
-                                            <button type="submit" class="button button-small"><?php esc_html_e('Erneut versuchen', 'feuer-einsatzberichte'); ?></button>
-                                        </form>
-                                    <?php endif; ?>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                    </article>
-                <?php endforeach; ?>
+                <?php foreach ($visible_background_tasks as $entry) { $render_background_task($entry); } ?>
             </div>
+            <?php if ($additional_background_tasks) : ?>
+                <details class="feu-einsatz-operations-more-tasks">
+                    <summary><?php echo esc_html(sprintf(__('Weitere %d Aufgaben anzeigen', 'feuer-einsatzberichte'), count($additional_background_tasks))); ?></summary>
+                    <div class="feu-einsatz-operations-task-list">
+                        <?php foreach ($additional_background_tasks as $entry) { $render_background_task($entry); } ?>
+                    </div>
+                </details>
+            <?php endif; ?>
         </section>
 
     <?php elseif ('queue' === $tab) : ?>

@@ -274,6 +274,38 @@
     gap: 8px;
 }
 
+.feu-se-category-picker {
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.feu-se-category-more {
+    margin-top: 10px;
+}
+
+.feu-se-category-more > summary {
+    display: inline-flex;
+    align-items: center;
+    min-height: 36px;
+    color: #2271b1;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.feu-se-category-more[open] > summary {
+    margin-bottom: 10px;
+}
+
+.feu-se-category-more > .feu-se-chip-group {
+    padding: 12px;
+    border: 1px solid var(--feu-se-border);
+    border-radius: 12px;
+    background: #f8fafc;
+}
+
 .feu-se-chip {
     position: relative;
 }

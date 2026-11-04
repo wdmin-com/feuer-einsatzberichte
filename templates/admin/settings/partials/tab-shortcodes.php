@@ -11,7 +11,7 @@ if (!defined('ABSPATH')) {
     <div class="feu-admin-settings-section">
         <div class="feu-admin-settings-section-header">
             <h2><?php esc_html_e('Shortcodes', 'feuer-einsatzberichte'); ?></h2>
-            <p class="description"><?php esc_html_e('Alle verfuegbaren Shortcodes des Plugins. Die Codes koennen direkt in WordPress-Seiten, Beitraege oder Widget-Bereiche eingefuegt werden.', 'feuer-einsatzberichte'); ?></p>
+            <p class="description"><?php esc_html_e('Alle verfügbaren Shortcodes des Plugins. Die Codes können direkt in WordPress-Seiten, Beiträge oder Widget-Bereiche eingefügt werden.', 'feuer-einsatzberichte'); ?></p>
         </div>
     </div>
 
@@ -152,7 +152,7 @@ if (!defined('ABSPATH')) {
         [
             'tag'         => '[feu_einsatz_alarm_liste]',
             'label'       => __('Redaktionelle Alarm-Liste', 'feuer-einsatzberichte'),
-            'description' => __('Zeigt die letzten Einsatzberichte als klare Liste mit Datum, Uhrzeit, Einsatzart, Strasse, Beschreibung und optionalen Zusatzdaten.', 'feuer-einsatzberichte'),
+            'description' => __('Zeigt die letzten Einsatzberichte als klare Liste mit Datum, Uhrzeit, Einsatzart, Straße, Beschreibung und optionalen Zusatzdaten.', 'feuer-einsatzberichte'),
             'example'     => '[feu_einsatz_alarm_liste anzahl="3" anzeigen="zeit,nummer,ort,fotos"]',
             'attributes'  => [
                 [

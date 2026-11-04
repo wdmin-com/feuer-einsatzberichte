@@ -708,7 +708,7 @@
             var postId = String($button.data('post-id') || '');
             var nonce = String($button.data('nonce') || '');
             var redirectTo = String($button.data('redirect-to') || window.location.href);
-            var confirmMessage = String($button.data('confirm') || 'Soll das automatisch generierte Kartenbild wirklich geloescht werden?');
+            var confirmMessage = String($button.data('confirm') || 'Soll das automatisch generierte Kartenbild wirklich gelöscht werden?');
             var $form;
 
             event.preventDefault();
@@ -743,13 +743,13 @@
             event.preventDefault();
 
             if (!mediaApi) {
-                alert('Die WordPress Mediathek ist nicht verfuegbar.');
+                alert('Die WordPress Mediathek ist nicht verfügbar.');
                 return;
             }
 
             if (!galleryFrame) {
                 galleryFrame = mediaApi({
-                    title: 'Fotos fuer Einsatzbericht auswaehlen',
+                    title: 'Fotos für Einsatzbericht auswählen',
                     button: {
                         text: 'Fotos uebernehmen'
                     },
@@ -836,7 +836,7 @@
             event.preventDefault();
 
             if (!mediaApi) {
-                alert('Die WordPress Mediathek ist nicht verfuegbar.');
+                alert('Die WordPress Mediathek ist nicht verfügbar.');
                 return;
             }
 
@@ -876,7 +876,7 @@
         $(document).on('click', '#feu-einsatz-watermark-image-remove', function (event) {
             event.preventDefault();
             $('#feu_einsatz_photo_watermark_image_id').val('0');
-            $('#feu-einsatz-watermark-image-preview').html('<div class="feu-einsatz-watermark-placeholder">Noch kein Wasserzeichen-Bild ausgewaehlt.</div>');
+            $('#feu-einsatz-watermark-image-preview').html('<div class="feu-einsatz-watermark-placeholder">Noch kein Wasserzeichen-Bild ausgewählt.</div>');
             $(this).prop('hidden', true);
         });
 
@@ -886,7 +886,7 @@
             event.preventDefault();
 
             if (!mediaApi) {
-                alert('Die WordPress Mediathek ist nicht verfuegbar.');
+                alert('Die WordPress Mediathek ist nicht verfügbar.');
                 return;
             }
 
@@ -927,7 +927,7 @@
         $(document).on('click', '#feu-einsatz-area-station-logo-remove', function (event) {
             event.preventDefault();
             $('#feu_einsatz_area_station_logo_id').val('0');
-            $('#feu-einsatz-area-station-logo-preview').html('<div class="feu-einsatz-watermark-placeholder">Noch kein Feuerwehr-Logo ausgewaehlt.</div>');
+            $('#feu-einsatz-area-station-logo-preview').html('<div class="feu-einsatz-watermark-placeholder">Noch kein Feuerwehr-Logo ausgewählt.</div>');
             $(this).prop('hidden', true);
             updateMapPreviewLivePreview();
         });
@@ -938,13 +938,13 @@
             event.preventDefault();
 
             if (!mediaApi) {
-                alert('Die WordPress Mediathek ist nicht verfuegbar.');
+                alert('Die WordPress Mediathek ist nicht verfügbar.');
                 return;
             }
 
             if (!socialShareFrame) {
                 socialShareFrame = mediaApi({
-                    title: 'Hintergrundbild fuer Share-Karte auswaehlen',
+                    title: 'Hintergrundbild für Share-Karte auswählen',
                     button: {
                         text: 'Bild verwenden'
                     },
@@ -979,7 +979,7 @@
         $(document).on('click', '#feu-einsatz-social-share-image-remove', function (event) {
             event.preventDefault();
             $('#feu_einsatz_social_share_background_id').val('0');
-            $('#feu-einsatz-social-share-image-preview').html('<div class="feu-einsatz-watermark-placeholder">Noch kein Hintergrundbild ausgewaehlt. Ohne eigenes Bild nutzt die Share-Karte automatisch das vorhandene Beitragsbild oder eine neutrale Flaeche.</div>');
+            $('#feu-einsatz-social-share-image-preview').html('<div class="feu-einsatz-watermark-placeholder">Noch kein Hintergrundbild ausgewählt. Ohne eigenes Bild nutzt die Share-Karte automatisch das vorhandene Beitragsbild oder eine neutrale Fläche.</div>');
             $(this).prop('hidden', true);
             updateSocialShareLivePreview();
         });
@@ -991,13 +991,13 @@
             event.preventDefault();
 
             if (!mediaApi) {
-                alert('Die WordPress Mediathek ist nicht verfuegbar.');
+                alert('Die WordPress Mediathek ist nicht verfügbar.');
                 return;
             }
 
             if (!socialShareLogoFrame) {
                 socialShareLogoFrame = mediaApi({
-                    title: 'Logo fuer Share-Karte auswaehlen',
+                    title: 'Logo für Share-Karte auswählen',
                     button: {
                         text: 'Logo verwenden'
                     },
@@ -1032,7 +1032,7 @@
         $(document).on('click', '#feu-einsatz-social-share-logo-remove', function (event) {
             event.preventDefault();
             $('#feu_einsatz_social_share_logo_id').val('0');
-            $('#feu-einsatz-social-share-logo-preview').html('<div class="feu-einsatz-watermark-placeholder">Noch kein Share-Logo ausgewaehlt. Ohne eigenes Logo bleibt die Fussleiste der Share-Karte frei.</div>');
+            $('#feu-einsatz-social-share-logo-preview').html('<div class="feu-einsatz-watermark-placeholder">Noch kein Share-Logo ausgewählt. Ohne eigenes Logo bleibt die Fußleiste der Share-Karte frei.</div>');
             $(this).prop('hidden', true);
             updateSocialShareLivePreview();
         });
@@ -1195,7 +1195,7 @@
                 return;
             }
 
-            $status.text(message || 'Vorschau ist aktuell. Aenderungen bitte unten speichern.');
+            $status.text(message || 'Vorschau ist aktuell. Änderungen bitte unten speichern.');
         }
 
         $(document).on('click', '[data-feu-share-preset]', function () {
@@ -1236,7 +1236,7 @@
         });
 
         $(document).on('input change', '#tab-sozial input, #tab-sozial select', function () {
-            updateShareSettingsStatus('Ungespeicherte Aenderungen – Vorschau wurde aktualisiert.');
+            updateShareSettingsStatus('Ungespeicherte Änderungen – Vorschau wurde aktualisiert.');
         });
 
         updateSocialShareLivePreview();
@@ -1866,7 +1866,7 @@
             }
 
             var heading = $.trim($('#feu_einsatz_map_preview_heading_text').val() || '') || 'Einsatzort';
-            var prefix = $.trim($('#feu_einsatz_map_preview_street_label_prefix').val() || '') || 'Einsatz Strasse';
+            var prefix = $.trim($('#feu_einsatz_map_preview_street_label_prefix').val() || '') || 'Einsatz Straße';
             var showPanel = $('#feu_einsatz_map_preview_show_panel').is(':checked');
             var showPanelHeading = $('#feu_einsatz_map_preview_show_panel_heading').is(':checked');
             var showPanelAddress = $('#feu_einsatz_map_preview_show_panel_address').is(':checked');
@@ -2032,7 +2032,7 @@
             }
 
             if (!strasse && !hasCoordinates) {
-                alert('Bitte hinterlegen Sie mindestens eine Strasse oder gueltige Koordinaten.');
+                alert('Bitte hinterlegen Sie mindestens eine Straße oder gültige Koordinaten.');
                 return;
             }
 

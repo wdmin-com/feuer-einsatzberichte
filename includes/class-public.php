@@ -98,7 +98,7 @@ class FEU_Einsatz_Public {
         add_action('feu_einsatz_prime_public_map', ['FEU_Einsatz_Template_Helpers', 'prime_public_map_in_background']);
         add_action('feu_einsatz_prime_public_station', ['FEU_Einsatz_Template_Helpers', 'prime_public_station_in_background']);
         add_action('wp_enqueue_scripts', [$this, 'enqueue_scripts']);
-        add_action('wp_head', [$this, 'render_social_share_meta_tags'], 5);
+        add_action('wp_head', [$this, 'render_social_share_meta_tags'], -9999);
         $this->register_shortcode_aliases('count', [$this, 'render_einsatz_count_shortcode']);
         $this->register_shortcode_aliases('current', [$this, 'render_current_einsatz_count_shortcode']);
         $this->register_shortcode_aliases('previous', [$this, 'render_previous_einsatz_count_shortcode']);
@@ -578,7 +578,7 @@ class FEU_Einsatz_Public {
 
         foreach ([
             'category' => __('Einsatzart: %s', 'feuer-einsatzberichte'),
-            'street' => __('Strasse: %s', 'feuer-einsatzberichte'),
+            'street' => __('Straße: %s', 'feuer-einsatzberichte'),
             'location' => __('Ort: %s', 'feuer-einsatzberichte'),
         ] as $field_key => $line_format) {
             if (!in_array($field_key, $selected_fields, true)) {
@@ -862,7 +862,7 @@ class FEU_Einsatz_Public {
             $preview_image_url = '' !== $post_image_url ? $post_image_url : $generated_share_preview_url;
             $download_image_url = '' !== $post_image_url ? $post_image_url : $generated_share_download_url;
             $image_notice = '' !== $post_image_url
-                ? __('Es wird das vorhandene Beitragsbild beziehungsweise das aktuell fuer den Beitrag genutzte Einsatzbild geteilt.', 'feuer-einsatzberichte')
+                ? __('Es wird das vorhandene Beitragsbild beziehungsweise das aktuell für den Beitrag genutzte Einsatzbild geteilt.', 'feuer-einsatzberichte')
                 : __('Kein verwendbares Beitragsbild gefunden. Die Vorschau nutzt deshalb automatisch die generierte Share-Karte.', 'feuer-einsatzberichte');
         }
 
@@ -896,7 +896,7 @@ class FEU_Einsatz_Public {
             'selected_fields' => $settings['fields'],
             'status_notice' => 'publish' === $post_status
                 ? ''
-                : __('Share-Links fuer soziale Netzwerke werden erst nach der Veroeffentlichung freigegeben, damit keine nicht oeffentlichen Beitragslinks verteilt werden.', 'feuer-einsatzberichte'),
+                : __('Share-Links für soziale Netzwerke werden erst nach der Veröffentlichung freigegeben, damit keine nicht öffentlichen Beitragslinks verteilt werden.', 'feuer-einsatzberichte'),
         ];
     }
 
@@ -1115,7 +1115,7 @@ class FEU_Einsatz_Public {
             $items[] = [
                 '@type' => 'ListItem',
                 'position' => $position,
-                'name' => (string) $breadcrumb['label'],
+                'name' => html_entity_decode(wp_strip_all_tags((string) $breadcrumb['label']), ENT_QUOTES | ENT_HTML5, 'UTF-8'),
                 'item' => !empty($breadcrumb['url']) ? (string) $breadcrumb['url'] : $fallback_url,
             ];
 
@@ -1386,7 +1386,7 @@ class FEU_Einsatz_Public {
 
     private function get_page_template_map() {
         $template_path = FEU_EINSATZ_PLUGIN_DIR . 'templates/feuer-einsatzberichte-uebersicht-bootstrap.php';
-        $template_label = __('Einsatz Uebersicht (Bootstrap)', 'feuer-einsatzberichte');
+        $template_label = __('Einsatz Übersicht (Bootstrap)', 'feuer-einsatzberichte');
 
         return [
             'feuer-einsatzberichte-uebersicht-bootstrap.php' => [
@@ -1648,7 +1648,7 @@ class FEU_Einsatz_Public {
 
         if (!FEU_Einsatz_Template_Helpers::is_comments_enabled($post_id)) {
             wp_die(
-                esc_html__('Kommentare sind fuer diesen Einsatzbericht deaktiviert.', 'feuer-einsatzberichte'),
+                esc_html__('Kommentare sind für diesen Einsatzbericht deaktiviert.', 'feuer-einsatzberichte'),
                 esc_html__('Kommentare deaktiviert', 'feuer-einsatzberichte'),
                 [
                     'response' => 403,
@@ -1679,7 +1679,7 @@ class FEU_Einsatz_Public {
         }
 
         wp_die(
-            esc_html__('Kommentare zu Einsatzberichten sind nur fuer angemeldete Benutzer verfuegbar.', 'feuer-einsatzberichte'),
+            esc_html__('Kommentare zu Einsatzberichten sind nur für angemeldete Benutzer verfügbar.', 'feuer-einsatzberichte'),
             esc_html__('Anmeldung erforderlich', 'feuer-einsatzberichte'),
             [
                 'response' => 403,
@@ -1710,10 +1710,10 @@ class FEU_Einsatz_Public {
         );
         $needs_public_runtime_script = $is_single_report || $has_overview_shortcodes || $is_overview_template_request || $is_overview_archive_request;
         $public_strings = [
-            'mapUnavailable' => __('Kartenansicht nicht verfuegbar.', 'feuer-einsatzberichte'),
-            'mapUnavailableHint' => __('Fuer diesen Einsatz sind noch keine ausreichenden Kartendaten gespeichert.', 'feuer-einsatzberichte'),
+            'mapUnavailable' => __('Kartenansicht nicht verfügbar.', 'feuer-einsatzberichte'),
+            'mapUnavailableHint' => __('Für diesen Einsatz sind noch keine ausreichenden Kartendaten gespeichert.', 'feuer-einsatzberichte'),
             'pedestrianPartLabel' => __('Fussgaengerbereich', 'feuer-einsatzberichte'),
-            'streetFallback' => __('Strasse', 'feuer-einsatzberichte'),
+            'streetFallback' => __('Straße', 'feuer-einsatzberichte'),
             'radiusLabel' => __('Feuerwehr-Einsatzbereich', 'feuer-einsatzberichte'),
             'mapConsentTitle' => __('Datenschutz-Hinweis', 'feuer-einsatzberichte'),
             'mapConsentText' => __('Beim Laden der Live-Karte werden externe Kartendaten von OpenStreetMap nachgeladen.', 'feuer-einsatzberichte'),
@@ -1723,8 +1723,8 @@ class FEU_Einsatz_Public {
             'mapPrivacyRejectedHint' => __('Sie haben das Nachladen externer Kartendaten abgelehnt.', 'feuer-einsatzberichte'),
         ];
         $area_map_strings = [
-            'mapUnavailable' => __('Einsatzgebiet-Karte nicht verfuegbar.', 'feuer-einsatzberichte'),
-            'mapUnavailableHint' => __('Bitte pruefen Sie die hinterlegten PLZ oder die Kartendaten.', 'feuer-einsatzberichte'),
+            'mapUnavailable' => __('Einsatzgebiet-Karte nicht verfügbar.', 'feuer-einsatzberichte'),
+            'mapUnavailableHint' => __('Bitte prüfen Sie die hinterlegten PLZ oder die Kartendaten.', 'feuer-einsatzberichte'),
             'callSingular' => __('Einsatz', 'feuer-einsatzberichte'),
             'callPlural' => __('Einsaetze', 'feuer-einsatzberichte'),
             'streetsLabel' => __('Strassen', 'feuer-einsatzberichte'),

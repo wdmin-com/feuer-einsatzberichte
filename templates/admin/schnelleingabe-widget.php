@@ -12,6 +12,27 @@ $success_edit_url = isset($success_edit_url) ? (string) $success_edit_url : '';
 $can_publish = !empty($can_publish);
 $selected_categories = array_map('absint', (array) ($form_values['categories'] ?? []));
 $street_suggestions = FEU_Einsatz_Template_Helpers::get_street_suggestions();
+$primary_categories = [];
+$additional_categories = [];
+$primary_category_limit = 8;
+
+foreach ($categories as $category) {
+    if (in_array((int) $category->term_id, $selected_categories, true)) {
+        $primary_categories[] = $category;
+    }
+}
+
+foreach ($categories as $category) {
+    if (in_array((int) $category->term_id, $selected_categories, true)) {
+        continue;
+    }
+
+    if (count($primary_categories) < $primary_category_limit) {
+        $primary_categories[] = $category;
+    } else {
+        $additional_categories[] = $category;
+    }
+}
 ?>
 
 <div class="feu-se-widget">
@@ -59,10 +80,10 @@ $street_suggestions = FEU_Einsatz_Template_Helpers::get_street_suggestions();
             </div>
         </div>
 
-        <div class="feu-se-field">
-            <label class="feu-se-label"><?php esc_html_e('Einsatzart', 'feuer-einsatzberichte'); ?> <span class="feu-se-required">*</span></label>
+        <fieldset class="feu-se-field feu-se-category-picker">
+            <legend class="feu-se-label"><?php esc_html_e('Einsatzart', 'feuer-einsatzberichte'); ?> <span class="feu-se-required">*</span></legend>
             <div class="feu-se-chip-group feu-se-chip-group--compact">
-                <?php foreach ($categories as $category) : ?>
+                <?php foreach ($primary_categories as $category) : ?>
                     <label class="feu-se-chip">
                         <input
                             type="checkbox"
@@ -75,11 +96,29 @@ $street_suggestions = FEU_Einsatz_Template_Helpers::get_street_suggestions();
                     </label>
                 <?php endforeach; ?>
             </div>
-        </div>
+            <?php if ($additional_categories) : ?>
+                <details class="feu-se-category-more">
+                    <summary><?php echo esc_html(sprintf(__('Weitere %d Einsatzstichworte', 'feuer-einsatzberichte'), count($additional_categories))); ?></summary>
+                    <div class="feu-se-chip-group feu-se-chip-group--compact">
+                        <?php foreach ($additional_categories as $category) : ?>
+                            <label class="feu-se-chip">
+                                <input
+                                    type="checkbox"
+                                    class="feu-se-chip-input"
+                                    name="post_category[]"
+                                    value="<?php echo esc_attr($category->term_id); ?>"
+                                >
+                                <span class="feu-se-chip-label"><?php echo esc_html($category->name); ?></span>
+                            </label>
+                        <?php endforeach; ?>
+                    </div>
+                </details>
+            <?php endif; ?>
+        </fieldset>
 
         <div class="feu-se-field">
-            <label class="feu-se-label" for="feu-widget-street"><?php esc_html_e('Strasse', 'feuer-einsatzberichte'); ?> <span class="feu-se-required">*</span></label>
-            <input type="text" id="feu-widget-street" name="feu_einsatz_strasse" class="feu-se-input" value="<?php echo esc_attr($form_values['street'] ?? ''); ?>" placeholder="<?php esc_attr_e('Musterstrasse', 'feuer-einsatzberichte'); ?>" list="feu-einsatz-street-suggestions" autocomplete="street-address" required>
+            <label class="feu-se-label" for="feu-widget-street"><?php esc_html_e('Straße', 'feuer-einsatzberichte'); ?> <span class="feu-se-required">*</span></label>
+            <input type="text" id="feu-widget-street" name="feu_einsatz_strasse" class="feu-se-input" value="<?php echo esc_attr($form_values['street'] ?? ''); ?>" placeholder="<?php esc_attr_e('Musterstraße', 'feuer-einsatzberichte'); ?>" list="feu-einsatz-street-suggestions" autocomplete="street-address" required>
             <?php if (!empty($street_suggestions)) : ?>
                 <datalist id="feu-einsatz-street-suggestions">
                     <?php foreach ($street_suggestions as $street_suggestion) : ?>
@@ -116,7 +155,7 @@ $street_suggestions = FEU_Einsatz_Template_Helpers::get_street_suggestions();
                 value="<?php echo $can_publish ? 'publish' : 'draft'; ?>"
                 class="button button-primary"
             >
-                <span data-feu-submit-text><?php echo esc_html($can_publish ? __('Veroeffentlichen', 'feuer-einsatzberichte') : __('Speichern', 'feuer-einsatzberichte')); ?></span>
+                <span data-feu-submit-text><?php echo esc_html($can_publish ? __('Veröffentlichen', 'feuer-einsatzberichte') : __('Speichern', 'feuer-einsatzberichte')); ?></span>
                 <span class="feu-se-btn-spinner feu-se-btn-spinner--inline" data-feu-submit-spinner hidden></span>
             </button>
             <?php if ($can_publish) : ?>
@@ -125,7 +164,7 @@ $street_suggestions = FEU_Einsatz_Template_Helpers::get_street_suggestions();
                 </button>
             <?php endif; ?>
             <a href="<?php echo esc_url(admin_url('admin.php?page=feu-einsatz-schnelleingabe')); ?>" class="button button-link">
-                <?php esc_html_e('Vollstaendige Schnelleingabe oeffnen', 'feuer-einsatzberichte'); ?>
+                <?php esc_html_e('Vollständige Schnelleingabe öffnen', 'feuer-einsatzberichte'); ?>
             </a>
         </div>
     </form>

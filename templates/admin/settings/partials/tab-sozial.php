@@ -22,7 +22,7 @@ $social_share_preview_time = (string) ($social_share_preview_example['time'] ?? 
 $social_share_preview_category = (string) ($social_share_preview_example['category'] ?? 'FEUK');
 $social_share_preview_street = (string) ($social_share_preview_example['street'] ?? 'Beispielstrasse');
 $social_share_preview_location = (string) ($social_share_preview_example['location'] ?? '22547 Hamburg');
-$social_share_preview_description = (string) ($social_share_preview_example['description'] ?? 'Kurzer Beispieltext fuer die Share-Karte. Laengere Texte werden automatisch gekuerzt.');
+$social_share_preview_description = (string) ($social_share_preview_example['description'] ?? 'Kurzer Beispieltext für die Share-Karte. Längere Texte werden automatisch gekürzt.');
 $social_share_preview_url = (string) ($social_share_preview_example['url'] ?? home_url('/einsaetze/beispiel/'));
 $_preview_host = wp_parse_url(home_url(), PHP_URL_HOST);
 $_preview_host = $_preview_host ? preg_replace('/^www\./i', '', (string) $_preview_host) : get_bloginfo('name');
@@ -66,7 +66,7 @@ if ($social_share_background_url) {
             <div class="feu-admin-settings-surface-head">
                 <div>
                     <h2><?php esc_html_e('Soziale Netzwerke', 'feuer-einsatzberichte'); ?></h2>
-                    <p class="description"><?php esc_html_e('Share-Buttons, Share-Karte und Meta-Daten fuer Link-Vorschauen werden hier zentral gesteuert.', 'feuer-einsatzberichte'); ?></p>
+                    <p class="description"><?php esc_html_e('Share-Buttons, Share-Karte und Meta-Daten für Link-Vorschauen werden hier zentral gesteuert.', 'feuer-einsatzberichte'); ?></p>
                 </div>
             </div>
 
@@ -75,7 +75,7 @@ if ($social_share_background_url) {
                     <strong><?php esc_html_e('In drei Schritten zur fertigen Share-Karte', 'feuer-einsatzberichte'); ?></strong>
                     <span data-feu-share-settings-status aria-live="polite"></span>
                 </div>
-                <div class="feu-share-settings-workbench-actions" aria-label="<?php esc_attr_e('Schnellaktionen fuer die Share-Karte', 'feuer-einsatzberichte'); ?>">
+                <div class="feu-share-settings-workbench-actions" aria-label="<?php esc_attr_e('Schnellaktionen für die Share-Karte', 'feuer-einsatzberichte'); ?>">
                     <button type="button" class="button" data-feu-share-preset="operational"><?php esc_html_e('Einsatz kompakt', 'feuer-einsatzberichte'); ?></button>
                     <button type="button" class="button" data-feu-share-preset="photo"><?php esc_html_e('Foto im Fokus', 'feuer-einsatzberichte'); ?></button>
                     <button type="button" class="button" data-feu-share-preset="story"><?php esc_html_e('Story mobil', 'feuer-einsatzberichte'); ?></button>
@@ -143,7 +143,7 @@ if ($social_share_background_url) {
                             </select>
                         </label>
                         <label class="feu-admin-settings-field">
-                            <span><?php esc_html_e('Kurztext fuer Website-Hinweis', 'feuer-einsatzberichte'); ?></span>
+                            <span><?php esc_html_e('Kurztext für Website-Hinweis', 'feuer-einsatzberichte'); ?></span>
                             <input type="text" id="feu_einsatz_social_share_cta_text" name="feu_einsatz_social_share_cta_text" class="regular-text" value="<?php echo esc_attr($social_share_cta_text); ?>" placeholder="<?php esc_attr_e('Weitere Infos', 'feuer-einsatzberichte'); ?>" />
                             <small><?php esc_html_e('Optional. In der aktuellen Karte wird unten primaer die kurze Website-Adresse gezeigt.', 'feuer-einsatzberichte'); ?></small>
                         </label>
@@ -175,7 +175,7 @@ if ($social_share_background_url) {
                                     <?php if ($social_share_background_url) : ?>
                                         <img src="<?php echo esc_url($social_share_background_url); ?>" alt="" class="feu-einsatz-watermark-preview-image" />
                                     <?php else : ?>
-                                        <div class="feu-einsatz-watermark-placeholder"><?php esc_html_e('Kein eigenes Hintergrundbild gewaehlt. Dann greift die Karte auf Beitragsbild oder neutrale Flaeche zurueck.', 'feuer-einsatzberichte'); ?></div>
+                                        <div class="feu-einsatz-watermark-placeholder"><?php esc_html_e('Kein eigenes Hintergrundbild gewählt. Dann greift die Karte auf Beitragsbild oder neutrale Fläche zurück.', 'feuer-einsatzberichte'); ?></div>
                                     <?php endif; ?>
                                 </div>
                                 <div class="feu-einsatz-watermark-actions">
@@ -193,7 +193,7 @@ if ($social_share_background_url) {
                                     <?php if ($social_share_logo_url) : ?>
                                         <img src="<?php echo esc_url($social_share_logo_url); ?>" alt="" class="feu-einsatz-watermark-preview-image" />
                                     <?php else : ?>
-                                        <div class="feu-einsatz-watermark-placeholder"><?php esc_html_e('Kein Logo gewaehlt. Dann bleibt die rechte untere Ecke frei.', 'feuer-einsatzberichte'); ?></div>
+                                        <div class="feu-einsatz-watermark-placeholder"><?php esc_html_e('Kein Logo gewählt. Dann bleibt die rechte untere Ecke frei.', 'feuer-einsatzberichte'); ?></div>
                                     <?php endif; ?>
                                 </div>
                                 <div class="feu-einsatz-watermark-actions">
@@ -310,7 +310,7 @@ if ($social_share_background_url) {
                             />
                             <span class="feu-admin-settings-check-copy">
                                 <strong><?php esc_html_e('Hintergrund-Overlays anzeigen', 'feuer-einsatzberichte'); ?></strong>
-                                <small><?php esc_html_e('Deaktivieren, wenn Bild, Texte und Logo ohne blaue Panel-Flaeche wirken sollen.', 'feuer-einsatzberichte'); ?></small>
+                                <small><?php esc_html_e('Deaktivieren, wenn Bild, Texte und Logo ohne blaue Panel-Fläche wirken sollen.', 'feuer-einsatzberichte'); ?></small>
                             </span>
                         </label>
                     </div>
@@ -377,7 +377,7 @@ if ($social_share_background_url) {
             <div class="feu-admin-settings-surface-head">
                 <div>
                     <h3><?php esc_html_e('Meta-Daten und Link-Vorschau', 'feuer-einsatzberichte'); ?></h3>
-                    <p class="description"><?php esc_html_e('Open Graph, X Cards, Canonical und Schema.org werden hier fuer Link-Vorschauen und Suchmaschinen geschaltet.', 'feuer-einsatzberichte'); ?></p>
+                    <p class="description"><?php esc_html_e('Open Graph, X Cards, Canonical und Schema.org werden hier für Link-Vorschauen und Suchmaschinen geschaltet.', 'feuer-einsatzberichte'); ?></p>
                 </div>
             </div>
 
@@ -387,7 +387,7 @@ if ($social_share_background_url) {
                         <input type="checkbox" name="feu_einsatz_social_meta_enabled" value="1" <?php checked(1 === (int) $social_meta_enabled); ?> />
                         <span class="feu-admin-settings-check-copy">
                             <strong><?php esc_html_e('Open Graph und X Cards', 'feuer-einsatzberichte'); ?></strong>
-                            <small><?php esc_html_e('Titel, Beschreibung und Bild fuer Messenger und Social-Apps.', 'feuer-einsatzberichte'); ?></small>
+                            <small><?php esc_html_e('Titel, Beschreibung und Bild für Messenger und Social-Apps.', 'feuer-einsatzberichte'); ?></small>
                         </span>
                     </label>
                     <label class="feu-admin-settings-check-card">
@@ -401,7 +401,7 @@ if ($social_share_background_url) {
                         <input type="checkbox" name="feu_einsatz_social_meta_schema_enabled" value="1" <?php checked(1 === (int) $social_meta_schema_enabled); ?> />
                         <span class="feu-admin-settings-check-copy">
                             <strong><?php esc_html_e('Schema.org', 'feuer-einsatzberichte'); ?></strong>
-                            <small><?php esc_html_e('Strukturierte Daten fuer Artikel und Breadcrumbs.', 'feuer-einsatzberichte'); ?></small>
+                            <small><?php esc_html_e('Strukturierte Daten für Artikel und Breadcrumbs.', 'feuer-einsatzberichte'); ?></small>
                         </span>
                     </label>
                 </div>
@@ -409,7 +409,7 @@ if ($social_share_background_url) {
                 <label class="feu-admin-settings-field">
                     <span><?php esc_html_e('X / Twitter Handle', 'feuer-einsatzberichte'); ?></span>
                     <input type="text" id="feu_einsatz_social_meta_twitter_site" name="feu_einsatz_social_meta_twitter_site" class="regular-text" value="<?php echo esc_attr($social_meta_twitter_site); ?>" placeholder="@feuerwehr" />
-                    <small><?php esc_html_e('Wird fuer Cards und via= bei X verwendet.', 'feuer-einsatzberichte'); ?></small>
+                    <small><?php esc_html_e('Wird für Cards und via= bei X verwendet.', 'feuer-einsatzberichte'); ?></small>
                 </label>
             </div>
         </section>

@@ -10,12 +10,12 @@ if (isset($active_tab) && 'einzelbeitrag' !== (string) $active_tab) {
 }
 
 $single_info_field_options = [
-    'street' => __('Strasse', 'feuer-einsatzberichte'),
+    'street' => __('Straße', 'feuer-einsatzberichte'),
     'location' => __('Ort', 'feuer-einsatzberichte'),
     'date' => __('Datum', 'feuer-einsatzberichte'),
     'time' => __('Uhrzeit', 'feuer-einsatzberichte'),
     'category' => __('Einsatzart', 'feuer-einsatzberichte'),
-    'organizations' => __('Kraefte vor Ort', 'feuer-einsatzberichte'),
+    'organizations' => __('Kräfte vor Ort', 'feuer-einsatzberichte'),
 ];
 ?>
 
@@ -97,7 +97,7 @@ $single_info_field_options = [
                             class="regular-text">
                         <option value="live" <?php selected($single_map_display_mode, 'live'); ?>><?php esc_html_e('Live-Karte anzeigen', 'feuer-einsatzberichte'); ?></option>
                         <option value="image" <?php selected($single_map_display_mode, 'image'); ?>><?php esc_html_e('Nur Beitragsbild anzeigen', 'feuer-einsatzberichte'); ?></option>
-                        <option value="disabled" <?php selected($single_map_display_mode, 'disabled'); ?>><?php esc_html_e('Karte vollstaendig ausblenden', 'feuer-einsatzberichte'); ?></option>
+                        <option value="disabled" <?php selected($single_map_display_mode, 'disabled'); ?>><?php esc_html_e('Karte vollständig ausblenden', 'feuer-einsatzberichte'); ?></option>
                     </select>
                 </label>
 
@@ -121,7 +121,7 @@ $single_info_field_options = [
                            value="1"
                            <?php checked($single_desaturate_organizations, 1); ?> />
                     <span class="feu-admin-settings-check-copy">
-                        <strong><?php esc_html_e('Farben bei Kraefte vor Ort entschaerfen', 'feuer-einsatzberichte'); ?></strong>
+                        <strong><?php esc_html_e('Farben der Kräfte vor Ort entschärfen', 'feuer-einsatzberichte'); ?></strong>
                         <small><?php esc_html_e('Die Organisationsfarben werden im Einzelbeitrag entsaettigt dargestellt.', 'feuer-einsatzberichte'); ?></small>
                     </span>
                 </label>

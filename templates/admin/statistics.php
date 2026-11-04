@@ -1644,36 +1644,11 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('[data-feu-count-up]').forEach(function(element) {
             var target = parseFloat(element.getAttribute('data-feu-count-up') || '0');
             var decimals = parseInt(element.getAttribute('data-feu-count-decimals') || '0', 10);
-            var duration = reduceMotion ? 0 : 900;
-            var startTime = null;
 
             if (!Number.isFinite(target)) {
                 return;
             }
-
-            function renderValue(progress) {
-                var eased = 1 - Math.pow(1 - progress, 3);
-                var value = target * eased;
-                element.textContent = decimals > 0 ? value.toFixed(decimals) : String(Math.round(value));
-            }
-
-            if (!duration) {
-                renderValue(1);
-                return;
-            }
-
-            window.requestAnimationFrame(function step(timestamp) {
-                if (!startTime) {
-                    startTime = timestamp;
-                }
-
-                var progress = Math.min(1, (timestamp - startTime) / duration);
-                renderValue(progress);
-
-                if (progress < 1) {
-                    window.requestAnimationFrame(step);
-                }
-            });
+            element.textContent = decimals > 0 ? target.toFixed(decimals) : String(Math.round(target));
         });
 
         document.querySelectorAll('.feu-einsatz-stat-visual-card, .feu-einsatz-command-visual, .feu-einsatz-admindek-card').forEach(function(element, index) {
@@ -2758,7 +2733,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
             var marker = L.marker([latitude, longitude], {
                 icon: getActivityMarkerIcon(cluster, maxClusterCount),
-                keyboard: true
+                keyboard: true,
+                title: 'Einsatzort: ' + getClusterPrimaryLabel(cluster)
             }).addTo(activityMapInstance);
             marker.bindPopup(getActivityClusterPopup(cluster), {
                 maxWidth: 320
@@ -2844,6 +2820,8 @@ document.addEventListener('DOMContentLoaded', function() {
         var slides = deck ? Array.prototype.slice.call(deck.querySelectorAll('[data-feu-presentation-slide]')) : [];
         var current = deck ? deck.querySelector('[data-feu-presentation-current]') : null;
         var total = deck ? deck.querySelector('[data-feu-presentation-total]') : null;
+        var previousButton = deck ? deck.querySelector('[data-feu-presentation-prev]') : null;
+        var nextButton = deck ? deck.querySelector('[data-feu-presentation-next]') : null;
 
         if (!deck || !slides.length) {
             return;
@@ -2862,6 +2840,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (total) {
             total.textContent = String(slides.length);
+        }
+
+        if (previousButton) {
+            previousButton.disabled = index === 0;
+            previousButton.setAttribute('aria-disabled', index === 0 ? 'true' : 'false');
+        }
+
+        if (nextButton) {
+            nextButton.disabled = index === slides.length - 1;
+            nextButton.setAttribute('aria-disabled', index === slides.length - 1 ? 'true' : 'false');
         }
 
         if (slides[index] && slides[index].dataset.feuPresentationKind === 'activity-map') {
@@ -3319,7 +3307,7 @@ document.addEventListener('DOMContentLoaded', function() {
             pdf.addImage(canvas.toDataURL('image/png'), 'PNG', x + 4, y + 18, width - 8, height - 22, undefined, 'FAST');
         } else {
             pdf.setTextColor(100, 116, 139);
-            pdf.text(sanitizePdfText('Keine Grafik verfuegbar.'), x + 5, y + 26);
+            pdf.text(sanitizePdfText('Keine Grafik verfügbar.'), x + 5, y + 26);
             pdf.setTextColor(23, 23, 23);
         }
     }

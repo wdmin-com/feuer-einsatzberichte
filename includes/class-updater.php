@@ -522,7 +522,7 @@ class FEU_Einsatz_Updater {
             '<div class="notice notice-warning"><p>%s</p></div>',
             wp_kses_post(
                 sprintf(
-                    __('Fuer Einsatzberichte ist Version %1$s verfuegbar. <a href="%2$s">Jetzt zur Plugin-Aktualisierung wechseln</a>.', 'feuer-einsatzberichte'),
+                    __('Für Einsatzberichte ist Version %1$s verfügbar. <a href="%2$s">Jetzt zur Plugin-Aktualisierung wechseln</a>.', 'feuer-einsatzberichte'),
                     esc_html($manifest['version']),
                     esc_url(admin_url('plugins.php'))
                 )

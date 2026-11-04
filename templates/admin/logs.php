@@ -8,7 +8,11 @@ $search = isset($_GET['s']) ? sanitize_text_field(wp_unslash($_GET['s'])) : '';
 $action_filter = isset($_GET['log_action']) ? sanitize_key(wp_unslash($_GET['log_action'])) : '';
 $entity_filter = isset($_GET['log_entity']) ? sanitize_key(wp_unslash($_GET['log_entity'])) : '';
 $paged = max(1, isset($_GET['paged']) ? absint(wp_unslash($_GET['paged'])) : 1);
-$per_page = 100;
+$allowed_per_page = [20, 50, 100];
+$per_page = isset($_GET['per_page']) ? absint(wp_unslash($_GET['per_page'])) : 20;
+if (!in_array($per_page, $allowed_per_page, true)) {
+    $per_page = 20;
+}
 $offset = ($paged - 1) * $per_page;
 $logs = $logger ? $logger->get_logs([
     'limit' => $per_page,
@@ -39,13 +43,16 @@ $filters_active = '' !== $search || '' !== $action_filter || '' !== $entity_filt
 
     <form method="get" class="feu-einsatz-log-filter-bar">
         <input type="hidden" name="page" value="feu-einsatz-logs" />
+        <label class="screen-reader-text" for="feu-einsatz-log-search"><?php esc_html_e('Logs durchsuchen', 'feuer-einsatzberichte'); ?></label>
         <input type="search"
+               id="feu-einsatz-log-search"
                name="s"
                value="<?php echo esc_attr($search); ?>"
                placeholder="<?php esc_attr_e('Suche in Bereich, Aktion oder Details', 'feuer-einsatzberichte'); ?>"
                class="regular-text" />
 
-        <select name="log_action">
+        <label class="screen-reader-text" for="feu-einsatz-log-action"><?php esc_html_e('Nach Aktion filtern', 'feuer-einsatzberichte'); ?></label>
+        <select name="log_action" id="feu-einsatz-log-action">
             <option value=""><?php esc_html_e('Alle Aktionen', 'feuer-einsatzberichte'); ?></option>
             <?php foreach ($action_choices as $action_key => $action_label) : ?>
                 <option value="<?php echo esc_attr($action_key); ?>" <?php selected($action_filter, $action_key); ?>>
@@ -54,7 +61,8 @@ $filters_active = '' !== $search || '' !== $action_filter || '' !== $entity_filt
             <?php endforeach; ?>
         </select>
 
-        <select name="log_entity">
+        <label class="screen-reader-text" for="feu-einsatz-log-entity"><?php esc_html_e('Nach Bereich filtern', 'feuer-einsatzberichte'); ?></label>
+        <select name="log_entity" id="feu-einsatz-log-entity">
             <option value=""><?php esc_html_e('Alle Bereiche', 'feuer-einsatzberichte'); ?></option>
             <?php foreach ($entity_choices as $entity_key => $entity_label) : ?>
                 <?php if ('' === (string) $entity_key) { continue; } ?>
@@ -64,19 +72,28 @@ $filters_active = '' !== $search || '' !== $action_filter || '' !== $entity_filt
             <?php endforeach; ?>
         </select>
 
+        <label class="screen-reader-text" for="feu-einsatz-log-per-page"><?php esc_html_e('Einträge pro Seite', 'feuer-einsatzberichte'); ?></label>
+        <select name="per_page" id="feu-einsatz-log-per-page">
+            <?php foreach ($allowed_per_page as $page_size) : ?>
+                <option value="<?php echo esc_attr((string) $page_size); ?>" <?php selected($per_page, $page_size); ?>>
+                    <?php echo esc_html(sprintf(__('%d Einträge', 'feuer-einsatzberichte'), $page_size)); ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
+
         <button type="submit" class="button button-primary"><?php esc_html_e('Filtern', 'feuer-einsatzberichte'); ?></button>
 
         <?php if ($filters_active) : ?>
             <a class="button" href="<?php echo esc_url(admin_url('admin.php?page=feu-einsatz-logs')); ?>">
-                <?php esc_html_e('Filter zuruecksetzen', 'feuer-einsatzberichte'); ?>
+                <?php esc_html_e('Filter zurücksetzen', 'feuer-einsatzberichte'); ?>
             </a>
         <?php endif; ?>
     </form>
 
     <?php if (empty($logs)) : ?>
         <div class="feu-einsatz-log-empty-card">
-            <h2><?php esc_html_e('Keine Log-Eintraege gefunden', 'feuer-einsatzberichte'); ?></h2>
-            <p class="description"><?php esc_html_e('Fuer die aktuelle Filterkombination wurden keine passenden Aktionen gefunden.', 'feuer-einsatzberichte'); ?></p>
+            <h2><?php esc_html_e('Keine Log-Einträge gefunden', 'feuer-einsatzberichte'); ?></h2>
+            <p class="description"><?php esc_html_e('Für die aktuelle Filterkombination wurden keine passenden Aktionen gefunden.', 'feuer-einsatzberichte'); ?></p>
         </div>
     <?php else : ?>
         <div class="feu-einsatz-table-scroll">
@@ -175,6 +192,7 @@ $filters_active = '' !== $search || '' !== $action_filter || '' !== $entity_filt
                         's' => $search,
                         'log_action' => $action_filter,
                         'log_entity' => $entity_filter,
+                        'per_page' => $per_page,
                         'paged' => '%#%',
                     ], admin_url('admin.php')),
                     'format' => '',

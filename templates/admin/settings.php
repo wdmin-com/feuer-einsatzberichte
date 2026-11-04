@@ -1014,7 +1014,7 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
         $success_message = __('Einstellungen wurden erfolgreich gespeichert.', 'feuer-einsatzberichte');
 
         if ($map_preview_settings_changed) {
-            $success_message .= ' ' . __('Neue Karten-Einstellungen gelten sofort fuer neue Berichte. Bereits vorhandene Kartenbilder koennen bei Bedarf manuell neu aufgebaut werden.', 'feuer-einsatzberichte');
+            $success_message .= ' ' . __('Neue Karten-Einstellungen gelten sofort für neue Berichte. Bereits vorhandene Kartenbilder können bei Bedarf manuell neu aufgebaut werden.', 'feuer-einsatzberichte');
         }
 
         // Persist the confirmation across the POST/redirect/GET cycle. This is
@@ -1063,7 +1063,7 @@ if (isset($_GET['settings-updated']) && 'true' === sanitize_key(wp_unslash($_GET
         && isset($_GET['map-settings-updated'])
         && '1' === sanitize_key(wp_unslash($_GET['map-settings-updated']))
     ) {
-        $saved_notice .= ' ' . __('Neue Karten-Einstellungen gelten sofort fuer neue Berichte. Bereits vorhandene Kartenbilder koennen bei Bedarf manuell neu aufgebaut werden.', 'feuer-einsatzberichte');
+        $saved_notice .= ' ' . __('Neue Karten-Einstellungen gelten sofort für neue Berichte. Bereits vorhandene Kartenbilder können bei Bedarf manuell neu aufgebaut werden.', 'feuer-einsatzberichte');
     }
 
     echo '<div class="notice notice-success is-dismissible"><p>' . esc_html($saved_notice) . '</p></div>';
@@ -1398,7 +1398,7 @@ $settings_summary_cards = [
         <div class="feu-admin-page-heading">
             <span class="feu-admin-page-eyebrow"><?php esc_html_e('Plugin-Konfiguration', 'feuer-einsatzberichte'); ?></span>
             <h1 class="wp-heading-inline"><?php _e('Einstellungen', 'feuer-einsatzberichte'); ?></h1>
-            <p><?php esc_html_e('Zentrale Verwaltung fuer Darstellung, Karten, Teilen, Zugriffe und technische Optionen des Plugins.', 'feuer-einsatzberichte'); ?></p>
+            <p><?php esc_html_e('Zentrale Verwaltung für Darstellung, Karten, Teilen, Zugriffe und technische Optionen des Plugins.', 'feuer-einsatzberichte'); ?></p>
         </div>
         <div class="feu-admin-page-actions">
             <a href="<?php echo esc_url(admin_url('admin.php?page=feu-einsatz-statistiken')); ?>" class="button button-secondary">
@@ -1611,7 +1611,7 @@ $settings_summary_cards = [
             'db' => $this->db,
             'street_registry_entries' => $street_registry_entries,
             'street_suggestion_records' => $street_suggestion_records,
-        ], 'Einstellungen: Strassenregister');
+        ], 'Einstellungen: Straßenregister');
 
         echo FEU_Einsatz_Template_Helpers::render_guarded('templates/admin/settings/partials/tab-manifest.php', [
             'active_tab' => $active_tab,
@@ -1712,14 +1712,14 @@ jQuery(document).ready(function($) {
         updateSuccess: <?php echo wp_json_encode(__('Änderungen wurden gespeichert.', 'feuer-einsatzberichte')); ?>,
         deleteSuccess: <?php echo wp_json_encode(__('Organisation wurde gelöscht.', 'feuer-einsatzberichte')); ?>,
         deleteConfirm: <?php echo wp_json_encode(__('Sind Sie sicher, dass Sie diese Organisation löschen möchten?', 'feuer-einsatzberichte')); ?>,
-        streetNameRequired: <?php echo wp_json_encode(__('Bitte zuerst eine Strasse eingeben.', 'feuer-einsatzberichte')); ?>,
+        streetNameRequired: <?php echo wp_json_encode(__('Bitte zuerst eine Straße eingeben.', 'feuer-einsatzberichte')); ?>,
         streetDeleteConfirm: <?php echo wp_json_encode(__('Diesen Strassen-Eintrag wirklich entfernen?', 'feuer-einsatzberichte')); ?>,
-        streetAdd: <?php echo wp_json_encode(__('Strasse hinzufuegen', 'feuer-einsatzberichte')); ?>,
-        streetSave: <?php echo wp_json_encode(__('Strasse speichern', 'feuer-einsatzberichte')); ?>,
+        streetAdd: <?php echo wp_json_encode(__('Straße hinzufügen', 'feuer-einsatzberichte')); ?>,
+        streetSave: <?php echo wp_json_encode(__('Straße speichern', 'feuer-einsatzberichte')); ?>,
         streetEditMode: <?php echo wp_json_encode(__('Strassen-Eintrag wird bearbeitet.', 'feuer-einsatzberichte')); ?>,
         streetSaved: <?php echo wp_json_encode(__('Strassen-Eintrag wurde gespeichert.', 'feuer-einsatzberichte')); ?>,
         streetDeleted: <?php echo wp_json_encode(__('Strassen-Eintrag wurde entfernt.', 'feuer-einsatzberichte')); ?>,
-        streetInUse: <?php echo wp_json_encode(__('Diese Strasse wird bereits in Einsatzberichten verwendet und kann nicht geloescht werden.', 'feuer-einsatzberichte')); ?>,
+        streetInUse: <?php echo wp_json_encode(__('Diese Straße wird bereits in Einsatzberichten verwendet und kann nicht gelöscht werden.', 'feuer-einsatzberichte')); ?>,
         organizationOrderSaved: <?php echo wp_json_encode(__('Reihenfolge der Organisationen wurde gespeichert.', 'feuer-einsatzberichte')); ?>,
         factoryResetCodeRequired: <?php echo wp_json_encode(__('Bitte geben Sie den neu erzeugten 7-stelligen Sicherheitscode ein.', 'feuer-einsatzberichte')); ?>,
         purgeSelectionRequired: <?php echo wp_json_encode(__('Bitte wählen Sie mindestens einen Datenbereich aus.', 'feuer-einsatzberichte')); ?>,
@@ -1958,7 +1958,7 @@ jQuery(document).ready(function($) {
         tableHtml = '' +
             '<table class="wp-list-table widefat striped feu-einsatz-street-registry-table">' +
                 '<thead><tr>' +
-                    '<th>Strasse / PLZ / Ort</th>' +
+                    '<th>Straße / PLZ / Ort</th>' +
                     '<th>Einsaetze</th>' +
                     '<th>Aktion</th>' +
                 '</tr></thead>' +
@@ -1980,7 +1980,7 @@ jQuery(document).ready(function($) {
         tableHtml = '' +
             '<table class="wp-list-table widefat striped feu-einsatz-street-registry-table feu-einsatz-street-registry-table--known">' +
                 '<thead><tr>' +
-                    '<th>Strasse / PLZ / Ort</th>' +
+                    '<th>Straße / PLZ / Ort</th>' +
                     '<th>Verwendung</th>' +
                     '<th>Aktion</th>' +
                 '</tr></thead>' +
@@ -2064,7 +2064,7 @@ jQuery(document).ready(function($) {
         if (knownEntries.length) {
             $knownTable.find('tbody').html(knownEntries.map(buildKnownStreetRegistryRow).join(''));
         } else {
-            $knownTable.replaceWith('<p class="description feu-einsatz-street-registry-empty">Aktuell sind noch keine bekannten Strassen verfuegbar.</p>');
+            $knownTable.replaceWith('<p class="description feu-einsatz-street-registry-empty">Aktuell sind noch keine bekannten Straßen verfügbar.</p>');
         }
 
         $('#feu-einsatz-street-registry-count').text(String(registryEntries.length));
@@ -2078,7 +2078,7 @@ jQuery(document).ready(function($) {
         }
 
         streetRegistryLoading = true;
-        $('#tab-strassenregister .feu-einsatz-street-registry-empty').first().text('Strassenregister wird geladen...');
+        $('#tab-strassenregister .feu-einsatz-street-registry-empty').first().text('Straßenregister wird geladen...');
 
         $.post(feu_einsatz_ajax.ajax_url, {
             action: 'feu_einsatz_get_street_registry',
@@ -2183,7 +2183,11 @@ jQuery(document).ready(function($) {
         }).done(function(response) {
             if (response && response.success) {
                 showNotice('success', texts.organizationOrderSaved);
+                return;
             }
+            showNotice('error', texts.saveError);
+        }).fail(function() {
+            showNotice('error', texts.connectionError);
         });
     }
 

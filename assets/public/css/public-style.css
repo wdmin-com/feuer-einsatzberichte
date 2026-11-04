@@ -2845,7 +2845,8 @@
     text-transform: uppercase;
 }
 
-.feu-einsatz-template-header h1 {
+.feu-einsatz-template-header h1,
+.feu-einsatz-template-header h2 {
     margin: 0;
     color: #122033;
     font-size: clamp(2rem, 5vw, 3.5rem);

@@ -614,6 +614,13 @@ if (!function_exists('feu_einsatz_render_default_function_selects')) {
                     <?php endif; ?>
                 </table>
             </div>
+            <div class="feu-einsatz-participant-pagination" data-feu-participant-pagination aria-live="polite">
+                <span data-feu-participant-page-status></span>
+                <div class="feu-einsatz-participant-pagination-actions">
+                    <button type="button" class="button" data-feu-participant-page-prev><?php esc_html_e('Zurück', 'feuer-einsatzberichte'); ?></button>
+                    <button type="button" class="button" data-feu-participant-page-next><?php esc_html_e('Weiter', 'feuer-einsatzberichte'); ?></button>
+                </div>
+            </div>
         <?php endif; ?>
     </div>
 </div>
@@ -644,7 +651,20 @@ jQuery(document).ready(function($) {
                 nonce: feu_einsatz_ajax.nonce,
                 id: id,
                 archived: 0
-            }).always(function() { location.reload(); });
+            }).done(function(response) {
+                if (response && response.success) {
+                    location.reload();
+                    return;
+                }
+                alert((response && response.data && response.data.message) ? response.data.message : '<?php echo esc_js(__('Archivierung konnte nicht rückgängig gemacht werden.', 'feuer-einsatzberichte')); ?>');
+                location.reload();
+            }).fail(function(xhr) {
+                var message = xhr && xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message
+                    ? xhr.responseJSON.data.message
+                    : '<?php echo esc_js(__('Archivierung konnte nicht rückgängig gemacht werden.', 'feuer-einsatzberichte')); ?>';
+                alert(message);
+                location.reload();
+            });
         });
         archiveReloadTimer = window.setTimeout(function() { location.reload(); }, 7000);
     }
@@ -1078,27 +1098,62 @@ jQuery(document).ready(function($) {
         }
     });
 
-    function filterParticipants() {
+    var participantPage = 1;
+    var participantPageSize = 20;
+
+    function filterParticipants(resetPage) {
+        if (resetPage) {
+            participantPage = 1;
+        }
         var needle = $.trim($('#feu-einsatz-search-participant').val() || '').toLowerCase();
-        $('.feu-einsatz-participant-table tr[data-participant-id]').each(function() {
+        var $matchedRows = $();
+        var $allRows = $('.feu-einsatz-participant-table tr[data-participant-id]');
+
+        $allRows.hide().each(function() {
             var $row = $(this);
             var textMatch = needle === '' || $row.text().toLowerCase().indexOf(needle) !== -1;
             var filterMatch = participantFilter === 'all'
                 || $row.attr('data-status') === participantFilter
                 || $row.attr('data-source') === participantFilter
                 || $row.attr('data-photo') === participantFilter;
-            $row.toggle(textMatch && filterMatch);
+            if (textMatch && filterMatch) {
+                $matchedRows = $matchedRows.add($row);
+            }
         });
-        $('.feu-einsatz-participant-separator').toggle(participantFilter === 'all' || participantFilter === 'archived');
+
+        var total = $matchedRows.length;
+        var totalPages = Math.max(1, Math.ceil(total / participantPageSize));
+        participantPage = Math.min(participantPage, totalPages);
+        var start = (participantPage - 1) * participantPageSize;
+        var end = Math.min(start + participantPageSize, total);
+        var $visibleRows = $matchedRows.slice(start, end).show();
+        var hasVisibleArchived = $visibleRows.filter('[data-status="archived"]').length > 0;
+
+        $('.feu-einsatz-participant-separator').toggle(hasVisibleArchived);
+        $('[data-feu-participant-page-status]').text(total ? (start + 1) + '–' + end + ' von ' + total : 'Keine passenden Mitglieder');
+        $('[data-feu-participant-page-prev]').prop('disabled', participantPage <= 1);
+        $('[data-feu-participant-page-next]').prop('disabled', participantPage >= totalPages);
+        $('[data-feu-participant-pagination]').toggle(total > participantPageSize);
     }
 
-    $('#feu-einsatz-search-participant').on('input', filterParticipants);
+    $('#feu-einsatz-search-participant').on('input', function() {
+        filterParticipants(true);
+    });
     $('[data-feu-participant-filter]').on('click', function() {
         participantFilter = $(this).attr('data-feu-participant-filter') || 'all';
         $('[data-feu-participant-filter]').removeClass('is-active').attr('aria-pressed', 'false');
         $(this).addClass('is-active').attr('aria-pressed', 'true');
-        filterParticipants();
+        filterParticipants(true);
     });
+    $('[data-feu-participant-page-prev]').on('click', function() {
+        participantPage = Math.max(1, participantPage - 1);
+        filterParticipants(false);
+    });
+    $('[data-feu-participant-page-next]').on('click', function() {
+        participantPage += 1;
+        filterParticipants(false);
+    });
+    filterParticipants(true);
 });
 </script>
 

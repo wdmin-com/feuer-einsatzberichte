@@ -54,7 +54,7 @@ if (isset($active_tab) && 'allgemein' !== (string) $active_tab) {
                 <div class="feu-admin-settings-fieldset">
                     <div class="feu-admin-settings-fieldset-head">
                         <h3><?php esc_html_e('Darstellung', 'feuer-einsatzberichte'); ?></h3>
-                        <p class="description"><?php esc_html_e('Vorgaben fuer Kartenlisten und optische Standardeinstellungen.', 'feuer-einsatzberichte'); ?></p>
+                        <p class="description"><?php esc_html_e('Vorgaben für Kartenlisten und optische Standardeinstellungen.', 'feuer-einsatzberichte'); ?></p>
                     </div>
 
                     <label class="feu-admin-settings-field">
@@ -68,7 +68,7 @@ if (isset($active_tab) && 'allgemein' !== (string) $active_tab) {
                                 </option>
                             <?php endforeach; ?>
                         </select>
-                        <small><?php esc_html_e('Wird fuer Einsatzlisten, Uebersichten und letzte Einsatzberichte ohne eigenen card_variant genutzt.', 'feuer-einsatzberichte'); ?></small>
+                        <small><?php esc_html_e('Wird für Einsatzlisten, Übersichten und letzte Einsatzberichte ohne eigenen card_variant genutzt.', 'feuer-einsatzberichte'); ?></small>
                     </label>
                 </div>
             </div>
@@ -77,8 +77,8 @@ if (isset($active_tab) && 'allgemein' !== (string) $active_tab) {
         <section class="feu-admin-settings-surface">
             <div class="feu-admin-settings-surface-head">
                 <div>
-                    <h2><?php esc_html_e('Einsatz-Uebersicht', 'feuer-einsatzberichte'); ?></h2>
-                    <p class="description"><?php esc_html_e('Steuert die sichtbaren Zusatzmodule auf der oeffentlichen Einsatz-Uebersicht.', 'feuer-einsatzberichte'); ?></p>
+                    <h2><?php esc_html_e('Einsatz-Übersicht', 'feuer-einsatzberichte'); ?></h2>
+                    <p class="description"><?php esc_html_e('Steuert die sichtbaren Zusatzmodule auf der öffentlichen Einsatz-Übersicht.', 'feuer-einsatzberichte'); ?></p>
                 </div>
             </div>
 
@@ -91,7 +91,7 @@ if (isset($active_tab) && 'allgemein' !== (string) $active_tab) {
                            <?php checked($overview_show_stats, 1); ?> />
                     <span class="feu-admin-settings-check-copy">
                         <strong><?php esc_html_e('Sidebar-Statistik anzeigen', 'feuer-einsatzberichte'); ?></strong>
-                        <small><?php esc_html_e('Zeigt die Statistik fuer Alle Jahre bzw. das ausgewaehlte Jahr in der Sidebar.', 'feuer-einsatzberichte'); ?></small>
+                        <small><?php esc_html_e('Zeigt die Statistik für alle Jahre bzw. das ausgewählte Jahr in der Sidebar.', 'feuer-einsatzberichte'); ?></small>
                     </span>
                 </label>
 
@@ -147,12 +147,12 @@ if (isset($active_tab) && 'allgemein' !== (string) $active_tab) {
             <div class="feu-admin-settings-check-grid">
                 <?php
                 $single_info_field_options = [
-                    'street' => __('Strasse', 'feuer-einsatzberichte'),
+                    'street' => __('Straße', 'feuer-einsatzberichte'),
                     'location' => __('Ort', 'feuer-einsatzberichte'),
                     'date' => __('Datum', 'feuer-einsatzberichte'),
                     'time' => __('Uhrzeit', 'feuer-einsatzberichte'),
                     'category' => __('Einsatzart', 'feuer-einsatzberichte'),
-                    'organizations' => __('Kraefte vor Ort', 'feuer-einsatzberichte'),
+                    'organizations' => __('Kräfte vor Ort', 'feuer-einsatzberichte'),
                 ];
                 foreach ($single_info_field_options as $field_key => $field_label) :
                 ?>
@@ -177,7 +177,7 @@ if (isset($active_tab) && 'allgemein' !== (string) $active_tab) {
                             class="regular-text">
                         <option value="live" <?php selected($single_map_display_mode, 'live'); ?>><?php esc_html_e('Live-Karte anzeigen', 'feuer-einsatzberichte'); ?></option>
                         <option value="image" <?php selected($single_map_display_mode, 'image'); ?>><?php esc_html_e('Nur Beitragsbild anzeigen', 'feuer-einsatzberichte'); ?></option>
-                        <option value="disabled" <?php selected($single_map_display_mode, 'disabled'); ?>><?php esc_html_e('Karte vollstaendig ausblenden', 'feuer-einsatzberichte'); ?></option>
+                        <option value="disabled" <?php selected($single_map_display_mode, 'disabled'); ?>><?php esc_html_e('Karte vollständig ausblenden', 'feuer-einsatzberichte'); ?></option>
                     </select>
                 </label>
 
@@ -201,7 +201,7 @@ if (isset($active_tab) && 'allgemein' !== (string) $active_tab) {
                            value="1"
                            <?php checked($single_desaturate_organizations, 1); ?> />
                     <span class="feu-admin-settings-check-copy">
-                        <strong><?php esc_html_e('Farben bei Kraefte vor Ort entschaerfen', 'feuer-einsatzberichte'); ?></strong>
+                        <strong><?php esc_html_e('Farben der Kräfte vor Ort entschärfen', 'feuer-einsatzberichte'); ?></strong>
                         <small><?php esc_html_e('Die Organisationsfarben werden im Einzelbeitrag entsaettigt dargestellt.', 'feuer-einsatzberichte'); ?></small>
                     </span>
                 </label>

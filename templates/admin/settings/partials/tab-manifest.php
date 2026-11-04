@@ -22,7 +22,7 @@ if ('' !== $remote_version) {
         $update_status_class = 'is-warning';
         $update_status_text = sprintf(
             /* translators: %s: version */
-            __('Neue Version verfuegbar: %s', 'feuer-einsatzberichte'),
+            __('Neue Version verfügbar: %s', 'feuer-einsatzberichte'),
             $remote_version
         );
     } else {
@@ -42,7 +42,7 @@ $manifest_reference_items = [
     ],
     __('Update-Manifest', 'feuer-einsatzberichte') => [
         'value' => $remote_manifest_url,
-        'description' => __('Remote-Quelle fuer die technische WordPress-Update-Pruefung.', 'feuer-einsatzberichte'),
+        'description' => __('Remote-Quelle für die technische WordPress-Update-Prüfung.', 'feuer-einsatzberichte'),
     ],
     __('Release-Liste lokal', 'feuer-einsatzberichte') => [
         'value' => $release_notes_path,
@@ -144,7 +144,7 @@ $manifest_reference_items = [
             <div class="feu-admin-settings-surface-head">
                 <div>
                     <h2><?php esc_html_e('Letzte 10 Versionen', 'feuer-einsatzberichte'); ?></h2>
-                    <p class="description"><?php esc_html_e('Die Uebersicht wird direkt aus der mitgelieferten Release-Datei gelesen und zeigt die zehn zuletzt veroeffentlichten Aenderungen.', 'feuer-einsatzberichte'); ?></p>
+                    <p class="description"><?php esc_html_e('Die Übersicht wird direkt aus der mitgelieferten Release-Datei gelesen und zeigt die zehn zuletzt veröffentlichten Änderungen.', 'feuer-einsatzberichte'); ?></p>
                     <?php if ($release_history_count > 0 && '' !== $oldest_release_version) : ?>
                         <p class="description">
                             <?php

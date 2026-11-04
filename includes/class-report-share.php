@@ -383,7 +383,7 @@ class FEU_Einsatz_Report_Share {
         $canvas     = $this->build_generated_share_card_canvas($share_data);
 
         if (!$canvas) {
-            wp_die(esc_html__('Share-Karte konnte nicht erzeugt werden. Pruefen Sie bitte die Bildbibliothek und die GD-Unterstuetzung des Servers.', 'feuer-einsatzberichte'));
+            wp_die(esc_html__('Share-Karte konnte nicht erzeugt werden. Prüfen Sie bitte die Bildbibliothek und die GD-Unterstützung des Servers.', 'feuer-einsatzberichte'));
         }
 
         $download = isset($_GET['download']) && '1' === sanitize_text_field(wp_unslash($_GET['download']));
@@ -408,7 +408,7 @@ class FEU_Einsatz_Report_Share {
         }
 
         if ($expires_at > 0 && $expires_at < time()) {
-            wp_die(esc_html__('Die Freigabe fuer dieses Share-Bild ist abgelaufen.', 'feuer-einsatzberichte'), '', ['response' => 403]);
+            wp_die(esc_html__('Die Freigabe für dieses Share-Bild ist abgelaufen.', 'feuer-einsatzberichte'), '', ['response' => 403]);
         }
 
         if ($expires_at > 0 && ($expires_at - time()) > (self::PUBLIC_SHARE_TTL + HOUR_IN_SECONDS)) {
@@ -607,7 +607,7 @@ class FEU_Einsatz_Report_Share {
             $preview_image_url  = '' !== $post_image_url ? $post_image_url : $generated_share_preview_url;
             $download_image_url = '' !== $post_image_url ? $post_image_url : $generated_share_download_url;
             $image_notice       = '' !== $post_image_url
-                ? __('Es wird das vorhandene Beitragsbild beziehungsweise das aktuell fuer den Beitrag genutzte Einsatzbild geteilt.', 'feuer-einsatzberichte')
+                ? __('Es wird das vorhandene Beitragsbild beziehungsweise das aktuell für den Beitrag genutzte Einsatzbild geteilt.', 'feuer-einsatzberichte')
                 : __('Kein verwendbares Beitragsbild gefunden. Die Vorschau nutzt deshalb automatisch die generierte Share-Karte.', 'feuer-einsatzberichte');
         }
 
@@ -659,7 +659,7 @@ class FEU_Einsatz_Report_Share {
             'selected_fields'          => $settings['fields'],
             'status_notice'            => 'publish' === $post_status
                                             ? ''
-                                            : __('Share-Links fuer soziale Netzwerke werden erst nach der Veroeffentlichung freigegeben, damit keine nicht oeffentlichen Beitragslinks verteilt werden.', 'feuer-einsatzberichte'),
+                                            : __('Share-Links für soziale Netzwerke werden erst nach der Veröffentlichung freigegeben, damit keine nicht öffentlichen Beitragslinks verteilt werden.', 'feuer-einsatzberichte'),
         ];
     }
 
@@ -856,7 +856,7 @@ class FEU_Einsatz_Report_Share {
 
         foreach ([
             'category' => __('Einsatzart: %s', 'feuer-einsatzberichte'),
-            'street'   => __('Strasse: %s', 'feuer-einsatzberichte'),
+            'street'   => __('Straße: %s', 'feuer-einsatzberichte'),
             'location' => __('Ort: %s', 'feuer-einsatzberichte'),
         ] as $field_key => $line_format) {
             if (!in_array($field_key, $selected_fields, true)) {
@@ -1069,7 +1069,7 @@ class FEU_Einsatz_Report_Share {
         }
 
         if (in_array('street', $selected_fields, true) && '' !== $street_label) {
-            $detail_parts[] = sprintf(__('Strasse: %s', 'feuer-einsatzberichte'), $street_label);
+            $detail_parts[] = sprintf(__('Straße: %s', 'feuer-einsatzberichte'), $street_label);
         }
 
         if (in_array('location', $selected_fields, true) && '' !== $location_label) {

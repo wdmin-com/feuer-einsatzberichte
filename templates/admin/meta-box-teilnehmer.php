@@ -324,7 +324,7 @@ if (!function_exists('feu_einsatz_render_function_quick_actions')) {
                     <?php if (!$suppress_section_titles) : ?>
                         <h3 class="feu-einsatz-meta-section-title">
                             <span class="dashicons dashicons-building"></span>
-                            <?php _e('Kraefte vor Ort', 'feuer-einsatzberichte'); ?>
+                            <?php _e('Kräfte vor Ort', 'feuer-einsatzberichte'); ?>
                         </h3>
                     <?php endif; ?>
                     <p class="description">
@@ -362,7 +362,7 @@ if (!function_exists('feu_einsatz_render_function_quick_actions')) {
 
             <div id="feu-einsatz-organisation-list" class="feu-einsatz-list-container feu-einsatz-list-container--organizations">
                 <?php if (empty($selected_organization_ids)) : ?>
-                    <p class="feu-einsatz-empty-message"><?php _e('Noch keine Organisation ausgewaehlt.', 'feuer-einsatzberichte'); ?></p>
+                    <p class="feu-einsatz-empty-message"><?php _e('Noch keine Organisation ausgewählt.', 'feuer-einsatzberichte'); ?></p>
                 <?php else : ?>
                     <?php foreach (array_values($selected_organization_ids) as $index => $organization_id) : ?>
                         <?php if (!isset($organization_lookup[(int) $organization_id])) { continue; } ?>
@@ -408,7 +408,7 @@ if (!function_exists('feu_einsatz_render_function_quick_actions')) {
             <p class="description">
                 <span class="dashicons dashicons-info"></span>
                 <?php _e('Archivierte oder entfernte Mannschaftsmitglieder können nicht neu hinzugefügt werden, bleiben aber in bestehenden Einsatzberichten erhalten.', 'feuer-einsatzberichte'); ?>
-                <?php echo ' ' . esc_html__('Archivierte Organisationen koennen nicht neu hinzugefuegt werden, bleiben aber in bestehenden Einsatzberichten erhalten.', 'feuer-einsatzberichte'); ?>
+                <?php echo ' ' . esc_html__('Archivierte Organisationen können nicht neu hinzugefügt werden, bleiben aber in bestehenden Einsatzberichten erhalten.', 'feuer-einsatzberichte'); ?>
             </p>
         </div>
     <?php endif; ?>
@@ -451,7 +451,7 @@ jQuery(document).ready(function($) {
     var participantRemoveLabel = <?php echo wp_json_encode(__('Mitglied entfernen', 'feuer-einsatzberichte')); ?>;
     var participantStandardPrefix = <?php echo wp_json_encode(__('Standard:', 'feuer-einsatzberichte')); ?>;
     var participantQuickActionHint = <?php echo wp_json_encode(__('Oft genutzt', 'feuer-einsatzberichte')); ?>;
-    var organizationEmptyMessage = <?php echo wp_json_encode(__('Noch keine Organisation ausgewaehlt.', 'feuer-einsatzberichte')); ?>;
+    var organizationEmptyMessage = <?php echo wp_json_encode(__('Noch keine Organisation ausgewählt.', 'feuer-einsatzberichte')); ?>;
     var organizationRemoveLabel = <?php echo wp_json_encode(__('Organisation entfernen', 'feuer-einsatzberichte')); ?>;
     var organizationMoveUpLabel = <?php echo wp_json_encode(__('Nach oben verschieben', 'feuer-einsatzberichte')); ?>;
     var organizationMoveDownLabel = <?php echo wp_json_encode(__('Nach unten verschieben', 'feuer-einsatzberichte')); ?>;

@@ -147,7 +147,7 @@ $street_highlight_settings = class_exists('FEU_Einsatz_Template_Helpers')
     : ['mode' => 'full', 'length_meters' => 100, 'radius_meters' => 100];
 $street_highlight_mode = (string) ($street_highlight_settings['mode'] ?? 'full');
 $street_highlight_mode_label = 'full' === $street_highlight_mode
-    ? __('Ganze Strasse', 'feuer-einsatzberichte')
+    ? __('Ganze Straße', 'feuer-einsatzberichte')
     : ('radius' === $street_highlight_mode
         ? sprintf(__('%d m Radius', 'feuer-einsatzberichte'), (int) ($street_highlight_settings['radius_meters'] ?? 100))
         : sprintf(__('%d m Strassenabschnitt', 'feuer-einsatzberichte'), (int) ($street_highlight_settings['length_meters'] ?? 100)));
@@ -181,7 +181,7 @@ $street_highlight_mode_label = 'full' === $street_highlight_mode
         <div class="feu-einsatz-form-row feu-einsatz-form-grid feu-einsatz-form-grid--address" data-feu-location-panel="address">
             <div class="feu-einsatz-field">
                 <label class="feu-einsatz-field-label" for="feu_einsatz_strasse">
-                    <?php esc_html_e('Strasse', 'feuer-einsatzberichte'); ?>
+                    <?php esc_html_e('Straße', 'feuer-einsatzberichte'); ?>
                 </label>
                 <input
                     type="text"
@@ -195,7 +195,7 @@ $street_highlight_mode_label = 'full' === $street_highlight_mode
                     <?php echo 'address' === $map_location_mode ? 'required' : ''; ?>
                 />
                 <p class="description feu-einsatz-field-hint">
-                    <?php esc_html_e('Die Strasse ist fuer Karte, Share-Bild und den automatischen Titel relevant.', 'feuer-einsatzberichte'); ?>
+                    <?php esc_html_e('Die Straße ist für Karte, Share-Bild und den automatischen Titel relevant.', 'feuer-einsatzberichte'); ?>
                 </p>
             </div>
 
@@ -212,7 +212,7 @@ $street_highlight_mode_label = 'full' === $street_highlight_mode
                     placeholder="z.B. 12a"
                 />
                 <p class="description feu-einsatz-field-hint">
-                    <?php esc_html_e('Optional. Die Hausnummer wird intern verwendet, aber nicht oeffentlich auf Kartenbildern gezeigt.', 'feuer-einsatzberichte'); ?>
+                    <?php esc_html_e('Optional. Die Hausnummer wird intern verwendet, aber nicht öffentlich auf Kartenbildern gezeigt.', 'feuer-einsatzberichte'); ?>
                 </p>
             </div>
         </div>
@@ -335,6 +335,7 @@ $street_highlight_mode_label = 'full' === $street_highlight_mode
         <p class="feu-einsatz-map-input-guidance" data-feu-map-input-guidance hidden aria-live="polite"></p>
 
         <div
+            id="feu-einsatz-live-map-preview"
             class="feu-einsatz-form-row feu-einsatz-inline-card feu-einsatz-inline-card--map-preview"
             data-feu-address-map-preview
             hidden
@@ -473,7 +474,7 @@ $street_highlight_mode_label = 'full' === $street_highlight_mode
                         <h4 class="feu-einsatz-inline-card-title"><?php esc_html_e('Kartenbild / Beitragsbild', 'feuer-einsatzberichte'); ?></h4>
                     <?php endif; ?>
                     <p class="description feu-einsatz-inline-card-copy">
-                        <?php esc_html_e('Erstellt oder aktualisiert das automatisch generierte Kartenbild fuer den Bericht.', 'feuer-einsatzberichte'); ?>
+                        <?php esc_html_e('Erstellt oder aktualisiert das automatisch generierte Kartenbild für den Bericht.', 'feuer-einsatzberichte'); ?>
                     </p>
                 </div>
             </div>
@@ -500,7 +501,7 @@ $street_highlight_mode_label = 'full' === $street_highlight_mode
 
             <?php if (!$is_new_report && is_array($generated_map_publish_hold) && !empty($generated_map_publish_hold['target_status'])) : ?>
                 <div class="notice inline notice-warning">
-                    <p><?php esc_html_e('Dieser Bericht bleibt bis zur erfolgreichen Kartenbild-Generierung unveroeffentlicht.', 'feuer-einsatzberichte'); ?></p>
+                    <p><?php esc_html_e('Dieser Bericht bleibt bis zur erfolgreichen Kartenbild-Generierung unveröffentlicht.', 'feuer-einsatzberichte'); ?></p>
                 </div>
             <?php endif; ?>
 
@@ -510,7 +511,7 @@ $street_highlight_mode_label = 'full' === $street_highlight_mode
                 </div>
             <?php elseif ($is_new_report) : ?>
                 <p class="description feu-einsatz-inline-card-copy">
-                    <?php esc_html_e('Beim ersten Speichern wird das Kartenbild zeitversetzt im Hintergrund erzeugt, sobald eine Strasse vorhanden ist.', 'feuer-einsatzberichte'); ?>
+                    <?php esc_html_e('Beim ersten Speichern wird das Kartenbild zeitversetzt im Hintergrund erzeugt, sobald eine Straße vorhanden ist.', 'feuer-einsatzberichte'); ?>
                 </p>
             <?php elseif ($has_thumbnail) : ?>
                 <div class="feu-einsatz-media-preview">
@@ -536,9 +537,9 @@ $street_highlight_mode_label = 'full' === $street_highlight_mode
                             data-post-id="<?php echo esc_attr((string) $post->ID); ?>"
                             data-redirect-to="<?php echo esc_attr($map_action_redirect); ?>"
                             data-nonce="<?php echo esc_attr(wp_create_nonce('feu_einsatz_delete_map_image_' . $post->ID)); ?>"
-                            data-confirm="<?php echo esc_attr__('Soll das automatisch generierte Kartenbild wirklich geloescht werden?', 'feuer-einsatzberichte'); ?>"
+                            data-confirm="<?php echo esc_attr__('Soll das automatisch generierte Kartenbild wirklich gelöscht werden?', 'feuer-einsatzberichte'); ?>"
                         >
-                            <?php esc_html_e('Kartenbild loeschen', 'feuer-einsatzberichte'); ?>
+                            <?php esc_html_e('Kartenbild löschen', 'feuer-einsatzberichte'); ?>
                         </button>
                     <?php endif; ?>
                 </p>
@@ -565,9 +566,9 @@ $street_highlight_mode_label = 'full' === $street_highlight_mode
                             data-post-id="<?php echo esc_attr((string) $post->ID); ?>"
                             data-redirect-to="<?php echo esc_attr($map_action_redirect); ?>"
                             data-nonce="<?php echo esc_attr(wp_create_nonce('feu_einsatz_delete_map_image_' . $post->ID)); ?>"
-                            data-confirm="<?php echo esc_attr__('Soll das automatisch generierte Kartenbild wirklich geloescht werden?', 'feuer-einsatzberichte'); ?>"
+                            data-confirm="<?php echo esc_attr__('Soll das automatisch generierte Kartenbild wirklich gelöscht werden?', 'feuer-einsatzberichte'); ?>"
                         >
-                            <?php esc_html_e('Kartenbild loeschen', 'feuer-einsatzberichte'); ?>
+                            <?php esc_html_e('Kartenbild löschen', 'feuer-einsatzberichte'); ?>
                         </button>
                     <?php endif; ?>
                 </p>
@@ -654,7 +655,7 @@ $street_highlight_mode_label = 'full' === $street_highlight_mode
                     value="1"
                     <?php checked($comments_enabled, '1'); ?>
                 />
-                <span><?php esc_html_e('Kommentare fuer diesen Einsatzbericht aktivieren', 'feuer-einsatzberichte'); ?></span>
+                <span><?php esc_html_e('Kommentare für diesen Einsatzbericht aktivieren', 'feuer-einsatzberichte'); ?></span>
             </label>
         </div>
     <?php endif; ?>

@@ -377,11 +377,11 @@ class FEU_Einsatz_Schnelleingabe {
         $form_values['city'] = trim($form_values['city']);
 
         if ('' === $form_values['street']) {
-            $errors[] = __('Strasse ist ein Pflichtfeld.', 'feuer-einsatzberichte');
+            $errors[] = __('Straße ist ein Pflichtfeld.', 'feuer-einsatzberichte');
         }
 
         if (!preg_match('/^\d{5}$/', $form_values['postal_code'])) {
-            $errors[] = __('PLZ ist ein Pflichtfeld und muss aus fuenf Ziffern bestehen.', 'feuer-einsatzberichte');
+            $errors[] = __('PLZ ist ein Pflichtfeld und muss aus fünf Ziffern bestehen.', 'feuer-einsatzberichte');
         }
 
         if ('' === $form_values['city']) {
@@ -400,7 +400,7 @@ class FEU_Einsatz_Schnelleingabe {
         $form_values['categories'] = array_values(array_intersect($form_values['categories'], array_map('absint', $allowed_category_ids)));
 
         if (empty($form_values['categories'])) {
-            $errors[] = __('Mindestens eine Einsatzart muss gewaehlt werden.', 'feuer-einsatzberichte');
+            $errors[] = __('Mindestens eine Einsatzart muss gewählt werden.', 'feuer-einsatzberichte');
         }
 
         return $errors;

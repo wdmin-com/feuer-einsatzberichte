@@ -19,7 +19,7 @@ $max_num_pages = isset($context['max_num_pages']) ? (int) $context['max_num_page
             'format' => '',
             'current' => max(1, $paged),
             'total' => $max_num_pages,
-            'prev_text' => esc_html__('< Zurueck', 'feuer-einsatzberichte'),
+            'prev_text' => esc_html__('‹ Zurück', 'feuer-einsatzberichte'),
             'next_text' => esc_html__('Weiter >', 'feuer-einsatzberichte'),
             'type' => 'list',
             'add_args' => $selected_year ? ['jahr' => $selected_year] : [],

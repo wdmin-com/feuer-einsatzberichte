@@ -658,19 +658,19 @@ body.feu-apple-settings .feu-admin-settings-surface select.regular-text {
     max-width: none;
 }
 
-/* The functions tab is intentionally compact: a short label must never
- * occupy a full desktop work surface. */
 body.feu-apple-settings #tab-funktionen {
-    max-width: 700px;
+    width: 100%;
+    max-width: none;
 }
 
 body.feu-apple-settings #tab-funktionen > p {
-    max-width: 720px;
+    max-width: none;
 }
 
 body.feu-apple-settings .feu-einsatz-function-default-card,
 body.feu-apple-settings #feu-einsatz-functions-list {
-    max-width: 680px;
+    width: 100%;
+    max-width: none;
 }
 
 body.feu-apple-settings .feu-einsatz-function-default-card {

@@ -317,7 +317,7 @@ class FEU_Einsatz_Template_Helpers {
             'time' => __('Uhrzeit', 'feuer-einsatzberichte'),
             'number' => __('Nummer / Jahr', 'feuer-einsatzberichte'),
             'category' => __('Einsatzart', 'feuer-einsatzberichte'),
-            'street' => __('Strasse', 'feuer-einsatzberichte'),
+            'street' => __('Straße', 'feuer-einsatzberichte'),
             'location' => __('Ort', 'feuer-einsatzberichte'),
             'description' => __('Beschreibung', 'feuer-einsatzberichte'),
             'url' => __('Link zum Beitrag', 'feuer-einsatzberichte'),
@@ -355,15 +355,15 @@ class FEU_Einsatz_Template_Helpers {
         return [
             'wide' => [
                 'label' => __('Breit 1200 x 630', 'feuer-einsatzberichte'),
-                'description' => __('Fuer Link-Vorschauen und klassische breite Share-Karten.', 'feuer-einsatzberichte'),
+                'description' => __('Für Link-Vorschauen und klassische breite Share-Karten.', 'feuer-einsatzberichte'),
             ],
             'story' => [
                 'label' => __('Story 1080 x 1920', 'feuer-einsatzberichte'),
-                'description' => __('Fuer mobile Story-Formate mit schmaler, zentraler Textflaeche.', 'feuer-einsatzberichte'),
+                'description' => __('Für mobile Story-Formate mit schmaler, zentraler Textfläche.', 'feuer-einsatzberichte'),
             ],
             'feed' => [
                 'label' => __('Feed 1080 x 1350', 'feuer-einsatzberichte'),
-                'description' => __('Fuer hohe Feed-Posts mit viel Platz fuer Titel und Beschreibung.', 'feuer-einsatzberichte'),
+                'description' => __('Für hohe Feed-Posts mit viel Platz für Titel und Beschreibung.', 'feuer-einsatzberichte'),
             ],
         ];
     }
@@ -795,7 +795,7 @@ class FEU_Einsatz_Template_Helpers {
             ],
             'minimal' => [
                 'label' => __('Minimal', 'feuer-einsatzberichte'),
-                'description' => __('Reduzierte Textkarte ohne Bild fuer sehr kompakte Listen.', 'feuer-einsatzberichte'),
+                'description' => __('Reduzierte Textkarte ohne Bild für sehr kompakte Listen.', 'feuer-einsatzberichte'),
             ],
             'banner' => [
                 'label' => __('Banner', 'feuer-einsatzberichte'),
@@ -3593,9 +3593,9 @@ class FEU_Einsatz_Template_Helpers {
                 '<circle cx="' . esc_attr($projected_marker['x']) . '" cy="' . esc_attr($projected_marker['y']) . '" r="' . esc_attr((string) $inner_radius) . '" fill="' . esc_attr($line_color) . '" />';
 
             if ('minimal' === $preview_mode) {
-                $label_prefix = trim((string) get_option('feu_einsatz_map_preview_street_label_prefix', 'Einsatz Strasse'));
+                $label_prefix = trim((string) get_option('feu_einsatz_map_preview_street_label_prefix', 'Einsatz Straße'));
                 if ('' === $label_prefix) {
-                    $label_prefix = __('Einsatz Strasse', 'feuer-einsatzberichte');
+                    $label_prefix = __('Einsatz Straße', 'feuer-einsatzberichte');
                 }
                 $label_enabled = 1 === (int) get_option('feu_einsatz_map_preview_show_street_label', 1);
                 $street_label = trim((string) preg_replace('/,\s*Deutschland$/i', '', $address_label));

@@ -32,6 +32,6 @@ for (const [, target] of source.matchAll(/href="#([^"]+)"/g)) {
 assert.equal(socialImage.toString('ascii', 1, 4), 'PNG', 'The social preview must be a PNG file.');
 assert.equal(socialImage.readUInt32BE(16), 1200, 'The social preview width must be 1200 px.');
 assert.equal(socialImage.readUInt32BE(20), 630, 'The social preview height must be 630 px.');
-assert.equal(manifest.version, '3.3.10', 'The page test must run against the expected current release.');
+assert.equal(manifest.version, '3.3.11', 'The page test must run against the expected current release.');
 
 console.log('Plugin product index checks passed.');

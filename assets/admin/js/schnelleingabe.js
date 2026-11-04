@@ -64,11 +64,11 @@
             }
 
             if (!streetValue) {
-                errors.push('Strasse ist ein Pflichtfeld.');
+                errors.push('Straße ist ein Pflichtfeld.');
             }
 
             if (!/^\d{5}$/.test(postalCodeValue)) {
-                errors.push('PLZ ist ein Pflichtfeld und muss aus fuenf Ziffern bestehen.');
+                errors.push('PLZ ist ein Pflichtfeld und muss aus fünf Ziffern bestehen.');
             }
 
             if (!cityValue) {
@@ -76,7 +76,7 @@
             }
 
             if (!form.querySelector('input[name="post_category[]"]:checked')) {
-                errors.push('Mindestens eine Einsatzart muss gewaehlt werden.');
+                errors.push('Mindestens eine Einsatzart muss gewählt werden.');
             }
 
             return errors;
@@ -105,8 +105,8 @@
             }
 
             photoCount.textContent = activeCount === 1
-                ? '1 Foto ausgewaehlt'
-                : activeCount + ' Fotos ausgewaehlt';
+                ? '1 Foto ausgewählt'
+                : activeCount + ' Fotos ausgewählt';
         }
 
         function appendPhotoPreview(file, index) {

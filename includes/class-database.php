@@ -2315,10 +2315,12 @@ class FEU_Einsatz_Database {
                 p.ID,
                 p.post_title,
                 street.meta_value AS street,
-                {$event_date_sql} AS event_date
+                {$event_date_sql} AS event_date,
+                COALESCE(event_time.meta_value, '') AS event_time
             FROM {$this->wpdb->posts} p
             INNER JOIN {$this->wpdb->postmeta} pm ON p.ID = pm.post_id
             LEFT JOIN {$this->wpdb->postmeta} event_date ON p.ID = event_date.post_id AND event_date.meta_key = '_feu_einsatz_datum'
+            LEFT JOIN {$this->wpdb->postmeta} event_time ON p.ID = event_time.post_id AND event_time.meta_key = '_feu_einsatz_uhrzeit'
             LEFT JOIN {$this->wpdb->postmeta} street ON p.ID = street.post_id AND street.meta_key = '_feu_einsatz_strasse'
             WHERE p.post_type IN ('post', 'einsatzbericht')
             AND p.post_status IN ('publish', 'future', 'draft', 'pending', 'private')

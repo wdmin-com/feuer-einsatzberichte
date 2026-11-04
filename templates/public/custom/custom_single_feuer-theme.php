@@ -25,7 +25,7 @@ get_header();
         <div class="feu-einsatz-template-map row g-0"><?php echo $render('templates/public/single/map.php'); ?></div>
         <header class="feu-einsatz-template-header">
             <p class="feu-einsatz-template-kicker"><?php echo esc_html($report['category']['name'] ?? __('Einsatzbericht', 'feuer-einsatzberichte')); ?></p>
-            <h1><?php echo esc_html($report['title'] ?? ''); ?></h1>
+            <h2><?php echo esc_html($report['title'] ?? ''); ?></h2>
             <p class="feu-einsatz-template-meta"><?php echo esc_html(trim(($report['date_display'] ?? '') . ' · ' . ($report['time'] ?? ''))); ?></p>
         </header>
         <div class="feu-einsatz-template-description"><?php echo wp_kses_post(apply_filters('the_content', (string) ($report['content'] ?? ''))); ?></div>

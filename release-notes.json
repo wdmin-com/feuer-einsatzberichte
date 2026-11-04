@@ -1,6 +1,27 @@
 {
   "releases": [
     {
+      "version": "3.3.11",
+      "date": "2026-11-04",
+      "title": "Abgeschlossener Oberflächen- und Funktionsaudit",
+      "summary": "Der vollständige Audit räumt lange Verwaltungsansichten auf, schließt inkonsistente Karten- und Berichtsstatus, verbessert Editor, Dashboard, Statistik und Mobilansicht und vereinheitlicht die sichtbare deutsche Sprache.",
+      "changes": [
+        "Dashboard: Die Schnelleingabe zeigt zunächst acht Einsatzstichworte und legt den restlichen Katalog in einen klar beschrifteten Zusatzbereich, sodass die Arbeitszentrale kompakt bleibt.",
+        "Kartenstatus: Wartende oder laufende Kartengenerierungen werden korrekt erkannt; doppelte Jobs und unpassende Aktionsschaltflächen für bereits fertige Karten entfallen.",
+        "Berichtsübersicht: Datum und Uhrzeit stammen exakt aus den Einsatzdaten; Links öffnen konsistent den eigenen Plugin-Editor statt der unübersichtlichen WordPress-Standardmaske.",
+        "Berichtseditor: Die Abschnittsnavigation führt direkt zur Live-Kartenvorschau und Kartendarstellung; Speicherstatus und Kontraste sind eindeutiger.",
+        "Lange Listen: Protokolle besitzen eine Seitengröße von 20, 50 oder 100 Einträgen; die Mannschaftsverwaltung blättert in kompakten Gruppen von 20 Profilen.",
+        "Arbeitszentrale: Hintergrundaufgaben zeigen zuerst die sechs wichtigsten Einträge und halten weitere Details bei Bedarf in einem zugänglichen Aufklappbereich bereit.",
+        "Statistik: Zahlen springen nicht mehr durch erfundene Zwischenwerte; Präsentationssteuerung, Kartenmarker und deaktivierte Vor-/Zurück-Aktionen sind eindeutig und barriereärmer.",
+        "Einstellungen: Funktionskarten verwenden die verfügbare Breite konsistent; Reiter und Statistiknavigation bleiben auf kleinen Bildschirmen horizontal bedienbar.",
+        "Archive: Zeilen, Aktionen und Statusinformationen wurden verdichtet, ohne Lesbarkeit oder sichere Wiederherstellung zu verlieren.",
+        "SEO: Plugin-Metadaten werden vor generischen Theme-Daten ausgegeben, Breadcrumbs normalisiert und doppelte H1-Überschriften im Feuer-Theme vermieden.",
+        "Fehlerbehandlung: Organisationsreihenfolge und Rückgängig-Aktion nach Archivierung melden Verbindungs- oder Serverfehler sichtbar statt still zu scheitern.",
+        "Sprache: Veraltete Umschreibungen wie Strasse, Aenderungen oder verfuegbar wurden in den sichtbaren Verwaltungs- und Frontendtexten durch korrekte deutsche Schreibweisen ersetzt.",
+        "Qualität: Neun zusätzliche Audit-Regressionsprüfungen sichern Listen, Editor, Dashboard, Kartenstatus, Statistik, SEO, Mobilnavigation und Fehlerrückmeldungen; insgesamt bestehen 38 automatische Tests."
+      ]
+    },
+    {
       "version": "3.3.10",
       "date": "2026-11-04",
       "title": "Chronologische Berichtsliste und eindeutige Statistikwerte",

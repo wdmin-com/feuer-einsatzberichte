@@ -14,10 +14,10 @@ if (isset($active_tab) && 'uebersicht' !== (string) $active_tab) {
     <section class="feu-admin-settings-surface">
         <div class="feu-admin-settings-surface-head">
             <div>
-                <h2><?php esc_html_e('Einsatz-Uebersicht', 'feuer-einsatzberichte'); ?></h2>
+                <h2><?php esc_html_e('Einsatz-Übersicht', 'feuer-einsatzberichte'); ?></h2>
                 <p class="description"><?php esc_html_e('Diese Optionen wurden in die allgemeinen Einstellungen verschoben, damit die Navigation kompakter bleibt.', 'feuer-einsatzberichte'); ?></p>
             </div>
         </div>
-        <p class="feu-admin-settings-inline-note"><?php esc_html_e('Bitte wechseln Sie zu Allgemein. Dort finden Sie jetzt die Steuerung fuer Sidebar-Statistik und Jahresfilter.', 'feuer-einsatzberichte'); ?></p>
+        <p class="feu-admin-settings-inline-note"><?php esc_html_e('Bitte wechseln Sie zu Allgemein. Dort finden Sie jetzt die Steuerung für Sidebar-Statistik und Jahresfilter.', 'feuer-einsatzberichte'); ?></p>
     </section>
 </div>

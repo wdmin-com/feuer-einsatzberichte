@@ -10,7 +10,7 @@ $selected_year = isset($selected_year) ? (string) $selected_year : '';
     <?php
     if ($selected_year) {
         printf(
-            esc_html__('Fuer das Jahr %s wurden keine Einsatzberichte gefunden.', 'feuer-einsatzberichte'),
+            esc_html__('Für das Jahr %s wurden keine Einsatzberichte gefunden.', 'feuer-einsatzberichte'),
             esc_html($selected_year)
         );
     } else {

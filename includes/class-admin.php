@@ -684,7 +684,7 @@ class FEU_Einsatz_Admin {
                     $station_postcode,
                     $station_city
                 )
-                : __('Pflicht: Strasse, PLZ und Stadt des Feuerwehrhauses eintragen. Diese Daten werden fuer Karten, Live-Vorschau und Feuerwehrhaus-Markierung genutzt.', 'feuer-einsatzberichte'),
+                : __('Pflicht: Straße, PLZ und Stadt des Feuerwehrhauses eintragen. Diese Daten werden für Karten, Live-Vorschau und Feuerwehrhaus-Markierung genutzt.', 'feuer-einsatzberichte'),
             $station_address_complete ? 'ok' : 'missing',
             true,
             __('Karten-Einstellungen oeffnen', 'feuer-einsatzberichte'),
@@ -721,7 +721,7 @@ class FEU_Einsatz_Admin {
                     _n('%d Einsatzstichwort ist aktiv.', '%d Einsatzstichworte sind aktiv.', count($selected_categories), 'feuer-einsatzberichte'),
                     count($selected_categories)
                 )
-                : __('Pflicht: mindestens ein Einsatzstichwort fuer Einsatzberichte aktivieren.', 'feuer-einsatzberichte'),
+                : __('Pflicht: mindestens ein Einsatzstichwort für Einsatzberichte aktivieren.', 'feuer-einsatzberichte'),
             $categories_ok ? 'ok' : 'missing',
             true,
             __('Einsatzstichworte auswaehlen', 'feuer-einsatzberichte'),
@@ -783,14 +783,14 @@ class FEU_Einsatz_Admin {
         $add_item(
             $items,
             'organizations',
-            __('Kraefte vor Ort', 'feuer-einsatzberichte'),
+            __('Kräfte vor Ort', 'feuer-einsatzberichte'),
             $organizations_count > 0
                 ? sprintf(
                     /* translators: %d: organization count */
                     _n('%d Organisation ist aktiv.', '%d Organisationen sind aktiv.', $organizations_count, 'feuer-einsatzberichte'),
                     $organizations_count
                 )
-                : __('Empfohlen: Organisationen/Fahrzeuge fuer Kraefte vor Ort pflegen.', 'feuer-einsatzberichte'),
+                : __('Empfohlen: Organisationen/Fahrzeuge für Kräfte vor Ort pflegen.', 'feuer-einsatzberichte'),
             $organizations_count > 0 ? 'ok' : 'warning',
             false,
             __('Organisationen bearbeiten', 'feuer-einsatzberichte'),
@@ -832,7 +832,7 @@ class FEU_Einsatz_Admin {
                 : __('Pflicht: Karten-Copyright sichtbar lassen, damit OpenStreetMap/Leaflet korrekt genannt werden.', 'feuer-einsatzberichte'),
             $attribution_ok ? 'ok' : 'missing',
             true,
-            __('Copyright pruefen', 'feuer-einsatzberichte'),
+            __('Copyright prüfen', 'feuer-einsatzberichte'),
             add_query_arg('tab', 'karten', $settings_url)
         );
 
@@ -849,7 +849,7 @@ class FEU_Einsatz_Admin {
             __('Teilen / Share-Karte', 'feuer-einsatzberichte'),
             $share_ok && $share_logo_ok
                 ? __('Netzwerke und Share-Logo sind konfiguriert.', 'feuer-einsatzberichte')
-                : __('Empfohlen: aktive Netzwerke und Logo fuer Share-Karten pruefen.', 'feuer-einsatzberichte'),
+                : __('Empfohlen: aktive Netzwerke und Logo für Share-Karten prüfen.', 'feuer-einsatzberichte'),
             $share_ok && $share_logo_ok ? 'ok' : 'warning',
             false,
             __('Share-Einstellungen oeffnen', 'feuer-einsatzberichte'),
@@ -884,7 +884,7 @@ class FEU_Einsatz_Admin {
             __('Shortcodes / Seiten', 'feuer-einsatzberichte'),
             sprintf(
                 /* translators: %1$s: overview shortcode, %2$s: area shortcode */
-                __('Wichtig fuer Frontend-Seiten: %1$s fuer Uebersicht, %2$s fuer Einsatzgebiet.', 'feuer-einsatzberichte'),
+                __('Wichtig für Frontend-Seiten: %1$s für Übersicht, %2$s für Einsatzgebiet.', 'feuer-einsatzberichte'),
                 $overview_shortcode,
                 $area_shortcode
             ),
@@ -1003,7 +1003,7 @@ class FEU_Einsatz_Admin {
         $setup_status = $this->get_plugin_setup_status();
         $overall_state = !empty($setup_status['complete']) ? 'ok' : 'missing';
         $summary_text = !empty($setup_status['complete'])
-            ? __('Pflichtdaten vollstaendig.', 'feuer-einsatzberichte')
+            ? __('Pflichtdaten vollständig.', 'feuer-einsatzberichte')
             : sprintf(
                 /* translators: %d: missing count */
                 _n('%d Pflichtpunkt fehlt.', '%d Pflichtpunkte fehlen.', (int) $setup_status['critical_missing'], 'feuer-einsatzberichte'),
@@ -1060,7 +1060,7 @@ class FEU_Einsatz_Admin {
                         <li><?php esc_html_e('Feuerwehrhaus-Adresse und Logo unter Einstellungen > Karten pflegen.', 'feuer-einsatzberichte'); ?></li>
                         <li><?php esc_html_e('Einsatzstichworte und Funktionen festlegen.', 'feuer-einsatzberichte'); ?></li>
                         <li><?php esc_html_e('Mannschaftsmitglieder und Kräfte vor Ort anlegen.', 'feuer-einsatzberichte'); ?></li>
-                        <li><?php esc_html_e('Share-Karte, Wasserzeichen und Shortcode-Seiten pruefen.', 'feuer-einsatzberichte'); ?></li>
+                        <li><?php esc_html_e('Share-Karte, Wasserzeichen und Shortcode-Seiten prüfen.', 'feuer-einsatzberichte'); ?></li>
                     </ol>
                 </div>
             </section>
@@ -2568,8 +2568,8 @@ class FEU_Einsatz_Admin {
                 'feu-einsatz-report-create-validation',
                 'window.feuEinsatzReportValidation = ' . wp_json_encode([
                     'strings' => [
-                        'street' => __('Strasse', 'feuer-einsatzberichte'),
-                        'streetRequired' => __('Bitte gib eine Strasse an.', 'feuer-einsatzberichte'),
+                        'street' => __('Straße', 'feuer-einsatzberichte'),
+                        'streetRequired' => __('Bitte gib eine Straße an.', 'feuer-einsatzberichte'),
                         'houseNumber' => __('Hausnummer', 'feuer-einsatzberichte'),
                         'houseNumberRequired' => __('Für Abschnitt oder Radius bitte eine Hausnummer eingeben oder genaue Koordinaten wählen.', 'feuer-einsatzberichte'),
                         'postcode' => __('PLZ', 'feuer-einsatzberichte'),
@@ -5273,7 +5273,7 @@ class FEU_Einsatz_Admin {
                 'error',
                 [
                     'stage' => 'map',
-                    'message' => __('Die Hintergrund-Generierung wurde mehrfach eingeplant, aber nicht ausgefuehrt. Bitte manuell anstossen oder WP-Cron pruefen.', 'feuer-einsatzberichte'),
+                    'message' => __('Die Hintergrund-Generierung wurde mehrfach eingeplant, aber nicht ausgeführt. Bitte manuell anstoßen oder WP-Cron prüfen.', 'feuer-einsatzberichte'),
                     'scheduled_for' => 0,
                     'reason' => 'cron_stalled',
                 ]
@@ -5383,6 +5383,7 @@ class FEU_Einsatz_Admin {
         if (!$post_id) {
             return [
                 'status' => 'idle',
+                'stage' => '',
                 'class_name' => '',
                 'message' => '',
                 'scheduled_for' => 0,
@@ -5393,6 +5394,7 @@ class FEU_Einsatz_Admin {
         if ('hidden' === FEU_Einsatz_Template_Helpers::get_report_map_public_precision($post_id)) {
             return [
                 'status' => 'privacy_hidden',
+                'stage' => '',
                 'class_name' => 'feu-einsatz-map-generation-status feu-einsatz-map-generation-status--privacy-hidden',
                 'message' => __('Öffentliche Karte und automatisch erzeugtes Kartenbild sind für diesen Bericht deaktiviert.', 'feuer-einsatzberichte'),
                 'scheduled_for' => 0,
@@ -5480,11 +5482,11 @@ class FEU_Einsatz_Admin {
 
         if ('queued' === $status && $scheduled_for > 0) {
             $message .= ' ' . sprintf(
-                __('Geplant fuer %s.', 'feuer-einsatzberichte'),
+                __('Geplant für %s.', 'feuer-einsatzberichte'),
                 wp_date(get_option('date_format') . ' ' . get_option('time_format'), $scheduled_for)
             );
         } elseif ('error' === $status && '' === $message) {
-            $message = __('Kartenbild konnte nicht automatisch erstellt werden. Bitte erneut anstossen.', 'feuer-einsatzberichte');
+            $message = __('Kartenbild konnte nicht automatisch erstellt werden. Bitte erneut anstoßen.', 'feuer-einsatzberichte');
         } elseif ('ready' === $status && '' === $message) {
             $message = __('Kartenbild ist aktuell.', 'feuer-einsatzberichte');
         } elseif ('processing' === $status && 'geocode' === $stage) {
@@ -5503,11 +5505,12 @@ class FEU_Einsatz_Admin {
             && !empty($publish_hold['target_status'])
             && in_array($status, ['queued', 'processing', 'error'], true)
         ) {
-            $message = trim($message . ' ' . __('Der Bericht wird erst nach erfolgreicher Kartenbild-Generierung veroeffentlicht.', 'feuer-einsatzberichte'));
+            $message = trim($message . ' ' . __('Der Bericht wird erst nach erfolgreicher Kartenbild-Generierung veröffentlicht.', 'feuer-einsatzberichte'));
         }
 
         return [
             'status' => $status,
+            'stage' => $stage,
             'class_name' => 'feu-einsatz-map-generation-status feu-einsatz-map-generation-status--' . $status,
             'message' => trim($message),
             'scheduled_for' => $scheduled_for,
@@ -6169,7 +6172,7 @@ class FEU_Einsatz_Admin {
                 'error',
                 [
                     'stage' => 'map',
-                    'message' => __('Kartenbild konnte nicht automatisch erstellt werden. Bitte erneut anstossen.', 'feuer-einsatzberichte'),
+                    'message' => __('Kartenbild konnte nicht automatisch erstellt werden. Bitte erneut anstoßen.', 'feuer-einsatzberichte'),
                     'last_error' => $result->get_error_message(),
                 ]
             );
@@ -6223,7 +6226,7 @@ class FEU_Einsatz_Admin {
 
         return new WP_Error(
             'feu_einsatz_missing_coordinates',
-            __('Die Kartenvorschau konnte nicht erzeugt werden. Bitte pruefen Sie Adresse oder Koordinaten in den Einsatzdetails.', 'feuer-einsatzberichte')
+            __('Die Kartenvorschau konnte nicht erzeugt werden. Bitte prüfen Sie Adresse oder Koordinaten in den Einsatzdetails.', 'feuer-einsatzberichte')
         );
     }
 
@@ -8800,6 +8803,10 @@ class FEU_Einsatz_Admin {
             return 'geocode';
         }
 
+        if ('map' === $stage && in_array($status_key, ['missing', 'queued', 'processing'], true)) {
+            return 'map';
+        }
+
         if (in_array($status_key, ['queued', 'processing'], true)) {
             return 'map';
         }
@@ -8817,7 +8824,7 @@ class FEU_Einsatz_Admin {
 
         if ('geocode' === $bucket) {
             return 'processing' === $status_key
-                ? __('Geocoding laeuft', 'feuer-einsatzberichte')
+                ? __('Geocoding läuft', 'feuer-einsatzberichte')
                 : __('Wartet auf Geocoding', 'feuer-einsatzberichte');
         }
 
@@ -8979,25 +8986,28 @@ class FEU_Einsatz_Admin {
             $status = $item['status'];
             $post_id = (int) $report->ID;
             $status_key = sanitize_key((string) ($status['bucket'] ?? 'idle'));
+            $actual_status = sanitize_key((string) ($status['status'] ?? 'idle'));
             $status_label = (string) ($status['dashboard_label'] ?? __('Status', 'feuer-einsatzberichte'));
 
             echo '<div class="feu-einsatz-dashboard-mapqueue-item">';
             echo '<div class="feu-einsatz-dashboard-mapqueue-main">';
             echo '<div class="feu-einsatz-dashboard-mapqueue-head">';
-            echo '<a class="feu-einsatz-dashboard-mapqueue-title" href="' . esc_url(get_edit_post_link($post_id)) . '">' . esc_html(get_the_title($post_id)) . '</a>';
+            echo '<a class="feu-einsatz-dashboard-mapqueue-title" href="' . esc_url($this->get_edit_url($post_id)) . '">' . esc_html(get_the_title($post_id)) . '</a>';
             echo '<span class="feu-einsatz-dashboard-mapqueue-status feu-einsatz-dashboard-mapqueue-status--' . esc_attr($status_key) . '">' . esc_html($status_label) . '</span>';
             echo '</div>';
             echo '<div class="feu-einsatz-dashboard-mapqueue-meta">' . esc_html((string) ($status['message'] ?? '')) . '</div>';
             echo '</div>';
             echo '<div class="feu-einsatz-dashboard-mapqueue-actions">';
-            echo '<a class="button button-secondary button-small" href="' . esc_url(get_edit_post_link($post_id)) . '">' . esc_html__('Bearbeiten', 'feuer-einsatzberichte') . '</a>';
-            echo '<form class="feu-einsatz-dashboard-inline-form" method="post" action="' . esc_url(admin_url('admin-post.php')) . '">';
-            wp_nonce_field('feu_einsatz_generate_map_image_now_' . $post_id);
-            echo '<input type="hidden" name="action" value="feu_einsatz_generate_map_image_now" />';
-            echo '<input type="hidden" name="post_id" value="' . esc_attr((string) $post_id) . '" />';
-            echo '<input type="hidden" name="redirect_to" value="' . esc_attr(admin_url('index.php')) . '" />';
-            echo '<button type="submit" class="button button-primary button-small">' . esc_html__('Jetzt generieren', 'feuer-einsatzberichte') . '</button>';
-            echo '</form>';
+            echo '<a class="button button-secondary button-small" href="' . esc_url($this->get_edit_url($post_id)) . '">' . esc_html__('Bearbeiten', 'feuer-einsatzberichte') . '</a>';
+            if (!in_array($actual_status, ['queued', 'processing'], true)) {
+                echo '<form class="feu-einsatz-dashboard-inline-form" method="post" action="' . esc_url(admin_url('admin-post.php')) . '">';
+                wp_nonce_field('feu_einsatz_generate_map_image_now_' . $post_id);
+                echo '<input type="hidden" name="action" value="feu_einsatz_generate_map_image_now" />';
+                echo '<input type="hidden" name="post_id" value="' . esc_attr((string) $post_id) . '" />';
+                echo '<input type="hidden" name="redirect_to" value="' . esc_attr(admin_url('index.php')) . '" />';
+                echo '<button type="submit" class="button button-primary button-small">' . esc_html__('Jetzt generieren', 'feuer-einsatzberichte') . '</button>';
+                echo '</form>';
+            }
             echo '</div>';
             echo '</div>';
         }
@@ -9022,20 +9032,26 @@ class FEU_Einsatz_Admin {
             $status_object = $status ? get_post_status_object($status) : null;
             $street = FEU_Einsatz_Template_Helpers::strip_house_number_from_street((string) ($report->street ?? ''));
             $event_date = (string) ($report->event_date ?? '');
+            $event_time = trim((string) ($report->event_time ?? ''));
+            $has_generated_map = $report_id > 0 && $this->has_generated_map_asset($report_id);
+            $map_is_public = $report_id > 0 && 'hidden' !== FEU_Einsatz_Template_Helpers::get_report_map_public_precision($report_id);
             $date_label = '';
 
             if ('' !== $event_date) {
-                $timestamp = strtotime($event_date);
-                $date_label = $timestamp ? wp_date('d.m.Y H:i', $timestamp) : $event_date;
+                $date_value = DateTimeImmutable::createFromFormat('!Y-m-d', substr($event_date, 0, 10), wp_timezone());
+                $date_label = $date_value instanceof DateTimeImmutable ? $date_value->format('d.m.Y') : $event_date;
+                if (preg_match('/^\d{2}:\d{2}$/', $event_time)) {
+                    $date_label .= ' ' . $event_time;
+                }
             }
 
             echo '<div class="feu-einsatz-dashboard-recent-item">';
             echo '<div class="feu-einsatz-dashboard-recent-top">';
             echo '<div>';
-            echo '<a class="feu-einsatz-dashboard-recent-title" href="' . esc_url(get_edit_post_link($report_id)) . '">' . esc_html($title) . '</a>';
+            echo '<a class="feu-einsatz-dashboard-recent-title" href="' . esc_url($this->get_edit_url($report_id)) . '">' . esc_html($title) . '</a>';
             if ($date_label || $street) {
                 echo '<div class="feu-einsatz-dashboard-recent-meta">';
-                echo esc_html(trim($date_label . ($date_label && $street ? ' В· ' : '') . $street));
+                echo esc_html(trim($date_label . ($date_label && $street ? ' · ' : '') . $street));
                 echo '</div>';
             }
             echo '</div>';
@@ -9044,15 +9060,17 @@ class FEU_Einsatz_Admin {
             }
             echo '</div>';
             echo '<div class="feu-einsatz-dashboard-recent-actions">';
-            echo '<a class="button button-secondary button-small" href="' . esc_url(get_edit_post_link($report_id)) . '">' . esc_html__('Bearbeiten', 'feuer-einsatzberichte') . '</a>';
+            echo '<a class="button button-secondary button-small" href="' . esc_url($this->get_edit_url($report_id)) . '">' . esc_html__('Bearbeiten', 'feuer-einsatzberichte') . '</a>';
             echo '<a class="button button-small" href="' . esc_url(get_permalink($report_id)) . '" target="_blank" rel="noopener noreferrer">' . esc_html__('Ansehen', 'feuer-einsatzberichte') . '</a>';
-            echo '<form class="feu-einsatz-dashboard-inline-form" method="post" action="' . esc_url(admin_url('admin-post.php')) . '">';
-            wp_nonce_field('feu_einsatz_generate_map_image_now_' . $report_id);
-            echo '<input type="hidden" name="action" value="feu_einsatz_generate_map_image_now" />';
-            echo '<input type="hidden" name="post_id" value="' . esc_attr((string) $report_id) . '" />';
-            echo '<input type="hidden" name="redirect_to" value="' . esc_attr(admin_url('index.php')) . '" />';
-            echo '<button type="submit" class="button button-primary button-small">' . esc_html__('Karte generieren', 'feuer-einsatzberichte') . '</button>';
-            echo '</form>';
+            if (!$has_generated_map && $map_is_public) {
+                echo '<form class="feu-einsatz-dashboard-inline-form" method="post" action="' . esc_url(admin_url('admin-post.php')) . '">';
+                wp_nonce_field('feu_einsatz_generate_map_image_now_' . $report_id);
+                echo '<input type="hidden" name="action" value="feu_einsatz_generate_map_image_now" />';
+                echo '<input type="hidden" name="post_id" value="' . esc_attr((string) $report_id) . '" />';
+                echo '<input type="hidden" name="redirect_to" value="' . esc_attr(admin_url('index.php')) . '" />';
+                echo '<button type="submit" class="button button-primary button-small">' . esc_html__('Karte generieren', 'feuer-einsatzberichte') . '</button>';
+                echo '</form>';
+            }
             echo '</div>';
             echo '</div>';
         }
@@ -10506,7 +10524,7 @@ class FEU_Einsatz_Admin {
         $this->clear_background_geocode_schedule($post_id);
 
         if (!$this->acquire_generated_map_process_lock($post_id)) {
-            wp_die(esc_html__('Das Kartenbild wird bereits verarbeitet. Bitte versuchen Sie es spaeter erneut.', 'feuer-einsatzberichte'));
+            wp_die(esc_html__('Das Kartenbild wird bereits verarbeitet. Bitte versuchen Sie es später erneut.', 'feuer-einsatzberichte'));
         }
 
         $this->update_generated_map_status(

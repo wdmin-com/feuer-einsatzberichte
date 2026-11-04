@@ -23,7 +23,7 @@ $plugin_full_access_roles = isset($plugin_full_access_roles) && is_array($plugin
                 <?php _e('Hier wird nur gesteuert, welche Bereiche des Plugins im Backend sichtbar und aufrufbar sind. WordPress-Grundrechte wie Beitragsbearbeitung werden dadurch nicht erweitert.', 'feuer-einsatzberichte'); ?>
             </p>
             <p class="description">
-                <?php _e('Administratoren haben immer Vollzugriff. Weitere Rollen koennen pro Bereich gezielt freigegeben oder entfernt werden.', 'feuer-einsatzberichte'); ?>
+                <?php _e('Administratoren haben immer Vollzugriff. Weitere Rollen können pro Bereich gezielt freigegeben oder entfernt werden.', 'feuer-einsatzberichte'); ?>
             </p>
         </div>
     </div>
@@ -44,7 +44,7 @@ $plugin_full_access_roles = isset($plugin_full_access_roles) && is_array($plugin
                         <h3><?php echo esc_html((string) ($section_definition['label'] ?? $section_key)); ?></h3>
                         <p class="description"><?php echo esc_html((string) ($section_definition['description'] ?? '')); ?></p>
                         <?php if ($is_admin_only_section) : ?>
-                            <p class="description"><strong><?php _e('Nur Administratoren koennen diesen Bereich aufrufen.', 'feuer-einsatzberichte'); ?></strong></p>
+                            <p class="description"><strong><?php _e('Nur Administratoren können diesen Bereich aufrufen.', 'feuer-einsatzberichte'); ?></strong></p>
                         <?php endif; ?>
                     </div>
                 </div>

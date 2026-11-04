@@ -18,7 +18,7 @@ $quick_links = [
     [
         'url' => admin_url('admin.php?page=feu-einsatz-neuer-bericht'),
         'label' => __('Neuen Einsatzbericht', 'feuer-einsatzberichte'),
-        'description' => __('Vollstaendige Bearbeitung mit Karten, Medien und Mannschaftsmitgliedern.', 'feuer-einsatzberichte'),
+        'description' => __('Vollständige Bearbeitung mit Karten, Medien und Mannschaftsmitgliedern.', 'feuer-einsatzberichte'),
         'icon' => 'ti ti-file-plus',
     ],
     [
@@ -30,7 +30,7 @@ $quick_links = [
     [
         'url' => admin_url('admin.php?page=feu-einsatz-statistiken'),
         'label' => __('Statistiken', 'feuer-einsatzberichte'),
-        'description' => __('Kennzahlen, Kalender, Aktivitaetskarte und Ranking.', 'feuer-einsatzberichte'),
+        'description' => __('Kennzahlen, Kalender, Aktivitätskarte und Ranking.', 'feuer-einsatzberichte'),
         'icon' => 'ti ti-chart-donut-3',
     ],
     [
@@ -133,25 +133,28 @@ $dashboard_url = admin_url('admin.php?page=feuer-einsatzberichte');
                 $_mq_st   = $_mq_item['status'];
                 $_mq_id   = (int) $_mq_post->ID;
                 $_mq_bucket = sanitize_key((string) ($_mq_st['bucket'] ?? 'idle'));
+                $_mq_actual_status = sanitize_key((string) ($_mq_st['status'] ?? 'idle'));
                 $_mq_label = (string) ($_mq_st['dashboard_label'] ?? __('Status', 'feuer-einsatzberichte'));
             ?>
                 <div class="feu-einsatz-dashboard-mapqueue-item">
                     <div class="feu-einsatz-dashboard-mapqueue-main">
                         <div class="feu-einsatz-dashboard-mapqueue-head">
-                            <a class="feu-einsatz-dashboard-mapqueue-title" href="<?php echo esc_url(get_edit_post_link($_mq_id)); ?>"><?php echo esc_html(get_the_title($_mq_id)); ?></a>
+                            <a class="feu-einsatz-dashboard-mapqueue-title" href="<?php echo esc_url($this->get_edit_url($_mq_id)); ?>"><?php echo esc_html(get_the_title($_mq_id)); ?></a>
                             <span class="feu-einsatz-dashboard-mapqueue-status feu-einsatz-dashboard-mapqueue-status--<?php echo esc_attr($_mq_bucket); ?>"><?php echo esc_html($_mq_label); ?></span>
                         </div>
                         <div class="feu-einsatz-dashboard-mapqueue-meta"><?php echo esc_html((string) ($_mq_st['message'] ?? '')); ?></div>
                     </div>
                     <div class="feu-einsatz-dashboard-mapqueue-actions">
-                        <a class="button button-secondary button-small" href="<?php echo esc_url(get_edit_post_link($_mq_id)); ?>"><?php esc_html_e('Bearbeiten', 'feuer-einsatzberichte'); ?></a>
-                        <form class="feu-einsatz-dashboard-inline-form" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
-                            <?php wp_nonce_field('feu_einsatz_generate_map_image_now_' . $_mq_id); ?>
-                            <input type="hidden" name="action" value="feu_einsatz_generate_map_image_now" />
-                            <input type="hidden" name="post_id" value="<?php echo esc_attr((string) $_mq_id); ?>" />
-                            <input type="hidden" name="redirect_to" value="<?php echo esc_attr(admin_url('admin.php?page=feuer-einsatzberichte')); ?>" />
-                            <button type="submit" class="button button-primary button-small"><?php esc_html_e('Jetzt generieren', 'feuer-einsatzberichte'); ?></button>
-                        </form>
+                        <a class="button button-secondary button-small" href="<?php echo esc_url($this->get_edit_url($_mq_id)); ?>"><?php esc_html_e('Bearbeiten', 'feuer-einsatzberichte'); ?></a>
+                        <?php if (!in_array($_mq_actual_status, ['queued', 'processing'], true)) : ?>
+                            <form class="feu-einsatz-dashboard-inline-form" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                                <?php wp_nonce_field('feu_einsatz_generate_map_image_now_' . $_mq_id); ?>
+                                <input type="hidden" name="action" value="feu_einsatz_generate_map_image_now" />
+                                <input type="hidden" name="post_id" value="<?php echo esc_attr((string) $_mq_id); ?>" />
+                                <input type="hidden" name="redirect_to" value="<?php echo esc_attr(admin_url('admin.php?page=feuer-einsatzberichte')); ?>" />
+                                <button type="submit" class="button button-primary button-small"><?php esc_html_e('Jetzt generieren', 'feuer-einsatzberichte'); ?></button>
+                            </form>
+                        <?php endif; ?>
                     </div>
                 </div>
             <?php endforeach; ?>
@@ -184,7 +187,7 @@ $dashboard_url = admin_url('admin.php?page=feuer-einsatzberichte');
             <div class="feu-admin-card-header">
                 <div>
                     <h2><?php esc_html_e('Letzte Einsatzberichte', 'feuer-einsatzberichte'); ?></h2>
-                    <p><?php esc_html_e('Direkter Zugriff auf die juengsten Einsaetze inklusive Bearbeitung.', 'feuer-einsatzberichte'); ?></p>
+                    <p><?php esc_html_e('Direkter Zugriff auf die jüngsten Einsätze inklusive Bearbeitung.', 'feuer-einsatzberichte'); ?></p>
                 </div>
             </div>
 
@@ -195,7 +198,7 @@ $dashboard_url = admin_url('admin.php?page=feuer-einsatzberichte');
                             <tr>
                                 <th><?php esc_html_e('Datum', 'feuer-einsatzberichte'); ?></th>
                                 <th><?php esc_html_e('Titel', 'feuer-einsatzberichte'); ?></th>
-                                <th><?php esc_html_e('Strasse', 'feuer-einsatzberichte'); ?></th>
+                                <th><?php esc_html_e('Straße', 'feuer-einsatzberichte'); ?></th>
                                 <th><?php esc_html_e('Aktionen', 'feuer-einsatzberichte'); ?></th>
                             </tr>
                         </thead>
@@ -204,22 +207,29 @@ $dashboard_url = admin_url('admin.php?page=feuer-einsatzberichte');
                                 <?php
                                 $einsatz_id = isset($einsatz->ID) ? (int) $einsatz->ID : 0;
                                 $datum = isset($einsatz->event_date) ? (string) $einsatz->event_date : '';
+                                $uhrzeit = trim((string) ($einsatz->event_time ?? ''));
                                 $strasse = FEU_Einsatz_Template_Helpers::strip_house_number_from_street((string) ($einsatz->street ?? ''));
-                                $timestamp = $datum ? strtotime($datum) : false;
+                                $date_value = '' !== $datum
+                                    ? DateTimeImmutable::createFromFormat('!Y-m-d', substr($datum, 0, 10), wp_timezone())
+                                    : false;
+                                $date_label = $date_value instanceof DateTimeImmutable ? $date_value->format('d.m.Y') : '';
+                                if ('' !== $date_label && preg_match('/^\d{2}:\d{2}$/', $uhrzeit)) {
+                                    $date_label .= ' ' . $uhrzeit;
+                                }
                                 ?>
                                 <tr>
                                     <td data-label="<?php echo esc_attr__('Datum', 'feuer-einsatzberichte'); ?>">
-                                        <?php echo $timestamp ? esc_html(wp_date('d.m.Y H:i', $timestamp)) : '&mdash;'; ?>
+                                        <?php echo '' !== $date_label ? esc_html($date_label) : '&mdash;'; ?>
                                     </td>
                                     <td data-label="<?php echo esc_attr__('Titel', 'feuer-einsatzberichte'); ?>">
                                         <strong><?php echo esc_html(get_the_title($einsatz_id)); ?></strong>
                                     </td>
-                                    <td data-label="<?php echo esc_attr__('Strasse', 'feuer-einsatzberichte'); ?>">
+                                    <td data-label="<?php echo esc_attr__('Straße', 'feuer-einsatzberichte'); ?>">
                                         <?php echo esc_html($strasse); ?>
                                     </td>
                                     <td data-label="<?php echo esc_attr__('Aktionen', 'feuer-einsatzberichte'); ?>">
                                         <div class="feu-admin-inline-actions">
-                                            <a href="<?php echo esc_url(get_edit_post_link($einsatz_id)); ?>" class="button button-small">
+                                            <a href="<?php echo esc_url($this->get_edit_url($einsatz_id)); ?>" class="button button-small">
                                                 <?php esc_html_e('Bearbeiten', 'feuer-einsatzberichte'); ?>
                                             </a>
                                             <a href="<?php echo esc_url(get_permalink($einsatz_id)); ?>" class="button button-small" target="_blank" rel="noopener noreferrer">

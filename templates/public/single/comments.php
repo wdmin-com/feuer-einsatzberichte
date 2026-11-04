@@ -19,7 +19,7 @@ $report_comments_title = isset($comments['title']) ? (string) $comments['title']
                     <div class="feu-einsatz-comments-header text-center">
                         <div class="w-100">
                             <h2 class="feu-einsatz-comments-heading"><?php echo esc_html($report_comments_title); ?></h2>
-                            <p class="feu-einsatz-comments-subtitle"><?php echo esc_html__('Angemeldete WordPress-Benutzer koennen Einsatzberichte kommentieren.', 'feuer-einsatzberichte'); ?></p>
+                            <p class="feu-einsatz-comments-subtitle"><?php echo esc_html__('Angemeldete WordPress-Benutzer können Einsatzberichte kommentieren.', 'feuer-einsatzberichte'); ?></p>
                         </div>
                     </div>
 

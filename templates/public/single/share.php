@@ -52,7 +52,7 @@ if (!empty($share_data['preview_image_url'])) {
         <span class="feu-einsatz-single-share-summary-icon" aria-hidden="true"><?php echo $icon_renderer('share'); ?></span>
         <span class="feu-einsatz-single-share-summary-copy">
             <strong><?php echo esc_html__('Einsatzbericht teilen', 'feuer-einsatzberichte'); ?></strong>
-            <small><?php echo esc_html__('Nur fuer Administratoren sichtbar', 'feuer-einsatzberichte'); ?></small>
+            <small><?php echo esc_html__('Nur für Administratoren sichtbar', 'feuer-einsatzberichte'); ?></small>
         </span>
         <span class="feu-einsatz-single-share-summary-meta">
             <span class="feu-einsatz-single-share-badge"><?php echo esc_html($share_data['image_mode_label']); ?></span>
@@ -71,7 +71,7 @@ if (!empty($share_data['preview_image_url'])) {
             <div class="feu-einsatz-single-share-tools">
                 <div class="feu-einsatz-single-share-tools-head">
                     <strong><?php echo esc_html__('Direkt teilen', 'feuer-einsatzberichte'); ?></strong>
-                    <small><?php echo esc_html__('Direkte Share-Links fuer unterstuetzte Netzwerke plus native Teilen-Funktion mit Bild, Text und Link.', 'feuer-einsatzberichte'); ?></small>
+                    <small><?php echo esc_html__('Direkte Share-Links für unterstützte Netzwerke plus native Teilen-Funktion mit Bild, Text und Link.', 'feuer-einsatzberichte'); ?></small>
                 </div>
 
                 <div class="feu-einsatz-single-share-inline-preview">
@@ -82,7 +82,7 @@ if (!empty($share_data['preview_image_url'])) {
                                  class="feu-einsatz-single-share-inline-preview-image" />
                         <?php else : ?>
                             <div class="feu-einsatz-single-share-inline-preview-placeholder">
-                                <?php echo esc_html__('Kein Share-Bild verfuegbar', 'feuer-einsatzberichte'); ?>
+                                <?php echo esc_html__('Kein Share-Bild verfügbar', 'feuer-einsatzberichte'); ?>
                             </div>
                         <?php endif; ?>
                     </div>
@@ -115,7 +115,7 @@ if (!empty($share_data['preview_image_url'])) {
                                         data-feu-share-file="<?php echo esc_attr($share_file_url); ?>"
                                         data-feu-share-use-file-url="1"
                                         data-feu-share-success="<?php echo esc_attr__('Teilen gestartet', 'feuer-einsatzberichte'); ?>"
-                                        data-feu-share-error="<?php echo esc_attr__('Teilen nicht verfuegbar', 'feuer-einsatzberichte'); ?>"
+                                        data-feu-share-error="<?php echo esc_attr__('Teilen nicht verfügbar', 'feuer-einsatzberichte'); ?>"
                                         title="<?php echo esc_attr($network['label']); ?>"
                                         aria-label="<?php echo esc_attr($network['label']); ?>"
                                         <?php echo $is_public ? '' : 'disabled'; ?>>

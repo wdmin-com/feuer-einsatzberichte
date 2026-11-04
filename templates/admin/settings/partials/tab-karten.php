@@ -23,7 +23,7 @@ $live_preview_heading = isset($map_preview_heading_text) && '' !== trim((string)
     : 'Einsatzort';
 $live_preview_prefix = isset($map_preview_street_label_prefix) && '' !== trim((string) $map_preview_street_label_prefix)
     ? (string) $map_preview_street_label_prefix
-    : 'Einsatz Strasse';
+    : 'Einsatz Straße';
 $map_preview_show_panel = isset($map_preview_show_panel) ? (int) $map_preview_show_panel : 1;
 $map_preview_show_panel_heading = isset($map_preview_show_panel_heading) ? (int) $map_preview_show_panel_heading : 1;
 $map_preview_show_panel_address = isset($map_preview_show_panel_address) ? (int) $map_preview_show_panel_address : 1;
@@ -206,7 +206,7 @@ $generated_map_rebuild_to = isset($generated_map_rebuild_to) ? (string) $generat
                     </div>
 
                     <p class="description feu-admin-settings-inline-note">
-                        <?php esc_html_e('Aenderungen an Farbe, Linienbreite, Schrift oder Feuerwehrhaus koennen anschliessend per Neuaufbau auch auf aeltere Kartenbilder angewendet werden.', 'feuer-einsatzberichte'); ?>
+                        <?php esc_html_e('Änderungen an Farbe, Linienbreite, Schrift oder Feuerwehrhaus können anschließend per Neuaufbau auch auf ältere Kartenbilder angewendet werden.', 'feuer-einsatzberichte'); ?>
                     </p>
                 </div>
             </div>
@@ -263,7 +263,7 @@ $generated_map_rebuild_to = isset($generated_map_rebuild_to) ? (string) $generat
         <section class="feu-admin-settings-surface">
             <div class="feu-admin-settings-surface-head">
                 <div>
-                    <h3><?php esc_html_e('Kartenbild fuer Einsatzberichte', 'feuer-einsatzberichte'); ?></h3>
+                    <h3><?php esc_html_e('Kartenbild für Einsatzberichte', 'feuer-einsatzberichte'); ?></h3>
                     <p class="description"><?php esc_html_e('Diese Einstellungen wirken direkt auf das generierte PNG/SVG-Kartenbild und auf die Vorschau darunter.', 'feuer-einsatzberichte'); ?></p>
                 </div>
             </div>
@@ -282,7 +282,7 @@ $generated_map_rebuild_to = isset($generated_map_rebuild_to) ? (string) $generat
                             name="feu_einsatz_map_preview_heading_text"
                             value="<?php echo esc_attr(isset($map_preview_heading_text) ? (string) $map_preview_heading_text : ''); ?>"
                             class="regular-text"
-                            placeholder="<?php esc_attr_e('Leer lassen fuer den Standardtext', 'feuer-einsatzberichte'); ?>"
+                            placeholder="<?php esc_attr_e('Leer lassen für den Standardtext', 'feuer-einsatzberichte'); ?>"
                         />
                         <small><?php esc_html_e('Steuert die Ueberschrift im unteren Infofeld des Kartenbilds.', 'feuer-einsatzberichte'); ?></small>
                     </label>
@@ -306,7 +306,7 @@ $generated_map_rebuild_to = isset($generated_map_rebuild_to) ? (string) $generat
                             <input type="checkbox" id="feu_einsatz_map_preview_show_panel_address" name="feu_einsatz_map_preview_show_panel_address" value="1" <?php checked(1 === (int) $map_preview_show_panel_address); ?> />
                             <span class="feu-admin-settings-check-copy">
                                 <strong><?php esc_html_e('Adresse im Infofeld', 'feuer-einsatzberichte'); ?></strong>
-                                <small><?php esc_html_e('Zeigt Strasse, PLZ und Stadt im Infofeld.', 'feuer-einsatzberichte'); ?></small>
+                                <small><?php esc_html_e('Zeigt Straße, PLZ und Stadt im Infofeld.', 'feuer-einsatzberichte'); ?></small>
                             </span>
                         </label>
                     </div>
@@ -341,7 +341,7 @@ $generated_map_rebuild_to = isset($generated_map_rebuild_to) ? (string) $generat
                             />
                             <span class="feu-admin-settings-check-copy">
                                 <strong><?php esc_html_e('Strassen-Label an der Markierung', 'feuer-einsatzberichte'); ?></strong>
-                                <small><?php esc_html_e('Blendet direkt an der markierten Strasse ein zusaetzliches Label ein.', 'feuer-einsatzberichte'); ?></small>
+                                <small><?php esc_html_e('Blendet direkt an der markierten Straße ein zusätzliches Label ein.', 'feuer-einsatzberichte'); ?></small>
                             </span>
                         </label>
                     </div>
@@ -352,11 +352,11 @@ $generated_map_rebuild_to = isset($generated_map_rebuild_to) ? (string) $generat
                             type="text"
                             id="feu_einsatz_map_preview_street_label_prefix"
                             name="feu_einsatz_map_preview_street_label_prefix"
-                            value="<?php echo esc_attr(isset($map_preview_street_label_prefix) ? (string) $map_preview_street_label_prefix : 'Einsatz Strasse'); ?>"
+                            value="<?php echo esc_attr(isset($map_preview_street_label_prefix) ? (string) $map_preview_street_label_prefix : 'Einsatz Straße'); ?>"
                             class="regular-text"
-                            placeholder="<?php esc_attr_e('Einsatz Strasse', 'feuer-einsatzberichte'); ?>"
+                            placeholder="<?php esc_attr_e('Einsatz Straße', 'feuer-einsatzberichte'); ?>"
                         />
-                        <small><?php esc_html_e('Beispiel: Einsatz Strasse: Beispielstrasse', 'feuer-einsatzberichte'); ?></small>
+                        <small><?php esc_html_e('Beispiel: Einsatz Straße: Beispielstraße', 'feuer-einsatzberichte'); ?></small>
                     </label>
 
                     <div class="feu-admin-settings-check-grid">
@@ -459,13 +459,13 @@ $generated_map_rebuild_to = isset($generated_map_rebuild_to) ? (string) $generat
 
                     <div class="feu-admin-settings-fieldset-head" style="margin-top: 24px;">
                         <h4><?php esc_html_e('Auswahl der Strassenmarkierung', 'feuer-einsatzberichte'); ?></h4>
-                        <p class="description"><?php esc_html_e('Die Auswahl gilt identisch fuer Live-Karte, lokale Vorschau und automatisch erzeugtes Kartenbild.', 'feuer-einsatzberichte'); ?></p>
+                        <p class="description"><?php esc_html_e('Die Auswahl gilt identisch für Live-Karte, lokale Vorschau und automatisch erzeugtes Kartenbild.', 'feuer-einsatzberichte'); ?></p>
                     </div>
                     <div class="feu-admin-settings-form-grid feu-admin-settings-form-grid--2">
                         <label class="feu-admin-settings-field">
                             <span><?php esc_html_e('Markierungsmodus', 'feuer-einsatzberichte'); ?></span>
                             <select id="feu_einsatz_street_highlight_mode" name="feu_einsatz_street_highlight_mode">
-                                <option value="full" <?php selected(($street_highlight_mode ?? 'full'), 'full'); ?>><?php esc_html_e('Ganze Strasse anzeigen', 'feuer-einsatzberichte'); ?></option>
+                                <option value="full" <?php selected(($street_highlight_mode ?? 'full'), 'full'); ?>><?php esc_html_e('Ganze Straße anzeigen', 'feuer-einsatzberichte'); ?></option>
                                 <option value="length" <?php selected(($street_highlight_mode ?? 'full'), 'length'); ?>><?php esc_html_e('Strassenabschnitt um Einsatzort', 'feuer-einsatzberichte'); ?></option>
                                 <option value="radius" <?php selected(($street_highlight_mode ?? 'full'), 'radius'); ?>><?php esc_html_e('Radius um Einsatzort', 'feuer-einsatzberichte'); ?></option>
                             </select>
@@ -473,7 +473,7 @@ $generated_map_rebuild_to = isset($generated_map_rebuild_to) ? (string) $generat
                         <label class="feu-admin-settings-field" data-feu-street-highlight-length>
                             <span><?php esc_html_e('Abschnittslaenge (Meter)', 'feuer-einsatzberichte'); ?></span>
                             <input type="number" id="feu_einsatz_street_highlight_length_meters" name="feu_einsatz_street_highlight_length_meters" min="20" max="5000" step="10" value="<?php echo esc_attr((string) ($street_highlight_length_meters ?? 100)); ?>" />
-                            <small><?php esc_html_e('Der Einsatzort liegt moeglichst mittig im Abschnitt. Ist die ermittelte Strasse kuerzer, bleibt sie vollstaendig sichtbar.', 'feuer-einsatzberichte'); ?></small>
+                            <small><?php esc_html_e('Der Einsatzort liegt möglichst mittig im Abschnitt. Ist die ermittelte Straße kürzer, bleibt sie vollständig sichtbar.', 'feuer-einsatzberichte'); ?></small>
                         </label>
                         <label class="feu-admin-settings-field" data-feu-street-highlight-radius>
                             <span><?php esc_html_e('Radius (Meter)', 'feuer-einsatzberichte'); ?></span>
@@ -608,14 +608,14 @@ $generated_map_rebuild_to = isset($generated_map_rebuild_to) ? (string) $generat
                     </label>
 
                     <label class="feu-admin-settings-field">
-                        <span><?php esc_html_e('Strasse und Hausnummer', 'feuer-einsatzberichte'); ?></span>
+                        <span><?php esc_html_e('Straße und Hausnummer', 'feuer-einsatzberichte'); ?></span>
                         <input
                             type="text"
                             id="feu_einsatz_area_station_street"
                             name="feu_einsatz_area_station_street"
                             value="<?php echo esc_attr($area_station_street); ?>"
                             class="regular-text"
-                            placeholder="<?php esc_attr_e('Strasse und Hausnummer', 'feuer-einsatzberichte'); ?>"
+                            placeholder="<?php esc_attr_e('Straße und Hausnummer', 'feuer-einsatzberichte'); ?>"
                         />
                     </label>
 
@@ -659,7 +659,7 @@ $generated_map_rebuild_to = isset($generated_map_rebuild_to) ? (string) $generat
                                 <?php if (!empty($area_station_logo_url)) : ?>
                                     <img src="<?php echo esc_url($area_station_logo_url); ?>" alt="" class="feu-einsatz-watermark-preview-image" />
                                 <?php else : ?>
-                                    <div class="feu-einsatz-watermark-placeholder"><?php esc_html_e('Noch kein Feuerwehr-Logo ausgewaehlt.', 'feuer-einsatzberichte'); ?></div>
+                                    <div class="feu-einsatz-watermark-placeholder"><?php esc_html_e('Noch kein Feuerwehr-Logo ausgewählt.', 'feuer-einsatzberichte'); ?></div>
                                 <?php endif; ?>
                             </div>
                             <div class="feu-einsatz-watermark-actions">
@@ -692,7 +692,7 @@ $generated_map_rebuild_to = isset($generated_map_rebuild_to) ? (string) $generat
             <div class="feu-admin-settings-surface-head">
                 <div>
                     <h3><?php esc_html_e('Wartung und Neuaufbau', 'feuer-einsatzberichte'); ?></h3>
-                    <p class="description"><?php esc_html_e('Werkzeuge fuer Cache, Geometrien und die Neuerstellung vorhandener Kartenbilder.', 'feuer-einsatzberichte'); ?></p>
+                    <p class="description"><?php esc_html_e('Werkzeuge für Cache, Geometrien und die Neuerstellung vorhandener Kartenbilder.', 'feuer-einsatzberichte'); ?></p>
                 </div>
             </div>
 

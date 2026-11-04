@@ -75,8 +75,8 @@ elseif ('' !== $post_image_url) : ?>
          fetchpriority="low" />
 <?php else : ?>
     <div class="feu-einsatz-map-placeholder">
-        <strong><?php echo esc_html__('Kein Einsatzfoto verfuegbar.', 'feuer-einsatzberichte'); ?></strong>
-        <p><?php echo esc_html__('Fuer diesen Einsatz ist weder ein Beitragsbild noch ein Foto in der Galerie hinterlegt, das statt der Karte gezeigt werden kann.', 'feuer-einsatzberichte'); ?></p>
+        <strong><?php echo esc_html__('Kein Einsatzfoto verfügbar.', 'feuer-einsatzberichte'); ?></strong>
+        <p><?php echo esc_html__('Für diesen Einsatz ist weder ein Beitragsbild noch ein Foto in der Galerie hinterlegt, das statt der Karte gezeigt werden kann.', 'feuer-einsatzberichte'); ?></p>
     </div>
 <?php endif;
 $post_image_markup = (string) ob_get_clean();
@@ -92,8 +92,8 @@ if (!empty($map['fallback_image_url'])) : ?>
     echo $map['preview_markup'];
 else : ?>
     <div class="feu-einsatz-map-placeholder">
-        <strong><?php echo esc_html__('Kartenansicht nicht verfuegbar.', 'feuer-einsatzberichte'); ?></strong>
-        <p><?php echo esc_html__('Fuer diesen Einsatz sind noch keine ausreichenden Kartendaten gespeichert.', 'feuer-einsatzberichte'); ?></p>
+        <strong><?php echo esc_html__('Kartenansicht nicht verfügbar.', 'feuer-einsatzberichte'); ?></strong>
+        <p><?php echo esc_html__('Für diesen Einsatz sind noch keine ausreichenden Kartendaten gespeichert.', 'feuer-einsatzberichte'); ?></p>
         <?php if (isset($map['latitude'], $map['longitude']) && is_numeric($map['latitude']) && is_numeric($map['longitude'])) : ?>
             <p class="feu-einsatz-map-placeholder-coordinates">
                 <?php echo esc_html(number_format((float) ($map['latitude'] ?? 0), 6, '.', '') . ', ' . number_format((float) ($map['longitude'] ?? 0), 6, '.', '')); ?>
@@ -185,7 +185,7 @@ if ($show_live_map) {
         </div>
 
         <div class="feu-einsatz-map-note">
-            <?php echo esc_html__('Hier ist die Strasse markiert, auf der sich der Einsatz ereignet hat. Aus Datenschutzgruenden zeigen wir bewusst nicht den exakten Ereignisort.', 'feuer-einsatzberichte'); ?>
+            <?php echo esc_html__('Hier ist die Straße markiert, auf der sich der Einsatz ereignet hat. Aus Datenschutzgründen zeigen wir bewusst nicht den exakten Ereignisort.', 'feuer-einsatzberichte'); ?>
         </div>
     </div>
 </div>

@@ -25,7 +25,7 @@ if (!empty($display['single_desaturate_organizations'])) {
 
         <div class="feu-einsatz-single-meta">
             <?php if (in_array('street', $info_fields, true) && !empty($report['street'])) : ?>
-                <div class="feu-einsatz-single-meta-row"><b><?php echo esc_html__('Strasse:', 'feuer-einsatzberichte'); ?></b> <?php echo esc_html($report['street']); ?></div>
+                <div class="feu-einsatz-single-meta-row"><b><?php echo esc_html__('Straße:', 'feuer-einsatzberichte'); ?></b> <?php echo esc_html($report['street']); ?></div>
             <?php endif; ?>
 
             <?php if (in_array('location', $info_fields, true)) : ?>

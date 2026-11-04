@@ -35,7 +35,7 @@ if (!defined('ABSPATH')) {
 
             <p class="submit">
                 <button type="submit" class="button button-primary">
-                    <?php _e('Aenderungen speichern', 'feuer-einsatzberichte'); ?>
+                    <?php _e('Änderungen speichern', 'feuer-einsatzberichte'); ?>
                 </button>
                 <button type="button" class="button feu-einsatz-modal-close">
                     <?php _e('Abbrechen', 'feuer-einsatzberichte'); ?>
