@@ -1,6 +1,20 @@
 {
   "releases": [
     {
+      "version": "3.3.15",
+      "date": "2026-11-05",
+      "title": "Korrekte Bilddiagnose und robuste Kartenaktion",
+      "summary": "Die Bildintegritätsprüfung erkennt erhaltene WordPress-Miniaturen als sichtbare Kartenbilder, bereinigt ältere Fehlklassifizierungen automatisch und verwendet für die manuelle Neugenerierung eine zuverlässige SVG-Ikone.",
+      "changes": [
+        "Bildintegrität: Eine vorhandene, lesbare WordPress-Miniatur wird als geprüftes Kartenbild gezählt und nicht länger als tatsächlich fehlende Datei gemeldet.",
+        "Statusübersicht: Erhaltene Karten-Miniaturen erscheinen als eigener informativer Wert und bleiben damit von echten Karten-, Share-, Foto- und Wasserzeichenfehlern getrennt.",
+        "Aktualisierung: Nach dem Plugin-Update werden ältere gespeicherte Prüfergebnisse automatisch neu aufgebaut, sodass frühere Fehlalarme ohne Wartezeit verschwinden.",
+        "Diagnosebericht: Der neue Wert „Retained map thumbnails“ macht verfügbare Fallback-Dateien für den technischen Support nachvollziehbar, ohne Bild- oder Berichtsinhalte offenzulegen.",
+        "Berichtseditor: Die Aktion „Kartenbild neu generieren“ verwendet eine eigenständige, sauber skalierende SVG-Ikone statt des browser- und schriftabhängigen Dashicons-Zeichens.",
+        "Qualität: Regressionstests sichern die neue Fallback-Klassifizierung, die automatische Statusaktualisierung und die SVG-Schaltfläche; alle 45 automatischen Prüfungen bestehen."
+      ]
+    },
+    {
       "version": "3.3.14",
       "date": "2026-11-04",
       "title": "Zuverlässiger Kartenstatus und kompakte Einsatzredaktion",

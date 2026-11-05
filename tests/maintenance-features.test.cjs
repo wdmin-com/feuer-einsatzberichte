@@ -35,7 +35,12 @@ test('daily image audit validates files and is visible in the existing operation
     assert.match(service, /privacy_hidden/);
     assert.match(service, /pending_count/);
     assert.match(service, /issue_counts/);
+    assert.match(service, /thumbnail_fallback_count/);
+    assert.match(service, /!empty\(\$map_status\['has_thumbnail_fallback'\]\)/);
+    assert.match(service, /'schema_version'\s*=>\s*2/);
+    assert.match(service, /\['schema_version'\]\s*\?\?\s*0/);
     assert.match(operations, /Bildintegrität/);
+    assert.match(operations, /gesicherte Miniatur/);
     assert.match(operations, /Keine tatsächlichen Probleme/);
     assert.match(operations, /feu_einsatz_run_image_integrity/);
 });

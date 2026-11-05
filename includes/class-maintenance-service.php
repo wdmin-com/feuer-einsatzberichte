@@ -94,6 +94,7 @@ final class FEU_Einsatz_Maintenance_Service {
         $warm_queued = 0;
         $pending_count = 0;
         $not_required_count = 0;
+        $thumbnail_fallback_count = 0;
         foreach (array_map('absint', (array) $report_ids) as $index => $post_id) {
             $warm = get_post_meta($post_id, '_feu_einsatz_cache_warm_job', true);
             $warm_time = is_array($warm) ? (int) ($warm['updated_at'] ?? 0) : 0;
@@ -113,6 +114,15 @@ final class FEU_Einsatz_Maintenance_Service {
                 $not_required_count++;
             } elseif ('ready' === $map_status_key) {
                 $checked_files++;
+            } elseif (!empty($map_status['has_thumbnail_fallback'])) {
+                // A generated WordPress derivative is still a valid, visible map asset.
+                // Keep it visible as a recoverable fallback without reporting a false
+                // "missing image" incident while the full-size file is rebuilt.
+                $checked_files++;
+                $thumbnail_fallback_count++;
+                if (in_array($map_status_key, ['queued', 'processing'], true)) {
+                    $pending_count++;
+                }
             } elseif (in_array($map_status_key, ['queued', 'processing'], true)) {
                 $pending_count++;
             } else {
@@ -167,6 +177,7 @@ final class FEU_Einsatz_Maintenance_Service {
             $issue_counts[$kind] = ($issue_counts[$kind] ?? 0) + 1;
         }
         $state = [
+            'schema_version' => 2,
             'checked_at' => time(),
             'reports' => count($report_ids),
             'files' => $checked_files,
@@ -175,6 +186,7 @@ final class FEU_Einsatz_Maintenance_Service {
             'issue_counts' => $issue_counts,
             'pending_count' => $pending_count,
             'not_required_count' => $not_required_count,
+            'thumbnail_fallback_count' => $thumbnail_fallback_count,
             'warm_queued' => $warm_queued,
         ];
         update_option(self::IMAGE_AUDIT_OPTION, $state, false);
@@ -183,7 +195,15 @@ final class FEU_Einsatz_Maintenance_Service {
 
     public function get_image_integrity_state(): array {
         $state = get_option(self::IMAGE_AUDIT_OPTION, []);
-        return is_array($state) ? $state : [];
+        $state = is_array($state) ? $state : [];
+
+        // Rebuild summaries written by older plugin versions so previously
+        // misclassified thumbnail fallbacks disappear immediately after update.
+        if (!empty($state) && (int) ($state['schema_version'] ?? 0) < 2) {
+            return $this->run_image_integrity_audit();
+        }
+
+        return $state;
     }
 
     public function handle_manual_image_integrity(): void {

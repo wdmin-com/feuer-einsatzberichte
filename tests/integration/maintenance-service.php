@@ -52,7 +52,7 @@ try {
         throw new RuntimeException('Cache warm-up status is not visible.');
     }
     $state = $service->run_image_integrity_audit();
-    if (empty($state['checked_at']) || !isset($state['issue_count'], $state['issue_counts'], $state['pending_count'], $state['not_required_count'], $state['warm_queued'])) {
+    if (2 !== (int) ($state['schema_version'] ?? 0) || empty($state['checked_at']) || !isset($state['issue_count'], $state['issue_counts'], $state['pending_count'], $state['not_required_count'], $state['thumbnail_fallback_count'], $state['warm_queued'])) {
         throw new RuntimeException('Image integrity audit did not persist a complete summary.');
     }
     foreach ((array) ($state['issues'] ?? []) as $issue) {

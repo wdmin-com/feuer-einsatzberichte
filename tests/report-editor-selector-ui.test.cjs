@@ -30,8 +30,9 @@ test('map image action aligns its icon and keeps the label separate', () => {
     const template = read('templates/admin/meta-box-details.php');
     const styles = read('assets/admin/css/admin-style.css');
     assert.match(template, /feu-einsatz-map-regenerate-button/);
-    assert.match(template, /dashicons-image-rotate/);
-    assert.match(styles, /feu-einsatz-map-regenerate-button \.dashicons/);
+    assert.match(template, /<svg class="feu-einsatz-map-regenerate-icon"/);
+    assert.doesNotMatch(template, /dashicons-image-rotate/);
+    assert.match(styles, /feu-einsatz-map-regenerate-icon[\s\S]*?stroke:\s*currentColor/);
 });
 
 test('an unverified house number can offer cached OSM alternatives safely', () => {

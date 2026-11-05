@@ -529,7 +529,10 @@ $street_highlight_mode_label = 'full' === $street_highlight_mode
                 <?php endif; ?>
                 <p class="feu-einsatz-report-status-actions">
                     <button type="button" id="feu-einsatz-regenerate-map-image" class="button button-secondary feu-einsatz-map-regenerate-button">
-                        <span class="dashicons dashicons-image-rotate" aria-hidden="true"></span>
+                        <svg class="feu-einsatz-map-regenerate-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                            <path d="M20 11a8 8 0 1 0-2.34 5.66" />
+                            <path d="M20 5v6h-6" />
+                        </svg>
                         <span><?php esc_html_e('Kartenbild neu generieren', 'feuer-einsatzberichte'); ?></span>
                     </button>
                     <?php if ($has_generated_map_asset) : ?>
@@ -558,7 +561,10 @@ $street_highlight_mode_label = 'full' === $street_highlight_mode
                 </div>
                 <p class="feu-einsatz-report-status-actions">
                     <button type="button" id="feu-einsatz-regenerate-map-image" class="button button-secondary feu-einsatz-map-regenerate-button">
-                        <span class="dashicons dashicons-image-rotate" aria-hidden="true"></span>
+                        <svg class="feu-einsatz-map-regenerate-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                            <path d="M20 11a8 8 0 1 0-2.34 5.66" />
+                            <path d="M20 5v6h-6" />
+                        </svg>
                         <span><?php esc_html_e('Kartenbild neu generieren', 'feuer-einsatzberichte'); ?></span>
                     </button>
                     <?php if ($has_generated_map_asset || $generated_map_thumbnail_id > 0) : ?>

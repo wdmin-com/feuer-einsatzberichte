@@ -281,6 +281,7 @@ class FEU_Einsatz_Operations_Center {
             'Issues photos: ' . (int) ($integrity['issue_counts']['photo'] ?? 0),
             'Issues watermark: ' . (int) ($integrity['issue_counts']['watermark'] ?? 0),
             'Pending image tasks: ' . (int) ($integrity['pending_count'] ?? 0),
+            'Retained map thumbnails: ' . (int) ($integrity['thumbnail_fallback_count'] ?? 0),
             'Not required by configuration: ' . (int) ($integrity['not_required_count'] ?? 0),
             'Warm-up queued: ' . (int) ($integrity['warm_queued'] ?? 0),
             'Cache ready: ' . (int) ($cache_status['ready'] ?? 0),
