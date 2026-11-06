@@ -20,8 +20,8 @@
         return getConfig().required === true || getConfig().required === '1' || getConfig().required === 1;
     }
 
-    function getFcaApi() {
-        var api = window.FCAConsent;
+    function getFeuerCookieApi() {
+        var api = window.FeuerCookieConsent;
 
         if (!api || typeof api.allows !== 'function') {
             return null;
@@ -65,7 +65,7 @@
             return true;
         }
 
-        var api = getFcaApi();
+        var api = getFeuerCookieApi();
 
         if (api) {
             try {
@@ -83,7 +83,7 @@
     function snapshot() {
         return Object.freeze({
             required: isRequired(),
-            ready: !isRequired() || !!getFcaApi() || getLegacyDecision() !== null,
+            ready: !isRequired() || !!getFeuerCookieApi() || getLegacyDecision() !== null,
             allowed: allows(),
             resource: RESOURCE
         });
@@ -101,8 +101,8 @@
         });
     }
 
-    function bindFcaApi() {
-        var api = getFcaApi();
+    function bindFeuerCookieApi() {
+        var api = getFeuerCookieApi();
 
         if (!api || unsubscribe) {
             return false;
@@ -120,7 +120,7 @@
     }
 
     function waitForApi() {
-        if (bindFcaApi() || !isRequired()) {
+        if (bindFeuerCookieApi() || !isRequired()) {
             window.clearTimeout(readyTimer);
             readyTimer = null;
             return;
@@ -141,10 +141,10 @@
         }
 
         started = true;
-        document.addEventListener('fca:consent-ready', function () {
+        document.addEventListener('feuer-cookie-analytics:consent-ready', function () {
             window.setTimeout(waitForApi, 0);
         });
-        document.addEventListener('fca:consent-change', notify);
+        document.addEventListener('feuer-cookie-analytics:consent-change', notify);
         document.addEventListener('fazcookie_consent_ready', notify);
         document.addEventListener('fazcookie_consent_update', notify);
         waitForApi();

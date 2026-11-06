@@ -1,6 +1,19 @@
 {
   "releases": [
     {
+      "version": "3.3.17",
+      "date": "2026-11-07",
+      "title": "Aktualisierte Feuer-Cookie-Analytics-Schnittstelle",
+      "summary": "Die Kartenintegration verwendet die neuen vollständig ausgeschriebenen PHP-, Browser- und Ereigniskennungen von Feuer-Cookie-Analytics und bleibt dadurch mit dem bereinigten Cookie-Plugin kompatibel.",
+      "changes": [
+        "Schnittstellenvertrag: Die WordPress-Integration verwendet den Filter „feuer_cookie_analytics_feuer_plugin_integrations“ und die vollständig benannten Ressourcen- und Einwilligungsfunktionen.",
+        "Browser-API: Die Kartenfreigabe wird über window.FeuerCookieConsent abgefragt und beobachtet.",
+        "Ereignisse: Initialisierung und Widerruf reagieren auf „feuer-cookie-analytics:consent-ready“ und „feuer-cookie-analytics:consent-change“.",
+        "Bereinigung: Veraltete Kurzkennungen aus der ersten Integrationsfassung wurden vollständig aus dem produktiven Plugin-Code entfernt.",
+        "Qualität: Der Consent-Regressionstest verwendet denselben aktuellen Vertrag wie Feuer-Cookie-Analytics und sichert Freigabe sowie Widerruf weiterhin ab."
+      ]
+    },
+    {
       "version": "3.3.16",
       "date": "2026-11-06",
       "title": "Einwilligungsgesteuerte OpenStreetMap-Karten",
@@ -11,7 +24,7 @@
         "Live-Aktualisierung: Eine neu erteilte Einwilligung aktiviert die interaktive Karte ohne Seitenwechsel; nach einem Widerruf wird die Leaflet-Karte entfernt und der externe Zugriff wieder gesperrt.",
         "Sicherer Fallback: Das lokal gespeicherte Kartenbild und der Einsatzbericht bleiben ohne externe Verbindung sichtbar.",
         "Transparenz: Der neue Zustimmungshinweis erklärt die Übertragung der IP-Adresse an OpenStreetMap und führt direkt zu den Datenschutz-Einstellungen.",
-        "Kompatibilität: Die Integration unterstützt die neue FCAConsent-Schnittstelle, vorhandene Feuer-Cookie-Schnittstellen und Installationen ohne Cookie-Plugin.",
+        "Kompatibilität: Die Integration unterstützt die Browser-Einwilligungsschnittstelle von Feuer-Cookie-Analytics, vorhandene Feuer-Cookie-Schnittstellen und Installationen ohne Cookie-Plugin.",
         "Qualität: Ein neuer Regressionstest sichert die gesperrte Ausgangslage, Freigabe, Widerruf und beide öffentlichen Kartenvarianten; die vollständige Testsuite besteht fehlerfrei."
       ]
     },

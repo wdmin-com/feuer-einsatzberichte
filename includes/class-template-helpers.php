@@ -719,8 +719,8 @@ class FEU_Einsatz_Template_Helpers {
     }
 
     public static function has_cookie_map_consent_integration() {
-        return function_exists('fca_feuer_plugin_resource')
-            || function_exists('fca_consent_allows')
+        return function_exists('feuer_cookie_analytics_feuer_plugin_resource')
+            || function_exists('feuer_cookie_analytics_consent_allows')
             || function_exists('ff_cookie_has_consent')
             || function_exists('feuer_cookie_has_category_consent')
             || function_exists('feuer_cookie_header_macro')
@@ -728,8 +728,8 @@ class FEU_Einsatz_Template_Helpers {
     }
 
     public static function has_cookie_map_consent() {
-        if (function_exists('fca_consent_allows')) {
-            return (bool) fca_consent_allows('feuer-einsatzberichte', 'openstreetmap-tiles');
+        if (function_exists('feuer_cookie_analytics_consent_allows')) {
+            return (bool) feuer_cookie_analytics_consent_allows('feuer-einsatzberichte', 'openstreetmap-tiles');
         }
 
         if (function_exists('ff_cookie_has_consent')) {

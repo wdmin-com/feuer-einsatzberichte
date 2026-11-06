@@ -13,7 +13,7 @@ const documentEvents = {};
 const timers = [];
 const states = [];
 let allowed = true;
-let fcaListener = null;
+let consentListener = null;
 
 const documentStub = {
     addEventListener(name, callback) { documentEvents[name] = callback; },
@@ -35,25 +35,25 @@ vm.runInNewContext(adapterSource, {
 windowStub.FEUEinsatzMapConsent.onChange((state) => states.push(state));
 assert.equal(states.at(-1).allowed, false, 'The OpenStreetMap resource must fail closed before the consent API is ready.');
 
-windowStub.FCAConsent = {
+windowStub.FeuerCookieConsent = {
     allows(resource) {
         assert.equal(resource.category, 'functional');
         assert.equal(resource.service, 'feuer-einsatzberichte');
         return allowed;
     },
     onChange(callback) {
-        fcaListener = callback;
+        consentListener = callback;
         callback({ status: 'decided' });
         return () => {};
     }
 };
 
-documentEvents['fca:consent-ready']();
+documentEvents['feuer-cookie-analytics:consent-ready']();
 while (timers.length) timers.shift()();
 assert.equal(states.at(-1).allowed, true, 'A granted functional consent must release the map runtime.');
 
 allowed = false;
-fcaListener({ status: 'decided' });
+consentListener({ status: 'decided' });
 assert.equal(states.at(-1).allowed, false, 'Withdrawing consent must immediately close the map resource again.');
 
 assert.match(reportSource, /consent\.allows\(\) !== true/, 'The report map must check consent before Leaflet or tiles are loaded.');
