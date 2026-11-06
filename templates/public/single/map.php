@@ -24,7 +24,7 @@ $radius_has_coordinates = 'radius' === ($map_config['highlight_mode'] ?? '')
 $has_live_data = !empty($map['has_live_data']) || $radius_has_coordinates;
 $cookie_map_integration_active = FEU_Einsatz_Template_Helpers::has_cookie_map_consent_integration();
 $cookie_map_consent_granted = !$cookie_map_integration_active || FEU_Einsatz_Template_Helpers::has_cookie_map_consent();
-$show_live_map = 'live' === $map_display_mode && $has_live_data && (!$cookie_map_integration_active || $cookie_map_consent_granted);
+$show_live_map = 'live' === $map_display_mode && $has_live_data;
 $post_image_attachment_id = isset($map['post_image_attachment_id']) ? absint($map['post_image_attachment_id']) : 0;
 $post_image_url = isset($map['post_image_url']) ? trim((string) $map['post_image_url']) : '';
 $post_image_alt = isset($map['post_image_alt']) ? trim((string) $map['post_image_alt']) : '';
@@ -115,8 +115,9 @@ if ($show_live_map) {
     <div class="<?php echo esc_attr($runtime_classes); ?>"
          data-map-display-mode="<?php echo esc_attr($map_display_mode); ?>"
          data-map-privacy-mode="<?php echo esc_attr($cookie_map_integration_active ? 'always' : $map_privacy_mode); ?>"
+         data-map-consent-required="<?php echo $cookie_map_integration_active ? '1' : '0'; ?>"
          data-map-live-available="<?php echo $show_live_map ? '1' : '0'; ?>"
-         data-map-enabled="<?php echo $show_live_map ? '1' : '0'; ?>">
+         data-map-enabled="<?php echo $show_live_map && $cookie_map_consent_granted ? '1' : '0'; ?>">
         <?php if ($show_live_map) : ?>
             <div class="feu-einsatz-map-load-bar"
                  role="progressbar"
@@ -137,13 +138,23 @@ if ($show_live_map) {
                 <div class="feu-einsatz-map-privacy-preview is-visible">
                     <?php echo $post_image_available ? $post_image_markup : $preview_markup; ?>
                 </div>
-            <?php elseif ('live' === $map_display_mode && $has_live_data && $cookie_map_integration_active && !$cookie_map_consent_granted) : ?>
+            <?php elseif ('live' === $map_display_mode && $has_live_data && $cookie_map_integration_active) : ?>
                 <div class="feu-einsatz-map-consent is-visible" data-feu-map-cookie-consent>
-                    <strong><?php echo esc_html__('Live-Karte ist noch nicht freigegeben', 'feuer-einsatzberichte'); ?></strong>
-                    <p><?php echo esc_html__('Die Straßenmarkierung ist vorbereitet. Bitte aktivieren Sie in den Cookie-Einstellungen die Kategorie „Karten“ beziehungsweise „Leaflet / OpenStreetMap“.', 'feuer-einsatzberichte'); ?></p>
-                    <button type="button" class="btn btn-danger btn-sm" data-feu-map-open-cookie-settings>
-                        <?php echo esc_html__('Cookie-Einstellungen öffnen', 'feuer-einsatzberichte'); ?>
-                    </button>
+                    <div class="feu-einsatz-map-consent-preview">
+                        <?php echo $preview_markup; ?>
+                    </div>
+                    <div class="feu-einsatz-map-consent-content">
+                        <span class="feu-einsatz-map-consent-kicker"><?php echo esc_html__('Externe Karteninhalte', 'feuer-einsatzberichte'); ?></span>
+                        <strong><?php echo esc_html__('Interaktive Karte nur mit Ihrer Zustimmung', 'feuer-einsatzberichte'); ?></strong>
+                        <p><?php echo esc_html__('Beim Laden werden Kartenkacheln von OpenStreetMap abgerufen. Dabei wird Ihre IP-Adresse an OpenStreetMap übertragen. Das gespeicherte Kartenbild und der Einsatzbericht bleiben ohne Zustimmung sichtbar.', 'feuer-einsatzberichte'); ?></p>
+                        <button type="button"
+                                class="btn btn-danger btn-sm feu-einsatz-consent-button"
+                                data-feu-map-open-cookie-settings
+                                data-faz-open-preferences="1"
+                                aria-haspopup="dialog">
+                            <?php echo esc_html__('Datenschutz-Einstellungen öffnen', 'feuer-einsatzberichte'); ?>
+                        </button>
+                    </div>
                 </div>
             <?php elseif ('live' === $map_display_mode && $has_live_data && 'always' !== $map_privacy_mode) : ?>
                 <div class="feu-einsatz-map-consent" data-feu-map-consent>

@@ -97,6 +97,7 @@ class FEU_Einsatz_Public {
         add_action('feu_einsatz_reports_restored', ['FEU_Einsatz_Template_Helpers', 'invalidate_overview_cache']);
         add_action('feu_einsatz_prime_public_map', ['FEU_Einsatz_Template_Helpers', 'prime_public_map_in_background']);
         add_action('feu_einsatz_prime_public_station', ['FEU_Einsatz_Template_Helpers', 'prime_public_station_in_background']);
+        add_filter('fca_feuer_plugin_integrations', [$this, 'register_cookie_integration']);
         add_action('wp_enqueue_scripts', [$this, 'enqueue_scripts']);
         add_action('wp_head', [$this, 'render_social_share_meta_tags'], -9999);
         $this->register_shortcode_aliases('count', [$this, 'render_einsatz_count_shortcode']);
@@ -1687,11 +1688,52 @@ class FEU_Einsatz_Public {
         );
     }
 
+    /**
+     * Declares the only automatic public third-party request made by this
+     * plugin. The merge keeps the contract available for older releases of
+     * Feuer-Cookie-Analytics without overwriting newer definitions.
+     */
+    public function register_cookie_integration($integrations) {
+        $integrations = is_array($integrations) ? $integrations : [];
+        $definition = isset($integrations['feuer-einsatzberichte']) && is_array($integrations['feuer-einsatzberichte'])
+            ? $integrations['feuer-einsatzberichte']
+            : [];
+        $resources = isset($definition['resources']) && is_array($definition['resources'])
+            ? $definition['resources']
+            : [];
+
+        $resources['openstreetmap-tiles'] = array_merge(
+            [
+                'category' => 'functional',
+                'domain' => 'tile.openstreetmap.org',
+            ],
+            isset($resources['openstreetmap-tiles']) && is_array($resources['openstreetmap-tiles'])
+                ? $resources['openstreetmap-tiles']
+                : []
+        );
+
+        $integrations['feuer-einsatzberichte'] = array_merge(
+            [
+                'name' => 'Feuer-Einsatzberichte',
+                'category' => 'necessary',
+                'service' => 'feuer-einsatzberichte',
+                'local_only' => true,
+                'description' => __('Berichte und lokale Kartenbilder; interaktive OpenStreetMap-Karten werden erst nach Einwilligung geladen.', 'feuer-einsatzberichte'),
+            ],
+            $definition,
+            ['resources' => $resources]
+        );
+
+        return $integrations;
+    }
+
     public function enqueue_scripts() {
         $public_style_path = FEU_EINSATZ_PLUGIN_DIR . 'assets/public/css/public-style.css';
         $public_script_path = FEU_EINSATZ_PLUGIN_DIR . 'assets/public/js/public-script.js';
+        $map_consent_script_path = FEU_EINSATZ_PLUGIN_DIR . 'assets/public/js/map-consent.js';
         $public_style_version = file_exists($public_style_path) ? (string) filemtime($public_style_path) : FEU_EINSATZ_VERSION;
         $public_script_version = file_exists($public_script_path) ? (string) filemtime($public_script_path) : FEU_EINSATZ_VERSION;
+        $map_consent_script_version = file_exists($map_consent_script_path) ? (string) filemtime($map_consent_script_path) : FEU_EINSATZ_VERSION;
         $current_post_id = get_queried_object_id();
         $current_post = $current_post_id ? get_post($current_post_id) : null;
         $current_post_content = $current_post instanceof WP_Post ? (string) $current_post->post_content : '';
@@ -1738,11 +1780,34 @@ class FEU_Einsatz_Public {
             $public_style_version
         );
 
+        if ($needs_public_runtime_script || ($is_area_page_request && $this->is_area_page_enabled())) {
+            wp_enqueue_script(
+                'feu-einsatz-map-consent',
+                FEU_EINSATZ_PLUGIN_URL . 'assets/public/js/map-consent.js',
+                [],
+                $map_consent_script_version,
+                ['in_footer' => true, 'strategy' => 'defer']
+            );
+
+            wp_add_inline_script(
+                'feu-einsatz-map-consent',
+                'window.feu_einsatz_map_consent = Object.assign({}, window.feu_einsatz_map_consent || {}, ' . wp_json_encode([
+                    'required' => FEU_Einsatz_Template_Helpers::has_cookie_map_consent_integration(),
+                    'initialAllowed' => FEU_Einsatz_Template_Helpers::has_cookie_map_consent(),
+                    'integration' => 'feuer-einsatzberichte',
+                    'resource' => 'openstreetmap-tiles',
+                    'category' => 'functional',
+                    'service' => 'feuer-einsatzberichte',
+                ]) . ');',
+                'before'
+            );
+        }
+
         if ($needs_public_runtime_script && !$is_single_report) {
             wp_enqueue_script(
                 'feu-einsatz-public-script',
                 FEU_EINSATZ_PLUGIN_URL . 'assets/public/js/public-script.js',
-                [],
+                ['feu-einsatz-map-consent'],
                 $public_script_version,
                 ['in_footer' => true, 'strategy' => 'defer']
             );
@@ -1759,7 +1824,7 @@ class FEU_Einsatz_Public {
             wp_enqueue_script(
                 'feu-einsatz-public-script',
                 FEU_EINSATZ_PLUGIN_URL . 'assets/public/js/public-script.js',
-                [],
+                ['feu-einsatz-map-consent'],
                 $public_script_version,
                 ['in_footer' => true, 'strategy' => 'defer']
             );
@@ -1791,7 +1856,7 @@ class FEU_Einsatz_Public {
             wp_enqueue_script(
                 'feu-einsatz-area-map-script',
                 FEU_EINSATZ_PLUGIN_URL . 'assets/public/js/area-map.js',
-                ['feu-einsatz-leaflet'],
+                ['feu-einsatz-leaflet', 'feu-einsatz-map-consent'],
                 $area_script_version,
                 ['in_footer' => true, 'strategy' => 'defer']
             );

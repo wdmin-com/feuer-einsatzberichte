@@ -65,9 +65,62 @@
 
     function showFallback(runtime) {
         var fallback = runtime.querySelector('.feu-einsatz-area-map-fallback');
+        var consent = runtime.querySelector('[data-feu-area-map-consent]');
+        var error = runtime.querySelector('[data-feu-area-map-error]');
 
         if (fallback) {
             fallback.hidden = false;
+        }
+        if (consent) {
+            consent.hidden = true;
+        }
+        if (error) {
+            error.hidden = false;
+        }
+    }
+
+    function destroyAreaMap(runtime) {
+        var map = runtime._feuAreaLeafletMap;
+
+        if (map && typeof map.remove === 'function') {
+            try {
+                map.remove();
+            } catch (error) {
+                // Consent withdrawal remains fail-closed even after cleanup errors.
+            }
+        }
+
+        runtime._feuAreaLeafletMap = null;
+        var canvas = runtime.querySelector('.feu-einsatz-area-map-canvas');
+        if (canvas) {
+            canvas.innerHTML = '';
+            if (canvas._leaflet_id) {
+                delete canvas._leaflet_id;
+            }
+        }
+    }
+
+    function showConsent(runtime) {
+        destroyAreaMap(runtime);
+        var fallback = runtime.querySelector('.feu-einsatz-area-map-fallback');
+        var consent = runtime.querySelector('[data-feu-area-map-consent]');
+        var error = runtime.querySelector('[data-feu-area-map-error]');
+
+        if (fallback) {
+            fallback.hidden = false;
+        }
+        if (consent) {
+            consent.hidden = false;
+        }
+        if (error) {
+            error.hidden = true;
+        }
+    }
+
+    function showReady(runtime) {
+        var fallback = runtime.querySelector('.feu-einsatz-area-map-fallback');
+        if (fallback) {
+            fallback.hidden = true;
         }
     }
 
@@ -631,6 +684,7 @@
             keyboard: true,
             preferCanvas: true
         });
+        runtime._feuAreaLeafletMap = map;
 
         addBaseLayer(map);
 
@@ -651,9 +705,12 @@
                 maxZoom: 15
             });
         } else {
+            destroyAreaMap(runtime);
             showFallback(runtime);
             return;
         }
+
+        showReady(runtime);
 
         window.setTimeout(function () {
             map.invalidateSize();
@@ -664,10 +721,35 @@
         var runtimes = document.querySelectorAll('.feu-einsatz-area-map-runtime[data-area-map-enabled="1"]');
 
         runtimes.forEach(function (runtime) {
-            try {
-                renderAreaMap(runtime);
-            } catch (error) {
-                showFallback(runtime);
+            var consentRequired = runtime.getAttribute('data-map-consent-required') === '1';
+            var consent = window.FEUEinsatzMapConsent;
+
+            function renderAllowedMap() {
+                if (runtime._feuAreaLeafletMap) {
+                    showReady(runtime);
+                    return;
+                }
+
+                try {
+                    renderAreaMap(runtime);
+                } catch (error) {
+                    destroyAreaMap(runtime);
+                    showFallback(runtime);
+                }
+            }
+
+            if (consentRequired && consent && typeof consent.onChange === 'function') {
+                consent.onChange(function (state) {
+                    if (state.allowed) {
+                        renderAllowedMap();
+                    } else {
+                        showConsent(runtime);
+                    }
+                });
+            } else if (consentRequired) {
+                showConsent(runtime);
+            } else {
+                renderAllowedMap();
             }
         });
     }

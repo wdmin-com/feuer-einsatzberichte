@@ -588,6 +588,56 @@
         fallback.innerHTML = '<div class="feu-einsatz-map-placeholder"><strong>' + escapeHtml(strings.mapPrivacyRejected) + '</strong><p>' + escapeHtml(strings.mapPrivacyRejectedHint) + '</p></div>';
     }
 
+    function destroyMap(runtime) {
+        var map = runtime._feuLeafletMap;
+
+        if (map && typeof map.remove === 'function') {
+            try {
+                map.remove();
+            } catch (error) {
+                // Consent withdrawal must remain fail-closed even if Leaflet cleanup fails.
+            }
+        }
+
+        runtime._feuLeafletMap = null;
+        runtime._feuLeafletTileLayer = null;
+
+        var canvas = runtime.querySelector('.feu-einsatz-live-map');
+        if (canvas) {
+            canvas.innerHTML = '';
+            if (canvas._leaflet_id) {
+                delete canvas._leaflet_id;
+            }
+        }
+    }
+
+    function showCookieConsentState(runtime) {
+        destroyMap(runtime);
+        runtime.setAttribute('data-map-enabled', '0');
+        runtime.classList.remove('is-ready', 'has-error');
+
+        var fallback = runtime.querySelector('.feu-einsatz-map-runtime-fallback');
+        var consentBox = runtime.querySelector('[data-feu-map-cookie-consent]');
+
+        if (fallback) {
+            fallback.hidden = false;
+        }
+        if (consentBox) {
+            consentBox.hidden = false;
+        }
+    }
+
+    function hasRuntimeMapConsent(runtime) {
+        if (runtime.getAttribute('data-map-consent-required') !== '1') {
+            return true;
+        }
+
+        return !!(
+            window.FEUEinsatzMapConsent
+            && window.FEUEinsatzMapConsent.allows() === true
+        );
+    }
+
     function renderMap(runtime) {
         if (!window.L) {
             showFallback(runtime, null);
@@ -645,6 +695,7 @@
             scrollWheelZoom: false,
             preferCanvas: true
         });
+        runtime._feuLeafletMap = map;
 
         var loadBar     = runtime.querySelector('.feu-einsatz-map-load-bar');
         var loadBarFill = loadBar ? loadBar.querySelector('.feu-einsatz-map-load-bar-fill') : null;
@@ -655,6 +706,7 @@
             maxZoom: 19,
             attribution: '&copy; OpenStreetMap contributors'
         });
+        runtime._feuLeafletTileLayer = tileLayer;
         var tileSucceeded = false;
         var tileSettled = false;
         var tileTimeout = null;
@@ -667,6 +719,18 @@
             }
             tileSettled = true;
             window.clearTimeout(tileTimeout);
+            if (!hasRuntimeMapConsent(runtime)) {
+                try {
+                    map.remove();
+                } catch (error) {
+                    // The consent state is authoritative even if cleanup fails.
+                }
+                runtime._feuLeafletMap = null;
+                runtime._feuLeafletTileLayer = null;
+                showCookieConsentState(runtime);
+                completeTileLoad();
+                return;
+            }
             if (tileSucceeded) {
                 showReady(runtime);
                 window.setTimeout(function () { map.invalidateSize(); }, 0);
@@ -678,6 +742,8 @@
             } catch (error) {
                 // A failed Leaflet cleanup must not keep the retry button locked.
             }
+            runtime._feuLeafletMap = null;
+            runtime._feuLeafletTileLayer = null;
             showFallback(runtime, null);
             completeTileLoad();
         }
@@ -826,6 +892,20 @@
     }
 
     function activateMap(runtime) {
+        var consent = window.FEUEinsatzMapConsent;
+        var consentRequired = runtime.getAttribute('data-map-consent-required') === '1';
+
+        if (consentRequired && (!consent || consent.allows() !== true)) {
+            showCookieConsentState(runtime);
+            return;
+        }
+
+        if (runtime._feuMapActivationPending) {
+            return;
+        }
+
+        runtime._feuMapActivationPending = true;
+
         var button = runtime.querySelector('[data-feu-map-action="activate"], [data-feu-map-action="allow"]');
         var retryButton = runtime.querySelector('[data-feu-map-action="activate"]');
         var loadError = runtime.querySelector('[data-feu-map-load-error]');
@@ -839,6 +919,11 @@
             retryButton.hidden = true;
         }
         loadLeafletOnDemand().then(function () {
+            if (!hasRuntimeMapConsent(runtime)) {
+                showCookieConsentState(runtime);
+                return;
+            }
+
             try {
                 return renderMap(runtime);
             } catch (error) {
@@ -852,6 +937,7 @@
         }).catch(function () {
             showFallback(runtime, null);
         }).finally(function () {
+            runtime._feuMapActivationPending = false;
             if (button) {
                 button.disabled = false;
             }
@@ -889,6 +975,14 @@
 
         if (cookieSettingsButton) {
             cookieSettingsButton.addEventListener('click', function () {
+                if (cookieSettingsButton.hasAttribute('data-faz-open-preferences')) {
+                    return;
+                }
+
+                if (window.FEUEinsatzMapConsent && window.FEUEinsatzMapConsent.openPreferences()) {
+                    return;
+                }
+
                 var cookieSettingsTrigger = document.querySelector('[data-feuer-cookie-open]');
 
                 if (cookieSettingsTrigger) {
@@ -915,6 +1009,26 @@
             }
 
             initMapConsent(runtime);
+
+            var consentRequired = runtime.getAttribute('data-map-consent-required') === '1';
+            var consent = window.FEUEinsatzMapConsent;
+
+            if (consentRequired && consent && typeof consent.onChange === 'function') {
+                consent.onChange(function (state) {
+                    if (state.allowed) {
+                        runtime.setAttribute('data-map-enabled', '1');
+                        activateMap(runtime);
+                    } else {
+                        showCookieConsentState(runtime);
+                    }
+                });
+                return;
+            }
+
+            if (consentRequired) {
+                showCookieConsentState(runtime);
+                return;
+            }
 
             if (privacyMode === 'always') {
                 runtime.setAttribute('data-map-enabled', '1');

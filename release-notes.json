@@ -1,6 +1,21 @@
 {
   "releases": [
     {
+      "version": "3.3.16",
+      "date": "2026-11-06",
+      "title": "Einwilligungsgesteuerte OpenStreetMap-Karten",
+      "summary": "Feuer-Einsatzberichte integriert sich direkt in Feuer-Cookie-Analytics und lädt öffentliche OpenStreetMap-Kartenkacheln erst nach einer gültigen funktionalen Einwilligung.",
+      "changes": [
+        "Cookie-Integration: Die Ressource „openstreetmap-tiles“ ist für Feuer-Cookie-Analytics als funktionaler externer Dienst von Feuer-Einsatzberichte registriert.",
+        "Datenschutz: Öffentliche Kartenkacheln von OpenStreetMap werden weder in einzelnen Einsatzberichten noch auf der Einsatzgebiet-Karte vor einer gültigen Einwilligung angefordert.",
+        "Live-Aktualisierung: Eine neu erteilte Einwilligung aktiviert die interaktive Karte ohne Seitenwechsel; nach einem Widerruf wird die Leaflet-Karte entfernt und der externe Zugriff wieder gesperrt.",
+        "Sicherer Fallback: Das lokal gespeicherte Kartenbild und der Einsatzbericht bleiben ohne externe Verbindung sichtbar.",
+        "Transparenz: Der neue Zustimmungshinweis erklärt die Übertragung der IP-Adresse an OpenStreetMap und führt direkt zu den Datenschutz-Einstellungen.",
+        "Kompatibilität: Die Integration unterstützt die neue FCAConsent-Schnittstelle, vorhandene Feuer-Cookie-Schnittstellen und Installationen ohne Cookie-Plugin.",
+        "Qualität: Ein neuer Regressionstest sichert die gesperrte Ausgangslage, Freigabe, Widerruf und beide öffentlichen Kartenvarianten; die vollständige Testsuite besteht fehlerfrei."
+      ]
+    },
+    {
       "version": "3.3.15",
       "date": "2026-11-05",
       "title": "Korrekte Bilddiagnose und robuste Kartenaktion",
