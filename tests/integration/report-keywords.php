@@ -21,6 +21,7 @@ $old_run = get_option('feu_einsatz_keyword_migration_run', null);
 $post_ids = [];
 $term_ids = [];
 $new_term_ids = [];
+$collision_term_id = 0;
 $temporary_post_id = 0;
 $editable_draft_id = 0;
 
@@ -61,6 +62,22 @@ try {
     }, Feuer_Einsatzberichte_Core::get_instance()->get_db()->get_category_statistics($year)));
     feu_keyword_assert($after === $before + 2, 'Two multi-keyword reports were double-counted.');
     feu_keyword_assert($after === (int) Feuer_Einsatzberichte_Core::get_instance()->get_db()->get_total_statistics($year)['total_einsaetze'], 'Legacy donut total differs from report total.');
+
+    $legacy_first = get_term($term_ids[0], 'category');
+    $collision = wp_insert_term('Unrelated keyword ' . $suffix, FEU_Einsatz_Report_Taxonomy::TAXONOMY, [
+        'slug' => $legacy_first->slug,
+    ]);
+    feu_keyword_assert(!is_wp_error($collision), 'Cannot create keyword collision fixture.');
+    $collision_term_id = (int) $collision['term_id'];
+    $collision_preflight = FEU_Einsatz_Keyword_Migration::preflight();
+    feu_keyword_assert(!empty($collision_preflight['errors']), 'Unowned keyword collision passed preflight.');
+    feu_keyword_assert(is_wp_error(FEU_Einsatz_Keyword_Migration::migrate(false)), 'Unowned keyword collision started migration.');
+    update_term_meta($collision_term_id, FEU_Einsatz_Report_Taxonomy::LEGACY_TERM_META, $term_ids[0]);
+    $parent_preflight = FEU_Einsatz_Keyword_Migration::preflight();
+    feu_keyword_assert(!empty($parent_preflight['errors']), 'Wrong keyword parent passed preflight.');
+    feu_keyword_assert(is_wp_error(FEU_Einsatz_Keyword_Migration::migrate(false)), 'Wrong keyword parent started migration.');
+    wp_delete_term($collision_term_id, FEU_Einsatz_Report_Taxonomy::TAXONOMY);
+    $collision_term_id = 0;
 
     $preflight = FEU_Einsatz_Keyword_Migration::preflight();
     feu_keyword_assert(!$preflight['errors'], 'Keyword preflight failed: ' . implode('; ', $preflight['errors']));
@@ -212,6 +229,9 @@ try {
     }
     if ($temporary_post_id) {
         wp_delete_post($temporary_post_id, true);
+    }
+    if ($collision_term_id) {
+        wp_delete_term($collision_term_id, FEU_Einsatz_Report_Taxonomy::TAXONOMY);
     }
     foreach ($post_ids as $post_id) {
         wp_delete_post($post_id, true);
