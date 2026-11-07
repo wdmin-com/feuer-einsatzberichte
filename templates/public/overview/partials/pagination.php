@@ -10,7 +10,7 @@ $max_num_pages = isset($context['max_num_pages']) ? (int) $context['max_num_page
 ?>
 
 <?php if ($max_num_pages > 1) : ?>
-    <nav aria-label="<?php echo esc_attr__('Seitennavigation', 'feuer-einsatzberichte'); ?>" class="mt-4">
+    <nav aria-label="<?php echo esc_attr__('Seitennavigation', 'feuer-einsatzberichte'); ?>" class="mt-4 feuer-calls-pagination">
         <?php
         $base_url = remove_query_arg(['paged', 'page', 'feu_page', 'jahr'], get_pagenum_link(1, false));
         $page_url = add_query_arg('feu_page', 999999999, $base_url);

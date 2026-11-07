@@ -57,8 +57,9 @@ $_feu_partials = [
     'related'     => ['templates/public/single/related.php',     ['context' => $context]],
 ];
 
-$_feu_render = static function ($key) use ($_feu_partials) {
+$_feu_render = static function ($key, $overrides = []) use ($_feu_partials) {
     [$tpl, $data] = $_feu_partials[$key];
+    $data = array_merge($data, (array) $overrides);
     try {
         return FEU_Einsatz_Template_Helpers::render($tpl, $data);
     } catch (Throwable $e) {
@@ -68,25 +69,20 @@ $_feu_render = static function ($key) use ($_feu_partials) {
 };
 ?>
 
-<div class="container feu-einsatz-single-layout">
+<div class="container feuer-call-detail">
     <?php echo $_feu_render('breadcrumbs'); ?>
 
-    <div class="row g-4 align-items-stretch feu-einsatz-single-row">
-        <?php
-        echo $_feu_render('info');
-        echo $_feu_render('map');
-        ?>
-    </div>
+    <header class="feuer-call-detail-head">
+        <?php echo $_feu_render('info', ['header_only' => true]); ?>
+    </header>
 
-    <div class="row feu-einsatz-single-content-row">
-        <div class="col-12">
-            <?php
-            echo $_feu_render('content');
-            echo $_feu_render('gallery');
-            echo $_feu_render('share');
-            ?>
-        </div>
-    </div>
+    <?php if ('disabled' !== FEU_Einsatz_Template_Helpers::normalize_single_map_display_mode($context['display']['single_map_display_mode'] ?? 'live')) : ?>
+        <section class="feuer-call-detail-map" aria-label="<?php echo esc_attr__('Karte des Einsatzortes', 'feuer-einsatzberichte'); ?>"><?php echo $_feu_render('map'); ?></section>
+    <?php endif; ?>
+    <section class="feuer-call-detail-description"><?php echo $_feu_render('content'); ?></section>
+    <section class="feuer-call-detail-facts"><?php echo $_feu_render('info', ['facts_only' => true]); ?></section>
+    <section class="feuer-call-detail-gallery"><?php echo $_feu_render('gallery'); ?></section>
+    <section class="feuer-call-detail-share"><?php echo $_feu_render('share'); ?></section>
 
     <?php
     echo $_feu_render('comments');

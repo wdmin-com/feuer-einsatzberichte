@@ -527,6 +527,7 @@ class FEU_Einsatz_Installer {
             'feu_einsatz_single_live_map_show_station' => 0,
             'feu_einsatz_overview_show_stats' => 1,
             'feu_einsatz_overview_show_year_filter' => 1,
+            'feu_einsatz_overview_map_mode' => 'all',
             'feu_einsatz_social_share_enabled_networks' => FEU_Einsatz_Template_Helpers::get_default_social_share_networks(),
             'feu_einsatz_social_share_image_mode' => 'post_image',
             'feu_einsatz_social_share_background_id' => 0,

@@ -708,6 +708,11 @@ class FEU_Einsatz_Template_Helpers {
         return 'live';
     }
 
+    public static function normalize_overview_map_mode($value) {
+        $mode = sanitize_key((string) $value);
+        return in_array($mode, ['all', 'latest', 'none'], true) ? $mode : 'all';
+    }
+
     public static function normalize_single_map_privacy_mode($value) {
         $mode = sanitize_key((string) $value);
 
@@ -6176,6 +6181,7 @@ class FEU_Einsatz_Template_Helpers {
                 'single_desaturate_organizations' => $single_desaturate_organizations,
                 'overview_show_stats' => 1 === (int) get_option('feu_einsatz_overview_show_stats', 1),
                 'overview_show_year_filter' => 1 === (int) get_option('feu_einsatz_overview_show_year_filter', 1),
+                'overview_map_mode' => self::normalize_overview_map_mode(get_option('feu_einsatz_overview_map_mode', 'all')),
             ],
             'report' => [
                 'id' => $post_id,
@@ -6418,6 +6424,7 @@ class FEU_Einsatz_Template_Helpers {
             'display' => [
                 'overview_show_stats' => 1 === (int) get_option('feu_einsatz_overview_show_stats', 1),
                 'overview_show_year_filter' => 1 === (int) get_option('feu_einsatz_overview_show_year_filter', 1),
+                'overview_map_mode' => self::normalize_overview_map_mode(get_option('feu_einsatz_overview_map_mode', 'all')),
             ],
         ];
     }

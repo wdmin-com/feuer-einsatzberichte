@@ -230,6 +230,7 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
             'feu_einsatz_single_map_privacy_mode' => FEU_Einsatz_Template_Helpers::normalize_single_map_privacy_mode(get_option('feu_einsatz_single_map_privacy_mode', 'always')),
             'feu_einsatz_single_live_map_show_station' => (int) get_option('feu_einsatz_single_live_map_show_station', 0),
             'feu_einsatz_overview_show_stats' => (int) get_option('feu_einsatz_overview_show_stats', 1),
+            'feu_einsatz_overview_map_mode' => FEU_Einsatz_Template_Helpers::normalize_overview_map_mode(get_option('feu_einsatz_overview_map_mode', 'all')),
             'feu_einsatz_overview_show_year_filter' => (int) get_option('feu_einsatz_overview_show_year_filter', 1),
             'feu_einsatz_social_share_enabled_networks' => FEU_Einsatz_Template_Helpers::normalize_social_share_networks(
                 get_option('feu_einsatz_social_share_enabled_networks', FEU_Einsatz_Template_Helpers::get_default_social_share_networks())
@@ -541,6 +542,7 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
         );
         update_option('feu_einsatz_single_live_map_show_station', isset($_POST['feu_einsatz_single_live_map_show_station']) ? 1 : 0);
         update_option('feu_einsatz_overview_show_stats', isset($_POST['feu_einsatz_overview_show_stats']) ? 1 : 0);
+        update_option('feu_einsatz_overview_map_mode', FEU_Einsatz_Template_Helpers::normalize_overview_map_mode(isset($_POST['feu_einsatz_overview_map_mode']) ? wp_unslash($_POST['feu_einsatz_overview_map_mode']) : 'all'));
         update_option('feu_einsatz_overview_show_year_filter', isset($_POST['feu_einsatz_overview_show_year_filter']) ? 1 : 0);
         delete_option('feu_einsatz_overview_enable_scroll_animations');
         delete_option('feu_einsatz_overview_scroll_animation');
@@ -799,6 +801,7 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
             'feu_einsatz_single_map_privacy_mode' => FEU_Einsatz_Template_Helpers::normalize_single_map_privacy_mode(get_option('feu_einsatz_single_map_privacy_mode', 'always')),
             'feu_einsatz_single_live_map_show_station' => (int) get_option('feu_einsatz_single_live_map_show_station', 0),
             'feu_einsatz_overview_show_stats' => (int) get_option('feu_einsatz_overview_show_stats', 1),
+            'feu_einsatz_overview_map_mode' => FEU_Einsatz_Template_Helpers::normalize_overview_map_mode(get_option('feu_einsatz_overview_map_mode', 'all')),
             'feu_einsatz_overview_show_year_filter' => (int) get_option('feu_einsatz_overview_show_year_filter', 1),
             'feu_einsatz_social_share_enabled_networks' => FEU_Einsatz_Template_Helpers::normalize_social_share_networks(
                 get_option('feu_einsatz_social_share_enabled_networks', FEU_Einsatz_Template_Helpers::get_default_social_share_networks())
@@ -906,6 +909,7 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
             'feu_einsatz_single_map_privacy_mode' => __('Datenschutz-Verhalten der Karte', 'feuer-einsatzberichte'),
             'feu_einsatz_single_live_map_show_station' => __('Feuerwehrhaus in Live-Karte', 'feuer-einsatzberichte'),
             'feu_einsatz_overview_show_stats' => __('Statistik in Übersicht', 'feuer-einsatzberichte'),
+            'feu_einsatz_overview_map_mode' => __('Kartenbilder in der Übersicht', 'feuer-einsatzberichte'),
             'feu_einsatz_overview_show_year_filter' => __('Jahresfilter in Übersicht', 'feuer-einsatzberichte'),
             'feu_einsatz_social_share_enabled_networks' => __('Aktive Netzwerke', 'feuer-einsatzberichte'),
             'feu_einsatz_social_share_image_mode' => __('Bildquelle für Teilen', 'feuer-einsatzberichte'),
@@ -1161,6 +1165,7 @@ $single_info_fields = FEU_Einsatz_Template_Helpers::normalize_single_info_fields
 $single_map_display_mode = FEU_Einsatz_Template_Helpers::normalize_single_map_display_mode(get_option('feu_einsatz_single_map_display_mode', 'live'));
 $single_map_privacy_mode = FEU_Einsatz_Template_Helpers::normalize_single_map_privacy_mode(get_option('feu_einsatz_single_map_privacy_mode', 'always'));
 $overview_show_stats = (int) get_option('feu_einsatz_overview_show_stats', 1);
+$overview_map_mode = FEU_Einsatz_Template_Helpers::normalize_overview_map_mode(get_option('feu_einsatz_overview_map_mode', 'all'));
 $overview_show_year_filter = (int) get_option('feu_einsatz_overview_show_year_filter', 1);
 $social_share_network_definitions = FEU_Einsatz_Template_Helpers::get_social_share_network_definitions();
 $social_share_enabled_networks = FEU_Einsatz_Template_Helpers::normalize_social_share_networks(
@@ -1447,6 +1452,7 @@ $settings_summary_cards = [
             'default_card_variant' => $default_card_variant,
             'card_variants' => $card_variants,
             'overview_show_stats' => $overview_show_stats,
+            'overview_map_mode' => $overview_map_mode,
             'overview_show_year_filter' => $overview_show_year_filter,
             'backup_retention_limit' => $backup_retention_limit,
             'related_reports_display' => $related_reports_display,

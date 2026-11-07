@@ -42,8 +42,8 @@ test('plugin SEO is emitted before generic theme metadata and normalizes breadcr
     assert.match(publicController, /html_entity_decode\(wp_strip_all_tags/);
     assert.doesNotMatch(themeTemplate, /<h1>/);
     assert.match(themeTemplate, /<h2>/);
-    assert.doesNotMatch(reportInfo, /<h1/);
-    assert.match(reportInfo, /<h2 class="feu-einsatz-single-heading"/);
+    assert.match(reportInfo, /<h1 class="feuer-call-detail-title"/);
+    assert.doesNotMatch(reportInfo, /<h2 class="feu-einsatz-single-heading"/);
     assert.match(publicCss, /\.feu-einsatz-template-header h1,\s*\.feu-einsatz-template-header h2/);
 });
 

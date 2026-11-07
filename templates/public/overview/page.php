@@ -9,24 +9,15 @@ $show_sidebar = (!isset($display['overview_show_stats']) || !empty($display['ove
     || (!isset($display['overview_show_year_filter']) || !empty($display['overview_show_year_filter']));
 ?>
 
-<div class="container py-4 feu-einsatz-overview-page">
-    <div class="row g-4">
-        <div class="<?php echo esc_attr($show_sidebar ? 'col-lg-8' : 'col-12'); ?>">
-            <?php
-            echo FEU_Einsatz_Template_Helpers::render('templates/public/overview/list.php', [
-                'context' => $context,
-            ]);
-            ?>
-        </div>
-
-        <?php if ($show_sidebar) : ?>
-            <aside class="col-lg-4">
-                <?php
-                echo FEU_Einsatz_Template_Manager::render('sidebar', [
-                    'context' => $context,
-                ], 'templates/public/overview/sidebar.php');
-                ?>
-            </aside>
-        <?php endif; ?>
-    </div>
+<div class="container py-4 feuer-public-calls">
+    <?php
+    echo FEU_Einsatz_Template_Helpers::render('templates/public/overview/list.php', [
+        'context' => $context,
+    ]);
+    ?>
+    <?php if ($show_sidebar) : ?>
+        <aside class="feuer-public-calls-sidebar">
+            <?php echo FEU_Einsatz_Template_Manager::render('sidebar', ['context' => $context], 'templates/public/overview/sidebar.php'); ?>
+        </aside>
+    <?php endif; ?>
 </div>

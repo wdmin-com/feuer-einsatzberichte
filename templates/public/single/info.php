@@ -13,6 +13,8 @@ $map_display_mode = isset($display['single_map_display_mode'])
     ? FEU_Einsatz_Template_Helpers::normalize_single_map_display_mode($display['single_map_display_mode'])
     : 'live';
 $organization_section_classes = 'feu-einsatz-single-section feu-einsatz-single-organizations';
+$facts_only = !empty($facts_only);
+$header_only = !empty($header_only);
 
 if (!empty($display['single_desaturate_organizations'])) {
     $organization_section_classes .= ' is-desaturated';
@@ -21,9 +23,19 @@ if (!empty($display['single_desaturate_organizations'])) {
 
 <div class="<?php echo esc_attr('disabled' === $map_display_mode ? 'col-12' : 'col-12 col-lg-5'); ?> feu-einsatz-single-info-col d-flex">
     <div class="feu-einsatz-einsatz-info h-100">
-        <h2 class="feu-einsatz-single-heading"><?php echo esc_html($report['title'] ?? ''); ?></h2>
+        <?php if (!$facts_only) : ?>
+            <h1 class="feuer-call-detail-title"><?php echo esc_html($report['title'] ?? ''); ?></h1>
+            <div class="feuer-call-detail-meta">
+                <?php if (in_array('category', $info_fields, true) && !empty($report['category']['name'])) : ?><span class="feuer-call-category"><?php echo esc_html($report['category']['name']); ?></span><?php endif; ?>
+                <?php if (in_array('date', $info_fields, true) && !empty($report['date_display'])) : ?>
+                    <time><?php echo esc_html($report['date_display']); ?><?php if (in_array('time', $info_fields, true) && !empty($report['time'])) : ?> · <?php echo esc_html($report['time']); ?> Uhr<?php endif; ?></time>
+                <?php elseif (in_array('time', $info_fields, true) && !empty($report['time'])) : ?>
+                    <time><?php echo esc_html($report['time']); ?> Uhr</time>
+                <?php endif; ?>
+            </div>
+        <?php endif; ?>
 
-        <div class="feu-einsatz-single-meta">
+        <?php if (!$header_only) : ?><div class="feu-einsatz-single-meta feuer-call-facts">
             <?php if (in_array('street', $info_fields, true) && !empty($report['street'])) : ?>
                 <div class="feu-einsatz-single-meta-row"><b><?php echo esc_html__('Straße:', 'feuer-einsatzberichte'); ?></b> <?php echo esc_html($report['street']); ?></div>
             <?php endif; ?>
@@ -51,9 +63,9 @@ if (!empty($display['single_desaturate_organizations'])) {
             <?php if (in_array('category', $info_fields, true) && !empty($report['category']['name'])) : ?>
                 <div class="feu-einsatz-single-meta-row"><b><?php echo esc_html__('Einsatzart:', 'feuer-einsatzberichte'); ?></b> <?php echo esc_html($report['category']['name']); ?></div>
             <?php endif; ?>
-        </div>
+        </div><?php endif; ?>
 
-        <?php if (1 === (int) get_option('feu_einsatz_feature_organizations_enabled', 1) && in_array('organizations', $info_fields, true) && !empty($report['organizations'])) : ?>
+        <?php if (!$header_only && 1 === (int) get_option('feu_einsatz_feature_organizations_enabled', 1) && in_array('organizations', $info_fields, true) && !empty($report['organizations'])) : ?>
             <div class="<?php echo esc_attr($organization_section_classes); ?>">
                 <b><?php echo esc_html__('Kräfte vor Ort:', 'feuer-einsatzberichte'); ?></b><br>
                 <?php foreach ($report['organizations'] as $organization) : ?>

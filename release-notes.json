@@ -1,6 +1,21 @@
 {
   "releases": [
     {
+      "version": "3.3.18",
+      "date": "2026-11-07",
+      "title": "Neue Einsatzübersicht und Berichtsdarstellung",
+      "summary": "Die öffentliche Einsatzübersicht erhält einen hervorgehobenen neuesten Einsatz, ein zweispaltiges Kartenraster und eine Seitenleiste. Einzelberichte zeigen Titel, Einsatzdaten, Karte, Beschreibung, Ortsangaben und Fotos in einer klaren Reihenfolge.",
+      "changes": [
+        "Übersicht: Der neueste Einsatz steht auf der ersten Seite als hervorgehobener Bericht; die weiteren Einsätze erscheinen in einem zweispaltigen Raster neben der Seitenleiste.",
+        "Bilder: Eine neue Einstellung steuert Kartenbilder in der Übersicht: bei allen Einsätzen, nur beim neuesten oder bei keinem. Echte Einsatzfotos bleiben unabhängig von dieser Einstellung sichtbar.",
+        "Detailseite: Titel, Einsatzart und Datum stehen im Kopfbereich. Darunter folgen Karte, Beschreibung, Standortdaten, Kräfte vor Ort und die Fotogalerie.",
+        "Konsistenz: Seiten ab Seite zwei zeigen alle zugehörigen Berichte im Raster, ohne einen Eintrag aus der Seite zu verlieren. Die Einsatzdaten bleiben nach tatsächlichem Einsatzdatum sortiert.",
+        "Anzeigeoptionen: Ausgeblendete Datums-, Zeit- und Kategorieangaben bleiben auch im Kopfbereich ausgeblendet; bei deaktivierter Karte entsteht kein leerer Kartenrahmen.",
+        "Layout: Die neuen öffentlichen Übersichts- und Detailstile liegen in einer eigenen, gezielt geladenen CSS-Datei.",
+        "Qualität: Regressionstests prüfen Seitenübergänge, Kartenanzeige, Darstellungseinstellungen, CSS-Einbindung und das öffentliche Berichtslayout."
+      ]
+    },
+    {
       "version": "3.3.17",
       "date": "2026-11-07",
       "title": "Aktualisierte Feuer-Cookie-Analytics-Schnittstelle",

@@ -107,6 +107,18 @@ if (isset($active_tab) && 'allgemein' !== (string) $active_tab) {
                     </span>
                 </label>
             </div>
+
+            <div class="feu-admin-settings-form-grid">
+                <label class="feu-admin-settings-field">
+                    <span><?php esc_html_e('Kartenbilder in der Einsatzübersicht', 'feuer-einsatzberichte'); ?></span>
+                    <select id="feu_einsatz_overview_map_mode" name="feu_einsatz_overview_map_mode" class="regular-text">
+                        <option value="all" <?php selected($overview_map_mode ?? 'all', 'all'); ?>><?php esc_html_e('Bei allen Berichten anzeigen', 'feuer-einsatzberichte'); ?></option>
+                        <option value="latest" <?php selected($overview_map_mode ?? 'all', 'latest'); ?>><?php esc_html_e('Nur beim neuesten Bericht anzeigen', 'feuer-einsatzberichte'); ?></option>
+                        <option value="none" <?php selected($overview_map_mode ?? 'all', 'none'); ?>><?php esc_html_e('Bei keinem Bericht anzeigen', 'feuer-einsatzberichte'); ?></option>
+                    </select>
+                    <small><?php esc_html_e('Steuert Kartenbilder in der Übersicht. Fotos bleiben weiterhin sichtbar.', 'feuer-einsatzberichte'); ?></small>
+                </label>
+            </div>
         </section>
 
         <section class="feu-admin-settings-surface">

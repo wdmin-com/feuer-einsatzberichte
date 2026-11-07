@@ -1780,6 +1780,17 @@ class FEU_Einsatz_Public {
             $public_style_version
         );
 
+        if ($needs_public_runtime_script) {
+            $public_calls_style_path = FEU_EINSATZ_PLUGIN_DIR . 'assets/public/css/public-calls.css';
+            $public_calls_style_version = file_exists($public_calls_style_path) ? (string) filemtime($public_calls_style_path) : FEU_EINSATZ_VERSION;
+            wp_enqueue_style(
+                'feu-einsatz-public-calls',
+                FEU_EINSATZ_PLUGIN_URL . 'assets/public/css/public-calls.css',
+                ['feu-einsatz-public-style'],
+                $public_calls_style_version
+            );
+        }
+
         if ($needs_public_runtime_script || ($is_area_page_request && $this->is_area_page_enabled())) {
             wp_enqueue_script(
                 'feu-einsatz-map-consent',
