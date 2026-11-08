@@ -1,6 +1,16 @@
 {
   "releases": [
     {
+      "version": "3.3.33",
+      "date": "2026-11-08",
+      "title": "Einzelbericht mobil mit klaren Flächen",
+      "summary": "Weiße Seitenflächen im mobilen Einzelbericht sind abgesichert; weitere Einsatzberichte heben sich mit klaren Kartenflächen vom Hintergrund ab.",
+      "changes": [
+        "Mobil: Die gesamte Fläche eines Einsatzberichts bleibt unabhängig von den umgebenden Theme-Containern weiß.",
+        "Mobil: Weitere Einsatzberichte stehen auf einer dezent abgesetzten Fläche und sind durch weiße Karten mit deutlicher Kontur und Schatten klar erkennbar."
+      ]
+    },
+    {
       "version": "3.3.32",
       "date": "2026-11-08",
       "title": "Klarer Einsatzort und Jahresfilter",

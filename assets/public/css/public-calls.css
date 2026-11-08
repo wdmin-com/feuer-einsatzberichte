@@ -266,3 +266,46 @@ body.ft-einsatzbericht-detail .hero-panel--page .page-hero-content { display: no
         padding: 28px 20px 32px;
     }
 }
+
+/* Keep every theme wrapper around a single incident white on mobile, and
+   give related incidents their own visible surface against that white page. */
+@media (max-width: 767.98px) {
+    body:has(.feuer-call-detail),
+    body:has(.feuer-call-detail) #main-content,
+    body:has(.feuer-call-detail) #main-content > .site-container,
+    body:has(.feuer-call-detail) #main-content .site-main,
+    body:has(.feuer-call-detail) #main-content .content-area,
+    body:has(.feuer-call-detail) #main-content main {
+        background-color: #fff !important;
+    }
+
+    body:has(.feuer-call-detail) .feuer-call-detail {
+        background-color: #fff;
+    }
+
+    body:has(.feuer-call-detail) .feuer-call-detail-after .feu-einsatz-related-reports {
+        padding: 20px 16px;
+        border: 1px solid #e0e6eb;
+        border-radius: 14px;
+        background-color: #f4f7f9;
+    }
+
+    body:has(.feuer-call-detail) .feuer-call-detail-after .feu-einsatz-related-reports > .row {
+        row-gap: 14px;
+    }
+
+    body:has(.feuer-call-detail) .feuer-call-detail-after .feu-einsatz-related-mini-card {
+        border: 1px solid #d5dee5 !important;
+        border-radius: 12px !important;
+        background-color: #fff !important;
+        box-shadow: 0 5px 16px rgba(23, 43, 59, .09) !important;
+    }
+
+    body:has(.feuer-call-detail) .feuer-call-detail-after .feu-einsatz-related-mini-card h3 {
+        color: #172b3b !important;
+    }
+
+    body:has(.feuer-call-detail) .feuer-call-detail-after .feu-einsatz-related-mini-meta {
+        color: #526779 !important;
+    }
+}
