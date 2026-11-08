@@ -1740,9 +1740,14 @@ class FEU_Einsatz_Public {
         $is_area_page_request = $this->is_area_page_request($current_post_id);
         $is_single_report = is_singular(FEU_Einsatz_Report_Post_Type::readable_post_types()) && $this->is_einsatzbericht_post($current_post_id);
         $is_overview_archive_request = $this->is_overview_archive_request();
+        $overview_page_template = $current_post_id ? strtolower((string) get_page_template_slug($current_post_id)) : '';
         $is_overview_template_request = $current_post_id
             && is_page($current_post_id)
-            && $this->get_primary_page_template_key() === (string) get_page_template_slug($current_post_id);
+            && (
+                $this->get_primary_page_template_key() === $overview_page_template
+                || false !== strpos($overview_page_template, 'einsaetze')
+                || ($current_post instanceof WP_Post && 'einsaetze' === (string) $current_post->post_name)
+            );
         $has_overview_shortcodes = $current_post instanceof WP_Post && (
             $this->has_shortcode_alias($current_post_content, 'overview_page')
             || $this->has_shortcode_alias($current_post_content, 'overview_list')
@@ -1756,7 +1761,8 @@ class FEU_Einsatz_Public {
             'mapUnavailableHint' => __('Für diesen Einsatz sind noch keine ausreichenden Kartendaten gespeichert.', 'feuer-einsatzberichte'),
             'pedestrianPartLabel' => __('Fußgängerbereich', 'feuer-einsatzberichte'),
             'streetFallback' => __('Straße', 'feuer-einsatzberichte'),
-            'radiusLabel' => __('Feuerwehr-Einsatzbereich', 'feuer-einsatzberichte'),
+            'radiusLabel' => __('Einsatzort', 'feuer-einsatzberichte'),
+            'incidentLocationLabel' => __('Einsatzort', 'feuer-einsatzberichte'),
             'mapConsentTitle' => __('Datenschutz-Hinweis', 'feuer-einsatzberichte'),
             'mapConsentText' => __('Beim Laden der Live-Karte werden externe Kartendaten von OpenStreetMap nachgeladen.', 'feuer-einsatzberichte'),
             'mapConsentAllow' => __('Live-Karte laden', 'feuer-einsatzberichte'),

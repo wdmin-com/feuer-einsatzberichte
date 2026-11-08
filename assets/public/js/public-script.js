@@ -11,7 +11,8 @@
             mapUnavailableHint: 'Für diesen Einsatz sind noch keine ausreichenden Kartendaten gespeichert.',
             pedestrianPartLabel: 'Fußgängerbereich',
             streetFallback: 'Straße',
-            radiusLabel: 'Feuerwehr-Einsatzbereich',
+            radiusLabel: 'Einsatzort',
+            incidentLocationLabel: 'Einsatzort',
             mapConsentTitle: 'Datenschutz-Hinweis',
             mapConsentText: 'Beim Laden der Live-Karte werden externe Kartendaten von OpenStreetMap nachgeladen.',
             mapConsentAllow: 'Live-Karte laden',
@@ -293,7 +294,7 @@
                 fillOpacity: 0.18,
                 interactive: false
             }).addTo(map);
-            var radiusLabel = escapeHtml(strings.radiusLabel || 'Feuerwehr-Einsatzbereich');
+            var radiusLabel = escapeHtml(strings.radiusLabel || 'Einsatzort');
             circle.bindTooltip('<span class="feu-einsatz-map-label feu-einsatz-map-label--bubble" style="background:' + escapeHtml(highlightColor) + ';color:#ffffff">' + radiusLabel + '</span>', {
                 permanent: true,
                 direction: 'top',
@@ -359,9 +360,7 @@
         var labelStyle = (config && config.label_style) || 'bubble';
         var labelTextColor = (config && config.label_text_color) || '#ffffff';
         orderedGeometry.forEach(function (segment) {
-            var labelText = segment.kind === 'pedestrian'
-                ? strings.pedestrianPartLabel + ': ' + streetLabel
-                : streetLabel;
+            var labelText = (strings.incidentLocationLabel || 'Einsatzort') + ': ' + streetLabel;
             var tooltipContent;
             if (labelStyle === 'plain') {
                 tooltipContent = '<span class="feu-einsatz-map-label feu-einsatz-map-label--plain">' + escapeHtml(labelText) + '</span>';
@@ -397,7 +396,7 @@
         });
         if (allRoutePoints.length > 0) {
             var midPoint = allRoutePoints[Math.floor(allRoutePoints.length / 2)];
-            var permanentLabelText = streetLabel;
+            var permanentLabelText = (strings.incidentLocationLabel || 'Einsatzort') + ': ' + streetLabel;
             var permanentLabelContent;
             if (labelStyle === 'plain') {
                 permanentLabelContent = '<span class="feu-einsatz-map-label feu-einsatz-map-label--plain">' + escapeHtml(permanentLabelText) + '</span>';

@@ -1,6 +1,182 @@
 {
   "releases": [
     {
+      "version": "3.3.32",
+      "date": "2026-11-08",
+      "title": "Klarer Einsatzort und Jahresfilter",
+      "summary": "Einsatzorte sind direkt an der Kartenmarkierung erkennbar; die Übersicht benennt den aktiven Jahresfilter, und die mobile Ansicht nutzt den verfügbaren Platz besser.",
+      "changes": [
+        "Karte: Markierte Straßen und Radien sind in der Karten-Vorschau und in der interaktiven Karte direkt mit „Einsatzort“ beschriftet.",
+        "Übersicht: Die Überschrift wird durch „Alle Einsätze“ oder „Einsätze aus dem Jahr 2025“ passend zum gewählten Filter ergänzt.",
+        "Mobil: Die weißen Hintergründe der Übersicht und der Einzelberichte bleiben erhalten; Einsatzkarten nutzen die verfügbare Breite ohne übermäßige Seitenränder.",
+        "Mobil: Das Bild der hervorgehobenen Karte passt in die Kartenbreite, und ihr Titel verwendet dieselbe Schriftgröße wie die übrigen Einsätze."
+      ]
+    },
+    {
+      "version": "3.3.31",
+      "date": "2026-11-07",
+      "title": "Karten mit sauberer Typografie und korrekter Attribution",
+      "summary": "Die Kartenbeschriftung ist besser lesbar und die OpenStreetMap-Urheberangabe wird ohne Kodierungsfehler dargestellt.",
+      "changes": [
+        "Karten: Systemschriften DejaVu Sans und Liberation Sans werden auf Linux-Servern für die PNG-Erzeugung erkannt.",
+        "Karten: Informationsfeld ist kompakter; Überschrift, Adresse, Schriftgrößen und Abstände sind klarer abgestimmt.",
+        "Karten: Die Copyright-Angabe zeigt © korrekt; bei fehlendem TTF-Schriftzugriff verhindert ein ASCII-Fallback fehlerhafte Zeichen.",
+        "Karten: Bereits fehlerhaft gespeicherte Â©-Texte werden beim Rendern korrigiert."
+      ]
+    },
+    {
+      "version": "3.3.30",
+      "date": "2026-11-07",
+      "title": "Lesbare Einsatzstatistik in der Seitenleiste",
+      "summary": "Die Seitenleiste verwendet wieder helle Oberflächen; Einsatzarten sind klar lesbar und Kategorien erscheinen als sichtbare rote Markierungen.",
+      "changes": [
+        "Seitenleiste: Dunkle Flächen wurden durch weiße Karten mit dezenter Kontur und weichem Schatten ersetzt.",
+        "Statistik: Namen der Einsatzarten und Werte verwenden kontrastreiche dunkle Schrift; Fortschrittsbalken behalten den roten Akzent der Website.",
+        "Karten: Kategoriekennzeichen sind auch mobil als klar erkennbare hellrote Badges sichtbar."
+      ]
+    },
+    {
+      "version": "3.3.29",
+      "date": "2026-11-07",
+      "title": "Einheitliche mobile Beitragskarten",
+      "summary": "Die mobile Einsätze-Übersicht orientiert sich bei Seitenbreite, Überschrift, Karten, Bildern und Textabständen an der Neuigkeiten-Seite.",
+      "changes": [
+        "Mobil: Seitenbreite und vertikale Abstände folgen dem Neuigkeiten-Archiv der Website.",
+        "Mobil: Überschrift und Beschreibung verwenden dieselbe Größen- und Zeilenlängen-Hierarchie.",
+        "Mobil: Hervorgehobener und reguläre Einsatzberichte folgen denselben Kartenrändern, Rundungen, Bildhöhen und Textabständen wie Neuigkeiten.",
+        "Mobil: Einsatzart und Datum stehen vor der Überschrift; Schriftgrößen und Beschreibungstext orientieren sich an den Beitragskarten.",
+        "Desktop: Die bestehende hervorgehobene Darstellung des letzten Einsatzes bleibt erhalten."
+      ]
+    },
+    {
+      "version": "3.3.28",
+      "date": "2026-11-07",
+      "title": "Einheitliches Seitenmenü wie im FAQ",
+      "summary": "Die Einsatzseitenleiste übernimmt die klare dunkle Kartenoptik der FAQ-Seite mit roten Akzenten und gut lesbarer Statistik.",
+      "changes": [
+        "Seitenleiste: Jahresfilter und Statistik sind in eine gemeinsame dunkle Fläche mit klarer Typografie und Akzentlabels gruppiert.",
+        "Seitenleiste: Auswahl, Schaltfläche, Statistikbalken und aufklappbare Einsatzarten verwenden kontrastreiche Farben im FAQ-Stil.",
+        "Mobil: Die Seitenleiste behält kompakte Innenabstände und wird nicht sticky dargestellt."
+      ]
+    },
+    {
+      "version": "3.3.27",
+      "date": "2026-11-07",
+      "title": "Kompakter Letzter Einsatz auf Mobilgeräten",
+      "summary": "Die hervorgehobene Einsatzkarte passt sich auf kleinen Displays in Schrift, Bildhöhe und Abständen an die übrigen Karten an.",
+      "changes": [
+        "Mobil: Überschrift und Metadaten von „Letzter Einsatz“ sind kompakt und gegen überschreibende Theme-Schriftgrößen abgesichert.",
+        "Mobil: Bildformat, Innenabstände und Handlungslink der hervorgehobenen Karte folgen der kompakteren Kartenhierarchie.",
+        "Desktop: Die hervorgehobene Darstellung des neuesten Einsatzes bleibt erhalten.",
+        "Einzelbericht: Kategorie und Datum sind mit einem klaren Abstand getrennt; Datum und Uhrzeit erhalten einen gut lesbaren Punkt mit gleichmäßigen Abständen. Die Uhrzeit bleibt in normaler Schreibweise."
+      ]
+    },
+    {
+      "version": "3.3.26",
+      "date": "2026-11-07",
+      "title": "Freie Einsatzübersicht ohne Sammelkarte",
+      "summary": "Die Übersichtsseite erhält keine gemeinsame weiße Hintergrundkarte mehr; einzelne Einsatz- und Seitenleistenkarten bleiben klar abgegrenzt.",
+      "changes": [
+        "Übersicht: Der gemeinsame Hintergrund, Rahmen, Schatten und die Rundung des äußeren Inhaltscontainers wurden entfernt.",
+        "Übersicht: Einsatzkarten und Seitenleistenmodule bleiben eigenständige weiße Flächen mit 6-Pixel-Rundung.",
+        "Einzelbericht: Der weiße Berichtsbereich und die Karte behalten den gewünschten 6-Pixel-Radius."
+      ]
+    },
+    {
+      "version": "3.3.25",
+      "date": "2026-11-07",
+      "title": "Bereinigte Einsatzübersicht",
+      "summary": "Übersichts- und Detailseiten erhalten klar abgegrenzte weiße Sektionen mit einheitlichem 6-Pixel-Radius; die Seitenleiste wird kompakter.",
+      "changes": [
+        "Übersicht: Der weiße Bereich ist jetzt als eigenständige, zurückhaltend umrandete Sektion mit 6-Pixel-Rundung gestaltet.",
+        "Einzelbericht: Der äußere weiße Berichtsbereich und die Karte verwenden den gewünschten 6-Pixel-Radius.",
+        "Seitenleiste: Doppelte Jahreslinks entfallen; die Jahresauswahl bleibt im Dropdown mit einer einzigen klaren Aktion.",
+        "Seitenleiste: Die Statistik zeigt zunächst fünf Einsatzarten; weitere Einträge lassen sich bei Bedarf aufklappen.",
+        "Mobil: Die weiße Sektion behält ausreichende Innenabstände und bleibt vollständig innerhalb des Displays."
+      ]
+    },
+    {
+      "version": "3.3.24",
+      "date": "2026-11-07",
+      "title": "Sichtbarer Datenschutzhinweis",
+      "summary": "Der Hinweis zur Kartenmarkierung wird jetzt als klar gestaltete Informationskarte angezeigt.",
+      "changes": [
+        "Einzelbericht: Hinweis ist als gut lesbare Karte mit hellem Hintergrund, deutlicher Akzentkante und konsistenten Abständen gestaltet.",
+        "Darstellung: CSS-Regeln des Themes können Hintergrund, Rahmen, Rundung und Textformatierung des Hinweises nicht mehr unbemerkt entfernen."
+      ]
+    },
+    {
+      "version": "3.3.23",
+      "date": "2026-11-07",
+      "title": "Mobile Galerie und konsistente Einsatzkarten",
+      "summary": "Der Foto-Viewer unterstützt Touch-Navigation, und Einsatzkarten behalten auf schmalen Bildschirmen einheitliche Abstände und Überschriften.",
+      "changes": [
+        "Fotos: Im Vollbildmodus kann mit sichtbaren Vor-/Zurück-Schaltflächen, horizontalem Wisch oder Pfeiltasten gewechselt werden; eine Positionsanzeige zeigt das aktuelle Foto.",
+        "Mobil: Galerie-Viewer, Schaltflächen, Wasserzeichen und Kartenhöhe passen sich an kleine Displays an.",
+        "Übersicht: Fehlende Vorschaubilder, Kategorien und Kurztexte reservieren gleich große Bereiche, damit Titelkarten auf gleicher Höhe beginnen.",
+        "Übersicht: Lange Titel werden einheitlich auf zwei Zeilen begrenzt; Karten bleiben in jeder Zeile gleich hoch.",
+        "Einzelbericht: Der Abstand zur Navigation entspricht jetzt stärker der Referenzseite; die weiße Sektion bleibt flach ohne abweichende Rundung.",
+        "Einzelbericht: Die Schriftgröße der Überschrift folgt der angegebenen Skala bis maximal 2,95 rem."
+      ]
+    },
+    {
+      "version": "3.3.22",
+      "date": "2026-11-07",
+      "title": "Feinschliff für Einsatzberichte",
+      "summary": "Einzelberichte orientieren sich jetzt enger an den Referenzbeiträgen mit klaren Einsatzdaten, einer Hinweisbox und textbasierten Empfehlungen.",
+      "changes": [
+        "Einzelbericht: Kartenrahmen und Überschrift verwenden die 920-Pixel-Breite der Referenzseite; das Theme kann keine Rahmen um Überschrift oder Einsatzdaten legen.",
+        "Layout: Der weiße Artikelbereich sitzt als eigene Sektion mit kurzem Abstand zur Navigation auf dem neutralen Seitenhintergrund.",
+        "Einsatzdaten: Die Orts- und Einsatzwerte stehen unter einer eigenen Überschrift in einer kompakten, rahmenlosen Anordnung.",
+        "Hinweis: Der Datenschutzhinweis zur Straßenmarkierung steht jetzt nach der Fotogalerie im Abschnitt „Hinweis“.",
+        "Beschreibung: Der erste gespeicherte Absatz wird wie der Lead-Absatz der Referenz hervorgehoben.",
+        "Weitere Einsatzberichte: Die Karten sind kompakter und enthalten keine Bilder.",
+        "Metadaten: Kategorie, Datum und Uhrzeit sind mit größeren Abständen und klaren Trennern gesetzt."
+      ]
+    },
+    {
+      "version": "3.3.21",
+      "date": "2026-11-07",
+      "title": "Kompaktes Einsatzlayout und Pagination",
+      "summary": "Die Einsatzübersicht und Einzelberichte erhalten ein aufgeräumtes Layout mit gut bedienbarer Pagination und flexibler Darstellung der Kräfte vor Ort.",
+      "changes": [
+        "Übersicht: Die Seitennavigation wird als horizontale Reihe kompakter Schaltflächen dargestellt.",
+        "Einzelbericht: Der weiße Artikelbereich hat kleinere Rundungen und einen geringeren Abstand zur Navigation.",
+        "Einzelbericht: Überschrift und Karte nutzen eine breitere Fläche als Beschreibung, Einsatzdaten und Fotogalerie.",
+        "Einsatzdaten: Beschriftungen und Werte werden in einer stabilen zweispaltigen Anordnung dargestellt.",
+        "Kräfte vor Ort: In den Einstellungen kann zwischen farbigen Markierungen und einer einfachen Liste mit Kommas gewählt werden.",
+        "Übersicht: Die Kennzeichnung des hervorgehobenen Eintrags lautet jetzt „Letzter Einsatz“.",
+        "Qualität: Regressionstests decken Pagination, Breitenverhältnis, Datenlayout und die neue Organisationsdarstellung ab."
+      ]
+    },
+    {
+      "version": "3.3.20",
+      "date": "2026-11-07",
+      "title": "Berichtsseite im Stil des Website-Artikels",
+      "summary": "Die einzelne Einsatzseite verwendet jetzt einen durchgehenden, breiten Artikelrahmen mit derselben 920-Pixel-Lesespalte wie reguläre Website-Beiträge.",
+      "changes": [
+        "Einzelbericht: Titel, Einsatzart, Datum, Uhrzeit, Karte, Beschreibung, Standortdaten und Fotos stehen jetzt in einem zusammenhängenden Artikelbereich.",
+        "Layout: Der weiße Artikelrahmen füllt die verfügbare Seitenbreite; Überschrift, Karte und Text teilen sich eine mittig ausgerichtete Lesespalte von 920 Pixeln.",
+        "Abgleich mit Website-Beiträgen: Zusätzliche Breadcrumb-Zeile und getrennte Überschriften-Karte entfallen. Der Titel steht einmalig über Einsatzart und Datum, die Karte folgt direkt darunter.",
+        "Responsive: Die zentrale Lesespalte und der Artikelrahmen passen sich Tablet- und Mobilansichten an.",
+        "Qualität: Regressionstests prüfen Artikelrahmen, gemeinsame Inhaltsbreite, Kartenposition und die vollständige Reihenfolge der Berichtsinhalte."
+      ]
+    },
+    {
+      "version": "3.3.19",
+      "date": "2026-11-07",
+      "title": "Korrektur der öffentlichen Einsatzdarstellung",
+      "summary": "Die neue Einsatzübersicht wird jetzt auch mit dem Seitentemplate des Feuer-Themes korrekt gestaltet. Doppelte Zeitangaben, doppelte Seitentitel und leere Fotobereiche wurden bereinigt.",
+      "changes": [
+        "Stylesheet: Die Theme-Seite „Einsätze“ lädt die eigenständige Einsatzdarstellung jetzt auch dann, wenn das Theme die Berichtsübersicht direkt aus einem eigenen Seitentemplate ausgibt.",
+        "Übersicht: Raster, hervorgehobener Bericht und Seitenleiste erhalten die vorgesehenen Layoutregeln auch bei nachgeladenen Theme-Styles.",
+        "Zeitangaben: Karten zeigen die gespeicherte Uhrzeit inklusive „Uhr“ nur einmal an.",
+        "Berichtsseite: Der doppelte Hero-Titel der Theme-Seite entfällt; die plugin-eigene Berichtsüberschrift bleibt erhalten und passt zur Referenzdarstellung.",
+        "Abstände: Leere Beschreibungs-, Galerie- und Teilen-Bereiche erzeugen keine leeren Blöcke mehr.",
+        "Qualität: Regressionstests sichern die Erkennung des Theme-Templates, die Bild- und Zeitdarstellung sowie das Einzelberichtslayout."
+      ]
+    },
+    {
       "version": "3.3.18",
       "date": "2026-11-07",
       "title": "Neue Einsatzübersicht und Berichtsdarstellung",

@@ -195,9 +195,6 @@ if ($show_live_map) {
             <?php endif; ?>
         </div>
 
-        <div class="feu-einsatz-map-note">
-            <?php echo esc_html__('Hier ist die Straße markiert, auf der sich der Einsatz ereignet hat. Aus Datenschutzgründen zeigen wir bewusst nicht den exakten Ereignisort.', 'feuer-einsatzberichte'); ?>
-        </div>
     </div>
 </div>
 <?php echo FEU_Einsatz_Template_Helpers::render_cookie_macro('footer'); ?>

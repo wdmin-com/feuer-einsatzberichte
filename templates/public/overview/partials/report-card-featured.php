@@ -12,11 +12,11 @@ $show_image = !empty($report['image_url']) && ($show_map || empty($report['image
     <?php endif; ?>
     <div class="feuer-call-featured-body">
         <div class="feuer-call-eyebrow">
-            <span><?php echo esc_html__('Aktuellster Einsatz', 'feuer-einsatzberichte'); ?></span>
+            <span><?php echo esc_html__('Letzter Einsatz', 'feuer-einsatzberichte'); ?></span>
             <?php if (!empty($report['category']['name'])) : ?><span class="feuer-call-category"><?php echo esc_html($report['category']['name']); ?></span><?php endif; ?>
         </div>
         <h2><a href="<?php echo esc_url($report['permalink']); ?>"><?php echo esc_html($report['title']); ?></a></h2>
-        <p class="feuer-call-featured-date"><?php echo esc_html($report['event_date']); ?><?php if (!empty($report['event_time'])) : ?> · <?php echo esc_html($report['event_time']); ?> Uhr<?php endif; ?></p>
+        <p class="feuer-call-featured-date"><?php echo esc_html($report['event_date']); ?><?php if (!empty($report['event_time'])) : ?> · <?php echo esc_html($report['event_time']); ?><?php endif; ?></p>
         <?php if (!empty($report['excerpt'])) : ?><p class="feuer-call-featured-excerpt"><?php echo esc_html($report['excerpt']); ?></p><?php endif; ?>
         <a class="feuer-call-read-more" href="<?php echo esc_url($report['permalink']); ?>"><?php esc_html_e('Einsatz ansehen', 'feuer-einsatzberichte'); ?><span aria-hidden="true">→</span></a>
     </div>

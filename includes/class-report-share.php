@@ -1399,9 +1399,13 @@ class FEU_Einsatz_Report_Share {
 
         if ($used_map_preview_background) {
             $attribution_color = imagecolorallocatealpha($canvas, 255, 255, 255, 24);
+            $attribution_text = 'Leaflet | © OpenStreetMap contributors';
+            if (!($this->fn_font_path)()) {
+                $attribution_text = str_replace('©', '(c)', $attribution_text);
+            }
             $this->draw_text_within_box_v2(
                 $canvas,
-                'Leaflet | ' . html_entity_decode('&copy;', ENT_QUOTES, 'UTF-8') . ' OpenStreetMap contributors',
+                $attribution_text,
                 max(14, (int) round($width / 84)),
                 $attribution_color,
                 18,

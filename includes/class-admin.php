@@ -6660,7 +6660,7 @@ class FEU_Einsatz_Admin {
     }
 
     private function get_map_preview_attribution_text() {
-        $fallback = 'Leaflet | ' . html_entity_decode('&copy;', ENT_QUOTES, 'UTF-8') . ' OpenStreetMap contributors';
+        $fallback = 'Leaflet | © OpenStreetMap contributors';
         $custom = $this->prepare_map_preview_text((string) get_option('feu_einsatz_map_preview_attribution_text', $fallback));
 
         return '' !== $custom ? $custom : $fallback;
@@ -6729,17 +6729,30 @@ class FEU_Einsatz_Admin {
             'dejavu-sans' => [
                 'label' => 'DejaVu Sans',
                 'css_stack' => '"DejaVu Sans", Arial, sans-serif',
-                'paths' => [],
+                'paths' => [
+                    '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+                    '/usr/share/fonts/truetype/dejavu/DejaVuSansCondensed.ttf',
+                    '/usr/share/fonts/dejavu/DejaVuSans.ttf',
+                    '/usr/local/share/fonts/DejaVuSans.ttf',
+                    'C:\\Windows\\Fonts\\arial.ttf',
+                ],
             ],
             'liberation-sans' => [
                 'label' => 'Liberation Sans',
                 'css_stack' => '"Liberation Sans", Arial, sans-serif',
-                'paths' => [],
+                'paths' => [
+                    '/usr/share/fonts/truetype/liberation2/LiberationSans-Regular.ttf',
+                    '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf',
+                    '/usr/local/share/fonts/LiberationSans-Regular.ttf',
+                ],
             ],
             'free-sans' => [
                 'label' => 'FreeSans',
                 'css_stack' => '"FreeSans", Arial, sans-serif',
-                'paths' => [],
+                'paths' => [
+                    '/usr/share/fonts/truetype/freefont/FreeSans.ttf',
+                    '/usr/local/share/fonts/FreeSans.ttf',
+                ],
             ],
         ];
     }
@@ -7292,6 +7305,7 @@ class FEU_Einsatz_Admin {
 
     private function prepare_map_preview_text($text) {
         $text = wp_strip_all_tags((string) $text);
+        $text = str_replace(['Â©', 'â€™', 'â€“', 'â€”'], ['©', '’', '–', '—'], $text);
         $text = trim(preg_replace('/\s+/', ' ', $text));
 
         return $text;
@@ -8149,11 +8163,11 @@ class FEU_Einsatz_Admin {
         $show_panel_address = $this->is_map_preview_panel_address_enabled();
 
         if ($show_panel && ($show_panel_heading || $show_panel_address)) {
-            $panel_width = 600;
-            $panel_height = ($show_panel_heading && $show_panel_address) ? 134 : 84;
-            $panel = $this->get_map_preview_box_coordinates($this->get_map_preview_panel_position(), $width, $height, $panel_width, $panel_height, 42);
-            $text_x = $panel['left'] + 26;
-            $text_y = $panel['top'] + ($show_panel_heading ? 50 : 48);
+            $panel_width = min(600, max(260, $width - 36));
+            $panel_height = ($show_panel_heading && $show_panel_address) ? 100 : 62;
+            $panel = $this->get_map_preview_box_coordinates($this->get_map_preview_panel_position(), $width, $height, $panel_width, $panel_height, 24);
+            $text_x = $panel['left'] + 20;
+            $text_y = $panel['top'] + ($show_panel_heading ? 37 : 38);
 
             imagefilledrectangle($canvas, $panel['left'], $panel['top'], $panel['right'], $panel['bottom'], $panel_color);
             imagerectangle($canvas, $panel['left'], $panel['top'], $panel['right'], $panel['bottom'], $panel_border);
@@ -8164,11 +8178,11 @@ class FEU_Einsatz_Admin {
                     $text_x,
                     $text_y,
                     $this->get_map_preview_heading(),
-                    28,
+                    20,
                     $text_title,
-                    $panel_width - 60
+                    $panel_width - 44
                 );
-                $text_y += 44;
+                $text_y += 32;
             }
 
             if ($show_panel_address) {
@@ -8177,9 +8191,9 @@ class FEU_Einsatz_Admin {
                     $text_x,
                     $text_y,
                     $address,
-                    20,
+                    15,
                     $text_subtitle,
-                    $panel_width - 60
+                    $panel_width - 44
                 );
             }
         }
@@ -8232,6 +8246,7 @@ class FEU_Einsatz_Admin {
             );
         } else {
             $fallback_font = 4;
+            $attribution_text = str_replace('©', '(c)', $attribution_text);
             $fallback_text_width = imagefontwidth($fallback_font) * strlen($attribution_text);
             $fallback_text_height = imagefontheight($fallback_font);
             $fallback_box_width = $fallback_text_width + 24;

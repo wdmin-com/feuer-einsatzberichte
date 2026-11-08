@@ -22,7 +22,7 @@ echo FEU_Einsatz_Template_Helpers::render('templates/public/overview/partials/he
     </div>
 <?php elseif (!empty($posts)) : ?>
     <?php if ($has_featured_report) : ?>
-        <section class="feuer-calls-featured" aria-label="<?php echo esc_attr__('Aktuellster Einsatz', 'feuer-einsatzberichte'); ?>">
+        <section class="feuer-calls-featured" aria-label="<?php echo esc_attr__('Letzter Einsatz', 'feuer-einsatzberichte'); ?>">
             <?php echo FEU_Einsatz_Template_Helpers::render('templates/public/overview/partials/report-card-featured.php', [
                 'report' => $posts[0], 'show_map' => 'none' !== $map_mode,
             ]); ?>

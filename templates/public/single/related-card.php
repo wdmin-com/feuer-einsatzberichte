@@ -28,16 +28,6 @@ $number_label = sprintf(
        aria-label="<?php echo esc_attr($report['title'] ?? ''); ?>"></a>
 
     <div class="d-flex gap-3">
-        <div class="feu-einsatz-related-mini-thumb">
-            <?php if (!empty($report['image_url'])) : ?>
-                <img src="<?php echo esc_url($report['image_url']); ?>"
-                     alt="<?php echo esc_attr($report['title'] ?? ''); ?>"
-                     loading="lazy" />
-            <?php else : ?>
-                <span><?php echo esc_html__('FEU', 'feuer-einsatzberichte'); ?></span>
-            <?php endif; ?>
-        </div>
-
         <div class="feu-einsatz-related-mini-body">
             <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
                 <?php if ('' !== $category_name) : ?>

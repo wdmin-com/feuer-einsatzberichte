@@ -698,6 +698,11 @@ class FEU_Einsatz_Template_Helpers {
         return array_values(array_unique($normalized));
     }
 
+    public static function normalize_single_organizations_display($value) {
+        $mode = sanitize_key((string) $value);
+        return in_array($mode, ['chips', 'text'], true) ? $mode : 'chips';
+    }
+
     public static function normalize_single_map_display_mode($value) {
         $mode = sanitize_key((string) $value);
 
@@ -3531,14 +3536,12 @@ class FEU_Einsatz_Template_Helpers {
             $radius_px_y = max(8, abs($edge_screen_y['y'] - $marker_screen['y']));
             $radius_px_x = max(8, abs($edge_screen_x['x'] - $marker_screen['x']));
             $radius_markup = '<ellipse cx="' . esc_attr($marker_screen['x']) . '" cy="' . esc_attr($marker_screen['y']) . '" rx="' . esc_attr($radius_px_x) . '" ry="' . esc_attr($radius_px_y) . '" fill="' . esc_attr($line_color) . '" fill-opacity="0.18" stroke="' . esc_attr($line_color) . '" stroke-width="3" stroke-opacity="0.92" />';
-            if (1 === (int) get_option('feu_einsatz_map_preview_show_street_label', 1)) {
-                $label_text = __('Feuerwehr-Einsatzbereich', 'feuer-einsatzberichte');
-                $label_width = 282;
-                $label_left = max(24, min($width - $label_width - 24, (int) round($marker_screen['x'] - ($label_width / 2))));
-                $label_top = max(24, min($height - 80, (int) round($marker_screen['y'] - $radius_px_y - 54)));
-                $radius_label_markup = '<rect x="' . esc_attr($label_left) . '" y="' . esc_attr($label_top) . '" width="' . esc_attr($label_width) . '" height="38" rx="19" fill="' . esc_attr($line_color) . '" fill-opacity="0.94" />'
-                    . '<text x="' . esc_attr($label_left + ($label_width / 2)) . '" y="' . esc_attr($label_top + 25) . '" fill="#ffffff" font-size="17" font-weight="700" text-anchor="middle">' . esc_html($label_text) . '</text>';
-            }
+            $label_text = __('Einsatzort', 'feuer-einsatzberichte');
+            $label_width = 148;
+            $label_left = max(24, min($width - $label_width - 24, (int) round($marker_screen['x'] - ($label_width / 2))));
+            $label_top = max(24, min($height - 80, (int) round($marker_screen['y'] - $radius_px_y - 54)));
+            $radius_label_markup = '<rect x="' . esc_attr($label_left) . '" y="' . esc_attr($label_top) . '" width="' . esc_attr($label_width) . '" height="38" rx="19" fill="' . esc_attr($line_color) . '" fill-opacity="0.94" />'
+                . '<text x="' . esc_attr($label_left + ($label_width / 2)) . '" y="' . esc_attr($label_top + 25) . '" fill="#ffffff" font-size="17" font-weight="700" text-anchor="middle">' . esc_html($label_text) . '</text>';
         }
 
         foreach ($geometry_lines as $segment) {
@@ -3579,6 +3582,7 @@ class FEU_Einsatz_Template_Helpers {
             '<text x="' . esc_attr($width - 44) . '" y="' . esc_attr($height - 31) . '" fill="#334155" font-size="16" font-weight="700" text-anchor="end">Leaflet | &copy; OpenStreetMap contributors</text>';
         $station_markup = '';
         $marker_markup = '';
+        $incident_label_markup = '';
         $minimal_badge_markup = '';
         $minimal_panel_markup = '';
         $minimal_attribution_markup = '';
@@ -3602,6 +3606,20 @@ class FEU_Einsatz_Template_Helpers {
             $marker_markup =
                 '<circle cx="' . esc_attr($projected_marker['x']) . '" cy="' . esc_attr($projected_marker['y']) . '" r="' . esc_attr((string) $outer_radius) . '" fill="#ffffff" fill-opacity="0.92" stroke="#0f172a" stroke-opacity="0.16" stroke-width="2" />' .
                 '<circle cx="' . esc_attr($projected_marker['x']) . '" cy="' . esc_attr($projected_marker['y']) . '" r="' . esc_attr((string) $inner_radius) . '" fill="' . esc_attr($line_color) . '" />';
+
+            if ('full' === $preview_mode && 'radius' !== $args['highlight_mode']) {
+                $incident_label = __('Einsatzort', 'feuer-einsatzberichte');
+                $incident_label_width = 148;
+                $incident_label_left = (int) round($projected_marker['x'] + 24);
+                if ($incident_label_left + $incident_label_width > $width - 24) {
+                    $incident_label_left = (int) round($projected_marker['x'] - $incident_label_width - 24);
+                }
+                $incident_label_left = max(24, min($width - $incident_label_width - 24, $incident_label_left));
+                $incident_label_top = max(24, min($height - 64, (int) round($projected_marker['y'] - 48)));
+                $incident_label_markup =
+                    '<rect x="' . esc_attr($incident_label_left) . '" y="' . esc_attr($incident_label_top) . '" width="' . esc_attr($incident_label_width) . '" height="38" rx="19" fill="' . esc_attr($line_color) . '" fill-opacity="0.94" />' .
+                    '<text x="' . esc_attr($incident_label_left + ($incident_label_width / 2)) . '" y="' . esc_attr($incident_label_top + 25) . '" fill="#ffffff" font-size="17" font-weight="700" text-anchor="middle">' . esc_html($incident_label) . '</text>';
+            }
 
             if ('minimal' === $preview_mode) {
                 $label_prefix = trim((string) get_option('feu_einsatz_map_preview_street_label_prefix', 'Einsatz Straße'));
@@ -3703,6 +3721,7 @@ class FEU_Einsatz_Template_Helpers {
                     implode('', $street_halo_markup) .
                     implode('', $street_line_markup) .
                     $marker_markup .
+                    $incident_label_markup .
                     $station_markup .
                     $attribution_markup .
                     $footer_markup .
@@ -4895,6 +4914,7 @@ class FEU_Einsatz_Template_Helpers {
                 'single_info_fields' => self::normalize_single_info_fields(
                     get_option('feu_einsatz_single_info_fields', self::get_default_single_info_fields())
                 ),
+                'organizations_display' => self::normalize_single_organizations_display(get_option('feu_einsatz_single_organizations_display', 'chips')),
                 'map_display_mode' => (string) get_option('feu_einsatz_single_map_display_mode', 'live'),
                 'map_privacy_mode' => (string) get_option('feu_einsatz_single_map_privacy_mode', 'always'),
                 'map_height' => (int) get_option('feu_einsatz_map_height', 500),
@@ -6002,6 +6022,7 @@ class FEU_Einsatz_Template_Helpers {
         $single_info_fields = self::normalize_single_info_fields(
             get_option('feu_einsatz_single_info_fields', self::get_default_single_info_fields())
         );
+        $single_organizations_display = self::normalize_single_organizations_display(get_option('feu_einsatz_single_organizations_display', 'chips'));
         $single_map_display_mode = self::normalize_single_map_display_mode(get_option('feu_einsatz_single_map_display_mode', 'live'));
         $single_map_privacy_mode = self::normalize_single_map_privacy_mode(get_option('feu_einsatz_single_map_privacy_mode', 'always'));
         $single_live_map_show_station = 1 === (int) get_option('feu_einsatz_single_live_map_show_station', 0);
@@ -6175,6 +6196,7 @@ class FEU_Einsatz_Template_Helpers {
             'breadcrumbs' => $breadcrumb_items,
             'display' => [
                 'single_info_fields' => $single_info_fields,
+                'single_organizations_display' => $single_organizations_display,
                 'single_map_display_mode' => $single_map_display_mode,
                 'single_map_privacy_mode' => $single_map_privacy_mode,
                 'map_public_precision' => $public_precision,

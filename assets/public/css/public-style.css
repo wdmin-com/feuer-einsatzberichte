@@ -2413,6 +2413,48 @@
     overflow: hidden;
 }
 
+.feu-einsatz-photo-modal-nav {
+    position: absolute;
+    top: 50%;
+    z-index: 3;
+    display: inline-flex;
+    width: 48px;
+    height: 48px;
+    align-items: center;
+    justify-content: center;
+    padding: 0 0 4px;
+    transform: translateY(-50%);
+    border: 1px solid rgba(255,255,255,.32);
+    border-radius: 50%;
+    background: rgba(15,23,42,.58);
+    color: #fff;
+    font-size: 38px;
+    line-height: 1;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.feu-einsatz-photo-modal-nav:hover,
+.feu-einsatz-photo-modal-nav:focus-visible { background: rgba(15,23,42,.88); color: #fff; }
+.feu-einsatz-photo-modal-nav:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+.feu-einsatz-photo-modal-nav[hidden] { display: none; }
+.feu-einsatz-photo-modal-prev { left: max(16px, calc((100vw - 1100px) / 2 - 64px)); }
+.feu-einsatz-photo-modal-next { right: max(16px, calc((100vw - 1100px) / 2 - 64px)); }
+.feu-einsatz-photo-modal-counter { position: absolute; right: 0; bottom: -34px; left: 0; color: #fff; font-size: 14px; font-weight: 650; text-align: center; }
+.feu-einsatz-photo-modal-stage { touch-action: pan-y; }
+
+@media (max-width: 640px) {
+    .feu-einsatz-photo-modal-dialog { width: 100%; height: 100dvh; min-height: 0; padding: 64px 8px 44px; overflow: hidden; }
+    .feu-einsatz-photo-modal-stage { display: flex; width: 100%; max-width: 100%; max-height: calc(100dvh - 130px); align-items: center; justify-content: center; }
+    .feu-einsatz-photo-modal-stage img { width: auto; max-width: calc(100vw - 104px); max-height: calc(100dvh - 150px); object-fit: contain; }
+    .feu-einsatz-photo-modal-nav { top: 50%; width: 44px; height: 44px; font-size: 34px; }
+    .feu-einsatz-photo-modal-prev { left: 8px; }
+    .feu-einsatz-photo-modal-next { right: 8px; }
+    .feu-einsatz-photo-modal-close { top: max(12px, env(safe-area-inset-top)); right: 12px; width: 46px; height: 46px; background: rgba(255,255,255,.22); font-size: 28px; }
+    .feu-einsatz-photo-modal-counter { bottom: -30px; }
+    .feu-einsatz-photo-watermark-large { right: 8px; bottom: 8px; max-width: calc(100% - 16px); padding: 4px 8px; font-size: 10px; }
+}
+
 @media (max-width: 991px) {
     .feu-einsatz-overview-sidebar {
         position: static !important;

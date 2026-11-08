@@ -51,12 +51,19 @@ $photo_watermark_text = isset($gallery['watermark_text']) ? (string) $gallery['w
         <div class="feu-einsatz-photo-modal-backdrop"></div>
         <div class="feu-einsatz-photo-modal-dialog" role="dialog" aria-modal="true" aria-label="<?php echo esc_attr__('Foto ansehen', 'feuer-einsatzberichte'); ?>">
             <button type="button" class="feu-einsatz-photo-modal-close" aria-label="<?php echo esc_attr__('Schliessen', 'feuer-einsatzberichte'); ?>">&times;</button>
+            <button type="button" class="feu-einsatz-photo-modal-nav feu-einsatz-photo-modal-prev" aria-label="<?php echo esc_attr__('Vorheriges Foto', 'feuer-einsatzberichte'); ?>">
+                <span aria-hidden="true">&#8249;</span>
+            </button>
             <div class="feu-einsatz-photo-modal-stage">
                 <img src="" alt="" id="feu-einsatz-photo-modal-image" />
                 <?php if ($photo_watermark_enabled && '' !== $photo_watermark_text) : ?>
                     <span class="feu-einsatz-photo-watermark feu-einsatz-photo-watermark-large" id="feu-einsatz-photo-modal-watermark"><?php echo esc_html($photo_watermark_text); ?></span>
                 <?php endif; ?>
+                <span class="feu-einsatz-photo-modal-counter" aria-live="polite" aria-atomic="true"></span>
             </div>
+            <button type="button" class="feu-einsatz-photo-modal-nav feu-einsatz-photo-modal-next" aria-label="<?php echo esc_attr__('Nächstes Foto', 'feuer-einsatzberichte'); ?>">
+                <span aria-hidden="true">&#8250;</span>
+            </button>
         </div>
     </div>
 
@@ -66,11 +73,21 @@ $photo_watermark_text = isset($gallery['watermark_text']) ? (string) $gallery['w
         var modalImage = document.getElementById('feu-einsatz-photo-modal-image');
         var modalWatermark = document.getElementById('feu-einsatz-photo-modal-watermark');
         var closeButton = document.querySelector('.feu-einsatz-photo-modal-close');
-        var cards = document.querySelectorAll('.feu-einsatz-photo-card');
+        var previousButton = modal ? modal.querySelector('.feu-einsatz-photo-modal-prev') : null;
+        var nextButton = modal ? modal.querySelector('.feu-einsatz-photo-modal-next') : null;
+        var counter = modal ? modal.querySelector('.feu-einsatz-photo-modal-counter') : null;
+        var cards = Array.prototype.slice.call(document.querySelectorAll('.feu-einsatz-photo-card'));
         var returnFocus = null;
+        var activeIndex = 0;
+        var touchStartX = null;
 
         if (!modal || !modalImage || !cards.length) {
             return;
+        }
+        if (cards.length < 2) {
+            if (previousButton) { previousButton.hidden = true; }
+            if (nextButton) { nextButton.hidden = true; }
+            if (counter) { counter.hidden = true; }
         }
 
         function closeModal() {
@@ -83,22 +100,60 @@ $photo_watermark_text = isset($gallery['watermark_text']) ? (string) $gallery['w
             }
         }
 
+        function showImage(index) {
+            if (!cards.length) {
+                return;
+            }
+
+            activeIndex = (index + cards.length) % cards.length;
+            var card = cards[activeIndex];
+            modalImage.src = card.getAttribute('data-full-image') || '';
+            modalImage.alt = card.getAttribute('data-alt-text') || '';
+            if (counter) {
+                counter.textContent = (activeIndex + 1) + ' / ' + cards.length;
+            }
+            if (modalWatermark) {
+                modalWatermark.hidden = card.getAttribute('data-embedded-watermark') === '1';
+            }
+        }
+
         cards.forEach(function(card) {
             card.addEventListener('click', function() {
                 returnFocus = card;
                 modal.hidden = false;
-                modalImage.src = card.getAttribute('data-full-image') || '';
-                modalImage.alt = card.getAttribute('data-alt-text') || '';
+                showImage(cards.indexOf(card));
                 document.body.classList.add('feu-einsatz-photo-modal-open');
                 if (closeButton) {
                     closeButton.focus();
                 }
-
-                if (modalWatermark) {
-                    modalWatermark.hidden = card.getAttribute('data-embedded-watermark') === '1';
-                }
             });
         });
+
+        if (previousButton) {
+            previousButton.addEventListener('click', function() { showImage(activeIndex - 1); });
+        }
+        if (nextButton) {
+            nextButton.addEventListener('click', function() { showImage(activeIndex + 1); });
+        }
+
+        var stage = modal.querySelector('.feu-einsatz-photo-modal-stage');
+        if (stage) {
+            stage.addEventListener('touchstart', function(event) {
+                if (event.changedTouches && event.changedTouches.length) {
+                    touchStartX = event.changedTouches[0].clientX;
+                }
+            }, {passive: true});
+            stage.addEventListener('touchend', function(event) {
+                if (touchStartX === null || !event.changedTouches || !event.changedTouches.length) {
+                    return;
+                }
+                var deltaX = event.changedTouches[0].clientX - touchStartX;
+                touchStartX = null;
+                if (Math.abs(deltaX) >= 45) {
+                    showImage(activeIndex + (deltaX < 0 ? 1 : -1));
+                }
+            }, {passive: true});
+        }
 
         if (closeButton) {
             closeButton.addEventListener('click', closeModal);
@@ -113,6 +168,10 @@ $photo_watermark_text = isset($gallery['watermark_text']) ? (string) $gallery['w
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape' && !modal.hidden) {
                 closeModal();
+            } else if (!modal.hidden && event.key === 'ArrowLeft') {
+                showImage(activeIndex - 1);
+            } else if (!modal.hidden && event.key === 'ArrowRight') {
+                showImage(activeIndex + 1);
             }
         });
     });

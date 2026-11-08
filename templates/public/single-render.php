@@ -52,6 +52,7 @@ $_feu_partials = [
     'map'         => ['templates/public/single/map.php',         ['context' => $context]],
     'content'     => ['templates/public/single/content.php',     ['context' => $context]],
     'gallery'     => ['templates/public/single/gallery.php',     ['context' => $context]],
+    'notice'      => ['templates/public/single/notice.php',      ['context' => $context]],
     'share'       => ['templates/public/single/share.php',       ['context' => $context, 'share_data' => $share_data]],
     'comments'    => ['templates/public/single/comments.php',    ['context' => $context]],
     'related'     => ['templates/public/single/related.php',     ['context' => $context]],
@@ -69,25 +70,33 @@ $_feu_render = static function ($key, $overrides = []) use ($_feu_partials) {
 };
 ?>
 
-<div class="container feuer-call-detail">
-    <?php echo $_feu_render('breadcrumbs'); ?>
+<div class="feuer-call-detail">
+    <article class="feuer-call-article">
+        <div class="feuer-call-article-shell">
+            <header class="feuer-call-detail-head">
+                <?php echo $_feu_render('info', ['header_only' => true]); ?>
+            </header>
 
-    <header class="feuer-call-detail-head">
-        <?php echo $_feu_render('info', ['header_only' => true]); ?>
-    </header>
+            <?php if ('disabled' !== FEU_Einsatz_Template_Helpers::normalize_single_map_display_mode($context['display']['single_map_display_mode'] ?? 'live')) : ?>
+                <section class="feuer-call-detail-map" aria-label="<?php echo esc_attr__('Karte des Einsatzortes', 'feuer-einsatzberichte'); ?>"><?php echo $_feu_render('map'); ?></section>
+            <?php endif; ?>
+            <?php $description_markup = $_feu_render('content'); ?>
+            <?php if ('' !== trim($description_markup)) : ?><section class="feuer-call-detail-description"><?php echo $description_markup; ?></section><?php endif; ?>
+            <section class="feuer-call-detail-facts"><?php echo $_feu_render('info', ['facts_only' => true]); ?></section>
+            <?php $gallery_markup = $_feu_render('gallery'); ?>
+            <?php if ('' !== trim($gallery_markup)) : ?><section class="feuer-call-detail-gallery"><?php echo $gallery_markup; ?></section><?php endif; ?>
+            <?php $share_markup = $_feu_render('share'); ?>
+            <?php if ('' !== trim($share_markup)) : ?><section class="feuer-call-detail-share"><?php echo $share_markup; ?></section><?php endif; ?>
+            <?php echo $_feu_render('notice'); ?>
+        </div>
+    </article>
 
-    <?php if ('disabled' !== FEU_Einsatz_Template_Helpers::normalize_single_map_display_mode($context['display']['single_map_display_mode'] ?? 'live')) : ?>
-        <section class="feuer-call-detail-map" aria-label="<?php echo esc_attr__('Karte des Einsatzortes', 'feuer-einsatzberichte'); ?>"><?php echo $_feu_render('map'); ?></section>
-    <?php endif; ?>
-    <section class="feuer-call-detail-description"><?php echo $_feu_render('content'); ?></section>
-    <section class="feuer-call-detail-facts"><?php echo $_feu_render('info', ['facts_only' => true]); ?></section>
-    <section class="feuer-call-detail-gallery"><?php echo $_feu_render('gallery'); ?></section>
-    <section class="feuer-call-detail-share"><?php echo $_feu_render('share'); ?></section>
-
-    <?php
-    echo $_feu_render('comments');
-    echo $_feu_render('related');
-    ?>
+    <div class="feuer-call-detail-after">
+        <?php
+        echo $_feu_render('comments');
+        echo $_feu_render('related');
+        ?>
+    </div>
 </div>
 
 <?php get_footer(); ?>

@@ -9,7 +9,7 @@ $scoped_category_stats = isset($context['scoped_category_stats']) && is_array($c
 $scoped_total_posts = isset($context['scoped_total_posts']) ? (int) $context['scoped_total_posts'] : 0;
 ?>
 
-<section class="card border-0 shadow-sm">
+<section class="card feu-einsatz-sidebar-stats border-0 shadow-sm">
     <div class="card-header bg-light">
         <h2 class="h5 mb-0">
             <?php
@@ -29,8 +29,13 @@ $scoped_total_posts = isset($context['scoped_total_posts']) ? (int) $context['sc
             <p class="text-muted small mb-0"><?php echo esc_html__('Die Statistik ist erst verfügbar, wenn die Kategorie Einsätze vorhanden ist.', 'feuer-einsatzberichte'); ?></p>
         <?php elseif (!empty($scoped_category_stats)) : ?>
             <?php $total_posts_in_scope = max(1, $scoped_total_posts); ?>
+            <?php $visible_stat_count = 5; ?>
             <div class="feu-einsatz-overview-stats">
-                <?php foreach ($scoped_category_stats as $stats) : ?>
+                <?php foreach ($scoped_category_stats as $index => $stats) : ?>
+                    <?php if ($index === $visible_stat_count) : ?>
+                        <details class="feu-einsatz-overview-stats-more">
+                            <summary><?php echo esc_html__('Weitere Einsatzarten', 'feuer-einsatzberichte'); ?></summary>
+                    <?php endif; ?>
                     <?php $percent = round(((int) $stats['count'] / $total_posts_in_scope) * 100, 1); ?>
                     <div class="feu-einsatz-overview-stat-item">
                         <div class="d-flex justify-content-between gap-3 mb-1">
@@ -42,6 +47,9 @@ $scoped_total_posts = isset($context['scoped_total_posts']) ? (int) $context['sc
                         </div>
                     </div>
                 <?php endforeach; ?>
+                <?php if (count($scoped_category_stats) > $visible_stat_count) : ?>
+                        </details>
+                <?php endif; ?>
             </div>
         <?php else : ?>
             <p class="text-muted small mb-0">

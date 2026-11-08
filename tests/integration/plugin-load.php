@@ -203,7 +203,7 @@ $radius_preview_markup = FEU_Einsatz_Template_Helpers::build_local_map_preview_m
 ]);
 if (
     false === strpos($radius_preview_markup, '<ellipse')
-    || false === strpos($radius_preview_markup, 'Feuerwehr-Einsatzbereich')
+    || false === strpos($radius_preview_markup, 'Einsatzort')
     || false !== strpos($radius_preview_markup, 'vector-effect="non-scaling-stroke"')
 ) {
     feu_einsatz_ci_fail('A coordinate-only radius did not produce a labelled SVG fallback circle.');

@@ -113,6 +113,19 @@ $single_info_field_options = [
                 </label>
             </div>
 
+            <div class="feu-admin-settings-form-grid feu-admin-settings-form-grid--2">
+                <label class="feu-admin-settings-field">
+                    <span><?php esc_html_e('Kräfte vor Ort anzeigen als', 'feuer-einsatzberichte'); ?></span>
+                    <select id="feu_einsatz_single_organizations_display"
+                            name="feu_einsatz_single_organizations_display"
+                            class="regular-text">
+                        <option value="chips" <?php selected($single_organizations_display, 'chips'); ?>><?php esc_html_e('Farbige Markierungen', 'feuer-einsatzberichte'); ?></option>
+                        <option value="text" <?php selected($single_organizations_display, 'text'); ?>><?php esc_html_e('Kompakter Text mit Kommas', 'feuer-einsatzberichte'); ?></option>
+                    </select>
+                    <small><?php esc_html_e('Legt fest, ob Kräfte vor Ort als Markierungen oder als schlichte, komma-getrennte Liste erscheinen.', 'feuer-einsatzberichte'); ?></small>
+                </label>
+            </div>
+
             <div class="feu-admin-settings-check-grid">
                 <label class="feu-admin-settings-check-card">
                     <input type="checkbox"

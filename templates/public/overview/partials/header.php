@@ -15,13 +15,13 @@ $selected_year = isset($context['selected_year']) ? (string) $context['selected_
                 <p class="text-muted mb-0">
                     <?php
                     printf(
-                        esc_html__('Aktuell werden Einsatzberichte aus dem Jahr %s angezeigt.', 'feuer-einsatzberichte'),
+                        esc_html__('Einsätze aus dem Jahr %s', 'feuer-einsatzberichte'),
                         esc_html($selected_year)
                     );
                     ?>
                 </p>
             <?php else : ?>
-                <p class="text-muted mb-0"><?php echo esc_html__('Aktuell wird der komplette Einsatzbericht-Überblick über alle Jahre angezeigt.', 'feuer-einsatzberichte'); ?></p>
+                <p class="text-muted mb-0"><?php echo esc_html__('Alle Einsätze', 'feuer-einsatzberichte'); ?></p>
             <?php endif; ?>
         </div>
     </div>

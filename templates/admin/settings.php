@@ -223,6 +223,7 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
             'feu_einsatz_related_reports_display' => FEU_Einsatz_Template_Helpers::normalize_related_reports_display(get_option('feu_einsatz_related_reports_display', 'cards')),
             'feu_einsatz_related_reports_count' => max(1, min(12, absint(get_option('feu_einsatz_related_reports_count', 6)))),
             'feu_einsatz_single_desaturate_organizations' => (int) get_option('feu_einsatz_single_desaturate_organizations', 0),
+            'feu_einsatz_single_organizations_display' => FEU_Einsatz_Template_Helpers::normalize_single_organizations_display(get_option('feu_einsatz_single_organizations_display', 'chips')),
             'feu_einsatz_single_info_fields' => FEU_Einsatz_Template_Helpers::normalize_single_info_fields(
                 get_option('feu_einsatz_single_info_fields', FEU_Einsatz_Template_Helpers::get_default_single_info_fields())
             ),
@@ -521,6 +522,12 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
             isset($_POST['feu_einsatz_related_reports_count']) ? max(1, min(12, absint(wp_unslash($_POST['feu_einsatz_related_reports_count'])))) : 6
         );
         update_option('feu_einsatz_single_desaturate_organizations', isset($_POST['feu_einsatz_single_desaturate_organizations']) ? 1 : 0);
+        update_option(
+            'feu_einsatz_single_organizations_display',
+            FEU_Einsatz_Template_Helpers::normalize_single_organizations_display(
+                isset($_POST['feu_einsatz_single_organizations_display']) ? wp_unslash($_POST['feu_einsatz_single_organizations_display']) : 'chips'
+            )
+        );
         update_option('feu_einsatz_feature_organizations_enabled', isset($_POST['feu_einsatz_feature_organizations_enabled']) ? 1 : 0);
         update_option(
             'feu_einsatz_single_info_fields',
@@ -794,6 +801,7 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
             'feu_einsatz_related_reports_display' => FEU_Einsatz_Template_Helpers::normalize_related_reports_display(get_option('feu_einsatz_related_reports_display', 'cards')),
             'feu_einsatz_related_reports_count' => max(1, min(12, absint(get_option('feu_einsatz_related_reports_count', 6)))),
             'feu_einsatz_single_desaturate_organizations' => (int) get_option('feu_einsatz_single_desaturate_organizations', 0),
+            'feu_einsatz_single_organizations_display' => FEU_Einsatz_Template_Helpers::normalize_single_organizations_display(get_option('feu_einsatz_single_organizations_display', 'chips')),
             'feu_einsatz_single_info_fields' => FEU_Einsatz_Template_Helpers::normalize_single_info_fields(
                 get_option('feu_einsatz_single_info_fields', FEU_Einsatz_Template_Helpers::get_default_single_info_fields())
             ),
@@ -904,6 +912,7 @@ if (!empty($_POST) && FEU_Einsatz_Admin::current_user_can_access_plugin_section(
             'feu_einsatz_related_reports_display' => __('Weitere Einsatzberichte', 'feuer-einsatzberichte'),
             'feu_einsatz_related_reports_count' => __('Anzahl weitere Einsatzberichte', 'feuer-einsatzberichte'),
             'feu_einsatz_single_desaturate_organizations' => __('Kräfte vor Ort entsättigen', 'feuer-einsatzberichte'),
+            'feu_einsatz_single_organizations_display' => __('Darstellung der Kräfte vor Ort', 'feuer-einsatzberichte'),
             'feu_einsatz_single_info_fields' => __('Sichtbare Einsatzinformationen', 'feuer-einsatzberichte'),
             'feu_einsatz_single_map_display_mode' => __('Darstellung von Karte/Bild', 'feuer-einsatzberichte'),
             'feu_einsatz_single_map_privacy_mode' => __('Datenschutz-Verhalten der Karte', 'feuer-einsatzberichte'),
@@ -1159,6 +1168,7 @@ $related_reports_display = FEU_Einsatz_Template_Helpers::normalize_related_repor
 $related_reports_count = max(1, min(12, absint(get_option('feu_einsatz_related_reports_count', 6))));
 $single_live_map_show_station = (int) get_option('feu_einsatz_single_live_map_show_station', 0);
 $single_desaturate_organizations = (int) get_option('feu_einsatz_single_desaturate_organizations', 0);
+$single_organizations_display = FEU_Einsatz_Template_Helpers::normalize_single_organizations_display(get_option('feu_einsatz_single_organizations_display', 'chips'));
 $single_info_fields = FEU_Einsatz_Template_Helpers::normalize_single_info_fields(
     get_option('feu_einsatz_single_info_fields', FEU_Einsatz_Template_Helpers::get_default_single_info_fields())
 );
@@ -1458,6 +1468,7 @@ $settings_summary_cards = [
             'related_reports_display' => $related_reports_display,
             'related_reports_count' => $related_reports_count,
             'single_desaturate_organizations' => $single_desaturate_organizations,
+            'single_organizations_display' => $single_organizations_display,
             'single_info_fields' => $single_info_fields,
             'single_map_display_mode' => $single_map_display_mode,
             'single_map_privacy_mode' => $single_map_privacy_mode,
