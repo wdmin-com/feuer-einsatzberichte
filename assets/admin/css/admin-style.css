@@ -11945,3 +11945,217 @@ body .feu-einsatz-detail-panel[hidden] {
     .feu-einsatz-profile-merge-actions { align-items: stretch; flex-direction: column; }
     .feu-einsatz-profile-merge-actions .button { min-height: 44px; }
 }
+.feu-einsatz-social-report-builder {
+    display: grid;
+    gap: 22px;
+}
+
+.feu-einsatz-social-report-filter {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: 12px;
+    padding: 18px;
+    border: 1px solid #dce5eb;
+    border-radius: 14px;
+    background: #f8fafc;
+}
+
+.feu-einsatz-social-report-filter > label,
+.feu-einsatz-social-report-custom-fields > label {
+    display: grid;
+    min-width: 190px;
+    gap: 6px;
+    color: #334155;
+    font-size: 13px;
+    font-weight: 650;
+}
+
+.feu-einsatz-social-report-filter select,
+.feu-einsatz-social-report-filter input[type="date"] {
+    min-height: 42px;
+    border: 1px solid #cbd5df;
+    border-radius: 8px;
+    background: #fff;
+}
+
+.feu-einsatz-social-report-custom-fields {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.feu-einsatz-social-report-custom-fields[hidden] {
+    display: none !important;
+}
+
+.feu-einsatz-social-report-preview {
+    width: min(100%, 760px);
+    margin-inline: auto;
+    overflow: hidden;
+    border: 1px solid #dce5eb;
+    border-radius: 18px;
+    background: #f3f6f9;
+    box-shadow: 0 14px 38px rgba(15, 41, 63, .12);
+}
+
+.feu-einsatz-social-report-preview-head {
+    display: flex;
+    min-height: 205px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 22px;
+    padding: 32px;
+    background: linear-gradient(130deg, #0b2941, #14577f);
+    color: #fff;
+}
+
+.feu-einsatz-social-report-eyebrow {
+    display: inline-flex;
+    margin-bottom: 12px;
+    color: #c9d9e6;
+    font-size: 12px;
+    font-weight: 750;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+}
+
+.feu-einsatz-social-report-preview-head h3 {
+    margin: 0;
+    color: #fff;
+    font-size: clamp(25px, 4vw, 42px);
+    line-height: 1.1;
+}
+
+.feu-einsatz-social-report-preview-head p {
+    margin: 12px 0 0;
+    color: #e6eef4;
+    font-size: 16px;
+}
+
+.feu-einsatz-social-report-total {
+    display: grid;
+    min-width: 130px;
+    justify-items: center;
+    padding: 16px 20px;
+    border-left: 3px solid #e43c4c;
+    border-radius: 0 12px 12px 0;
+    background: rgba(255, 255, 255, .1);
+}
+
+.feu-einsatz-social-report-total strong {
+    color: #fff;
+    font-size: clamp(38px, 6vw, 58px);
+    line-height: 1;
+}
+
+.feu-einsatz-social-report-total span {
+    margin-top: 8px;
+    color: #dbe7ef;
+    font-size: 13px;
+    font-weight: 650;
+}
+
+.feu-einsatz-social-report-preview-list {
+    display: grid;
+    gap: 8px;
+    padding: 28px 32px;
+}
+
+.feu-einsatz-social-report-row {
+    display: grid;
+    grid-template-columns: 10px minmax(130px, 1fr) minmax(80px, 180px) 38px;
+    align-items: center;
+    gap: 12px;
+    min-height: 42px;
+    padding: 7px 12px;
+    border: 1px solid #e5ebef;
+    border-radius: 9px;
+    background: #fff;
+    color: #203647;
+}
+
+.feu-einsatz-social-report-dot {
+    width: 9px;
+    height: 22px;
+    border-radius: 99px;
+    background: var(--feu-social-report-color, #14577f);
+}
+
+.feu-einsatz-social-report-row strong {
+    overflow: hidden;
+    font-size: 14px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.feu-einsatz-social-report-bar {
+    height: 8px;
+    overflow: hidden;
+    border-radius: 99px;
+    background: #e8edf1;
+}
+
+.feu-einsatz-social-report-bar i {
+    display: block;
+    width: var(--feu-social-report-share, 0%);
+    height: 100%;
+    border-radius: inherit;
+    background: var(--feu-social-report-color, #14577f);
+}
+
+.feu-einsatz-social-report-row > b {
+    color: #142c40;
+    font-size: 16px;
+    text-align: right;
+}
+
+.feu-einsatz-social-report-preview-footer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 8px 18px;
+    margin: 0 32px;
+    padding: 18px 0 22px;
+    border-top: 1px solid #dce5eb;
+    color: #526779;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.feu-einsatz-social-report-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+}
+
+@media (max-width: 782px) {
+    .feu-einsatz-social-report-preview-head {
+        align-items: flex-start;
+        padding: 24px 20px;
+    }
+
+    .feu-einsatz-social-report-total {
+        min-width: 88px;
+        padding: 12px 10px;
+    }
+
+    .feu-einsatz-social-report-preview-list {
+        padding: 20px 14px;
+    }
+
+    .feu-einsatz-social-report-row {
+        grid-template-columns: 8px minmax(0, 1fr) 76px 30px;
+        gap: 8px;
+        padding-inline: 9px;
+    }
+
+    .feu-einsatz-social-report-row strong {
+        font-size: 12px;
+    }
+
+    .feu-einsatz-social-report-preview-footer {
+        margin-inline: 18px;
+    }
+}

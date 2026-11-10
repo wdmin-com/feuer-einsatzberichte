@@ -1,6 +1,18 @@
 {
   "releases": [
     {
+      "version": "3.3.34",
+      "date": "2026-11-10",
+      "title": "Social-Media-Berichte nach Zeitraum",
+      "summary": "Erstellen Sie aus Wochen-, Monats-, Quartals-, Halbjahres-, Jahres- oder individuellen Statistiken ein Social-Media-Bild mit Zeitraum, Gesamtzahl und allen Einsatzstichworten.",
+      "changes": [
+        "Statistik: Social-Media-Berichte können für die aktuelle Kalenderwoche, den aktuellen Monat, das Quartal, das Halbjahr oder Kalenderjahr erstellt werden.",
+        "Statistik: Ein frei wählbarer Zeitraum mit Start- und Enddatum ist verfügbar. Die Zeitspanne wird im Bericht klar angezeigt.",
+        "Social Media: Die Anzahl der Einsätze wird je primärem Einsatzstichwort ohne doppelte Zählung ausgewiesen.",
+        "Social Media: Der Bericht kann als 1080 × 1920 Pixel großes PNG mit Feuerwehr-Logo gespeichert werden."
+      ]
+    },
+    {
       "version": "3.3.33",
       "date": "2026-11-08",
       "title": "Einzelbericht mobil mit klaren Flächen",

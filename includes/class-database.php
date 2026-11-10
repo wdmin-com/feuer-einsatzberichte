@@ -2054,8 +2054,34 @@ class FEU_Einsatz_Database {
      * Kategorie-Statistiken abrufen
      */
     public function get_category_statistics($jahr = null) {
-        if (!$jahr) $jahr = date('Y');
-        $event_year_sql = $this->get_statistics_event_year_sql('event_date', 'p');
+        $jahr = absint($jahr ?: current_time('Y'));
+
+        return $this->get_category_statistics_for_period(
+            sprintf('%04d-01-01', $jahr),
+            sprintf('%04d-12-31', $jahr)
+        );
+    }
+
+    /**
+     * Return one primary keyword count per published report in a date range.
+     */
+    public function get_category_statistics_for_period($date_from, $date_to) {
+        $date_from = is_scalar($date_from) ? (string) $date_from : '';
+        $date_to = is_scalar($date_to) ? (string) $date_to : '';
+        $valid_date = static function($value) {
+            if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
+                return false;
+            }
+
+            [$year, $month, $day] = array_map('intval', explode('-', $value));
+            return checkdate($month, $day, $year);
+        };
+
+        if (!$valid_date($date_from) || !$valid_date($date_to) || $date_from > $date_to) {
+            return [];
+        }
+
+        $event_date_sql = $this->get_statistics_event_date_sql('event_date', 'p');
 
         // The donut is a partition of reports, not a count of term
         // relationships. A report with several keywords must appear once.
@@ -2066,10 +2092,11 @@ class FEU_Einsatz_Database {
             LEFT JOIN {$this->wpdb->postmeta} event_date ON p.ID = event_date.post_id AND event_date.meta_key = '_feu_einsatz_datum'
             WHERE p.post_type IN ('post', 'einsatzbericht')
               AND p.post_status = 'publish'
-              AND {$event_year_sql} = %d
+              AND {$event_date_sql} >= %s
+              AND {$event_date_sql} <= %s
               AND pm.meta_key = '_feu_einsatz_einsatzbericht'
               AND pm.meta_value = '1'
-        ", $jahr)));
+        ", $date_from, $date_to)));
         if (!$post_ids) {
             return [];
         }

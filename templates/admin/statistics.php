@@ -17,10 +17,11 @@ if (empty($jahre)) {
 
 $default_jahr = in_array($aktuelles_jahr, $jahre, true) ? $aktuelles_jahr : (int) $jahre[0];
 
-$allowed_tabs = ['overview', 'categories', 'calendar', 'activity-map', 'participants', 'presentation-settings'];
+$allowed_tabs = ['overview', 'categories', 'calendar', 'activity-map', 'participants', 'presentation-settings', 'social-report'];
 $active_tab = 'overview';
-if (isset($_POST['feu_einsatz_stats_tab'])) {
-    $requested_tab = sanitize_key(wp_unslash($_POST['feu_einsatz_stats_tab']));
+if (isset($_REQUEST['feu_einsatz_stats_tab'])) {
+    $tab_request = wp_unslash($_REQUEST['feu_einsatz_stats_tab']);
+    $requested_tab = is_scalar($tab_request) ? sanitize_key((string) $tab_request) : '';
     if (in_array($requested_tab, $allowed_tabs, true)) {
         $active_tab = $requested_tab;
     }
@@ -28,6 +29,79 @@ if (isset($_POST['feu_einsatz_stats_tab'])) {
 
 $requested_year = isset($_REQUEST['jahr']) ? absint(wp_unslash($_REQUEST['jahr'])) : 0;
 $jahr = in_array($requested_year, $jahre, true) ? $requested_year : $default_jahr;
+$social_report_periods = [
+    'week' => __('Diese Woche', 'feuer-einsatzberichte'),
+    'month' => __('Dieser Monat', 'feuer-einsatzberichte'),
+    'quarter' => __('Dieses Quartal', 'feuer-einsatzberichte'),
+    'half_year' => __('Dieses Halbjahr', 'feuer-einsatzberichte'),
+    'year' => __('Dieses Kalenderjahr', 'feuer-einsatzberichte'),
+    'custom' => __('Individueller Zeitraum', 'feuer-einsatzberichte'),
+];
+$social_report_period_request = isset($_GET['feu_einsatz_report_period']) ? wp_unslash($_GET['feu_einsatz_report_period']) : '';
+$social_report_period = is_scalar($social_report_period_request)
+    ? sanitize_key((string) $social_report_period_request)
+    : 'month';
+if (!isset($social_report_periods[$social_report_period])) {
+    $social_report_period = 'month';
+}
+$social_report_today = current_datetime()->setTime(0, 0);
+$social_report_date_to = $social_report_today;
+$social_report_date_from = $social_report_today->modify('first day of this month');
+$social_report_parse_date = static function($value) {
+    if (!is_scalar($value)) {
+        return null;
+    }
+
+    $value = (string) $value;
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
+        return null;
+    }
+
+    $date = DateTimeImmutable::createFromFormat('!Y-m-d', $value, wp_timezone());
+    return $date && $date->format('Y-m-d') === $value ? $date : null;
+};
+
+switch ($social_report_period) {
+    case 'week':
+        $social_report_date_from = $social_report_today->modify('monday this week');
+        break;
+    case 'quarter':
+        $quarter_start_month = (int) (floor(((int) $social_report_today->format('n') - 1) / 3) * 3) + 1;
+        $social_report_date_from = $social_report_today->setDate((int) $social_report_today->format('Y'), $quarter_start_month, 1);
+        break;
+    case 'half_year':
+        $half_year_start_month = (int) $social_report_today->format('n') <= 6 ? 1 : 7;
+        $social_report_date_from = $social_report_today->setDate((int) $social_report_today->format('Y'), $half_year_start_month, 1);
+        break;
+    case 'year':
+        $social_report_date_from = $social_report_today->setDate((int) $social_report_today->format('Y'), 1, 1);
+        break;
+    case 'custom':
+        $custom_from = $social_report_parse_date($_GET['feu_einsatz_report_date_from'] ?? '');
+        $custom_to = $social_report_parse_date($_GET['feu_einsatz_report_date_to'] ?? '');
+        $social_report_date_from = $custom_from ?: $social_report_date_from;
+        $social_report_date_to = $custom_to ?: $social_report_today;
+        if ($social_report_date_from > $social_report_date_to) {
+            [$social_report_date_from, $social_report_date_to] = [$social_report_date_to, $social_report_date_from];
+        }
+        break;
+}
+$social_report_from_iso = $social_report_date_from->format('Y-m-d');
+$social_report_to_iso = $social_report_date_to->format('Y-m-d');
+$social_report_date_label = $social_report_date_from->format('d.m.Y') . ' – ' . $social_report_date_to->format('d.m.Y');
+$social_report_category_stats = $this->db->get_category_statistics_for_period($social_report_from_iso, $social_report_to_iso);
+$social_report_total = 0;
+$social_report_categories = [];
+$social_report_colors = ['#0f6cbd', '#e05a33', '#0f9f6e', '#8b5cf6', '#d97706', '#db2777', '#0891b2', '#65a30d', '#c2410c', '#475569'];
+foreach ((array) $social_report_category_stats as $category_index => $category_stat) {
+    $category_count = max(0, (int) ($category_stat->anzahl ?? 0));
+    $social_report_total += $category_count;
+    $social_report_categories[] = [
+        'name' => (string) ($category_stat->kategorie_name ?? __('Ohne Einsatzstichwort', 'feuer-einsatzberichte')),
+        'count' => $category_count,
+        'color' => $social_report_colors[$category_index % count($social_report_colors)],
+    ];
+}
 $selected_participant_id = isset($_GET['participant']) ? absint(wp_unslash($_GET['participant'])) : 0;
 $participant_stats_notice = null;
 $minimum_participation = max(0, min(100, (int) get_option('feu_einsatz_minimum_participation', 30)));
@@ -917,6 +991,10 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
     <div class="feu-einsatz-stats-tabs" role="tablist" aria-label="<?php esc_attr_e('Statistikbereiche', 'feuer-einsatzberichte'); ?>">
         <button type="button" class="button feu-einsatz-stats-tab <?php echo 'overview' === $active_tab ? 'is-active' : ''; ?>" data-target="overview" id="feu-einsatz-stats-tab-overview" role="tab" aria-controls="feu-einsatz-stats-panel-overview" aria-selected="<?php echo 'overview' === $active_tab ? 'true' : 'false'; ?>"><?php esc_html_e('Übersicht', 'feuer-einsatzberichte'); ?></button>
         <button type="button" class="button feu-einsatz-stats-tab <?php echo 'categories' === $active_tab ? 'is-active' : ''; ?>" data-target="categories" id="feu-einsatz-stats-tab-categories" role="tab" aria-controls="feu-einsatz-stats-panel-categories" aria-selected="<?php echo 'categories' === $active_tab ? 'true' : 'false'; ?>"><?php esc_html_e('Einsätze nach Einsatzstichwort', 'feuer-einsatzberichte'); ?></button>
+        <button type="button" class="button feu-einsatz-stats-tab <?php echo 'social-report' === $active_tab ? 'is-active' : ''; ?>" data-target="social-report" id="feu-einsatz-stats-tab-social-report" role="tab" aria-controls="feu-einsatz-stats-panel-social-report" aria-selected="<?php echo 'social-report' === $active_tab ? 'true' : 'false'; ?>">
+            <span class="ti ti-brand-instagram" aria-hidden="true"></span>
+            <?php esc_html_e('Social-Media-Bericht', 'feuer-einsatzberichte'); ?>
+        </button>
         <button type="button" class="button feu-einsatz-stats-tab <?php echo 'calendar' === $active_tab ? 'is-active' : ''; ?>" data-target="calendar" id="feu-einsatz-stats-tab-calendar" role="tab" aria-controls="feu-einsatz-stats-panel-calendar" aria-selected="<?php echo 'calendar' === $active_tab ? 'true' : 'false'; ?>"><?php esc_html_e('Kalender', 'feuer-einsatzberichte'); ?></button>
         <button type="button" class="button feu-einsatz-stats-tab <?php echo 'activity-map' === $active_tab ? 'is-active' : ''; ?>" data-target="activity-map" id="feu-einsatz-stats-tab-activity-map" role="tab" aria-controls="feu-einsatz-stats-panel-activity-map" aria-selected="<?php echo 'activity-map' === $active_tab ? 'true' : 'false'; ?>"><?php esc_html_e('Aktivitätskarte', 'feuer-einsatzberichte'); ?></button>
         <button type="button" class="button feu-einsatz-stats-tab <?php echo 'participants' === $active_tab ? 'is-active' : ''; ?>" data-target="participants" id="feu-einsatz-stats-tab-participants" role="tab" aria-controls="feu-einsatz-stats-panel-participants" aria-selected="<?php echo 'participants' === $active_tab ? 'true' : 'false'; ?>">
@@ -1282,6 +1360,86 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
         </div>
     </section>
 
+    <section class="feu-einsatz-stats-panel <?php echo 'social-report' === $active_tab ? 'is-active' : ''; ?>" data-panel="social-report" id="feu-einsatz-stats-panel-social-report" role="tabpanel" aria-labelledby="feu-einsatz-stats-tab-social-report">
+        <div class="feu-einsatz-panel-card feu-einsatz-social-report-builder">
+            <div class="feu-einsatz-panel-header">
+                <div>
+                    <h2><?php esc_html_e('Social-Media-Bericht erstellen', 'feuer-einsatzberichte'); ?></h2>
+                    <p class="description"><?php esc_html_e('Wählen Sie einen Zeitraum. Der Bericht zeigt die Einsatzanzahl nach Einsatzstichwort und lässt sich als PNG-Bild speichern.', 'feuer-einsatzberichte'); ?></p>
+                </div>
+            </div>
+
+            <form method="get" action="" class="feu-einsatz-social-report-filter" id="feu-einsatz-social-report-filter">
+                <?php $statistics_page_slug = isset($_GET['page']) && is_scalar($_GET['page']) ? sanitize_key((string) wp_unslash($_GET['page'])) : 'feu-einsatz-statistiken'; ?>
+                <input type="hidden" name="page" value="<?php echo esc_attr($statistics_page_slug); ?>">
+                <input type="hidden" name="jahr" value="<?php echo esc_attr((string) $jahr); ?>">
+                <input type="hidden" name="feu_einsatz_stats_tab" value="social-report">
+                <label>
+                    <span><?php esc_html_e('Zeitraum', 'feuer-einsatzberichte'); ?></span>
+                    <select name="feu_einsatz_report_period" id="feu-einsatz-report-period">
+                        <?php foreach ($social_report_periods as $period_key => $period_label): ?>
+                            <option value="<?php echo esc_attr($period_key); ?>" <?php selected($social_report_period, $period_key); ?>><?php echo esc_html($period_label); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </label>
+                <div class="feu-einsatz-social-report-custom-fields" data-feu-social-report-custom-fields <?php echo 'custom' === $social_report_period ? '' : 'hidden'; ?>>
+                    <label>
+                        <span><?php esc_html_e('Von', 'feuer-einsatzberichte'); ?></span>
+                        <input type="date" name="feu_einsatz_report_date_from" value="<?php echo esc_attr($social_report_from_iso); ?>">
+                    </label>
+                    <label>
+                        <span><?php esc_html_e('Bis', 'feuer-einsatzberichte'); ?></span>
+                        <input type="date" name="feu_einsatz_report_date_to" value="<?php echo esc_attr($social_report_to_iso); ?>">
+                    </label>
+                </div>
+                <button type="submit" class="button button-primary">
+                    <span class="ti ti-refresh" aria-hidden="true"></span>
+                    <?php esc_html_e('Bericht anzeigen', 'feuer-einsatzberichte'); ?>
+                </button>
+            </form>
+
+            <div class="feu-einsatz-social-report-preview" id="feu-einsatz-social-report-preview">
+                <div class="feu-einsatz-social-report-preview-head">
+                    <div>
+                        <span class="feu-einsatz-social-report-eyebrow"><?php echo esc_html($social_report_periods[$social_report_period]); ?></span>
+                        <h3><?php esc_html_e('Einsatzbericht', 'feuer-einsatzberichte'); ?></h3>
+                        <p><?php echo esc_html($social_report_date_label); ?></p>
+                    </div>
+                    <div class="feu-einsatz-social-report-total">
+                        <strong><?php echo esc_html(number_format_i18n($social_report_total)); ?></strong>
+                        <span><?php echo esc_html(_n('Einsatz', 'Einsätze', $social_report_total, 'feuer-einsatzberichte')); ?></span>
+                    </div>
+                </div>
+                <div class="feu-einsatz-social-report-preview-list">
+                    <?php if (empty($social_report_categories)): ?>
+                        <p class="description"><?php esc_html_e('In diesem Zeitraum liegen keine veröffentlichten Einsatzberichte vor.', 'feuer-einsatzberichte'); ?></p>
+                    <?php else: ?>
+                        <?php foreach ($social_report_categories as $social_category): ?>
+                            <?php $social_percent = $social_report_total > 0 ? (int) round(($social_category['count'] / $social_report_total) * 100) : 0; ?>
+                            <div class="feu-einsatz-social-report-row" style="--feu-social-report-color: <?php echo esc_attr($social_category['color']); ?>; --feu-social-report-share: <?php echo esc_attr((string) $social_percent); ?>%;">
+                                <span class="feu-einsatz-social-report-dot" aria-hidden="true"></span>
+                                <strong><?php echo esc_html($social_category['name']); ?></strong>
+                                <span class="feu-einsatz-social-report-bar" aria-hidden="true"><i></i></span>
+                                <b><?php echo esc_html(number_format_i18n($social_category['count'])); ?></b>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </div>
+                <div class="feu-einsatz-social-report-preview-footer">
+                    <span><?php echo esc_html($statistics_organization_name); ?></span>
+                    <span><?php esc_html_e('Bericht für den angegebenen Zeitraum', 'feuer-einsatzberichte'); ?></span>
+                </div>
+            </div>
+            <div class="feu-einsatz-social-report-actions">
+                <button type="button" class="button button-primary" id="feu-einsatz-social-report-download">
+                    <span class="ti ti-photo-down" aria-hidden="true"></span>
+                    <?php esc_html_e('Als PNG-Bild speichern', 'feuer-einsatzberichte'); ?>
+                </button>
+                    <span class="description"><?php esc_html_e('Hochformat (1080 × 1920 Pixel) mit Zeitraum, Gesamtzahl und allen Einsatzstichworten.', 'feuer-einsatzberichte'); ?></span>
+            </div>
+        </div>
+    </section>
+
     <section class="feu-einsatz-stats-panel <?php echo 'calendar' === $active_tab ? 'is-active' : ''; ?>" data-panel="calendar" id="feu-einsatz-stats-panel-calendar" role="tabpanel" aria-labelledby="feu-einsatz-stats-tab-calendar">
         <div class="feu-einsatz-panel-card">
             <div class="feu-einsatz-panel-header">
@@ -1592,6 +1750,16 @@ document.addEventListener('DOMContentLoaded', function() {
     var monthNames = <?php echo wp_json_encode($month_names); ?>;
     var monthlyTotals = <?php echo wp_json_encode(array_values($monthly_totals)); ?>;
     var selectedYear = <?php echo wp_json_encode($jahr); ?>;
+    var socialReportData = <?php echo wp_json_encode([
+        'organization' => $statistics_organization_name,
+        'logoUrl' => $statistics_logo_url,
+        'period' => $social_report_periods[$social_report_period],
+        'dateRange' => $social_report_date_label,
+        'dateFrom' => $social_report_from_iso,
+        'dateTo' => $social_report_to_iso,
+        'total' => $social_report_total,
+        'categories' => $social_report_categories,
+    ], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
     var activityMapPoints = <?php echo wp_json_encode($activity_map_points); ?>;
     var presentationStationFeature = <?php echo wp_json_encode(is_array($statistics_station_feature) ? $statistics_station_feature : null); ?>;
     var totalStats = <?php echo wp_json_encode($total); ?>;
@@ -3724,6 +3892,210 @@ document.addEventListener('DOMContentLoaded', function() {
             openParticipantDetails(button.getAttribute('data-participant-id'), button.getAttribute('data-participant-name'));
         });
     });
+
+    var socialReportPeriodSelect = document.getElementById('feu-einsatz-report-period');
+    var socialReportCustomFields = document.querySelector('[data-feu-social-report-custom-fields]');
+    if (socialReportPeriodSelect && socialReportCustomFields) {
+        socialReportPeriodSelect.addEventListener('change', function() {
+            socialReportCustomFields.hidden = socialReportPeriodSelect.value !== 'custom';
+        });
+    }
+
+    function socialReportRoundRect(ctx, x, y, width, height, radius, fill, stroke) {
+        var r = Math.min(radius, width / 2, height / 2);
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + width - r, y);
+        ctx.quadraticCurveTo(x + width, y, x + width, y + r);
+        ctx.lineTo(x + width, y + height - r);
+        ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+        ctx.lineTo(x + r, y + height);
+        ctx.quadraticCurveTo(x, y + height, x, y + height - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+        if (fill) {
+            ctx.fill();
+        }
+        if (stroke) {
+            ctx.stroke();
+        }
+    }
+
+    function fitSocialReportText(ctx, text, maxWidth) {
+        var value = String(text || '');
+        if (ctx.measureText(value).width <= maxWidth) {
+            return value;
+        }
+        while (value.length > 1 && ctx.measureText(value + '…').width > maxWidth) {
+            value = value.slice(0, -1);
+        }
+        return value + '…';
+    }
+
+    function drawSocialReport(canvas, logoImage) {
+        var width = 1080;
+        var height = 1920;
+        var ctx = canvas.getContext('2d');
+        var categories = Array.isArray(socialReportData.categories) ? socialReportData.categories : [];
+        var rowStart = 690;
+        var footerHeight = 112;
+        var rowsSpace = height - rowStart - footerHeight - 40;
+        var rowHeight = categories.length ? Math.max(30, Math.min(58, rowsSpace / categories.length)) : 58;
+        var maxCount = categories.reduce(function(max, item) { return Math.max(max, Number(item.count) || 0); }, 1);
+
+        canvas.width = width;
+        canvas.height = height;
+        ctx.fillStyle = '#f3f6f9';
+        ctx.fillRect(0, 0, width, height);
+
+        var headerGradient = ctx.createLinearGradient(0, 0, width, 600);
+        headerGradient.addColorStop(0, '#0b2941');
+        headerGradient.addColorStop(1, '#14577f');
+        ctx.fillStyle = headerGradient;
+        ctx.fillRect(0, 0, width, 590);
+        ctx.fillStyle = '#e43c4c';
+        ctx.fillRect(64, 64, 148, 12);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'alphabetic';
+        ctx.font = '700 30px Arial, sans-serif';
+        ctx.fillText(fitSocialReportText(ctx, socialReportData.organization || 'Freiwillige Feuerwehr', 750), 64, 145);
+
+        if (logoImage && logoImage.complete && logoImage.naturalWidth > 0) {
+            var logoSize = 116;
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(width - 122, 116, logoSize / 2, 0, Math.PI * 2);
+            ctx.clip();
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(width - 180, 58, logoSize, logoSize);
+            var scale = Math.min(logoSize / logoImage.naturalWidth, logoSize / logoImage.naturalHeight);
+            var logoWidth = logoImage.naturalWidth * scale;
+            var logoHeight = logoImage.naturalHeight * scale;
+            ctx.drawImage(logoImage, width - 122 - logoWidth / 2, 116 - logoHeight / 2, logoWidth, logoHeight);
+            ctx.restore();
+        }
+
+        ctx.fillStyle = '#c9d9e6';
+        ctx.font = '700 24px Arial, sans-serif';
+        ctx.letterSpacing = '3px';
+        ctx.fillText('EINSATZBERICHT', 64, 255);
+        ctx.letterSpacing = '0px';
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '700 70px Arial, sans-serif';
+        ctx.fillText('Einsätze', 64, 345);
+        ctx.fillStyle = '#e6eef4';
+        ctx.font = '400 32px Arial, sans-serif';
+        ctx.fillText(fitSocialReportText(ctx, socialReportData.period || 'Berichtszeitraum', 900), 64, 402);
+        ctx.font = '600 27px Arial, sans-serif';
+        ctx.fillText(socialReportData.dateRange || '', 64, 450);
+
+        ctx.fillStyle = '#ffffff';
+        socialReportRoundRect(ctx, 64, 500, 952, 150, 24, true, false);
+        ctx.fillStyle = '#e43c4c';
+        socialReportRoundRect(ctx, 64, 500, 14, 150, 7, true, false);
+        ctx.fillStyle = '#14577f';
+        ctx.font = '700 90px Arial, sans-serif';
+        ctx.fillText(new Intl.NumberFormat('de-DE').format(Number(socialReportData.total) || 0), 108, 610);
+        ctx.fillStyle = '#526779';
+        ctx.font = '700 28px Arial, sans-serif';
+        ctx.fillText((Number(socialReportData.total) || 0) === 1 ? 'EINSATZ IN DIESEM ZEITRAUM' : 'EINSÄTZE IN DIESEM ZEITRAUM', 450, 590);
+
+        ctx.fillStyle = '#142c40';
+        ctx.font = '700 34px Arial, sans-serif';
+        ctx.fillText('Einsätze nach Stichwort', 64, 730);
+        ctx.fillStyle = '#647789';
+        ctx.font = '400 23px Arial, sans-serif';
+        ctx.fillText('Anzahl je Einsatzstichwort', 64, 770);
+
+        if (!categories.length) {
+            ctx.fillStyle = '#647789';
+            ctx.font = '400 28px Arial, sans-serif';
+            ctx.fillText('Keine Einsätze in diesem Zeitraum.', 64, rowStart + 58);
+        } else {
+            categories.forEach(function(category, index) {
+                var y = rowStart + (index * rowHeight);
+                var count = Number(category.count) || 0;
+                var nameFontSize = rowHeight < 39 ? 19 : 24;
+                ctx.fillStyle = '#ffffff';
+                socialReportRoundRect(ctx, 64, y, 952, rowHeight - 7, 11, true, false);
+                ctx.fillStyle = category.color || '#14577f';
+                socialReportRoundRect(ctx, 80, y + 9, 8, Math.max(14, rowHeight - 25), 4, true, false);
+                ctx.fillStyle = '#203647';
+                ctx.font = '600 ' + nameFontSize + 'px Arial, sans-serif';
+                ctx.fillText(fitSocialReportText(ctx, category.name, 450), 108, y + Math.min(rowHeight - 14, 32));
+                ctx.fillStyle = '#e8edf1';
+                socialReportRoundRect(ctx, 590, y + Math.max(10, (rowHeight - 16) / 2), 300, 13, 7, true, false);
+                ctx.fillStyle = category.color || '#14577f';
+                socialReportRoundRect(ctx, 590, y + Math.max(10, (rowHeight - 16) / 2), Math.max(count > 0 ? 8 : 0, (count / maxCount) * 300), 13, 7, true, false);
+                ctx.fillStyle = '#142c40';
+                ctx.font = '700 25px Arial, sans-serif';
+                ctx.textAlign = 'right';
+                ctx.fillText(new Intl.NumberFormat('de-DE').format(count), 982, y + Math.min(rowHeight - 13, 32));
+                ctx.textAlign = 'left';
+            });
+        }
+
+        ctx.fillStyle = '#e43c4c';
+        ctx.fillRect(64, height - footerHeight, width - 128, 2);
+        ctx.fillStyle = '#526779';
+        ctx.font = '600 23px Arial, sans-serif';
+        ctx.fillText(fitSocialReportText(ctx, socialReportData.organization || 'Freiwillige Feuerwehr', 760), 64, height - 58);
+        ctx.textAlign = 'right';
+        ctx.font = '400 19px Arial, sans-serif';
+        ctx.fillText('BERICHT ' + (socialReportData.dateRange || ''), width - 64, height - 58);
+        ctx.textAlign = 'left';
+    }
+
+    var socialReportDownloadButton = document.getElementById('feu-einsatz-social-report-download');
+    if (socialReportDownloadButton) {
+        socialReportDownloadButton.addEventListener('click', function() {
+            var originalText = socialReportDownloadButton.textContent;
+            socialReportDownloadButton.disabled = true;
+            socialReportDownloadButton.textContent = 'Bild wird erstellt…';
+
+            var saveCanvas = function(logoImage) {
+                try {
+                    var canvas = document.createElement('canvas');
+                    drawSocialReport(canvas, logoImage);
+                    canvas.toBlob(function(blob) {
+                        if (!blob) {
+                            socialReportDownloadButton.disabled = false;
+                            socialReportDownloadButton.textContent = originalText;
+                            window.alert('Das Bild konnte nicht erstellt werden.');
+                            return;
+                        }
+                        var link = document.createElement('a');
+                        var imageUrl = URL.createObjectURL(blob);
+                        link.href = imageUrl;
+                        link.download = 'einsatzbericht-' + socialReportData.dateFrom + '-' + socialReportData.dateTo + '.png';
+                        document.body.appendChild(link);
+                        link.click();
+                        link.remove();
+                        window.setTimeout(function() { URL.revokeObjectURL(imageUrl); }, 1000);
+                        socialReportDownloadButton.disabled = false;
+                        socialReportDownloadButton.textContent = originalText;
+                    }, 'image/png');
+                } catch (error) {
+                    socialReportDownloadButton.disabled = false;
+                    socialReportDownloadButton.textContent = originalText;
+                    window.alert('Das Bild konnte nicht erstellt werden.');
+                }
+            };
+
+            if (!socialReportData.logoUrl) {
+                saveCanvas(null);
+                return;
+            }
+            var logoImage = new Image();
+            logoImage.crossOrigin = 'anonymous';
+            logoImage.onload = function() { saveCanvas(logoImage); };
+            logoImage.onerror = function() { saveCanvas(null); };
+            logoImage.src = socialReportData.logoUrl;
+        });
+    }
 
     var exportButton = document.getElementById('feu-einsatz-export-statistics-pdf');
     if (exportButton) {
