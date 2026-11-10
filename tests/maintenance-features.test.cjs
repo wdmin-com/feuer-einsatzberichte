@@ -72,3 +72,14 @@ test('weekday statistics use a professional label in dashboard, presentation and
     assert.doesNotMatch(statistics, /Beliebte Wochentage|Häufigste Wochentage|Top Wochentage/);
     assert.ok((statistics.match(/Einsätze nach Wochentag/g) || []).length >= 5);
 });
+
+test('statistics presentation shows weekday and peak day summaries only on the calendar slide', () => {
+    const statistics = read('templates/admin/statistics.php');
+    const start = statistics.indexOf('function feu_einsatz_render_statistics_presentation');
+    const end = statistics.indexOf('<div class="wrap feu-einsatz-statistics', start);
+    assert.ok(start >= 0 && end > start, 'The presentation renderer must be present.');
+    const presentation = statistics.slice(start, end);
+    assert.equal((presentation.match(/Einsätze nach Wochentag/g) || []).length, 1);
+    assert.equal((presentation.match(/Stärkste Tage/g) || []).length, 1);
+    assert.doesNotMatch(presentation, /Spitzen-Tage/);
+});

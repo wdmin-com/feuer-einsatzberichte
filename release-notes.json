@@ -1,6 +1,16 @@
 {
   "releases": [
     {
+      "version": "3.3.35",
+      "date": "2026-11-10",
+      "title": "Keine doppelten Kalenderinhalte in der Präsentation",
+      "summary": "Die Vollbildpräsentation zeigt Wochentage und stärkste Einsatztage nur noch auf der Kalenderseite.",
+      "changes": [
+        "Statistik: Die Übersichtsfolie zeigt keine doppelte Wochentagsverteilung oder Spitzen-Tage mehr.",
+        "Statistik: Wochentage und stärkste Einsatztage werden ausschließlich auf der Kalenderfolie angezeigt."
+      ]
+    },
+    {
       "version": "3.3.34",
       "date": "2026-11-10",
       "title": "Social-Media-Berichte nach Zeitraum",

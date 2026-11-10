@@ -781,20 +781,6 @@ if (!function_exists('feu_einsatz_render_statistics_presentation')) {
                         </div>
                         <div><span><?php esc_html_e('Top-Einsatzstichwort', 'feuer-einsatzberichte'); ?></span><strong><?php echo esc_html($top_category_label); ?></strong></div>
                     </div>
-                    <div class="feu-einsatz-presentation-overview-lists">
-                        <div>
-                            <h3><?php esc_html_e('Einsätze nach Wochentag', 'feuer-einsatzberichte'); ?></h3>
-                            <?php foreach (array_slice($top_weekdays, 0, 3) as $weekday): ?>
-                                <p><span><?php echo esc_html((string) ($weekday['label'] ?? '')); ?></span><strong><?php echo esc_html((string) ($weekday['count'] ?? 0)); ?></strong></p>
-                            <?php endforeach; ?>
-                        </div>
-                        <div>
-                            <h3><?php esc_html_e('Spitzen-Tage', 'feuer-einsatzberichte'); ?></h3>
-                            <?php foreach (array_slice($peak_days, 0, 3) as $peak_day): ?>
-                                <p><span><?php echo esc_html((string) ($peak_day['date'] ?? '')); ?></span><strong><?php echo esc_html((string) ($peak_day['count'] ?? 0)); ?></strong></p>
-                            <?php endforeach; ?>
-                        </div>
-                    </div>
                 </section>
                 <?php endif; ?>
 
