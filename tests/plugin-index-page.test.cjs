@@ -5,7 +5,9 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const source = fs.readFileSync(path.join(root, 'index.php'), 'utf8');
 const manifest = JSON.parse(fs.readFileSync(path.join(root, 'update-manifest.json'), 'utf8'));
+const pluginHeader = fs.readFileSync(path.join(root, 'feuer-einsatzberichte.php'), 'utf8');
 const socialImage = fs.readFileSync(path.join(root, 'assets', 'images', 'plugin-social-preview.png'));
+const pluginVersion = pluginHeader.match(/^ \* Version: (.+)$/m)?.[1];
 
 assert.match(source, /<html lang="de">/, 'The product page must declare German as its language.');
 assert.match(source, /rel="canonical"/, 'A canonical URL is required.');
@@ -32,6 +34,7 @@ for (const [, target] of source.matchAll(/href="#([^"]+)"/g)) {
 assert.equal(socialImage.toString('ascii', 1, 4), 'PNG', 'The social preview must be a PNG file.');
 assert.equal(socialImage.readUInt32BE(16), 1200, 'The social preview width must be 1200 px.');
 assert.equal(socialImage.readUInt32BE(20), 630, 'The social preview height must be 630 px.');
-assert.equal(manifest.version, '3.3.35', 'The page test must run against the expected current release.');
+assert.ok(pluginVersion, 'The plugin header must declare its version.');
+assert.equal(manifest.version, pluginVersion, 'The update manifest must match the plugin header version.');
 
 console.log('Plugin product index checks passed.');
