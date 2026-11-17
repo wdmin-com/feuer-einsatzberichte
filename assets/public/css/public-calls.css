@@ -10,7 +10,14 @@
     gap: 28px 36px;
     max-width: 1320px;
     color: var(--feuer-ink);
+    font-family: "Barlow", Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
 }
+/* A WordPress page may wrap shortcode output in a paragraph/code block.
+   Flatten those editor wrappers so the plugin's own layout remains in control. */
+#main-content .ff-page-content:has(.container.feuer-public-calls) p:has(> code) { display: contents; }
+#main-content .ff-page-content:has(.container.feuer-public-calls) code { display: contents; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; white-space: normal; }
 .feuer-public-calls > .feu-einsatz-overview-header { grid-area: header; margin: 0 !important; }
 .feuer-public-calls > .feu-einsatz-overview-header h1 { margin: 0; color: var(--feuer-ink); font-size: clamp(2rem, 4vw, 3.35rem); font-weight: 750; letter-spacing: -.035em; }
 .feuer-public-calls > .feu-einsatz-overview-header p { color: var(--feuer-muted) !important; }

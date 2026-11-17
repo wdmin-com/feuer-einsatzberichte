@@ -1987,10 +1987,22 @@ class FEU_Einsatz_Public {
     public function render_overview_list_shortcode($atts = []) {
         $context = $this->get_overview_context($atts);
         $context['card_variant'] = $this->get_overview_card_variant((array) $atts);
+        $display = isset($context['display']) && is_array($context['display']) ? $context['display'] : [];
+        $show_sidebar = (!isset($display['overview_show_stats']) || !empty($display['overview_show_stats']))
+            || (!isset($display['overview_show_year_filter']) || !empty($display['overview_show_year_filter']));
 
-        return FEU_Einsatz_Template_Helpers::render('templates/public/overview/list.php', [
+        $list = FEU_Einsatz_Template_Helpers::render('templates/public/overview/list.php', [
             'context' => $context,
         ]);
+
+        $sidebar = '';
+        if ($show_sidebar) {
+            $sidebar = '<aside class="feuer-public-calls-sidebar">' . FEU_Einsatz_Template_Manager::render('sidebar', [
+                'context' => $context,
+            ], 'templates/public/overview/sidebar.php') . '</aside>';
+        }
+
+        return '<div class="container py-4 feuer-public-calls">' . $list . $sidebar . '</div>';
     }
 
     public function render_overview_sidebar_shortcode($atts = []) {

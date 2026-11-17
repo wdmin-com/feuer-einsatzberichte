@@ -1,6 +1,26 @@
 {
   "releases": [
     {
+      "version": "3.3.37",
+      "date": "2026-11-17",
+      "title": "Seitenleiste in der Einsatzübersicht ergänzt",
+      "summary": "Die Einsatzübersicht zeigt auch bei Verwendung des Listen-Shortcodes die aktivierten Filter und Statistiken als Seitenleiste.",
+      "changes": [
+        "Einsatzübersicht: Der Listen-Shortcode rendert die Seitenleiste für Jahresfilter und Einsatzstatistik, sofern diese Bereiche aktiviert sind.",
+        "Mobil: Die Seitenleiste folgt unter Karten und Seitennavigation in einer einspaltigen Anordnung."
+      ]
+    },
+    {
+      "version": "3.3.36",
+      "date": "2026-11-17",
+      "title": "Einsatzübersicht an aktualisiertes Seitentemplate angepasst",
+      "summary": "Die Einsatzkarten behalten ihr Plugin-Layout auch dann, wenn die WordPress-Seite den Shortcode in Code-Blöcke einbettet.",
+      "changes": [
+        "Einsatzübersicht: Der Listen-Shortcode erhält wieder den Layout-Container mit responsivem Kartenraster.",
+        "Darstellung: Editor-Code- und Absatzhüllen werden neutralisiert; Theme-Monospace-Schrift und übergroße Kartenbilder greifen nicht mehr."
+      ]
+    },
+    {
       "version": "3.3.35",
       "date": "2026-11-10",
       "title": "Keine doppelten Kalenderinhalte in der Präsentation",
