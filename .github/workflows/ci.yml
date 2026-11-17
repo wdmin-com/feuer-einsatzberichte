@@ -87,7 +87,7 @@ jobs:
         run: |
           curl -fsSL -o /usr/local/bin/wp https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
           chmod +x /usr/local/bin/wp
-          wp core download --path="$RUNNER_TEMP/wordpress" --version=latest --force
+          wp core download --path="$RUNNER_TEMP/wordpress" --version=7.1.4 --force
       - name: Install isolated WordPress
         run: |
           wp config create --path="$RUNNER_TEMP/wordpress" --dbname=wordpress_test --dbuser=wordpress --dbpass=wordpress --dbhost=127.0.0.1 --skip-check --force
