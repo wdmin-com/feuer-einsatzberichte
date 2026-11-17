@@ -106,18 +106,23 @@ final class FEU_Einsatz_Report_Taxonomy {
             || !empty($query->query_vars['object_ids'])) {
             return;
         }
+        $children = [];
         $resolving_root = true;
         try {
             $root = get_category_by_slug('einsatze');
             if (!($root instanceof WP_Term)) {
                 $root = get_category_by_slug('einsaetze');
             }
+            if ($root instanceof WP_Term) {
+                // get_term_children() may run a broad hierarchy query; keep this
+                // filter out of that internal lookup to prevent recursive expansion.
+                $children = get_term_children((int) $root->term_id, 'category');
+            }
         } finally {
             $resolving_root = false;
         }
         if ($root instanceof WP_Term) {
             $excluded = array_map('absint', wp_parse_id_list($query->query_vars['exclude'] ?? []));
-            $children = get_term_children((int) $root->term_id, 'category');
             if (!is_wp_error($children)) {
                 $excluded = array_merge($excluded, array_map('absint', $children));
             }

@@ -46,6 +46,29 @@ try {
     set_current_screen('edit-category');
     get_current_screen()->post_type = 'post';
 
+    $query = new WP_Term_Query();
+    $query->query_vars = [
+        'taxonomy' => ['category'],
+        'exclude' => [],
+        'exclude_tree' => [],
+        'include' => [],
+        'slug' => '',
+        'name' => '',
+        'child_of' => 0,
+        'object_ids' => [],
+    ];
+    FEU_Einsatz_Report_Taxonomy::hide_legacy_terms_from_blog_admin($query);
+    $excluded_ids = array_map('absint', wp_parse_id_list($query->query_vars['exclude'] ?? []));
+    $expected_ids = array_merge(
+        [(int) $root->term_id],
+        array_map('absint', get_term_children((int) $root->term_id, 'category'))
+    );
+    feu_category_admin_assert(
+        empty($query->query_vars['exclude_tree'])
+            && !array_diff($expected_ids, $excluded_ids),
+        'The category query must exclude the root and all descendants by ID, without exclude_tree.'
+    );
+
     $terms = get_terms([
         'taxonomy' => 'category',
         'hide_empty' => false,
