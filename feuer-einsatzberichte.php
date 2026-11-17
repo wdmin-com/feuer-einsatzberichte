@@ -3,7 +3,7 @@
  * Plugin Name: Feuer-Einsatzberichte
  * Plugin URI: https://wdmin.com/plugins/feuer-einsatzberichte/
  * Description: Feuer-Einsatzberichte mit Einsatzverwaltung, Karten, Statistik und Archivierung
- * Version: 3.3.37
+ * Version: 3.3.38
  * Update URI: https://wdmin.com/plugins/feuer-einsatzberichte/
  * Requires at least: 7.1
  * Requires PHP: 8.1

@@ -116,9 +116,13 @@ final class FEU_Einsatz_Report_Taxonomy {
             $resolving_root = false;
         }
         if ($root instanceof WP_Term) {
-            $excluded = array_map('absint', (array) ($query->query_vars['exclude_tree'] ?? []));
+            $excluded = array_map('absint', wp_parse_id_list($query->query_vars['exclude'] ?? []));
+            $children = get_term_children((int) $root->term_id, 'category');
+            if (!is_wp_error($children)) {
+                $excluded = array_merge($excluded, array_map('absint', $children));
+            }
             $excluded[] = (int) $root->term_id;
-            $query->query_vars['exclude_tree'] = array_values(array_unique($excluded));
+            $query->query_vars['exclude'] = array_values(array_unique(array_filter($excluded)));
         }
     }
 

@@ -1,6 +1,16 @@
 {
   "releases": [
     {
+      "version": "3.3.38",
+      "date": "2026-11-17",
+      "title": "Speichermangel im Kategorie-Admin behoben",
+      "summary": "Die Blog-Kategorienverwaltung blendet den Einsatz-Zweig ohne rekursive exclude_tree-Abfragen aus.",
+      "changes": [
+        "Kategorien: Einsatz-Wurzel und alle untergeordneten Kategorien werden über direkte IDs ausgeschlossen.",
+        "Kategorien: Vorhandene exclude-IDs bleiben erhalten; eine Integration prüft Listenansicht und wiederholtes Speichern von Beschreibungen."
+      ]
+    },
+    {
       "version": "3.3.37",
       "date": "2026-11-17",
       "title": "Seitenleiste in der Einsatzübersicht ergänzt",
