@@ -21,6 +21,7 @@ $child_id = 0;
 $outside_id = 0;
 
 try {
+    wp_set_current_user(1);
     update_option(FEU_Einsatz_Report_Taxonomy::ENABLED_OPTION, 1, false);
     $parent = wp_insert_term('Admin exclusion parent ' . $suffix, 'category', [
         'slug' => 'admin-exclusion-parent-' . strtolower($suffix),
